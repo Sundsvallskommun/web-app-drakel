@@ -49,13 +49,13 @@ COPY --from=builder --chown=0:0 --chmod=555 /app/.next/standalone ./
 COPY --from=builder --chown=0:0 --chmod=555 /app/.next/static ./.next/static
 
 # entrypoint.sh rewrites placeholders in .next and server.js at startup, so make those writable.
+# Keep files root-owned (0:0) and group-writable — the container runs with an arbitrary uid in gid 0
+# (OpenShift-style), so writes go through the group permission, NOT the owner permission.
 USER root
 COPY entrypoint.sh ./
 RUN sed -i 's/\r$//' ./entrypoint.sh \
  && chmod 0555 ./entrypoint.sh \
- && chown 1001:0 /app /app/server.js \
- && chmod g+w /app/server.js \
- && chown -R 1001:0 /app/.next \
+ && chmod g+w /app /app/server.js \
  && chmod -R g+w /app/.next
 USER 1001
 
