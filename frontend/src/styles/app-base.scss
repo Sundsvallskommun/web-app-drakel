@@ -1,0 +1,21 @@
+// NOTE: sticky footer
+html,
+body,
+.full-page-layout {
+  width: 100%;
+  max-width: 100vw;
+  min-height: 100vh;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+.full-page-layout {
+  display: flex;
+  flex-direction: column;
+}
+
+.main-container {
+  flex: 1 0 auto;
+}

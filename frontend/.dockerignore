@@ -1,0 +1,10 @@
+Dockerfile
+.dockerignore
+node_modules
+npm-debug.log
+README.md
+.next
+.git
+# Dev env — the build uses .env-cicd (placeholders); runtime env comes from the container platform
+.env
+.env*.local

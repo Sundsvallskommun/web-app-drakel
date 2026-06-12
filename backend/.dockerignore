@@ -1,0 +1,23 @@
+# compiled output
+.vscode
+/node_modules
+dist
+
+# env — runtime env comes from the container platform, not a copied file
+.env
+.env*.local
+
+# code formatter
+.eslintrc
+.eslintignore
+.editorconfig
+.huskyrc
+.lintstagedrc.json
+.prettierrc
+
+# test
+jest.config.js
+
+# docker
+Dockerfile
+docker-compose.yml
