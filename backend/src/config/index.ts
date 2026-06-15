@@ -4,7 +4,8 @@ import { APIS } from './api-config';
 
 export { APIS };
 
-config({ path: `.env.${process.env.NODE_ENV ?? 'development'}.local` });
+// `quiet: true` suppresses dotenv 17's startup banner so it doesn't pollute server logs.
+config({ path: `.env.${process.env.NODE_ENV ?? 'development'}.local`, quiet: true });
 
 const env = process.env;
 

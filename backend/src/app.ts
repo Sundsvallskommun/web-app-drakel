@@ -211,15 +211,20 @@ class App {
     this.app.get(
       `${BASE_URL_PREFIX}/saml/login`,
       (req, res, next) => {
+        // Express 5's `req.query` is a read-only getter recomputed from `req.url`, so writes to
+        // it are silently discarded. passport-saml reads RelayState from
+        // `req.query.RelayState || req.body.RelayState`, so stash it on `req.body` instead.
+        let relayState = '';
         if (req.session.returnTo) {
-          req.query.RelayState = req.session.returnTo;
-        } else if (req.query.successRedirect) {
-          req.query.RelayState = req.query.successRedirect;
+          relayState = req.session.returnTo;
+        } else if (typeof req.query.successRedirect === 'string') {
+          relayState = req.query.successRedirect;
         }
-        if (req.query.failureRedirect) {
-          const currentRelay = typeof req.query.RelayState === 'string' ? req.query.RelayState : '';
-          const failure = typeof req.query.failureRedirect === 'string' ? req.query.failureRedirect : '';
-          req.query.RelayState = `${currentRelay},${failure}`;
+        if (typeof req.query.failureRedirect === 'string') {
+          relayState = `${relayState},${req.query.failureRedirect}`;
+        }
+        if (relayState) {
+          req.body = { ...(req.body as Record<string, unknown> | undefined), RelayState: relayState };
         }
         next();
       },
@@ -241,10 +246,16 @@ class App {
     this.app.get(
       `${BASE_URL_PREFIX}/saml/logout`,
       (req, res, next) => {
+        // See the /saml/login note: req.query is not writable in Express 5; pass RelayState
+        // via req.body, which samlStrategy.logout() also reads.
+        let relayState = '';
         if (req.session.returnTo) {
-          req.query.RelayState = req.session.returnTo;
-        } else if (req.query.successRedirect) {
-          req.query.RelayState = req.query.successRedirect;
+          relayState = req.session.returnTo;
+        } else if (typeof req.query.successRedirect === 'string') {
+          relayState = req.query.successRedirect;
+        }
+        if (relayState) {
+          req.body = { ...(req.body as Record<string, unknown> | undefined), RelayState: relayState };
         }
         next();
       },

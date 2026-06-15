@@ -3,6 +3,11 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  // Vite 8 transforms with Oxc by default, which (like esbuild) does not emit
+  // `emitDecoratorMetadata`. unplugin-swc sets `esbuild: false`, but that no longer
+  // disables the default transform, so disable Oxc explicitly and let SWC (below) own it.
+  oxc: false,
+  esbuild: false,
   plugins: [
     // Resolve the `@/`, `@controllers/*`, … path aliases. Point at tsconfig.eslint.json
     // because tsconfig.json excludes src/tests, which would make the plugin skip alias
