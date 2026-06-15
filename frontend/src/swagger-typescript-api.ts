@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { exec } from 'child_process';
 import { config } from 'dotenv';
 import path from 'path';
-config();
+config({ quiet: true });
 
 const PATH_TO_OUTPUT_DIR = path.resolve(process.cwd(), './src/data-contracts');
 
