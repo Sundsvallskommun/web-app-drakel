@@ -16,9 +16,9 @@
     "verify": "yarn lint:strict && yarn format:check && yarn type-check && yarn knip && yarn test"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.5.0",
-    "@commitlint/config-conventional": "^20.5.0",
+    "@commitlint/cli": "^21.0.2",
+    "@commitlint/config-conventional": "^21.0.2",
     "husky": "^9.1.7",
-    "lint-staged": "^15.4.3"
+    "lint-staged": "^16.4.0"
   }
 }
