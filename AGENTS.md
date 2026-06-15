@@ -125,3 +125,24 @@ Config lives in `backend/.env.{NODE_ENV}.local` (currently
 - **Descriptive names** — no single-letter variables or functions.
 - **Never hand-edit generated files** under `*/data-contracts/`.
 - **When in doubt, ask** before introducing a new pattern, dependency, or scope.
+
+## Quality gates & testing
+
+This repo enforces strict, type-aware quality gates. Before pushing, code must pass —
+and you should run these yourself after changes (see [README](./README.md#kvalitetsgrindar--test)
+for the full table):
+
+- **Lint** (`yarn lint:strict`): ESLint flat config, `strictTypeChecked` + `stylisticTypeChecked`,
+  **`any` is forbidden**, `simple-import-sort` + `unused-imports`, `no-console` (warn/error only),
+  zero warnings. Generated `*/data-contracts/**` are excluded.
+- **Type-check** (`yarn type-check`): `tsc --noEmit` with `strict: true` (+ `noUncheckedIndexedAccess`
+  on backend). Type correctness end-to-end — never reach for `any` to silence it.
+- **Knip** (`yarn knip`): dead code / unused exports & dependencies. Unused *dependencies* fail;
+  unused exports/files surface as warnings during the port.
+- **Tests** (`yarn test`): Vitest — backend (node, SWC for decorators) and frontend
+  (jsdom + React Testing Library). E2E via Playwright (`yarn test:e2e`). **No Cypress.**
+- **Hooks**: pre-commit (console.log + PII scan + lint-staged), commit-msg (Conventional Commits),
+  pre-push (lint + format + type-check + knip, both packages). Don't `--no-verify` to dodge them.
+
+Run quality gates from the repo root (fan-out) or per package. Fix the root cause; do not weaken
+a rule or add `any`/`eslint-disable` without a written reason. New code should ship with a test.

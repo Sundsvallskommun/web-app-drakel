@@ -1,7 +1,6 @@
-import { LogoutContent } from "@components/auth/logout-content.component";
+import { LogoutContent } from '@components/auth/logout-content.component';
 
 const Logout: React.FC = () => {
-
   return <LogoutContent />;
 };
 

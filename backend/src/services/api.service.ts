@@ -1,12 +1,10 @@
-import { HttpException } from '@/exceptions/HttpException';
-import { apiURL } from '@/utils/util';
-import axios, { AxiosError, AxiosRequestConfig } from 'axios';
-import ApiTokenService from './api-token.service';
+import axios, { AxiosRequestConfig } from 'axios';
 
-class ApiResponse<T> {
-  data: T;
-  message: string;
-}
+import { HttpException } from '@/exceptions/HttpException';
+import { ApiResponse } from '@/interfaces/api-service.interface';
+import { apiURL } from '@/utils/util';
+
+import ApiTokenService from './api-token.service';
 
 class ApiService {
   private apiTokenService = new ApiTokenService();
@@ -17,20 +15,17 @@ class ApiService {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     };
-    const defaultParams = {};
-
     const preparedConfig: AxiosRequestConfig = {
       ...config,
-      headers: { ...defaultHeaders, ...config.headers },
-      params: { ...defaultParams, ...config.params },
-      url: apiURL(config.url),
+      headers: { ...defaultHeaders, ...(config.headers as Record<string, string> | undefined) },
+      url: apiURL(config.url ?? ''),
     };
 
     try {
-      const res = await axios(preparedConfig);
+      const res = await axios<T>(preparedConfig);
       return { data: res.data, message: 'success' };
-    } catch (error: unknown | AxiosError) {
-      if (axios.isAxiosError(error) && (error as AxiosError).response?.status === 404) {
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
         throw new HttpException(404, 'Not found');
       }
       // NOTE: did you subscribe to the API called?

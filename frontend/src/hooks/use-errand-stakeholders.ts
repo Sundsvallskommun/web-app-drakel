@@ -22,7 +22,7 @@ export const useErrandStakeholders = (errandId: string): UseErrandStakeholdersRe
       return;
     }
     setIsLoading(true);
-    getErrandStakeholders(errandId).then((res) => {
+    void getErrandStakeholders(errandId).then((res) => {
       if (res.error) {
         setError(res.error);
         setStakeholders([]);

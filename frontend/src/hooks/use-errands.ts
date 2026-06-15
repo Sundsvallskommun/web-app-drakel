@@ -27,7 +27,7 @@ export const useErrands = (query: FindErrandsQueryDto): UseErrandsResult => {
 
   const load = useCallback(() => {
     setIsLoading(true);
-    getErrands({ filter, page, size, sort: sortKey ? sortKey.split(',') : undefined }).then((res) => {
+    void getErrands({ filter, page, size, sort: sortKey ? sortKey.split(',') : undefined }).then((res) => {
       if (res.error) {
         setError(res.error);
         setErrands([]);

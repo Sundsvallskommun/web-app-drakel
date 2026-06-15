@@ -4,7 +4,6 @@ import { CookieConsent, Footer, Header, Link } from '@sk-web-gui/react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
- 
 
 interface DefaultLayoutProps {
   children: React.ReactNode;
@@ -19,8 +18,8 @@ export default function DefaultLayout({
   headerTitle,
   headerSubtitle,
   children,
-  preContent = undefined,
-  postContent = undefined,
+  preContent,
+  postContent,
   logoLinkHref = '/',
 }: DefaultLayoutProps) {
   const router = useRouter();
@@ -50,9 +49,9 @@ export default function DefaultLayout({
 
       <Header
         data-cy="nav-header"
-        title={headerTitle ? headerTitle : process.env.NEXT_PUBLIC_APP_NAME}
-        subtitle={headerSubtitle ? headerSubtitle : ''}
-        aria-label={`${headerTitle ? headerTitle : process.env.NEXT_PUBLIC_APP_NAME} ${headerSubtitle}`}
+        title={headerTitle ?? process.env.NEXT_PUBLIC_APP_NAME}
+        subtitle={headerSubtitle ?? ''}
+        aria-label={`${headerTitle ?? process.env.NEXT_PUBLIC_APP_NAME} ${headerSubtitle ?? ''}`}
         logoLinkOnClick={handleLogoClick}
       />
 
@@ -71,9 +70,9 @@ export default function DefaultLayout({
         body={
           <p>
             {t('layout:cookies.description')}{' '}
-            <NextLink href="/kakor" passHref legacyBehavior>
-              <Link>{t('layout:cookies.read_more')}</Link>
-            </NextLink>
+            <Link as={NextLink} href="/kakor">
+              {t('layout:cookies.read_more')}
+            </Link>
           </p>
         }
         cookies={[

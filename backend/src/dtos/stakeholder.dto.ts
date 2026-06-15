@@ -1,6 +1,7 @@
-import { ContactChannel } from '@/responses/errand.response';
 import { Type } from 'class-transformer';
 import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
+
+import { ContactChannel } from '@/responses/errand.response';
 
 /** Fields accepted when adding a stakeholder to an errand. */
 export class CreateStakeholderDto {

@@ -26,7 +26,9 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     if (errand) {
       setHeaderErrand({ id: errand.id, title: errand.title, status: errand.status });
     }
-    return () => setHeaderErrand(undefined);
+    return () => {
+      setHeaderErrand(undefined);
+    };
   }, [errand?.id, errand?.title, errand?.status, setHeaderErrand]);
 
   if (isLoading) {
@@ -56,7 +58,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           isDirty={isDirty}
           saving={saving}
           error={saveError}
-          onSave={save}
+          onSave={() => void save()}
         />
       ),
     },

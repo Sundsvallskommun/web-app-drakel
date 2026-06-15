@@ -1,12 +1,22 @@
 {
-  "eslint.validate": ["html", "javascript", "typescript", "javascriptreact", "typescriptreact"],
   "eslint.enable": true,
-  "eslint.alwaysShowStatus": true,
+  "eslint.useFlatConfig": true,
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "eslint.workingDirectories": [{ "mode": "auto" }],
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "files.eol": "\n",
+  "[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[typescriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[json]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[jsonc]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
   "i18n-ally.localesPaths": ["frontend/public/locales"],
   "i18n-ally.sourceLanguage": "sv",
   "i18n-ally.namespace": true,
   "i18n-ally.keystyle": "nested",
-  "i18n-ally.enabledFrameworks": [
-    "react-i18next"
-  ]
+  "i18n-ally.enabledFrameworks": ["react-i18next"]
 }

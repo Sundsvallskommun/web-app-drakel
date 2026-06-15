@@ -61,7 +61,9 @@ export const ErrandSidebar: FC<{ sections: SidebarSection[] }> = ({ sections }) 
             aria-label={open ? 'Stäng sidomeny' : 'Öppna sidomeny'}
             iconButton
             leftIcon={open ? <ChevronsRight /> : <ChevronsLeft />}
-            onClick={() => setOpen(!open)}
+            onClick={() => {
+              setOpen(!open);
+            }}
           />
         </div>
       </div>

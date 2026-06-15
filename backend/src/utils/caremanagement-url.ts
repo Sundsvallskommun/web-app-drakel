@@ -11,5 +11,5 @@ import { CAREMANAGEMENT_BASE_URL, CAREMANAGEMENT_NAMESPACE, MUNICIPALITY_ID } fr
  */
 export const caremanagementUrl = (...parts: string[]): string => {
   const segments = [CAREMANAGEMENT_BASE_URL, MUNICIPALITY_ID, CAREMANAGEMENT_NAMESPACE, ...parts];
-  return segments.map(segment => String(segment).replace(/^\/+|\/+$/g, '')).join('/');
+  return segments.map(segment => segment.replace(/^\/+|\/+$/g, '')).join('/');
 };

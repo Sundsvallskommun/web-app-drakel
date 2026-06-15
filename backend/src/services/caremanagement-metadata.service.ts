@@ -1,7 +1,8 @@
-import { Lookup, ReadLookupsParamsKindEnum } from '@/data-contracts/caremanagement/data-contracts';
 import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
+
+import { Lookup, ReadLookupsParamsKindEnum } from '@/data-contracts/caremanagement/data-contracts';
 
 class CaremanagementMetadataService {
   private apiService = new CaremanagementApiService();

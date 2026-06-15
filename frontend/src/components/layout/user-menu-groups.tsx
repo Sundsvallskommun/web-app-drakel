@@ -39,7 +39,9 @@ export const userMenuGroups = [
             <Button
               type="button"
               className="usermenu-item w-full text-left inline-flex items-center gap-2"
-              onClick={() => window.location.assign(`${basePath}/logout`)}
+              onClick={() => {
+                window.location.assign(`${basePath}/logout`);
+              }}
             >
               <LogOut />
               <span>Logga ut</span>

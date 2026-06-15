@@ -1,6 +1,7 @@
-import { ExternalTag } from '@/responses/errand.response';
 import { Type } from 'class-transformer';
 import { IsArray, IsInt, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+
+import { ExternalTag } from '@/responses/errand.response';
 
 /** Fields a handläggare may change on an existing errand. */
 export class PatchErrandDto {

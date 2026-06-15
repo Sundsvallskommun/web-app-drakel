@@ -1,10 +1,11 @@
-import { Attachment } from '@/data-contracts/caremanagement/data-contracts';
-import { HttpException } from '@/exceptions/HttpException';
 import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 import axios from 'axios';
 import FormData from 'form-data';
+
+import { Attachment } from '@/data-contracts/caremanagement/data-contracts';
+import { HttpException } from '@/exceptions/HttpException';
 
 export interface AttachmentFile {
   data: Buffer;
@@ -24,7 +25,8 @@ const fileNameFromDisposition = (disposition?: string): string | undefined => {
     return undefined;
   }
   const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition);
-  return match ? decodeURIComponent(match[1]) : undefined;
+  const captured = match?.[1];
+  return captured === undefined ? undefined : decodeURIComponent(captured);
 };
 
 class CaremanagementAttachmentService {
@@ -39,10 +41,11 @@ class CaremanagementAttachmentService {
     const url = caremanagementUrl('errands', errandId, 'attachments', attachmentId, 'file');
     try {
       const res = await axios.get<ArrayBuffer>(url, { responseType: 'arraybuffer' });
+      const headers = res.headers as Record<string, string | undefined>;
       return {
         data: Buffer.from(res.data),
-        contentType: res.headers['content-type'],
-        fileName: fileNameFromDisposition(res.headers['content-disposition']),
+        contentType: headers['content-type'],
+        fileName: fileNameFromDisposition(headers['content-disposition']),
       };
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 404) {

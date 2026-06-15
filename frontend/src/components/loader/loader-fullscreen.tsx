@@ -1,4 +1,3 @@
- 
 import EmptyLayout from '@layouts/empty-layout/empty-layout.component';
 import { Spinner } from '@sk-web-gui/react';
 

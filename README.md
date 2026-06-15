@@ -84,3 +84,60 @@ Backend och frontend deployas som **två separata containrar** byggda från resp
 
 - **Backend** kräver (annars startar `validateEnv` inte): `NODE_ENV, PORT, SECRET_KEY, BASE_URL_PREFIX, API_BASE_URL, CLIENT_KEY, CLIENT_SECRET, MUNICIPALITY_ID, CAREMANAGEMENT_BASE_URL, CAREMANAGEMENT_NAMESPACE, AUTHORIZED_GROUPS, ADMIN_GROUP, SAML_*` (+ valfri `CAREMANAGEMENT_TYPE_SLUG`).
 - **Frontend** kräver `NEXT_PUBLIC_API_URL` (URL till backend).
+
+## Kvalitetsgrindar & test
+
+Repot har en **monorepo-rot** (privat `package.json`) som äger git-hooks och delade
+grindar. Installera den en gång: `yarn install` i roten (sätter upp Husky), sedan
+`yarn install` i `backend/` och `frontend/`.
+
+### Kommandon (kör från roten — fan-out:ar till båda paketen)
+
+| Kommando | Vad |
+|---|---|
+| `yarn lint` / `yarn lint:strict` | ESLint (flat config, **typ-medveten** `strictTypeChecked`, `any` förbjudet). `:strict` = `--max-warnings=0` |
+| `yarn format` / `yarn format:check` | Prettier (LF-radändelser) |
+| `yarn type-check` | `tsc --noEmit` (`strict: true`) |
+| `yarn knip` | Hittar död/oanvänd kod, oanvända exports & dependencies |
+| `yarn test` | Vitest — backend (node) + frontend (jsdom + React Testing Library) |
+| `yarn test:e2e` | Playwright (frontend, startar dev-servern själv) |
+| `yarn verify` | Allt ovan i sekvens |
+
+Per paket kör samma script i `backend/` resp. `frontend/` (t.ex. `yarn --cwd frontend test:e2e:ui`).
+
+### Git-hooks (Husky) — felen kommer lokalt, direkt
+
+- **pre-commit**: blockerar `console.log`, scannar efter personnummer/telefonnummer
+  (kända testvärden ligger i [`.husky/pii-allowlist.txt`](./.husky/pii-allowlist.txt)),
+  kör sedan `lint-staged` (Prettier + `eslint --fix --max-warnings=0` på stagead kod).
+- **commit-msg**: `commitlint` — [Conventional Commits](https://www.conventionalcommits.org).
+- **pre-push**: strikt lint + format-check + type-check + knip för **båda** paketen.
+  Bypass (avrådes): `git push --no-verify`.
+
+### CI ([`.github/workflows`](./.github/workflows))
+
+`lint`, `typecheck`, `knip`, `test` (unit) och `playwright` (e2e) körs på varje PR och
+push till `develop`/`main` (Node 24). De speglar pre-push så samma fel fångas i båda lägena.
+
+### AI-driven utveckling
+
+Grindarna är gjorda för snabb återkoppling: en LLM (eller människa) som ändrar kod får
+ett tydligt, maskinläsbart svar på exakt vad som är fel — typfel (`type-check`),
+lint-regel + rad (`lint:strict`), död kod (`knip`) eller trasigt test — både lokalt vid
+commit/push och i CI.
+
+### Radändelser (Mac + Windows)
+
+[`.gitattributes`](./.gitattributes) normaliserar **all** text till **LF** i historiken,
+och Prettier + EditorConfig enforcar LF. Resultat: ingen CRLF-churn eller brusiga diffar
+mellan operativsystem.
+
+### Strikthet
+
+Minst lika strikt som referensen `web-app-draken-public`, och starkare på typning:
+`strict: true` + `strictTypeChecked`/`stylisticTypeChecked` + **förbjudet `any`**
+(referensen tillåter `any`). Knip rapporterar oanvänd kod som varningar under aktiv
+utveckling (oanvända *dependencies* blockerar dock). Ett fåtal regler är medvetet
+nedtonade med motivering i respektive `eslint.config.mjs`: `no-unnecessary-condition`
+(krockar med defensiv kod mot externa data) och två React-pattern-regler
+(`react-hooks/set-state-in-effect`, `exhaustive-deps`) som inte rör typsäkerhet.

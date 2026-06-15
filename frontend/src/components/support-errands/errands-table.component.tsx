@@ -43,7 +43,7 @@ const columns: Column[] = [
     label: 'Ärende',
     render: (errand) => (
       <div className="max-w-[280px]">
-        <div className="font-bold truncate">{errand.title || '(utan titel)'}</div>
+        <div className="font-bold truncate">{errand.title ?? '(utan titel)'}</div>
         <div className="text-small truncate">{errand.id}</div>
       </div>
     ),
@@ -80,19 +80,18 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({ errands, isLoading, error,
         </div>
       )}
       <Table data-cy="errands-table" aria-describedby="errandTableCaption" scrollable>
-        {error ? (
+        {error ?
           <caption id="errandTableCaption" className="my-32">
             Det gick inte att hämta ärenden ({String(error)})
           </caption>
-        ) : !isLoading && errands.length === 0 ? (
+        : !isLoading && errands.length === 0 ?
           <caption id="errandTableCaption" className="my-32">
             Det finns inga ärenden
           </caption>
-        ) : (
-          <caption id="errandTableCaption" className="sr-only">
+        : <caption id="errandTableCaption" className="sr-only">
             Ärenden, sida {page + 1} av {Math.max(totalPages, 1)}
           </caption>
-        )}
+        }
 
         {errands.length > 0 && (
           <>
@@ -109,8 +108,14 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({ errands, isLoading, error,
                   role="button"
                   aria-label={`Ärende ${errand.title ?? errand.id}, öppna ärende`}
                   className="cursor-pointer"
-                  onClick={() => openErrand(errand)}
-                  onKeyDown={(e) => (e.key === 'Enter' ? openErrand(errand) : null)}
+                  onClick={() => {
+                    openErrand(errand);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      openErrand(errand);
+                    }
+                  }}
                 >
                   {columns.map((column, index) => (
                     <Table.Column key={`cell-${index}`}>{column.render(errand)}</Table.Column>
@@ -132,7 +137,9 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({ errands, isLoading, error,
                 fitContainer
                 pages={totalPages}
                 activePage={page + 1}
-                changePage={(nextPage) => onPageChange(nextPage - 1)}
+                changePage={(nextPage) => {
+                  onPageChange(nextPage - 1);
+                }}
               />
             </div>
           </Table.Footer>

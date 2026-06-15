@@ -1,10 +1,11 @@
-import { ReadLookupsParamsKindEnum } from '@/data-contracts/caremanagement/data-contracts';
 import { HttpException } from '@exceptions/HttpException';
-import { LookupsApiResponse } from '@/responses/lookup.response';
 import authMiddleware from '@middlewares/auth.middleware';
 import CaremanagementMetadataService from '@services/caremanagement-metadata.service';
 import { Controller, Get, QueryParam, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
+
+import { ReadLookupsParamsKindEnum } from '@/data-contracts/caremanagement/data-contracts';
+import { LookupsApiResponse } from '@/responses/lookup.response';
 
 @Controller()
 export class MetadataController {

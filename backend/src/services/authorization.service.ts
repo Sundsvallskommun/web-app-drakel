@@ -45,7 +45,7 @@ export const getPermissions = (groups: string[]): Permissions => {
     if (!rolePermissions) {
       return;
     }
-    (Object.keys(rolePermissions) as Array<keyof Permissions>).forEach(permission => {
+    (Object.keys(rolePermissions) as (keyof Permissions)[]).forEach(permission => {
       if (rolePermissions[permission]) {
         permissions[permission] = true;
       }

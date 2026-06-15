@@ -30,11 +30,16 @@ export const ErrandBasics: FC<ErrandBasicsProps> = ({ form, setField }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
             <FormControl id="category" className="w-full">
               <FormLabel>Kategori</FormLabel>
-              <Select value={form.category} onChange={(event) => setField('category', event.target.value)}>
+              <Select
+                value={form.category}
+                onChange={(event) => {
+                  setField('category', event.target.value);
+                }}
+              >
                 <Select.Option value="">Välj kategori</Select.Option>
                 {categories.map((lookup) => (
                   <Select.Option key={lookup.name} value={lookup.name ?? ''}>
-                    {lookup.displayName || lookup.name}
+                    {lookup.displayName ?? lookup.name}
                   </Select.Option>
                 ))}
               </Select>
@@ -42,11 +47,16 @@ export const ErrandBasics: FC<ErrandBasicsProps> = ({ form, setField }) => {
 
             <FormControl id="type" className="w-full">
               <FormLabel>Ärendetyp</FormLabel>
-              <Select value={form.type} onChange={(event) => setField('type', event.target.value)}>
+              <Select
+                value={form.type}
+                onChange={(event) => {
+                  setField('type', event.target.value);
+                }}
+              >
                 <Select.Option value="">Välj typ</Select.Option>
                 {types.map((lookup) => (
                   <Select.Option key={lookup.name} value={lookup.name ?? ''}>
-                    {lookup.displayName || lookup.name}
+                    {lookup.displayName ?? lookup.name}
                   </Select.Option>
                 ))}
               </Select>
@@ -55,16 +65,27 @@ export const ErrandBasics: FC<ErrandBasicsProps> = ({ form, setField }) => {
 
           <FormControl id="description" className="w-full">
             <FormLabel>Ärendebeskrivning</FormLabel>
-            <Textarea rows={5} value={form.description} onChange={(event) => setField('description', event.target.value)} />
+            <Textarea
+              rows={5}
+              value={form.description}
+              onChange={(event) => {
+                setField('description', event.target.value);
+              }}
+            />
           </FormControl>
 
           <FormControl id="contactReason" className="w-full">
             <FormLabel>Orsak till kontakt</FormLabel>
-            <Select value={form.contactReason} onChange={(event) => setField('contactReason', event.target.value)}>
+            <Select
+              value={form.contactReason}
+              onChange={(event) => {
+                setField('contactReason', event.target.value);
+              }}
+            >
               <Select.Option value="">Välj orsak</Select.Option>
               {contactReasons.map((lookup) => (
                 <Select.Option key={lookup.name} value={lookup.name ?? ''}>
-                  {lookup.displayName || lookup.name}
+                  {lookup.displayName ?? lookup.name}
                 </Select.Option>
               ))}
             </Select>

@@ -1,15 +1,15 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Button, FormErrorMessage } from '@sk-web-gui/react';
-import EmptyLayout from '@layouts/empty-layout/empty-layout.component';
 import LoaderFullScreen from '@components/loader/loader-fullscreen';
-import { appURL } from '@utils/app-url';
-import { useTranslation } from 'react-i18next';
+import EmptyLayout from '@layouts/empty-layout/empty-layout.component';
+import { Button, FormErrorMessage } from '@sk-web-gui/react';
 import { apiURL } from '@utils/api-url';
-import { capitalize } from 'lodash';
+import { appURL } from '@utils/app-url';
 import { PATH } from '@utils/constants';
+import { capitalize } from 'lodash';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const autoLogin = false;
 
@@ -55,7 +55,8 @@ const LoginContent: React.FC = () => {
 
     if (isLoggedOut) {
       router.push('/login');
-      return setIsLoading(false);
+      setIsLoading(false);
+      return;
     }
 
     if (failMessage === 'NOT_AUTHORIZED' && autoLogin) {
@@ -88,20 +89,11 @@ const LoginContent: React.FC = () => {
               <p className="my-0">{t('login:description')}</p>
             </div>
 
-            <Button
-              inverted
-              onClick={onLogin}
-              ref={initialFocusRef}
-              data-cy="loginButton"
-            >
+            <Button inverted onClick={onLogin} ref={initialFocusRef} data-cy="loginButton">
               {capitalize(t('common:login'))}
             </Button>
 
-            {errorMessage && (
-              <FormErrorMessage className="mt-lg">
-                {errorMessage}
-              </FormErrorMessage>
-            )}
+            {errorMessage && <FormErrorMessage className="mt-lg">{errorMessage}</FormErrorMessage>}
           </div>
         </div>
       </main>

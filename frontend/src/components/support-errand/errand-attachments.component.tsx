@@ -75,24 +75,23 @@ export const ErrandAttachments: FC<{ errandId: string }> = ({ errandId }) => {
 
   return (
     <FormProvider {...formMethods}>
-      <FileUpload.Area onChange={handleUpload}>
+      <FileUpload.Area onChange={(event) => void handleUpload(event)}>
         <div className="flex flex-col gap-16">
           <div className="flex items-center justify-between gap-12">
             <span className="font-bold">Bilagor</span>
             <div className="flex items-center gap-12">
               {uploading && <Spinner size={2} />}
-              <FileUpload.Button onChange={handleUpload} />
+              <FileUpload.Button onChange={(event) => void handleUpload(event)} />
             </div>
           </div>
 
           {actionError && <p className="text-error-surface-primary m-0">{actionError}</p>}
 
-          {isLoading ? (
+          {isLoading ?
             <Spinner size={3} />
-          ) : error ? (
+          : error ?
             <p className="m-0">Det gick inte att hämta bilagor ({String(error)})</p>
-          ) : (
-            <FileUpload.List placeholder="Inga bilagor">
+          : <FileUpload.List placeholder="Inga bilagor">
               {attachments.map((attachment, index) => (
                 <FileUpload.ListItem
                   key={attachment.id ?? index}
@@ -111,7 +110,7 @@ export const ErrandAttachments: FC<{ errandId: string }> = ({ errandId }) => {
                         iconButton
                         aria-label={`Ladda ner ${attachment.fileName ?? 'bilaga'}`}
                         loading={downloadingId === attachment.id}
-                        onClick={() => download(attachment.id, attachment.fileName)}
+                        onClick={() => void download(attachment.id, attachment.fileName)}
                         leftIcon={<Download />}
                       />
                     ),
@@ -119,7 +118,7 @@ export const ErrandAttachments: FC<{ errandId: string }> = ({ errandId }) => {
                 />
               ))}
             </FileUpload.List>
-          )}
+          }
         </div>
       </FileUpload.Area>
     </FormProvider>

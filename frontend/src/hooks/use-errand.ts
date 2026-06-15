@@ -22,7 +22,7 @@ export const useErrand = (errandId: string): UseErrandResult => {
       return;
     }
     setIsLoading(true);
-    getErrand(errandId).then((res) => {
+    void getErrand(errandId).then((res) => {
       if (res.error) {
         setError(res.error);
         setErrand(undefined);

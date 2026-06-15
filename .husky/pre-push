@@ -1,0 +1,25 @@
+# Strict, repo-wide quality gate before pushing. Mirrors the CI workflows so failures
+# surface locally first and give AI agents / developers the full picture in one run.
+# Bypass (discouraged): git push --no-verify
+
+set -e
+
+echo "→ backend: strict lint"
+yarn --cwd backend lint:strict
+echo "→ backend: format check"
+yarn --cwd backend format:check
+echo "→ backend: type check"
+yarn --cwd backend type-check
+echo "→ backend: knip (dead code / unused deps)"
+yarn --cwd backend knip
+
+echo "→ frontend: strict lint"
+yarn --cwd frontend lint:strict
+echo "→ frontend: format check"
+yarn --cwd frontend format:check
+echo "→ frontend: type check"
+yarn --cwd frontend type-check
+echo "→ frontend: knip (dead code / unused deps)"
+yarn --cwd frontend knip
+
+echo "✓ pre-push checks passed"

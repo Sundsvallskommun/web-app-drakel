@@ -8,11 +8,17 @@
 # testing
 /coverage
 /.nyc_output
-/cypress/downloads
+
+# playwright
+/test-results
+/playwright-report
+/blob-report
+/playwright/.cache
 
 # next.js
 /.next
 /out
+*.tsbuildinfo
 
 # production
 /build
