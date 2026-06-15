@@ -136,8 +136,23 @@ mellan operativsystem.
 
 Minst lika strikt som referensen `web-app-draken-public`, och starkare på typning:
 `strict: true` + `strictTypeChecked`/`stylisticTypeChecked` + **förbjudet `any`**
-(referensen tillåter `any`). Knip rapporterar oanvänd kod som varningar under aktiv
-utveckling (oanvända *dependencies* blockerar dock). Ett fåtal regler är medvetet
-nedtonade med motivering i respektive `eslint.config.mjs`: `no-unnecessary-condition`
-(krockar med defensiv kod mot externa data) och två React-pattern-regler
-(`react-hooks/set-state-in-effect`, `exhaustive-deps`) som inte rör typsäkerhet.
+(referensen tillåter `any`). Ett fåtal regler är medvetet nedtonade med motivering i
+respektive `eslint.config.mjs`: `no-unnecessary-condition` (krockar med defensiv kod mot
+externa data) och två React-pattern-regler (`react-hooks/set-state-in-effect`,
+`exhaustive-deps`) som inte rör typsäkerhet.
+
+### Död kod (Knip) — blockerar, med opt-out
+
+Knip **blockerar** PR:en på oanvänd kod: oanvända filer, exports, typer och
+dependencies. Default är alltså att död kod måste **tas bort**. Är något oanvänt
+*med flit* (avsedd publik API-yta eller infrastruktur som inte wirats upp än) undantar
+man det explicit — och undantaget syns i diffen och kan granskas:
+
+- **Per export/typ:** sätt `/** @public */` i JSDoc ovanför symbolen. Exempel:
+  `backend/src/services/api-token.service.ts` (`Token`), `caremanagement-api.service.ts`
+  (`CaremanagementResponse`), `custom-validation-classes.ts` (`IsNullable`).
+- **Per fil:** lägg en glob i paketets `knip.json` under `ignore` (t.ex. gener-erade
+  filer). Oanvända *dependencies* undantas via `ignoreDependencies`.
+
+Så: död kod flaggas alltid på PR:en, och vill man behålla den får man medvetet
+exkludera den — ingen död kod smyger in oavsiktligt.

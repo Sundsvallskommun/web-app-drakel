@@ -3,12 +3,5 @@
   "project": ["src/**/*.{ts,tsx}", "e2e/**/*.ts"],
   "ignore": ["src/**/data-contracts/**"],
   "ignoreDependencies": ["sharp", "swagger-typescript-api", "@tailwindcss/container-queries"],
-  "ignoreBinaries": ["tsx"],
-  "rules": {
-    "files": "warn",
-    "exports": "warn",
-    "types": "warn",
-    "enumMembers": "warn",
-    "duplicates": "warn"
-  }
+  "ignoreBinaries": ["tsx"]
 }

@@ -3,7 +3,10 @@ import axios, { AxiosRequestConfig } from 'axios';
 
 import { HttpException } from '@/exceptions/HttpException';
 
-/** caremanagement responses also expose the Location header — set on 201 Created (empty body). */
+/**
+ * caremanagement responses also expose the Location header — set on 201 Created (empty body).
+ * @public
+ */
 export interface CaremanagementResponse<T> extends ApiResponse<T> {
   location?: string;
 }

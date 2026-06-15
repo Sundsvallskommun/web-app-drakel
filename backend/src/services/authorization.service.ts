@@ -19,7 +19,7 @@ export function authorizeGroups(groups: string): boolean {
   return authorizedGroups.some(authorizedGroup => userGroups.includes(authorizedGroup));
 }
 
-export const defaultPermissions = (): Permissions => ({
+const defaultPermissions = (): Permissions => ({
   canEditErrands: false,
 });
 

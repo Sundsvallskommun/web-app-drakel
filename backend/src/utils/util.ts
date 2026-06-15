@@ -1,4 +1,4 @@
-import { API_BASE_URL, BASE_URL_PREFIX } from '@config';
+import { API_BASE_URL } from '@config';
 /**
  * @method isEmpty
  * @param {String | Number | Object} value
@@ -17,11 +17,6 @@ export const isEmpty = (value: string | number | object): boolean => {
   } else {
     return false;
   }
-};
-
-export const localApi = (...parts: string[]): string => {
-  const urlParts = [BASE_URL_PREFIX, ...parts];
-  return urlParts.map(pathPart => pathPart.replace(/(\/$)/g, '')).join('/');
 };
 
 export const apiURL = (...parts: string[]): string => {

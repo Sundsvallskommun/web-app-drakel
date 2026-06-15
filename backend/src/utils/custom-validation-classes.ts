@@ -5,12 +5,13 @@ const isNull = (value: unknown) => {
 };
 
 @ValidatorConstraint()
-export class IsNull implements ValidatorConstraintInterface {
+class IsNull implements ValidatorConstraintInterface {
   validate(value: unknown) {
     return isNull(value);
   }
 }
 
+/** @public Custom class-validator decorator for nullable DTO fields (used as `@IsNullable()`). */
 export function IsNullable(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
     registerDecorator({

@@ -137,8 +137,11 @@ for the full table):
   zero warnings. Generated `*/data-contracts/**` are excluded.
 - **Type-check** (`yarn type-check`): `tsc --noEmit` with `strict: true` (+ `noUncheckedIndexedAccess`
   on backend). Type correctness end-to-end — never reach for `any` to silence it.
-- **Knip** (`yarn knip`): dead code / unused exports & dependencies. Unused *dependencies* fail;
-  unused exports/files surface as warnings during the port.
+- **Knip** (`yarn knip`): dead code — **blocks** on unused files, exports, types and dependencies.
+  Default is to delete unused code. If something is unused *on purpose* (intended public API or
+  not-yet-wired infrastructure), opt it out explicitly so it shows in the diff: `/** @public */`
+  above the export/type, or a glob in the package `knip.json` `ignore` (per file) /
+  `ignoreDependencies` (per dep). Don't disable Knip — opt out the specific symbol.
 - **Tests** (`yarn test`): Vitest — backend (node, SWC for decorators) and frontend
   (jsdom + React Testing Library). E2E via Playwright (`yarn test:e2e`). **No Cypress.**
 - **Hooks**: pre-commit (console.log + PII scan + lint-staged), commit-msg (Conventional Commits),

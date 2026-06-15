@@ -7,6 +7,7 @@ import FormData from 'form-data';
 import { Attachment } from '@/data-contracts/caremanagement/data-contracts';
 import { HttpException } from '@/exceptions/HttpException';
 
+/** @public */
 export interface AttachmentFile {
   data: Buffer;
   contentType?: string;

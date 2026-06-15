@@ -4,11 +4,5 @@
   "project": ["src/**/*.ts"],
   "ignore": ["src/data-contracts/**"],
   "ignoreDependencies": ["swagger-typescript-api", "tsconfig-paths"],
-  "ignoreBinaries": ["pm2"],
-  "rules": {
-    "exports": "warn",
-    "types": "warn",
-    "enumMembers": "warn",
-    "duplicates": "warn"
-  }
+  "ignoreBinaries": ["pm2"]
 }

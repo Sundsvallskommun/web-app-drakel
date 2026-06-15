@@ -22,7 +22,7 @@ export const toServiceError = (error: unknown): ServiceResponse<never> => {
 
 const isAuthPath = (pathname: string): boolean => /\/login|\/logout/.test(pathname);
 
-export const handleError = (error: AxiosError<ApiResponse>) => {
+const handleError = (error: AxiosError<ApiResponse>) => {
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
 
   // An expired or missing session surfaces as 401 — send the user back to the login page (unless

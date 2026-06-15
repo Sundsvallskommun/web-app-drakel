@@ -6,6 +6,7 @@ import qs from 'qs';
 
 import { HttpException } from '@/exceptions/HttpException';
 
+/** @public Token returned by the OAuth client-credentials endpoint. */
 export interface Token {
   access_token: string;
   expires_in: number;

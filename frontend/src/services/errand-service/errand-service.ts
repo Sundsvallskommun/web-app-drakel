@@ -19,8 +19,6 @@ export interface NewStakeholder {
   contactChannels?: ContactChannel[];
 }
 
-export const emptyErrandsResult: FindErrandsResult = { errands: [], _meta: {} };
-
 /** Adds a stakeholder to an errand. The stakeholder is then available on the refetched errand. */
 export const createStakeholder = (errandId: string, stakeholder: NewStakeholder): Promise<ServiceResponse<null>> => {
   return apiService
@@ -58,14 +56,6 @@ export const getErrands = (query: FindErrandsQueryDto = {}): Promise<ServiceResp
 export const getErrand = (errandId: string): Promise<ServiceResponse<Errand>> => {
   return apiService
     .get<ApiResponse<Errand>>(`errands/${errandId}`)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
-};
-
-/** Creates a new errand and returns it (including its server-assigned id). */
-export const createErrand = (payload: PatchErrandDto): Promise<ServiceResponse<Errand>> => {
-  return apiService
-    .post<ApiResponse<Errand>>('errands', payload)
     .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);
 };
