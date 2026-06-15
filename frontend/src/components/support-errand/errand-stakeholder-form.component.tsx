@@ -4,7 +4,7 @@ import { ContactChannel } from '@data-contracts/backend/data-contracts';
 import { useLookups } from '@hooks/use-lookups';
 import { createStakeholder } from '@services/errand-service/errand-service';
 import { Button, FormControl, FormLabel, Input, Modal, Select } from '@sk-web-gui/react';
-import { FC, FormEvent, useState } from 'react';
+import { FC, useState } from 'react';
 
 interface ErrandStakeholderFormProps {
   errandId: string;
@@ -39,8 +39,7 @@ export const ErrandStakeholderForm: FC<ErrandStakeholderFormProps> = ({ errandId
     onClose();
   };
 
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
+  const submit = async () => {
     setSaving(true);
     setError(undefined);
 
@@ -72,7 +71,14 @@ export const ErrandStakeholderForm: FC<ErrandStakeholderFormProps> = ({ errandId
   return (
     <Modal show={show} onClose={close} label="Lägg till intressent" className="w-[42rem]">
       <Modal.Content>
-        <form id="stakeholder-form" onSubmit={(event) => void submit(event)} className="flex flex-col gap-16">
+        <form
+          id="stakeholder-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void submit();
+          }}
+          className="flex flex-col gap-16"
+        >
           <FormControl id="stakeholder-role" className="w-full">
             <FormLabel>Roll</FormLabel>
             <Select
