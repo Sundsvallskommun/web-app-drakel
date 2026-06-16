@@ -10,6 +10,7 @@ import { Response } from 'express';
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, QueryParams, Req, Res, UploadedFile, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
+import { MAX_UPLOAD_FILE_SIZE_BYTES } from '@/constants/upload';
 import { CreateErrandDto, FindErrandsQueryDto, PatchErrandDto } from '@/dtos/errand.dto';
 import { CreateStakeholderDto } from '@/dtos/stakeholder.dto';
 import { AttachmentsApiResponse } from '@/responses/attachment.response';
@@ -22,6 +23,15 @@ const DEFAULT_TYPE_SLUG = 'financial-assistance';
 
 // TODO: hardcoded for now — no ROLE metadata configured yet. Every added stakeholder gets PRIMARY.
 const DEFAULT_STAKEHOLDER_ROLE = 'PRIMARY';
+
+const singleAttachmentUploadOptions = {
+  options: {
+    limits: {
+      files: 1,
+      fileSize: MAX_UPLOAD_FILE_SIZE_BYTES,
+    },
+  },
+};
 
 @Controller()
 export class ErrandController {
@@ -117,7 +127,7 @@ export class ErrandController {
   @HttpCode(201)
   @OpenAPI({ summary: 'Upload a new attachment' })
   @UseBefore(authMiddleware)
-  async createAttachment(@Param('errandId') errandId: string, @UploadedFile('file') file: UploadedFileLike) {
+  async createAttachment(@Param('errandId') errandId: string, @UploadedFile('file', singleAttachmentUploadOptions) file: UploadedFileLike) {
     const res = await this.attachmentService.createAttachment(errandId, file);
     return { data: res.data, message: 'success' };
   }

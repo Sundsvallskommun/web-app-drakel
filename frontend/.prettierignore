@@ -1,0 +1,5 @@
+# Auto-generated API clients (swagger-typescript-api) under data-contracts are never hand-edited
+# and opt out of tsc/eslint; keep them in generator style so Prettier never rewrites them (which
+# would churn quotes/layout against the generator on every regeneration). Mirrors the same
+# exclusion in .lintstagedrc.mjs so format:check / format agree with the pre-commit hook.
+src/data-contracts/

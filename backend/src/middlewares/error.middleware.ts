@@ -2,6 +2,16 @@ import { HttpException } from '@exceptions/HttpException';
 import { logger } from '@utils/logger';
 import { NextFunction, Request, Response } from 'express';
 
+const multerErrorStatus = (error: HttpException): number | undefined => {
+  if (error.name !== 'MulterError') {
+    return undefined;
+  }
+  if (error.message === 'File too large' || (error as HttpException & { code?: string }).code === 'LIMIT_FILE_SIZE') {
+    return 413;
+  }
+  return 400;
+};
+
 // Helper function to sanitize log input by removing CR and LF characters
 function sanitizeLogInput(input: string): string {
   return input.replace(/[\r\n]/g, '');
@@ -9,7 +19,7 @@ function sanitizeLogInput(input: string): string {
 
 const errorMiddleware = (error: HttpException, req: Request, res: Response, next: NextFunction) => {
   try {
-    const status: number = error.status || 500;
+    const status: number = multerErrorStatus(error) ?? error.status ?? 500;
     const message: string = error.message || 'Something went wrong';
     const errors: string =
       error.errors?.length > 0 ? JSON.stringify(error.errors.map(error => ({ property: error.property, constraints: error.constraints }))) : '';

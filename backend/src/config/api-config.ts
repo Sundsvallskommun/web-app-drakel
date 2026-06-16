@@ -4,11 +4,11 @@ export const APIS = [
     name: 'simulatorserver',
     version: '2.0',
   },
-  {
-    name: 'caremanagement',
-    version: '1.0',
-  },
 ] as const;
+
+// NOTE: caremanagement is intentionally NOT in APIS. Runtime calls are built by caremanagementUrl,
+// while contract generation has its own explicit source in swagger-typescript-api.ts. In test that
+// source can point at the real caremanagement OpenAPI via WSO2 instead of the Dokploy instance.
 
 type ApiName = (typeof APIS)[number]['name'];
 

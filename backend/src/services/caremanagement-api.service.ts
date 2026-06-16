@@ -1,7 +1,6 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
+import { caremanagementError } from '@utils/caremanagement-error';
 import axios, { AxiosRequestConfig } from 'axios';
-
-import { HttpException } from '@/exceptions/HttpException';
 
 /**
  * caremanagement responses also expose the Location header — set on 201 Created (empty body).
@@ -30,10 +29,7 @@ class CaremanagementApiService {
       const headers = res.headers as Record<string, string | undefined>;
       return { data: res.data, message: 'success', location: headers.location };
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 404) {
-        throw new HttpException(404, 'Not found');
-      }
-      throw new HttpException(500, 'Internal server error from caremanagement');
+      throw caremanagementError(error);
     }
   }
 
