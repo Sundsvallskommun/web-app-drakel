@@ -73,6 +73,7 @@ export const ErrandInfoPanel: FC<ErrandInfoPanelProps> = ({
       <FormControl id="status" className="w-full">
         <FormLabel>Ärendestatus</FormLabel>
         <Select
+          className="w-full"
           value={form.status}
           onChange={(event) => {
             setField('status', event.target.value);
@@ -90,6 +91,7 @@ export const ErrandInfoPanel: FC<ErrandInfoPanelProps> = ({
       <FormControl id="priority" className="w-full">
         <FormLabel>Prioritet</FormLabel>
         <Select
+          className="w-full"
           value={form.priority}
           onChange={(event) => {
             setField('priority', event.target.value);

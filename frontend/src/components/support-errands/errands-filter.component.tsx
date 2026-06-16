@@ -78,6 +78,7 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({ query, onQueryChange, fi
           <FormControl id="filter-category" className="min-w-[20rem]">
             <FormLabel>Kategori</FormLabel>
             <Select
+              className="w-full"
               value={filters.category}
               onChange={(event) => {
                 onFilterChange('category', event.target.value);
@@ -95,6 +96,7 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({ query, onQueryChange, fi
           <FormControl id="filter-type" className="min-w-[20rem]">
             <FormLabel>Ärendetyp</FormLabel>
             <Select
+              className="w-full"
               value={filters.type}
               onChange={(event) => {
                 onFilterChange('type', event.target.value);
@@ -112,6 +114,7 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({ query, onQueryChange, fi
           <FormControl id="filter-priority" className="min-w-[20rem]">
             <FormLabel>Prioritet</FormLabel>
             <Select
+              className="w-full"
               value={filters.priority}
               onChange={(event) => {
                 onFilterChange('priority', event.target.value);
