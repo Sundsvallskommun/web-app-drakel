@@ -21,6 +21,11 @@ import { FormProvider, useForm } from 'react-hook-form';
 // Matches the backend CreateMessageDto / caremanagement CreateMessage.body limit.
 const MESSAGE_CHARACTER_LIMIT = 8192;
 
+// Mirror the backend message-attachment limits (MAX_MESSAGE_ATTACHMENT_FILES / MAX_UPLOAD_FILE_SIZE_BYTES)
+// so files are validated before sending instead of failing the POST with a generic error.
+const MAX_ATTACHMENT_FILES = 10;
+const MAX_ATTACHMENT_FILE_SIZE_MB = 20;
+
 const formatTimestamp = (created?: string): string => (created ? dayjs(created).format('YYYY-MM-DD HH:mm') : '—');
 
 const senderLabel = (message: Message): string => {
@@ -94,6 +99,7 @@ export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
   const [pendingFiles, setPendingFiles] = useState<UploadFile[]>([]);
   const [sending, setSending] = useState<boolean>(false);
   const [sendError, setSendError] = useState<string>();
+  const [fileError, setFileError] = useState<string>();
 
   const trimmed = body.trim();
   const isOverLimit = body.length > MESSAGE_CHARACTER_LIMIT;
@@ -101,10 +107,20 @@ export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
 
   const addFiles = (event: CustomOnChangeEventUploadFile) => {
     const incoming = event.target.value ?? [];
-    setPendingFiles((prev) => [...prev, ...incoming]);
+    if (!incoming.length) {
+      return;
+    }
+    // Enforce the backend file-count cap up front; FileUpload.Button enforces the per-file size.
+    setFileError(
+      incoming.length > MAX_ATTACHMENT_FILES - pendingFiles.length ?
+        `Du kan bifoga max ${MAX_ATTACHMENT_FILES} filer.`
+      : undefined
+    );
+    setPendingFiles((prev) => [...prev, ...incoming].slice(0, MAX_ATTACHMENT_FILES));
   };
 
   const removeFile = (id: string) => {
+    setFileError(undefined);
     setPendingFiles((prev) => prev.filter((file) => file.id !== id));
   };
 
@@ -126,6 +142,7 @@ export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
     }
     setBody('');
     setPendingFiles([]);
+    setFileError(undefined);
     refresh();
   };
 
@@ -155,7 +172,7 @@ export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
       <Divider className="m-0" />
 
       <FormProvider {...formMethods}>
-        <FormControl invalid={isOverLimit || Boolean(sendError)} className="flex flex-col gap-8">
+        <FormControl invalid={isOverLimit || Boolean(sendError) || Boolean(fileError)} className="flex flex-col gap-8">
           <Textarea
             aria-label="Nytt meddelande"
             placeholder="Skriv ett meddelande till den sökande…"
@@ -189,8 +206,13 @@ export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
           <div className="flex items-center justify-between gap-12">
             <div className="flex items-center gap-12">
               <FileUpload.Button
+                maxFileSizeMB={MAX_ATTACHMENT_FILE_SIZE_MB}
+                appendToContext={false}
                 onChange={(event) => {
                   addFiles(event);
+                }}
+                onInvalid={(message) => {
+                  setFileError(message);
                 }}
               />
               <span className={`text-small ${isOverLimit ? 'text-error-surface-primary' : 'text-secondary'}`}>
@@ -208,6 +230,7 @@ export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
             </Button>
           </div>
           {isOverLimit && <FormErrorMessage>Du får skriva max {MESSAGE_CHARACTER_LIMIT} tecken.</FormErrorMessage>}
+          {fileError && <FormErrorMessage>{fileError}</FormErrorMessage>}
           {sendError && <FormErrorMessage>{sendError}</FormErrorMessage>}
         </FormControl>
       </FormProvider>

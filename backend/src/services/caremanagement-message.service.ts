@@ -1,11 +1,11 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { AttachmentFile, fileNameFromDisposition, UploadedFileLike } from '@services/caremanagement-attachment.service';
+import { caremanagementError } from '@utils/caremanagement-error';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 import axios from 'axios';
 import FormData from 'form-data';
 
-import { HttpException } from '@/exceptions/HttpException';
 import { Message } from '@/responses/message.response';
 
 /**
@@ -17,22 +17,6 @@ interface CaremanagementMessage {
   body: string;
   author?: string;
 }
-
-const caremanagementError = (error: unknown): HttpException => {
-  if (axios.isAxiosError(error)) {
-    switch (error.response?.status) {
-      case 400:
-        return new HttpException(400, 'Bad request from caremanagement');
-      case 404:
-        return new HttpException(404, 'Not found');
-      case 413:
-        return new HttpException(413, 'Uploaded file is too large');
-      default:
-        break;
-    }
-  }
-  return new HttpException(500, 'Internal server error from caremanagement');
-};
 
 class CaremanagementMessageService {
   private apiService = new CaremanagementApiService();

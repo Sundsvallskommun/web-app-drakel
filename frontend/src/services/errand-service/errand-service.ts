@@ -20,8 +20,8 @@ export interface NewStakeholder {
 }
 
 /**
- * A file attached to a conversation message. The backend does not return these yet (messages are
- * text-only for now); the shape is here so the UI can render them once caremanagement supports it.
+ * A file attached to a conversation message. Returned alongside each message by the backend and
+ * downloaded individually via {@link downloadMessageAttachment}.
  */
 interface MessageAttachment {
   id?: string;
@@ -121,11 +121,12 @@ export const getErrandAttachments = (errandId: string): Promise<ServiceResponse<
     .catch(toServiceError);
 };
 
-/** Downloads an attachment's file (the backend streams it) and triggers a browser save. */
-export const downloadAttachment = async (errandId: string, attachmentId: string, fileName?: string): Promise<void> => {
-  const res = await apiService.get<Blob>(`errands/${errandId}/attachments/${attachmentId}/file`, {
-    responseType: 'blob',
-  });
+/**
+ * Fetches a streamed file from the backend and triggers a browser "save as". Shared by every
+ * download flow so the blob/object-URL/anchor dance lives in exactly one place.
+ */
+const downloadBlob = async (path: string, fileName?: string): Promise<void> => {
+  const res = await apiService.get<Blob>(path, { responseType: 'blob' });
   const url = window.URL.createObjectURL(res.data);
   const link = document.createElement('a');
   link.href = url;
@@ -135,6 +136,10 @@ export const downloadAttachment = async (errandId: string, attachmentId: string,
   link.remove();
   window.URL.revokeObjectURL(url);
 };
+
+/** Downloads an attachment's file (the backend streams it) and triggers a browser save. */
+export const downloadAttachment = (errandId: string, attachmentId: string, fileName?: string): Promise<void> =>
+  downloadBlob(`errands/${errandId}/attachments/${attachmentId}/file`, fileName);
 
 /** Uploads a file as a new attachment on an errand (multipart). */
 export const uploadAttachment = (errandId: string, file: File): Promise<ServiceResponse<null>> => {
@@ -178,21 +183,10 @@ export const postErrandMessage = (
 };
 
 /** Downloads a single attachment on a conversation message (the backend streams it). */
-export const downloadMessageAttachment = async (
+export const downloadMessageAttachment = (
   errandId: string,
   messageId: string,
   attachmentId: string,
   fileName?: string
-): Promise<void> => {
-  const res = await apiService.get<Blob>(`errands/${errandId}/messages/${messageId}/attachments/${attachmentId}/file`, {
-    responseType: 'blob',
-  });
-  const url = window.URL.createObjectURL(res.data);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName ?? 'bilaga';
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
-};
+): Promise<void> =>
+  downloadBlob(`errands/${errandId}/messages/${messageId}/attachments/${attachmentId}/file`, fileName);

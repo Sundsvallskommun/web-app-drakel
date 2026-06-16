@@ -1,11 +1,11 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
+import { caremanagementError } from '@utils/caremanagement-error';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 import axios from 'axios';
 import FormData from 'form-data';
 
 import { Attachment } from '@/data-contracts/caremanagement/data-contracts';
-import { HttpException } from '@/exceptions/HttpException';
 
 /** @public */
 export interface AttachmentFile {
@@ -49,10 +49,7 @@ class CaremanagementAttachmentService {
         fileName: fileNameFromDisposition(headers['content-disposition']),
       };
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 404) {
-        throw new HttpException(404, 'Not found');
-      }
-      throw new HttpException(500, 'Internal server error from caremanagement');
+      throw caremanagementError(error);
     }
   }
 
@@ -65,10 +62,7 @@ class CaremanagementAttachmentService {
       await axios.post(url, form, { headers: form.getHeaders() });
       return { data: null, message: 'success' };
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 404) {
-        throw new HttpException(404, 'Not found');
-      }
-      throw new HttpException(500, 'Internal server error from caremanagement');
+      throw caremanagementError(error);
     }
   }
 }
