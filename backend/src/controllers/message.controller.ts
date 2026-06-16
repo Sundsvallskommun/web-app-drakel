@@ -58,7 +58,11 @@ export class MessageController {
   async createMessage(
     @Req() req: RequestWithUser,
     @Param('errandId') errandId: string,
-    @BodyParam('body') body: unknown,
+    // Must be typed `string`, NOT `unknown`/`object`: routing-controllers JSON-parses any non-primitive
+    // @BodyParam, so a plain multipart text field like "test 2" throws ParameterParseJsonError ("cannot
+    // be parsed into JSON") before the handler runs. A string target is returned verbatim.
+    // normalizeMessageBody still validates defensively (handles missing/duplicate-field cases).
+    @BodyParam('body') body: string,
     @UploadedFiles('files', messageAttachmentUploadOptions) files?: UploadedFileLike[],
   ) {
     // Every message a handläggare posts is OUTBOUND (caseworker → applicant), authored by the logged-in
