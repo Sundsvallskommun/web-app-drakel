@@ -4,7 +4,7 @@ export const APIS = [
     name: 'simulatorserver',
     version: '2.0',
   },
-    {
+  {
     name: 'caremanagement',
     version: '1.0',
   },

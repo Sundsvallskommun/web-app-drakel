@@ -38,7 +38,9 @@ export const useErrandForm = (errand: Errand | undefined, onSaved: () => void) =
     setForm(fromErrand(errand));
   }, [errand?.id, errand?.modified]);
 
-  const setField = (key: keyof ErrandForm, value: string) => setForm((current) => ({ ...current, [key]: value }));
+  const setField = (key: keyof ErrandForm, value: string) => {
+    setForm((current) => ({ ...current, [key]: value }));
+  };
 
   const initial = fromErrand(errand);
   const isDirty = (Object.keys(form) as (keyof ErrandForm)[]).some((key) => form[key] !== initial[key]);

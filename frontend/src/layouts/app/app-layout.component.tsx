@@ -1,14 +1,14 @@
 'use client';
 
+import 'dayjs/locale/sv';
+
 import { useUserStore } from '@services/user-service/user-service';
 import { GuiProvider } from '@sk-web-gui/react';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import dayjs from 'dayjs';
-import 'dayjs/locale/sv';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import utc from 'dayjs/plugin/utc';
 import { ReactNode, useEffect } from 'react';
- 
 import { useShallow } from 'zustand/react/shallow';
 
 dayjs.extend(utc);
@@ -41,7 +41,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   const getMe = useUserStore((state) => state.getMe);
 
   useEffect(() => {
-    getMe();
+    void getMe();
   }, [getMe]);
 
   return (

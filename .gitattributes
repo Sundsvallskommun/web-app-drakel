@@ -1,0 +1,27 @@
+# Normalize ALL text files to LF in the repository, regardless of the OS that
+# committed them. This is the key to a clean Mac + Windows workflow: whatever each
+# editor writes on disk, git stores LF in history, so there is no CRLF/LF churn or
+# noisy diffs between contributors. Combined with Prettier `endOfLine: lf` and the
+# EditorConfig `end_of_line = lf`, line endings are enforced end-to-end.
+* text=auto eol=lf
+
+# Shell scripts and git hooks MUST be LF or they break on Unix/CI.
+*.sh    text eol=lf
+.husky/* text eol=lf
+
+# Binary assets — never touch their bytes / never try to diff them.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.webp  binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.eot   binary
+*.pdf   binary
+
+# Lockfiles: keep LF, but don't show them in diffs (huge, machine-generated).
+yarn.lock      text eol=lf -diff
+package-lock.json text eol=lf -diff

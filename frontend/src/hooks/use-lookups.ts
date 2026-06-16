@@ -11,11 +11,11 @@ export const useLookups = (kind: LookupKind): { lookups: Lookup[]; isLoading: bo
 
   useEffect(() => {
     let active = true;
-    getLookups(kind).then((res) => {
+    void getLookups(kind).then((res) => {
       if (!active) {
         return;
       }
-      setLookups(res.error ? [] : res.data ?? []);
+      setLookups(res.error ? [] : (res.data ?? []));
       setIsLoading(false);
     });
     return () => {

@@ -22,7 +22,7 @@ export const useErrandAttachments = (errandId: string): UseErrandAttachmentsResu
       return;
     }
     setIsLoading(true);
-    getErrandAttachments(errandId).then((res) => {
+    void getErrandAttachments(errandId).then((res) => {
       if (res.error) {
         setError(res.error);
         setAttachments([]);

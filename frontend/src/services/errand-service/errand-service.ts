@@ -8,7 +8,7 @@ import {
   Stakeholder,
 } from '@data-contracts/backend/data-contracts';
 import { ServiceResponse } from '@interfaces/services';
-import { ApiResponse, apiService } from '@services/api-service';
+import { ApiResponse, apiService, toServiceError } from '@services/api-service';
 
 /** The fields accepted when adding a stakeholder (matches the backend CreateStakeholderDto). */
 export interface NewStakeholder {
@@ -19,17 +19,12 @@ export interface NewStakeholder {
   contactChannels?: ContactChannel[];
 }
 
-export const emptyErrandsResult: FindErrandsResult = { errands: [], _meta: {} };
-
 /** Adds a stakeholder to an errand. The stakeholder is then available on the refetched errand. */
 export const createStakeholder = (errandId: string, stakeholder: NewStakeholder): Promise<ServiceResponse<null>> => {
   return apiService
     .post<ApiResponse<null>>(`errands/${errandId}/stakeholders`, stakeholder)
     .then(() => ({ data: null }))
-    .catch((e) => ({
-      message: e.response?.data?.message,
-      error: e.response?.status ?? 'UNKNOWN ERROR',
-    }));
+    .catch(toServiceError);
 };
 
 const buildParams = (query: FindErrandsQueryDto): Record<string, unknown> => {
@@ -54,10 +49,7 @@ export const getErrands = (query: FindErrandsQueryDto = {}): Promise<ServiceResp
   return apiService
     .get<ApiResponse<FindErrandsResult>>('errands', { params: buildParams(query) })
     .then((res) => ({ data: res.data.data }))
-    .catch((e) => ({
-      message: e.response?.data?.message,
-      error: e.response?.status ?? 'UNKNOWN ERROR',
-    }));
+    .catch(toServiceError);
 };
 
 /** Fetches a single errand by id. The errand includes its embedded stakeholders. */
@@ -65,21 +57,7 @@ export const getErrand = (errandId: string): Promise<ServiceResponse<Errand>> =>
   return apiService
     .get<ApiResponse<Errand>>(`errands/${errandId}`)
     .then((res) => ({ data: res.data.data }))
-    .catch((e) => ({
-      message: e.response?.data?.message,
-      error: e.response?.status ?? 'UNKNOWN ERROR',
-    }));
-};
-
-/** Creates a new errand and returns it (including its server-assigned id). */
-export const createErrand = (payload: PatchErrandDto): Promise<ServiceResponse<Errand>> => {
-  return apiService
-    .post<ApiResponse<Errand>>('errands', payload)
-    .then((res) => ({ data: res.data.data }))
-    .catch((e) => ({
-      message: e.response?.data?.message,
-      error: e.response?.status ?? 'UNKNOWN ERROR',
-    }));
+    .catch(toServiceError);
 };
 
 /**
@@ -90,10 +68,7 @@ export const initiateErrand = (): Promise<ServiceResponse<Errand>> => {
   return apiService
     .post<ApiResponse<Errand>>('errands/initiate', {})
     .then((res) => ({ data: res.data.data }))
-    .catch((e) => ({
-      message: e.response?.data?.message,
-      error: e.response?.status ?? 'UNKNOWN ERROR',
-    }));
+    .catch(toServiceError);
 };
 
 /** Fetches the stakeholders belonging to an errand (the dedicated list endpoint). */
@@ -101,10 +76,7 @@ export const getErrandStakeholders = (errandId: string): Promise<ServiceResponse
   return apiService
     .get<ApiResponse<Stakeholder[]>>(`errands/${errandId}/stakeholders`)
     .then((res) => ({ data: res.data.data }))
-    .catch((e) => ({
-      message: e.response?.data?.message,
-      error: e.response?.status ?? 'UNKNOWN ERROR',
-    }));
+    .catch(toServiceError);
 };
 
 /** Updates an errand (PATCH) and returns the updated errand. */
@@ -112,10 +84,7 @@ export const updateErrand = (errandId: string, patch: PatchErrandDto): Promise<S
   return apiService
     .patch<ApiResponse<Errand>>(`errands/${errandId}`, patch)
     .then((res) => ({ data: res.data.data }))
-    .catch((e) => ({
-      message: e.response?.data?.message,
-      error: e.response?.status ?? 'UNKNOWN ERROR',
-    }));
+    .catch(toServiceError);
 };
 
 /** Fetches the attachments belonging to an errand. */
@@ -123,10 +92,7 @@ export const getErrandAttachments = (errandId: string): Promise<ServiceResponse<
   return apiService
     .get<ApiResponse<Attachment[]>>(`errands/${errandId}/attachments`)
     .then((res) => ({ data: res.data.data }))
-    .catch((e) => ({
-      message: e.response?.data?.message,
-      error: e.response?.status ?? 'UNKNOWN ERROR',
-    }));
+    .catch(toServiceError);
 };
 
 /** Downloads an attachment's file (the backend streams it) and triggers a browser save. */
@@ -137,7 +103,7 @@ export const downloadAttachment = async (errandId: string, attachmentId: string,
   const url = window.URL.createObjectURL(res.data);
   const link = document.createElement('a');
   link.href = url;
-  link.download = fileName || 'bilaga';
+  link.download = fileName ?? 'bilaga';
   document.body.appendChild(link);
   link.click();
   link.remove();
@@ -152,8 +118,5 @@ export const uploadAttachment = (errandId: string, file: File): Promise<ServiceR
   return apiService
     .post<ApiResponse<null>>(`errands/${errandId}/attachments`, form, { headers: {} })
     .then(() => ({ data: null }))
-    .catch((e) => ({
-      message: e.response?.data?.message,
-      error: e.response?.status ?? 'UNKNOWN ERROR',
-    }));
+    .catch(toServiceError);
 };

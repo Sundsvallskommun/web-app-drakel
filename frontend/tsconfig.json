@@ -7,10 +7,7 @@
         "name": "next"
       },
     ],
-    "types": [
-      "node",
-      "@simonsmith/cypress-image-snapshot/types"
-     ]
+    "types": ["node", "vitest/globals", "@testing-library/jest-dom"]
   },
   "include": [
     "next-env.d.ts",
@@ -20,5 +17,5 @@
     "./*.js",
     ".next/types/**/*.ts",
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "vitest.config.ts"]
 }

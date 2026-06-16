@@ -2,8 +2,8 @@
 
 import { Lookup } from '@data-contracts/backend/data-contracts';
 import { useUserStore } from '@services/user-service/user-service';
-import { getInitials } from '@utils/get-initials';
 import { Badge, Button, cx, Divider, Logo, UserMenu } from '@sk-web-gui/react';
+import { getInitials } from '@utils/get-initials';
 import {
   ChevronsLeft,
   ChevronsRight,
@@ -81,7 +81,7 @@ export const MainSidebar: FC<MainSidebarProps> = ({
     { key: null, label: 'Alla ärenden', count: totalCount },
     ...statuses.map((status) => ({
       key: status.name ?? '',
-      label: status.displayName || status.name || '',
+      label: status.displayName ?? status.name ?? '',
       count: counts[status.name ?? ''] ?? 0,
     })),
   ];
@@ -130,7 +130,9 @@ export const MainSidebar: FC<MainSidebarProps> = ({
             return (
               <Button
                 key={item.key ?? 'all'}
-                onClick={() => onSelectStatus(item.key)}
+                onClick={() => {
+                  onSelectStatus(item.key);
+                }}
                 variant={isActive ? 'primary' : 'ghost'}
                 className={cx('w-full', open && 'justify-start', !isActive && 'hover:bg-dark-ghost')}
                 aria-label={`status-button-${item.key ?? 'all'}`}
@@ -153,7 +155,9 @@ export const MainSidebar: FC<MainSidebarProps> = ({
           })}
         </nav>
 
-        <div className={cx('absolute bottom-[2.4rem]', open ? 'right-[2.4rem]' : 'left-1/2 transform -translate-x-1/2')}>
+        <div
+          className={cx('absolute bottom-[2.4rem]', open ? 'right-[2.4rem]' : 'left-1/2 transform -translate-x-1/2')}
+        >
           <Button
             color="primary"
             size="md"
@@ -161,7 +165,9 @@ export const MainSidebar: FC<MainSidebarProps> = ({
             aria-label={open ? 'Stäng sidomeny' : 'Öppna sidomeny'}
             iconButton
             leftIcon={open ? <ChevronsLeft /> : <ChevronsRight />}
-            onClick={() => setOpen(!open)}
+            onClick={() => {
+              setOpen(!open);
+            }}
           />
         </div>
       </div>

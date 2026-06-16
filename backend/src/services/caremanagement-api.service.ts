@@ -1,8 +1,12 @@
-import { HttpException } from '@/exceptions/HttpException';
 import { ApiResponse } from '@interfaces/api-service.interface';
-import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 
-/** caremanagement responses also expose the Location header — set on 201 Created (empty body). */
+import { HttpException } from '@/exceptions/HttpException';
+
+/**
+ * caremanagement responses also expose the Location header — set on 201 Created (empty body).
+ * @public
+ */
 export interface CaremanagementResponse<T> extends ApiResponse<T> {
   location?: string;
 }
@@ -18,14 +22,15 @@ class CaremanagementApiService {
   private async request<T>(config: AxiosRequestConfig): Promise<CaremanagementResponse<T>> {
     const preparedConfig: AxiosRequestConfig = {
       ...config,
-      headers: { 'Content-Type': 'application/json', ...config.headers },
+      headers: { 'Content-Type': 'application/json', ...(config.headers as Record<string, string> | undefined) },
     };
 
     try {
-      const res = await axios(preparedConfig);
-      return { data: res.data, message: 'success', location: res.headers?.location };
-    } catch (error: unknown | AxiosError) {
-      if (axios.isAxiosError(error) && (error as AxiosError).response?.status === 404) {
+      const res = await axios<T>(preparedConfig);
+      const headers = res.headers as Record<string, string | undefined>;
+      return { data: res.data, message: 'success', location: headers.location };
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
         throw new HttpException(404, 'Not found');
       }
       throw new HttpException(500, 'Internal server error from caremanagement');

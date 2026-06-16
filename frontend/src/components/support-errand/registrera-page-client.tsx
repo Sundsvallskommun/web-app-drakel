@@ -22,7 +22,7 @@ export const RegistreraPageClient = () => {
     }
     initiated.current = true;
 
-    initiateErrand().then((result) => {
+    void initiateErrand().then((result) => {
       if (result.error || !result.data?.id) {
         setError('Det gick inte att initiera ett nytt ärende');
         return;
@@ -33,14 +33,13 @@ export const RegistreraPageClient = () => {
 
   return (
     <div className="h-full w-full flex flex-col items-center justify-center p-28 gap-16">
-      {error ? (
+      {error ?
         <p className="text-error-surface-primary">{error}</p>
-      ) : (
-        <>
+      : <>
           <Spinner size={4} />
           <span className="text-dark-secondary">Registrerar nytt ärende…</span>
         </>
-      )}
+      }
     </div>
   );
 };

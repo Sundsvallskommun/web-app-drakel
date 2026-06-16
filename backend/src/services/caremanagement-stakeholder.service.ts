@@ -1,8 +1,9 @@
-import { Stakeholder } from '@/data-contracts/caremanagement/data-contracts';
-import { CreateStakeholderDto } from '@/dtos/stakeholder.dto';
 import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
+
+import { Stakeholder } from '@/data-contracts/caremanagement/data-contracts';
+import { CreateStakeholderDto } from '@/dtos/stakeholder.dto';
 
 class CaremanagementStakeholderService {
   private apiService = new CaremanagementApiService();
@@ -11,8 +12,8 @@ class CaremanagementStakeholderService {
     return this.apiService.get<Stakeholder[]>({ url: caremanagementUrl('errands', errandId, 'stakeholders') });
   }
 
-  async createStakeholder(errandId: string, stakeholder: CreateStakeholderDto): Promise<ApiResponse<void>> {
-    return this.apiService.post<void>({
+  async createStakeholder(errandId: string, stakeholder: CreateStakeholderDto): Promise<ApiResponse<null>> {
+    return this.apiService.post<null>({
       url: caremanagementUrl('errands', errandId, 'stakeholders'),
       data: stakeholder,
     });

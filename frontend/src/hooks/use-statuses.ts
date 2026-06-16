@@ -11,11 +11,11 @@ export const useStatuses = (): { statuses: Lookup[]; isLoading: boolean } => {
 
   useEffect(() => {
     let active = true;
-    getStatuses().then((res) => {
+    void getStatuses().then((res) => {
       if (!active) {
         return;
       }
-      setStatuses(res.error ? [] : res.data ?? []);
+      setStatuses(res.error ? [] : (res.data ?? []));
       setIsLoading(false);
     });
     return () => {

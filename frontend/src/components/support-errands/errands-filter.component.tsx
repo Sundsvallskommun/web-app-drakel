@@ -47,13 +47,17 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({ query, onQueryChange, fi
           <Input
             id="errand-search"
             value={query}
-            onChange={(event) => onQueryChange(event.target.value)}
+            onChange={(event) => {
+              onQueryChange(event.target.value);
+            }}
             placeholder="Sök på titel, kategori, typ eller id…"
           />
         </div>
         <div className="flex gap-16">
           <Button
-            onClick={() => setShow(!show)}
+            onClick={() => {
+              setShow(!show);
+            }}
             variant={show ? 'tertiary' : 'primary'}
             inverted={!show}
             color="vattjom"
@@ -73,11 +77,16 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({ query, onQueryChange, fi
         <div className="flex flex-wrap gap-16 p-16 bg-background-200 rounded-12">
           <FormControl id="filter-category" className="min-w-[20rem]">
             <FormLabel>Kategori</FormLabel>
-            <Select value={filters.category} onChange={(event) => onFilterChange('category', event.target.value)}>
+            <Select
+              value={filters.category}
+              onChange={(event) => {
+                onFilterChange('category', event.target.value);
+              }}
+            >
               <Select.Option value="">Alla</Select.Option>
               {categories.map((lookup) => (
                 <Select.Option key={lookup.name} value={lookup.name ?? ''}>
-                  {lookup.displayName || lookup.name}
+                  {lookup.displayName ?? lookup.name}
                 </Select.Option>
               ))}
             </Select>
@@ -85,11 +94,16 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({ query, onQueryChange, fi
 
           <FormControl id="filter-type" className="min-w-[20rem]">
             <FormLabel>Ärendetyp</FormLabel>
-            <Select value={filters.type} onChange={(event) => onFilterChange('type', event.target.value)}>
+            <Select
+              value={filters.type}
+              onChange={(event) => {
+                onFilterChange('type', event.target.value);
+              }}
+            >
               <Select.Option value="">Alla</Select.Option>
               {types.map((lookup) => (
                 <Select.Option key={lookup.name} value={lookup.name ?? ''}>
-                  {lookup.displayName || lookup.name}
+                  {lookup.displayName ?? lookup.name}
                 </Select.Option>
               ))}
             </Select>
@@ -97,7 +111,12 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({ query, onQueryChange, fi
 
           <FormControl id="filter-priority" className="min-w-[20rem]">
             <FormLabel>Prioritet</FormLabel>
-            <Select value={filters.priority} onChange={(event) => onFilterChange('priority', event.target.value)}>
+            <Select
+              value={filters.priority}
+              onChange={(event) => {
+                onFilterChange('priority', event.target.value);
+              }}
+            >
               <Select.Option value="">Alla</Select.Option>
               {PRIORITIES.map((option) => (
                 <Select.Option key={option.value} value={option.value}>

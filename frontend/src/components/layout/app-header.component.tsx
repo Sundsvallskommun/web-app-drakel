@@ -24,7 +24,7 @@ export const AppHeader = () => {
 
   return (
     <nav className="shrink-0 bg-background-content border-b-1 border-divider px-24 md:px-40 py-8 flex items-center justify-between gap-16">
-      {errand ? (
+      {errand ?
         <div className="flex items-center gap-16 min-w-0">
           <NextLink href={`/${locale}/oversikt`} className="no-underline shrink-0" aria-label="Till översikten">
             <Logo variant="symbol" className="h-32" />
@@ -34,11 +34,10 @@ export const AppHeader = () => {
             {errand.title && errand.title !== EMPTY_ERRAND_TITLE ? errand.title : 'Nytt ärende'}
           </span>
         </div>
-      ) : (
-        <NextLink href={`/${locale}/oversikt`} className="no-underline" aria-label="Till översikten">
+      : <NextLink href={`/${locale}/oversikt`} className="no-underline" aria-label="Till översikten">
           <Logo variant="service" title="Drakel" subtitle={appName} />
         </NextLink>
-      )}
+      }
 
       <div className="flex items-center gap-16 shrink-0">
         <UserMenu

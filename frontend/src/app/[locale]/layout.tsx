@@ -1,18 +1,17 @@
-import { ReactNode } from 'react';
- 
-import { headers } from 'next/headers';
 import LocalizationProvider from '@components/localization-provider/localization-provider';
+import { headers } from 'next/headers';
+import { ReactNode } from 'react';
+
 import initLocalization from '../i18n';
 
 interface LocaleLayoutProps {
   children: ReactNode;
-  params: Promise<{ locale:string }>
+  params: Promise<{ locale: string }>;
 }
 
 const namespaces = ['common', 'paths', 'layout', 'login', 'example'];
 
 const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
-
   const { locale } = await params;
   const { resources } = await initLocalization(locale, namespaces);
 

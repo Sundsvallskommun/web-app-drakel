@@ -1,8 +1,8 @@
+import { LOG_DIR } from '@config';
 import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import winston from 'winston';
 import winstonDaily from 'winston-daily-rotate-file';
-import { LOG_DIR } from '@config';
 
 // logs dir
 const logDir: string = join(__dirname, LOG_DIR);
@@ -12,9 +12,18 @@ if (!existsSync(logDir)) {
 }
 
 // Print the stack trace when present (errors / uncaught exceptions), otherwise the message.
-const printFormat = winston.format.printf(
-  ({ timestamp, level, message, stack }) => `${timestamp} ${level}: ${stack || message}`,
-);
+const printFormat = winston.format.printf(({ timestamp, level, message, stack }) => {
+  const time = typeof timestamp === 'string' ? timestamp : '';
+  let body: string;
+  if (typeof stack === 'string') {
+    body = stack;
+  } else if (typeof message === 'string') {
+    body = message;
+  } else {
+    body = JSON.stringify(message);
+  }
+  return `${time} ${level}: ${body}`;
+});
 
 /**
  * Shared format. `errors({ stack: true })` lifts an Error's stack onto the log entry so crashes are

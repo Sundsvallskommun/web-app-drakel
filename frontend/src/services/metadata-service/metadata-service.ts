@@ -1,6 +1,6 @@
 import { Lookup } from '@data-contracts/backend/data-contracts';
 import { ServiceResponse } from '@interfaces/services';
-import { ApiResponse, apiService } from '@services/api-service';
+import { ApiResponse, apiService, toServiceError } from '@services/api-service';
 
 export type LookupKind = 'CATEGORY' | 'STATUS' | 'TYPE' | 'ROLE' | 'CONTACT_REASON';
 
@@ -9,10 +9,7 @@ export const getLookups = (kind: LookupKind): Promise<ServiceResponse<Lookup[]>>
   return apiService
     .get<ApiResponse<Lookup[]>>('metadata', { params: { kind } })
     .then((res) => ({ data: res.data.data }))
-    .catch((e) => ({
-      message: e.response?.data?.message,
-      error: e.response?.status ?? 'UNKNOWN ERROR',
-    }));
+    .catch(toServiceError);
 };
 
 /** Convenience helper for the STATUS lookups used by the overview status filter. */

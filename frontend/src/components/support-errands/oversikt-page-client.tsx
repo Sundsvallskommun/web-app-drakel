@@ -6,7 +6,7 @@ import { useErrands } from '@hooks/use-errands';
 import { useStatuses } from '@hooks/use-statuses';
 import { useMemo, useState } from 'react';
 
-import { ErrandFilters, emptyFilters, ErrandsFilter } from './errands-filter.component';
+import { emptyFilters, ErrandFilters, ErrandsFilter } from './errands-filter.component';
 import { ErrandsTable } from './errands-table.component';
 
 const PAGE_SIZE = 12;
@@ -74,8 +74,9 @@ export const OversiktPageClient = () => {
     setPage(0);
   };
 
-  const heading = selectedStatus
-    ? statuses.find((status) => status.name === selectedStatus)?.displayName ?? selectedStatus
+  const heading =
+    selectedStatus ?
+      (statuses.find((status) => status.name === selectedStatus)?.displayName ?? selectedStatus)
     : 'Alla ärenden';
 
   return (

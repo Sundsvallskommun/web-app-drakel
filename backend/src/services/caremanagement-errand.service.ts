@@ -1,15 +1,12 @@
-import { Errand, FindErrandsResponse, PatchErrand } from '@/data-contracts/caremanagement/data-contracts';
-import { CreateErrandDto, FindErrandsQueryDto, PatchErrandDto } from '@/dtos/errand.dto';
 import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 
+import { Errand, FindErrandsResponse, PatchErrand } from '@/data-contracts/caremanagement/data-contracts';
+import { CreateErrandDto, FindErrandsQueryDto, PatchErrandDto } from '@/dtos/errand.dto';
+
 /** Extracts the errand id (last path segment) from a caremanagement Location header. */
-const errandIdFromLocation = (location?: string): string | undefined =>
-  location
-    ?.split('/')
-    .filter(Boolean)
-    .pop();
+const errandIdFromLocation = (location?: string): string | undefined => location?.split('/').filter(Boolean).pop();
 
 class CaremanagementErrandService {
   private apiService = new CaremanagementApiService();
@@ -35,8 +32,8 @@ class CaremanagementErrandService {
     return this.apiService.patch<Errand>({ url: caremanagementUrl('errands', errandId), data: body });
   }
 
-  async deleteErrand(errandId: string): Promise<ApiResponse<void>> {
-    return this.apiService.delete<void>({ url: caremanagementUrl('errands', errandId) });
+  async deleteErrand(errandId: string): Promise<ApiResponse<null>> {
+    return this.apiService.delete<null>({ url: caremanagementUrl('errands', errandId) });
   }
 }
 

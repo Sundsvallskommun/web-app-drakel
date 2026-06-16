@@ -1,0 +1,8 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["src/server.ts", "src/types/**/*.d.ts", "src/tests/**/*.{test,spec}.ts"],
+  "project": ["src/**/*.ts"],
+  "ignore": ["src/data-contracts/**"],
+  "ignoreDependencies": ["swagger-typescript-api", "tsconfig-paths"],
+  "ignoreBinaries": ["pm2"]
+}

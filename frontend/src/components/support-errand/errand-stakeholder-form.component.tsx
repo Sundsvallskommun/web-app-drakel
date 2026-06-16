@@ -4,7 +4,7 @@ import { ContactChannel } from '@data-contracts/backend/data-contracts';
 import { useLookups } from '@hooks/use-lookups';
 import { createStakeholder } from '@services/errand-service/errand-service';
 import { Button, FormControl, FormLabel, Input, Modal, Select } from '@sk-web-gui/react';
-import { FC, FormEvent, useState } from 'react';
+import { FC, useState } from 'react';
 
 interface ErrandStakeholderFormProps {
   errandId: string;
@@ -39,8 +39,7 @@ export const ErrandStakeholderForm: FC<ErrandStakeholderFormProps> = ({ errandId
     onClose();
   };
 
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
+  const submit = async () => {
     setSaving(true);
     setError(undefined);
 
@@ -72,14 +71,26 @@ export const ErrandStakeholderForm: FC<ErrandStakeholderFormProps> = ({ errandId
   return (
     <Modal show={show} onClose={close} label="Lägg till intressent" className="w-[42rem]">
       <Modal.Content>
-        <form id="stakeholder-form" onSubmit={submit} className="flex flex-col gap-16">
+        <form
+          id="stakeholder-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void submit();
+          }}
+          className="flex flex-col gap-16"
+        >
           <FormControl id="stakeholder-role" className="w-full">
             <FormLabel>Roll</FormLabel>
-            <Select value={role} onChange={(event) => setRole(event.target.value)}>
+            <Select
+              value={role}
+              onChange={(event) => {
+                setRole(event.target.value);
+              }}
+            >
               <Select.Option value="">Välj roll</Select.Option>
               {roles.map((lookup) => (
                 <Select.Option key={lookup.name} value={lookup.name ?? ''}>
-                  {lookup.displayName || lookup.name}
+                  {lookup.displayName ?? lookup.name}
                 </Select.Option>
               ))}
             </Select>
@@ -88,27 +99,53 @@ export const ErrandStakeholderForm: FC<ErrandStakeholderFormProps> = ({ errandId
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
             <FormControl id="stakeholder-firstname" className="w-full">
               <FormLabel>Förnamn</FormLabel>
-              <Input value={firstName} onChange={(event) => setFirstName(event.target.value)} />
+              <Input
+                value={firstName}
+                onChange={(event) => {
+                  setFirstName(event.target.value);
+                }}
+              />
             </FormControl>
             <FormControl id="stakeholder-lastname" className="w-full">
               <FormLabel>Efternamn</FormLabel>
-              <Input value={lastName} onChange={(event) => setLastName(event.target.value)} />
+              <Input
+                value={lastName}
+                onChange={(event) => {
+                  setLastName(event.target.value);
+                }}
+              />
             </FormControl>
           </div>
 
           <FormControl id="stakeholder-org" className="w-full">
             <FormLabel>Organisation</FormLabel>
-            <Input value={organizationName} onChange={(event) => setOrganizationName(event.target.value)} />
+            <Input
+              value={organizationName}
+              onChange={(event) => {
+                setOrganizationName(event.target.value);
+              }}
+            />
           </FormControl>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
             <FormControl id="stakeholder-email" className="w-full">
               <FormLabel>E-post</FormLabel>
-              <Input type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
+              <Input
+                type="email"
+                value={email}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                }}
+              />
             </FormControl>
             <FormControl id="stakeholder-phone" className="w-full">
               <FormLabel>Telefon</FormLabel>
-              <Input value={phone} onChange={(event) => setPhone(event.target.value)} />
+              <Input
+                value={phone}
+                onChange={(event) => {
+                  setPhone(event.target.value);
+                }}
+              />
             </FormControl>
           </div>
 
@@ -119,7 +156,14 @@ export const ErrandStakeholderForm: FC<ErrandStakeholderFormProps> = ({ errandId
         <Button variant="secondary" onClick={close}>
           Avbryt
         </Button>
-        <Button type="submit" form="stakeholder-form" color="vattjom" variant="primary" loading={saving} loadingText="Sparar…">
+        <Button
+          type="submit"
+          form="stakeholder-form"
+          color="vattjom"
+          variant="primary"
+          loading={saving}
+          loadingText="Sparar…"
+        >
           Lägg till
         </Button>
       </Modal.Footer>

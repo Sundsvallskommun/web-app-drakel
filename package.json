@@ -1,0 +1,24 @@
+{
+  "name": "web-app-drakel",
+  "private": true,
+  "description": "Root orchestration for the drakel monorepo: git hooks, commit linting and cross-package quality gates.",
+  "scripts": {
+    "prepare": "husky",
+    "lint": "yarn --cwd backend lint && yarn --cwd frontend lint",
+    "lint:strict": "yarn --cwd backend lint:strict && yarn --cwd frontend lint:strict",
+    "lint:fix": "yarn --cwd backend lint:fix && yarn --cwd frontend lint:fix",
+    "format": "yarn --cwd backend format && yarn --cwd frontend format",
+    "format:check": "yarn --cwd backend format:check && yarn --cwd frontend format:check",
+    "type-check": "yarn --cwd backend type-check && yarn --cwd frontend type-check",
+    "knip": "yarn --cwd backend knip && yarn --cwd frontend knip",
+    "test": "yarn --cwd backend test && yarn --cwd frontend test",
+    "test:e2e": "yarn --cwd frontend test:e2e",
+    "verify": "yarn lint:strict && yarn format:check && yarn type-check && yarn knip && yarn test"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.0.2",
+    "@commitlint/config-conventional": "^21.0.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0"
+  }
+}

@@ -1,9 +1,10 @@
-import { exec } from 'child_process';
-import path from 'path';
-import fs from 'node:fs';
-import { config } from 'dotenv';
 import { ExecException } from 'node:child_process';
-config();
+import fs from 'node:fs';
+
+import { exec } from 'child_process';
+import { config } from 'dotenv';
+import path from 'path';
+config({ quiet: true });
 
 const PATH_TO_OUTPUT_DIR = path.resolve(process.cwd(), './src/data-contracts');
 

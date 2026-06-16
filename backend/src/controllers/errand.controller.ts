@@ -1,19 +1,20 @@
 import { CAREMANAGEMENT_TYPE_SLUG } from '@config';
 import { RequestWithUser } from '@interfaces/auth.interface';
+import authMiddleware from '@middlewares/auth.middleware';
+import { validationMiddleware } from '@middlewares/validation.middleware';
+import CaremanagementAttachmentService from '@services/caremanagement-attachment.service';
+import { UploadedFileLike } from '@services/caremanagement-attachment.service';
+import CaremanagementErrandService from '@services/caremanagement-errand.service';
+import CaremanagementStakeholderService from '@services/caremanagement-stakeholder.service';
+import { Response } from 'express';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, QueryParams, Req, Res, UploadedFile, UseBefore } from 'routing-controllers';
+import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
+
 import { CreateErrandDto, FindErrandsQueryDto, PatchErrandDto } from '@/dtos/errand.dto';
 import { CreateStakeholderDto } from '@/dtos/stakeholder.dto';
 import { AttachmentsApiResponse } from '@/responses/attachment.response';
 import { ErrandApiResponse, ErrandsApiResponse } from '@/responses/errand.response';
 import { StakeholdersApiResponse } from '@/responses/stakeholder.response';
-import authMiddleware from '@middlewares/auth.middleware';
-import { validationMiddleware } from '@middlewares/validation.middleware';
-import CaremanagementAttachmentService from '@services/caremanagement-attachment.service';
-import CaremanagementErrandService from '@services/caremanagement-errand.service';
-import CaremanagementStakeholderService from '@services/caremanagement-stakeholder.service';
-import { UploadedFileLike } from '@services/caremanagement-attachment.service';
-import { Response } from 'express';
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, QueryParams, Req, Res, UploadedFile, UseBefore } from 'routing-controllers';
-import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
 // caremanagement requires a typeSlug on every errand. Until per-type modules are configured this is
 // a single configured value (env override, with a sensible default).
@@ -65,7 +66,7 @@ export class ErrandController {
     // The draft is owned by the handläggare initiating it. The frontend is tenant-agnostic and does
     // not know the user id, so we inject it here (mirrors draken's "newerrand" flow).
     const draft: CreateErrandDto = {
-      typeSlug: CAREMANAGEMENT_TYPE_SLUG || DEFAULT_TYPE_SLUG,
+      typeSlug: CAREMANAGEMENT_TYPE_SLUG ?? DEFAULT_TYPE_SLUG,
       title: 'Empty errand',
       reporterUserId: req.user.username,
       assignedUserId: req.user.username,
@@ -103,11 +104,7 @@ export class ErrandController {
   @Get('/errands/:errandId/attachments/:attachmentId/file')
   @OpenAPI({ summary: 'Download an attachment file' })
   @UseBefore(authMiddleware)
-  async streamAttachmentFile(
-    @Param('errandId') errandId: string,
-    @Param('attachmentId') attachmentId: string,
-    @Res() response: Response,
-  ) {
+  async streamAttachmentFile(@Param('errandId') errandId: string, @Param('attachmentId') attachmentId: string, @Res() response: Response) {
     const file = await this.attachmentService.streamAttachmentFile(errandId, attachmentId);
     if (file.contentType) {
       response.setHeader('Content-Type', file.contentType);
@@ -139,7 +136,7 @@ export class ErrandController {
   @OpenAPI({ summary: 'Add a stakeholder to an errand' })
   @UseBefore(authMiddleware, validationMiddleware(CreateStakeholderDto, 'body'))
   async createStakeholder(@Param('errandId') errandId: string, @Body() stakeholder: CreateStakeholderDto) {
-    await this.stakeholderService.createStakeholder(errandId, { ...stakeholder, role: DEFAULT_STAKEHOLDER_ROLE });
+    await this.stakeholderService.createStakeholder(errandId, Object.assign({}, stakeholder, { role: DEFAULT_STAKEHOLDER_ROLE }));
     return { data: null, message: 'success' };
   }
 }

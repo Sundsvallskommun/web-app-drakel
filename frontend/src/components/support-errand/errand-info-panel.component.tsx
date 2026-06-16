@@ -31,7 +31,15 @@ interface ErrandInfoPanelProps {
  * "Handläggning" panel — assignee, status and priority. Holds the single central "Spara ärende"
  * button that saves every edited field across the errand view (basics + handläggning).
  */
-export const ErrandInfoPanel: FC<ErrandInfoPanelProps> = ({ errand, form, setField, isDirty, saving, error, onSave }) => {
+export const ErrandInfoPanel: FC<ErrandInfoPanelProps> = ({
+  errand,
+  form,
+  setField,
+  isDirty,
+  saving,
+  error,
+  onSave,
+}) => {
   const { statuses } = useStatuses();
   const username = useUserStore(useShallow((state) => state.user.username));
 
@@ -43,21 +51,37 @@ export const ErrandInfoPanel: FC<ErrandInfoPanelProps> = ({ errand, form, setFie
         <div className="flex justify-between items-center gap-8">
           <FormLabel className="mb-0">Ansvarig</FormLabel>
           {username && form.assignedUserId !== username && (
-            <Button variant="link" size="sm" onClick={() => setField('assignedUserId', username)}>
+            <Button
+              variant="link"
+              size="sm"
+              onClick={() => {
+                setField('assignedUserId', username);
+              }}
+            >
               Ta ärende
             </Button>
           )}
         </div>
-        <Input value={form.assignedUserId} onChange={(event) => setField('assignedUserId', event.target.value)} />
+        <Input
+          value={form.assignedUserId}
+          onChange={(event) => {
+            setField('assignedUserId', event.target.value);
+          }}
+        />
       </FormControl>
 
       <FormControl id="status" className="w-full">
         <FormLabel>Ärendestatus</FormLabel>
-        <Select value={form.status} onChange={(event) => setField('status', event.target.value)}>
+        <Select
+          value={form.status}
+          onChange={(event) => {
+            setField('status', event.target.value);
+          }}
+        >
           <Select.Option value="">Välj status</Select.Option>
           {statuses.map((lookup) => (
             <Select.Option key={lookup.name} value={lookup.name ?? ''}>
-              {lookup.displayName || lookup.name}
+              {lookup.displayName ?? lookup.name}
             </Select.Option>
           ))}
         </Select>
@@ -65,7 +89,12 @@ export const ErrandInfoPanel: FC<ErrandInfoPanelProps> = ({ errand, form, setFie
 
       <FormControl id="priority" className="w-full">
         <FormLabel>Prioritet</FormLabel>
-        <Select value={form.priority} onChange={(event) => setField('priority', event.target.value)}>
+        <Select
+          value={form.priority}
+          onChange={(event) => {
+            setField('priority', event.target.value);
+          }}
+        >
           <Select.Option value="">Välj prioritet</Select.Option>
           {PRIORITIES.map((option) => (
             <Select.Option key={option.value} value={option.value}>

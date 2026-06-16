@@ -6,12 +6,7 @@ export interface Permissions {
 /** Internal roles, ordered from least to most privileged */
 export type InternalRole = 'app_read' | 'app_admin';
 
-export enum InternalRoleEnum {
-  'app_read',
-  'app_admin',
-}
-
-export type User = {
+export interface User {
   username: string;
   name: string;
   givenName: string;
@@ -19,11 +14,11 @@ export type User = {
   groups: string[];
   role: InternalRole;
   permissions: Permissions;
-};
+}
 
-export type ClientUser = {
+export interface ClientUser {
   name: string;
   username: string;
   role: InternalRole;
   permissions: Permissions;
-};
+}
