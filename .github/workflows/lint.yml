@@ -58,6 +58,9 @@ jobs:
       - name: Install dependencies
         run: yarn --frozen-lockfile --silent
 
+      - name: Generate middleware envs
+        run: yarn generate:middleware-envs
+
       - name: Run eslint (strict)
         run: yarn lint:strict
 

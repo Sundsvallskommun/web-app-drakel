@@ -55,5 +55,8 @@ jobs:
       - name: Install dependencies
         run: yarn --frozen-lockfile --silent
 
+      - name: Generate middleware envs
+        run: yarn generate:middleware-envs
+
       - name: Run knip (dead code / unused deps)
         run: yarn knip
