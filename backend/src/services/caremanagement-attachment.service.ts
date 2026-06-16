@@ -21,7 +21,7 @@ export interface UploadedFileLike {
   mimetype: string;
 }
 
-const fileNameFromDisposition = (disposition?: string): string | undefined => {
+export const fileNameFromDisposition = (disposition?: string): string | undefined => {
   if (!disposition) {
     return undefined;
   }

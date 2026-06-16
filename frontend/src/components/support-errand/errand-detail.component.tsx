@@ -10,6 +10,7 @@ import { FC, useEffect, useState } from 'react';
 import { ErrandAttachments } from './errand-attachments.component';
 import { ErrandBasicsTab } from './errand-basics-tab.component';
 import { ErrandInfoPanel } from './errand-info-panel.component';
+import { ErrandMessages } from './errand-messages.component';
 import { ErrandSidebar, SidebarSection } from './errand-sidebar.component';
 
 // Drafts are created with this sentinel title until the handläggare fills the errand in.
@@ -90,6 +91,14 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               <Tabs.Content>
                 <div className="pt-24 pb-40 px-24 md:px-40">
                   <ErrandAttachments errandId={errandId} />
+                </div>
+              </Tabs.Content>
+            </Tabs.Item>
+            <Tabs.Item>
+              <Tabs.Button className="text-base">Meddelanden</Tabs.Button>
+              <Tabs.Content>
+                <div className="pt-24 pb-40 px-24 md:px-40">
+                  <ErrandMessages errandId={errandId} />
                 </div>
               </Tabs.Content>
             </Tabs.Item>

@@ -19,6 +19,32 @@ export interface NewStakeholder {
   contactChannels?: ContactChannel[];
 }
 
+/**
+ * A file attached to a conversation message. The backend does not return these yet (messages are
+ * text-only for now); the shape is here so the UI can render them once caremanagement supports it.
+ */
+interface MessageAttachment {
+  id?: string;
+  fileName?: string;
+  mimeType?: string;
+  fileSize?: number;
+}
+
+/**
+ * A conversation message on an errand. Mirrors the backend Message response; defined locally (like
+ * {@link NewStakeholder}) until the backend data-contract is regenerated with the message types.
+ */
+export interface Message {
+  id?: string;
+  errandId?: string;
+  /** INBOUND = applicant → handläggare, OUTBOUND = handläggare → applicant. */
+  direction?: 'INBOUND' | 'OUTBOUND';
+  body?: string;
+  author?: string;
+  created?: string;
+  attachments?: MessageAttachment[];
+}
+
 /** Adds a stakeholder to an errand. The stakeholder is then available on the refetched errand. */
 export const createStakeholder = (errandId: string, stakeholder: NewStakeholder): Promise<ServiceResponse<null>> => {
   return apiService
@@ -119,4 +145,54 @@ export const uploadAttachment = (errandId: string, file: File): Promise<ServiceR
     .post<ApiResponse<null>>(`errands/${errandId}/attachments`, form, { headers: {} })
     .then(() => ({ data: null }))
     .catch(toServiceError);
+};
+
+/** Fetches an errand's conversation messages (returned chronologically by the backend). */
+export const getErrandMessages = (errandId: string): Promise<ServiceResponse<Message[]>> => {
+  return apiService
+    .get<ApiResponse<Message[]>>(`errands/${errandId}/messages`)
+    .then((res) => ({ data: res.data.data }))
+    .catch(toServiceError);
+};
+
+/**
+ * Posts a message (with optional file attachments) to an errand's conversation. Sent as multipart:
+ * a `body` text field plus zero or more `files`. The backend marks it OUTBOUND and stamps the author
+ * from the session, so the handläggare only supplies the text and files.
+ */
+export const postErrandMessage = (
+  errandId: string,
+  body: string,
+  files: File[] = []
+): Promise<ServiceResponse<null>> => {
+  const form = new FormData();
+  form.append('body', body);
+  files.forEach((file) => {
+    form.append('files', file);
+  });
+  // Empty headers let axios set the multipart boundary instead of the default JSON content-type.
+  return apiService
+    .post<ApiResponse<null>>(`errands/${errandId}/messages`, form, { headers: {} })
+    .then(() => ({ data: null }))
+    .catch(toServiceError);
+};
+
+/** Downloads a single attachment on a conversation message (the backend streams it). */
+export const downloadMessageAttachment = async (
+  errandId: string,
+  messageId: string,
+  attachmentId: string,
+  fileName?: string
+): Promise<void> => {
+  const res = await apiService.get<Blob>(`errands/${errandId}/messages/${messageId}/attachments/${attachmentId}/file`, {
+    responseType: 'blob',
+  });
+  const url = window.URL.createObjectURL(res.data);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName ?? 'bilaga';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
 };
