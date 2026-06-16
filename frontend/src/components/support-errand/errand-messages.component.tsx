@@ -33,6 +33,24 @@ const senderLabel = (message: Message): string => {
 /** A single message bubble. OUTBOUND (handläggare) sits to the right, INBOUND (sökande) to the left. */
 const MessageBubble: FC<{ message: Message; errandId: string }> = ({ message, errandId }) => {
   const outbound = message.direction === 'OUTBOUND';
+  const [downloadingAttachmentId, setDownloadingAttachmentId] = useState<string>();
+  const [downloadError, setDownloadError] = useState<string>();
+
+  const downloadAttachment = async (attachmentId?: string, fileName?: string) => {
+    if (!message.id || !attachmentId) {
+      return;
+    }
+    setDownloadingAttachmentId(attachmentId);
+    setDownloadError(undefined);
+    try {
+      await downloadMessageAttachment(errandId, message.id, attachmentId, fileName);
+    } catch {
+      setDownloadError('Det gick inte att hämta filen');
+    } finally {
+      setDownloadingAttachmentId(undefined);
+    }
+  };
+
   return (
     <li className={`flex flex-col max-w-[80%] ${outbound ? 'self-end items-end' : 'self-start items-start'}`}>
       <div className="flex items-center gap-8 mb-4 text-small text-secondary">
@@ -55,11 +73,8 @@ const MessageBubble: FC<{ message: Message; errandId: string }> = ({ message, er
                 variant="tertiary"
                 leftIcon={<Download />}
                 disabled={!message.id || !attachment.id}
-                onClick={() =>
-                  message.id &&
-                  attachment.id &&
-                  void downloadMessageAttachment(errandId, message.id, attachment.id, attachment.fileName)
-                }
+                loading={downloadingAttachmentId === attachment.id}
+                onClick={() => void downloadAttachment(attachment.id, attachment.fileName)}
               >
                 {attachment.fileName ?? 'bilaga'}
               </Button>
@@ -67,6 +82,7 @@ const MessageBubble: FC<{ message: Message; errandId: string }> = ({ message, er
           ))}
         </ul>
       : null}
+      {downloadError && <p className="mt-4 mb-0 text-small text-error-surface-primary">{downloadError}</p>}
     </li>
   );
 };

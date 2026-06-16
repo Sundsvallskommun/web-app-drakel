@@ -18,6 +18,22 @@ interface CaremanagementMessage {
   author?: string;
 }
 
+const caremanagementError = (error: unknown): HttpException => {
+  if (axios.isAxiosError(error)) {
+    switch (error.response?.status) {
+      case 400:
+        return new HttpException(400, 'Bad request from caremanagement');
+      case 404:
+        return new HttpException(404, 'Not found');
+      case 413:
+        return new HttpException(413, 'Uploaded file is too large');
+      default:
+        break;
+    }
+  }
+  return new HttpException(500, 'Internal server error from caremanagement');
+};
+
 class CaremanagementMessageService {
   private apiService = new CaremanagementApiService();
 
@@ -42,10 +58,7 @@ class CaremanagementMessageService {
       await axios.post(url, form, { headers: form.getHeaders() });
       return { data: null, message: 'success' };
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 404) {
-        throw new HttpException(404, 'Not found');
-      }
-      throw new HttpException(500, 'Internal server error from caremanagement');
+      throw caremanagementError(error);
     }
   }
 
@@ -61,10 +74,7 @@ class CaremanagementMessageService {
         fileName: fileNameFromDisposition(headers['content-disposition']),
       };
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 404) {
-        throw new HttpException(404, 'Not found');
-      }
-      throw new HttpException(500, 'Internal server error from caremanagement');
+      throw caremanagementError(error);
     }
   }
 }

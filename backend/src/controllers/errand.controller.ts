@@ -29,6 +29,7 @@ import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
 import { CreateErrandDto, FindErrandsQueryDto, PatchErrandDto } from '@/dtos/errand.dto';
 import { CreateStakeholderDto } from '@/dtos/stakeholder.dto';
+import { HttpException } from '@/exceptions/HttpException';
 import { AttachmentsApiResponse } from '@/responses/attachment.response';
 import { ErrandApiResponse, ErrandsApiResponse } from '@/responses/errand.response';
 import { MessagesApiResponse } from '@/responses/message.response';
@@ -40,6 +41,43 @@ const DEFAULT_TYPE_SLUG = 'financial-assistance';
 
 // TODO: hardcoded for now — no ROLE metadata configured yet. Every added stakeholder gets PRIMARY.
 const DEFAULT_STAKEHOLDER_ROLE = 'PRIMARY';
+
+const MESSAGE_BODY_MAX_LENGTH = 8192;
+const MAX_UPLOAD_FILE_SIZE_BYTES = 20 * 1024 * 1024;
+const MAX_MESSAGE_ATTACHMENT_FILES = 10;
+
+const singleAttachmentUploadOptions = {
+  options: {
+    limits: {
+      files: 1,
+      fileSize: MAX_UPLOAD_FILE_SIZE_BYTES,
+    },
+  },
+};
+
+const messageAttachmentUploadOptions = {
+  required: false,
+  options: {
+    limits: {
+      files: MAX_MESSAGE_ATTACHMENT_FILES,
+      fileSize: MAX_UPLOAD_FILE_SIZE_BYTES,
+    },
+  },
+};
+
+const normalizeMessageBody = (body: unknown): string => {
+  if (typeof body !== 'string') {
+    throw new HttpException(400, 'Message body is required');
+  }
+  const trimmedBody = body.trim();
+  if (!trimmedBody) {
+    throw new HttpException(400, 'Message body is required');
+  }
+  if (trimmedBody.length > MESSAGE_BODY_MAX_LENGTH) {
+    throw new HttpException(400, `Message body must be at most ${MESSAGE_BODY_MAX_LENGTH} characters`);
+  }
+  return trimmedBody;
+};
 
 @Controller()
 export class ErrandController {
@@ -136,7 +174,7 @@ export class ErrandController {
   @HttpCode(201)
   @OpenAPI({ summary: 'Upload a new attachment' })
   @UseBefore(authMiddleware)
-  async createAttachment(@Param('errandId') errandId: string, @UploadedFile('file') file: UploadedFileLike) {
+  async createAttachment(@Param('errandId') errandId: string, @UploadedFile('file', singleAttachmentUploadOptions) file: UploadedFileLike) {
     const res = await this.attachmentService.createAttachment(errandId, file);
     return { data: res.data, message: 'success' };
   }
@@ -175,12 +213,16 @@ export class ErrandController {
   async createMessage(
     @Req() req: RequestWithUser,
     @Param('errandId') errandId: string,
-    @BodyParam('body') body: string,
-    @UploadedFiles('files', { required: false }) files?: UploadedFileLike[],
+    @BodyParam('body') body: unknown,
+    @UploadedFiles('files', messageAttachmentUploadOptions) files?: UploadedFileLike[],
   ) {
     // Every message a handläggare posts is OUTBOUND (caseworker → applicant), authored by the logged-in
     // user. Both are decided here, never trusted from the client (mirrors the initiateErrand flow).
-    await this.messageService.createMessage(errandId, { direction: 'OUTBOUND', body, author: req.user.username }, files ?? []);
+    await this.messageService.createMessage(
+      errandId,
+      { direction: 'OUTBOUND', body: normalizeMessageBody(body), author: req.user.username },
+      files ?? [],
+    );
     return { data: null, message: 'success' };
   }
 

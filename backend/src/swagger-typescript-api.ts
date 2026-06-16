@@ -38,6 +38,7 @@ const generateContract = async (name: string, swaggerUrl: string) => {
     console.warn(`Data-contract-generator: ${stdout}`);
   } catch (error) {
     console.error(`error generating ${name}: ${error instanceof Error ? error.message : String(error)}`);
+    throw error;
   }
 };
 
@@ -52,12 +53,14 @@ const main = async () => {
     await generateContract(api.name, `${API_BASE_URL}/${api.name}/${api.version}/api-docs`);
   }
 
-  // caremanagement is reached directly on its own host (Dokploy), NOT via the gateway, so its
-  // OpenAPI document is downloaded straight from that instance — /api-docs at the service root,
-  // the same path the gateway would proxy as /caremanagement/1.0/api-docs. Override with
-  // CAREMANAGEMENT_OPENAPI_URL if the document lives elsewhere.
+  // caremanagement's contract source is intentionally explicit. In test it can point at the real
+  // caremanagement OpenAPI via WSO2, even when runtime traffic goes to another configured host.
+  // CAREMANAGEMENT_OPENAPI_URL wins; otherwise we use CAREMANAGEMENT_BASE_URL/api-docs.
   const caremanagementOpenApiUrl = process.env.CAREMANAGEMENT_OPENAPI_URL || `${CAREMANAGEMENT_BASE_URL}/api-docs`;
   await generateContract('caremanagement', caremanagementOpenApiUrl);
 };
 
-void main();
+void main().catch(error => {
+  console.error(`contract generation failed: ${error instanceof Error ? error.message : String(error)}`);
+  process.exitCode = 1;
+});

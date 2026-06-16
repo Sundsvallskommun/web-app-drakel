@@ -6,10 +6,9 @@ export const APIS = [
   },
 ] as const;
 
-//TEST ONLY PRODUCTION NEED THIS API
-// NOTE: caremanagement is intentionally NOT in APIS. It is reached directly on its own host
-// (Dokploy) via CAREMANAGEMENT_BASE_URL, not through the shared API gateway, so its data
-// contract is generated separately, straight from that instance — see swagger-typescript-api.ts.
+// NOTE: caremanagement is intentionally NOT in APIS. Runtime calls are built by caremanagementUrl,
+// while contract generation has its own explicit source in swagger-typescript-api.ts. In test that
+// source can point at the real caremanagement OpenAPI via WSO2 instead of the Dokploy instance.
 
 type ApiName = (typeof APIS)[number]['name'];
 
