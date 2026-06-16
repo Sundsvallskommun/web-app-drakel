@@ -31,6 +31,7 @@ export const ErrandBasics: FC<ErrandBasicsProps> = ({ form, setField }) => {
             <FormControl id="category" className="w-full">
               <FormLabel>Kategori</FormLabel>
               <Select
+                className="w-full"
                 value={form.category}
                 onChange={(event) => {
                   setField('category', event.target.value);
@@ -48,6 +49,7 @@ export const ErrandBasics: FC<ErrandBasicsProps> = ({ form, setField }) => {
             <FormControl id="type" className="w-full">
               <FormLabel>Ärendetyp</FormLabel>
               <Select
+                className="w-full"
                 value={form.type}
                 onChange={(event) => {
                   setField('type', event.target.value);
@@ -77,6 +79,7 @@ export const ErrandBasics: FC<ErrandBasicsProps> = ({ form, setField }) => {
           <FormControl id="contactReason" className="w-full">
             <FormLabel>Orsak till kontakt</FormLabel>
             <Select
+              className="w-full"
               value={form.contactReason}
               onChange={(event) => {
                 setField('contactReason', event.target.value);

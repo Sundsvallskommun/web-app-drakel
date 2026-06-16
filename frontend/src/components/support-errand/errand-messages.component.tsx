@@ -1,239 +1,75 @@
 'use client';
 
 import { useErrandMessages } from '@hooks/use-errand-messages';
-import { downloadMessageAttachment, Message, postErrandMessage } from '@services/errand-service/errand-service';
-import {
-  Button,
-  CustomOnChangeEventUploadFile,
-  Divider,
-  FileUpload,
-  FormControl,
-  FormErrorMessage,
-  Spinner,
-  Textarea,
-  UploadFile,
-} from '@sk-web-gui/react';
-import dayjs from 'dayjs';
-import { Download, SendHorizontal, X } from 'lucide-react';
+import { Button, Divider, Spinner } from '@sk-web-gui/react';
 import { FC, useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
 
-// Matches the backend CreateMessageDto / caremanagement CreateMessage.body limit.
-const MESSAGE_CHARACTER_LIMIT = 8192;
+import { ErrandMessage } from './errand-message.component';
+import { ErrandNewMessage } from './errand-new-message.component';
 
-// Mirror the backend message-attachment limits (MAX_MESSAGE_ATTACHMENT_FILES / MAX_UPLOAD_FILE_SIZE_BYTES)
-// so files are validated before sending instead of failing the POST with a generic error.
-const MAX_ATTACHMENT_FILES = 10;
-const MAX_ATTACHMENT_FILE_SIZE_MB = 20;
-
-const formatTimestamp = (created?: string): string => (created ? dayjs(created).format('YYYY-MM-DD HH:mm') : '—');
-
-const senderLabel = (message: Message): string => {
-  if (message.direction === 'OUTBOUND') {
-    return message.author ? `${message.author} · Handläggare` : 'Handläggare';
-  }
-  return 'Sökande';
-};
-
-/** A single message bubble. OUTBOUND (handläggare) sits to the right, INBOUND (sökande) to the left. */
-const MessageBubble: FC<{ message: Message; errandId: string }> = ({ message, errandId }) => {
-  const outbound = message.direction === 'OUTBOUND';
-  const [downloadingAttachmentId, setDownloadingAttachmentId] = useState<string>();
-  const [downloadError, setDownloadError] = useState<string>();
-
-  const downloadAttachment = async (attachmentId?: string, fileName?: string) => {
-    if (!message.id || !attachmentId) {
-      return;
-    }
-    setDownloadingAttachmentId(attachmentId);
-    setDownloadError(undefined);
-    try {
-      await downloadMessageAttachment(errandId, message.id, attachmentId, fileName);
-    } catch {
-      setDownloadError('Det gick inte att hämta filen');
-    } finally {
-      setDownloadingAttachmentId(undefined);
-    }
-  };
-
-  return (
-    <li className={`flex flex-col max-w-[80%] ${outbound ? 'self-end items-end' : 'self-start items-start'}`}>
-      <div className="flex items-center gap-8 mb-4 text-small text-secondary">
-        <span className="font-bold">{senderLabel(message)}</span>
-        <span>{formatTimestamp(message.created)}</span>
-      </div>
-      <div
-        className={`rounded-12 px-16 py-12 whitespace-pre-wrap break-words ${
-          outbound ? 'bg-primary-surface-accent-DEFAULT' : 'bg-background-200'
-        }`}
-      >
-        {message.body}
-      </div>
-      {message.attachments?.length ?
-        <ul className="mt-8 flex flex-col gap-4 items-stretch">
-          {message.attachments.map((attachment, index) => (
-            <li key={attachment.id ?? index}>
-              <Button
-                size="sm"
-                variant="tertiary"
-                leftIcon={<Download />}
-                disabled={!message.id || !attachment.id}
-                loading={downloadingAttachmentId === attachment.id}
-                onClick={() => void downloadAttachment(attachment.id, attachment.fileName)}
-              >
-                {attachment.fileName ?? 'bilaga'}
-              </Button>
-            </li>
-          ))}
-        </ul>
-      : null}
-      {downloadError && <p className="mt-4 mb-0 text-small text-error-surface-primary">{downloadError}</p>}
-    </li>
-  );
-};
+// Messages are revealed in pages so a long thread doesn't render all at once.
+const PAGE_SIZE = 24;
 
 export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
   const { messages, isLoading, error, refresh } = useErrandMessages(errandId);
-  const formMethods = useForm();
-  const [body, setBody] = useState<string>('');
-  const [pendingFiles, setPendingFiles] = useState<UploadFile[]>([]);
-  const [sending, setSending] = useState<boolean>(false);
-  const [sendError, setSendError] = useState<string>();
-  const [fileError, setFileError] = useState<string>();
+  const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
 
-  const trimmed = body.trim();
-  const isOverLimit = body.length > MESSAGE_CHARACTER_LIMIT;
-  const canSend = trimmed.length > 0 && !isOverLimit && !sending;
-
-  const addFiles = (event: CustomOnChangeEventUploadFile) => {
-    const incoming = event.target.value ?? [];
-    if (!incoming.length) {
-      return;
-    }
-    // Enforce the backend file-count cap up front; FileUpload.Button enforces the per-file size.
-    setFileError(
-      incoming.length > MAX_ATTACHMENT_FILES - pendingFiles.length ?
-        `Du kan bifoga max ${MAX_ATTACHMENT_FILES} filer.`
-      : undefined
-    );
-    setPendingFiles((prev) => [...prev, ...incoming].slice(0, MAX_ATTACHMENT_FILES));
-  };
-
-  const removeFile = (id: string) => {
-    setFileError(undefined);
-    setPendingFiles((prev) => prev.filter((file) => file.id !== id));
-  };
-
-  const handleSend = async () => {
-    if (!canSend) {
-      return;
-    }
-    setSending(true);
-    setSendError(undefined);
-    const result = await postErrandMessage(
-      errandId,
-      trimmed,
-      pendingFiles.map((file) => file.file)
-    );
-    setSending(false);
-    if (result.error) {
-      setSendError('Det gick inte att skicka meddelandet');
-      return;
-    }
-    setBody('');
-    setPendingFiles([]);
-    setFileError(undefined);
-    refresh();
-  };
+  const visible = messages.slice(0, visibleCount);
+  const hasMore = visibleCount < messages.length;
 
   return (
-    <div className="flex flex-col gap-16">
-      <div className="text-secondary">
-        <span>
-          {messages.length ?
-            `${messages.length} ${messages.length === 1 ? 'meddelande' : 'meddelanden'}`
-          : 'Inga meddelanden'}
-        </span>
-        <Divider className="mx-0 mb-0 mt-16" />
+    <div className="rounded-12 border-1 border-divider bg-background-content py-32 flex flex-col gap-y-48 desktop:gap-y-64">
+      <div className="flex flex-col gap-y-32 self-stretch">
+        <div className="mx-20 desktop:mx-32">
+          <ErrandNewMessage errandId={errandId} onSent={refresh} />
+        </div>
+        <Divider className="m-0 self-stretch" />
       </div>
 
-      {isLoading ?
-        <Spinner size={3} />
-      : error ?
-        <p className="m-0">Det gick inte att hämta meddelanden ({String(error)})</p>
-      : messages.length ?
-        <ul aria-label="Ärendemeddelanden" className="flex flex-col gap-16">
-          {messages.map((message, index) => (
-            <MessageBubble key={message.id ?? index} message={message} errandId={errandId} />
-          ))}
-        </ul>
-      : null}
+      <div className="flex flex-col gap-y-16 items-start self-stretch mx-20 desktop:mx-32">
+        <div className="text-secondary w-full">
+          <span>
+            {messages.length ?
+              `${messages.length} ${messages.length === 1 ? 'meddelande' : 'meddelanden'}`
+            : 'Inga meddelanden'}
+          </span>
+          <Divider className="mx-0 mb-0 mt-16" />
+        </div>
 
-      <Divider className="m-0" />
-
-      <FormProvider {...formMethods}>
-        <FormControl invalid={isOverLimit || Boolean(sendError) || Boolean(fileError)} className="flex flex-col gap-8">
-          <Textarea
-            aria-label="Nytt meddelande"
-            placeholder="Skriv ett meddelande till den sökande…"
-            rows={4}
-            value={body}
-            onChange={(event) => {
-              setBody(event.target.value);
-            }}
-          />
-
-          {pendingFiles.length ?
-            <ul className="flex flex-col gap-4">
-              {pendingFiles.map((file) => (
-                <li key={file.id} className="flex items-center justify-between gap-8 text-small">
-                  <span className="truncate">{file.file.name}</span>
-                  <Button
-                    size="sm"
-                    variant="tertiary"
-                    iconButton
-                    aria-label={`Ta bort ${file.file.name}`}
-                    leftIcon={<X />}
-                    onClick={() => {
-                      removeFile(file.id);
-                    }}
-                  />
+        {isLoading ?
+          <Spinner size={3} />
+        : error ?
+          <p className="m-0">Det gick inte att hämta meddelanden ({String(error)})</p>
+        : messages.length ?
+          <>
+            <ul aria-label="Ärendemeddelanden" className="flex flex-col self-stretch gap-y-8">
+              {visible.map((message, index) => (
+                <li key={message.id ?? index} className="flex flex-col gap-y-8">
+                  <ErrandMessage message={message} errandId={errandId} />
+                  {index !== visible.length - 1 ?
+                    <Divider className="m-0" />
+                  : null}
                 </li>
               ))}
             </ul>
-          : null}
-
-          <div className="flex items-center justify-between gap-12">
-            <div className="flex items-center gap-12">
-              <FileUpload.Button
-                maxFileSizeMB={MAX_ATTACHMENT_FILE_SIZE_MB}
-                appendToContext={false}
-                onChange={(event) => {
-                  addFiles(event);
-                }}
-                onInvalid={(message) => {
-                  setFileError(message);
-                }}
-              />
-              <span className={`text-small ${isOverLimit ? 'text-error-surface-primary' : 'text-secondary'}`}>
-                {body.length} / {MESSAGE_CHARACTER_LIMIT}
-              </span>
+            <div className="w-full flex flex-col gap-y-12 items-center">
+              <div className="text-secondary text-small">
+                Visar {Math.min(visibleCount, messages.length)} av {messages.length}
+              </div>
+              {hasMore ?
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setVisibleCount((prev) => prev + PAGE_SIZE);
+                  }}
+                >
+                  Visa fler
+                </Button>
+              : null}
             </div>
-            <Button
-              variant="primary"
-              loading={sending}
-              disabled={!canSend}
-              leftIcon={<SendHorizontal />}
-              onClick={() => void handleSend()}
-            >
-              Skicka
-            </Button>
-          </div>
-          {isOverLimit && <FormErrorMessage>Du får skriva max {MESSAGE_CHARACTER_LIMIT} tecken.</FormErrorMessage>}
-          {fileError && <FormErrorMessage>{fileError}</FormErrorMessage>}
-          {sendError && <FormErrorMessage>{sendError}</FormErrorMessage>}
-        </FormControl>
-      </FormProvider>
+          </>
+        : null}
+      </div>
     </div>
   );
 };
