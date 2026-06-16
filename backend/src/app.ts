@@ -31,6 +31,7 @@ import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { RequestHandler } from 'express';
+import rateLimit from 'express-rate-limit';
 import session from 'express-session';
 import { existsSync, mkdirSync } from 'fs';
 import helmet from 'helmet';
@@ -52,6 +53,15 @@ import { isValidOrigin } from './utils/isValidOrigin';
 import { isValidUrl } from './utils/util';
 
 const corsWhitelist = ORIGIN.split(',');
+
+// Rate limit the public, unauthenticated SAML endpoints to throttle brute-force/replay
+// attempts and limit the DoS surface of session creation + assertion verification.
+const samlRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 100, // per IP per window — generous for a per-login SSO flow
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+});
 
 const SessionStoreCreate = SESSION_MEMORY ? createMemoryStore(session) : createFileStore(session);
 const sessionTTL = 4 * 24 * 60 * 60;
@@ -210,6 +220,7 @@ class App {
 
     this.app.get(
       `${BASE_URL_PREFIX}/saml/login`,
+      samlRateLimiter,
       (req, res, next) => {
         // Express 5's `req.query` is a read-only getter recomputed from `req.url`, so writes to
         // it are silently discarded. passport-saml reads RelayState from
@@ -237,7 +248,7 @@ class App {
       },
     );
 
-    this.app.get(`${BASE_URL_PREFIX}/saml/metadata`, (req, res) => {
+    this.app.get(`${BASE_URL_PREFIX}/saml/metadata`, samlRateLimiter, (req, res) => {
       res.type('application/xml');
       const metadata = samlStrategy.generateServiceProviderMetadata(SAML_PUBLIC_KEY, SAML_PUBLIC_KEY);
       res.status(200).send(metadata);
@@ -245,6 +256,7 @@ class App {
 
     this.app.get(
       `${BASE_URL_PREFIX}/saml/logout`,
+      samlRateLimiter,
       (req, res, next) => {
         // See the /saml/login note: req.query is not writable in Express 5; pass RelayState
         // via req.body, which samlStrategy.logout() also reads.
@@ -277,7 +289,7 @@ class App {
       },
     );
 
-    this.app.get(`${BASE_URL_PREFIX}/saml/logout/callback`, bodyParser.urlencoded({ extended: false }), (req, res, next) => {
+    this.app.get(`${BASE_URL_PREFIX}/saml/logout/callback`, samlRateLimiter, bodyParser.urlencoded({ extended: false }), (req, res, next) => {
       req.logout(err => {
         if (err) {
           next(err);
@@ -317,7 +329,7 @@ class App {
       });
     });
 
-    this.app.post(`${BASE_URL_PREFIX}/saml/login/callback`, bodyParser.urlencoded({ extended: false }), (req, res, next) => {
+    this.app.post(`${BASE_URL_PREFIX}/saml/login/callback`, samlRateLimiter, bodyParser.urlencoded({ extended: false }), (req, res, next) => {
       let successRedirect: URL, failureRedirect: URL;
 
       const relayState = (req.body as { RelayState?: string }).RelayState ?? '';
