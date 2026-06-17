@@ -2,9 +2,9 @@
 
 import { downloadMessageAttachment, Message } from '@services/errand-service/errand-service';
 import { useUserStore } from '@services/user-service/user-service';
-import { Avatar, Button } from '@sk-web-gui/react';
+import { Avatar, Badge, Button, cx } from '@sk-web-gui/react';
 import dayjs from 'dayjs';
-import { Download, UserRound } from 'lucide-react';
+import { Download, Paperclip, UserRound } from 'lucide-react';
 import { FC, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -16,7 +16,11 @@ const formatTimestamp = (created?: string): string => (created ? dayjs(created).
  * A single conversation message rendered as a row: sender avatar + name + timestamp, the message
  * body, and any attachments. OUTBOUND = handläggare (our side), INBOUND = the applicant ("Sökande").
  */
-export const ErrandMessage: FC<{ message: Message; errandId: string }> = ({ message, errandId }) => {
+export const ErrandMessage: FC<{ message: Message; errandId: string; isLatest?: boolean }> = ({
+  message,
+  errandId,
+  isLatest = false,
+}) => {
   const username = useUserStore(useShallow((state) => state.user.username));
   const [downloadingAttachmentId, setDownloadingAttachmentId] = useState<string>();
   const [downloadError, setDownloadError] = useState<string>();
@@ -45,34 +49,53 @@ export const ErrandMessage: FC<{ message: Message; errandId: string }> = ({ mess
   };
 
   return (
-    <div className="flex flex-col gap-y-16 py-20 px-8">
-      <div className="flex gap-16">
-        <Avatar
-          size="sm"
-          accent
-          rounded
-          color={outbound ? 'bjornstigen' : 'gronsta'}
-          imageElement={outbound ? <SkSymbol /> : <UserRound size={21} />}
-        />
-        <div className="flex flex-col desktop:flex-row desktop:items-center grow desktop:gap-16">
-          <div className="text-large">{sender}</div>
+    <div className={cx('flex gap-12 items-end', outbound && 'flex-row-reverse')}>
+      <Avatar
+        size="sm"
+        accent
+        rounded
+        color={outbound ? 'bjornstigen' : 'gronsta'}
+        imageElement={outbound ? <SkSymbol /> : <UserRound size={21} />}
+        className="shrink-0"
+      />
+      <div className={cx('flex flex-col gap-y-6 max-w-[min(72rem,85%)]', outbound && 'items-end')}>
+        <div
+          className={cx(
+            'flex flex-wrap items-center gap-x-8 gap-y-4 text-small text-secondary',
+            outbound && 'justify-end'
+          )}
+        >
+          <span className="font-bold text-body">{sender}</span>
           {message.created ?
-            <div className="text-small text-secondary">
+            <span>
               <span className="sr-only">Skickat </span>
               {formatTimestamp(message.created)}
-            </div>
+            </span>
+          : null}
+          {isLatest ?
+            <Badge size="sm" color="vattjom" rounded>
+              Senast
+            </Badge>
           : null}
         </div>
-      </div>
-      <div className="flex flex-col gap-y-16">
-        <span className="whitespace-pre-wrap break-words">{message.body}</span>
+        <div
+          className={cx(
+            'flex flex-col gap-y-14 rounded-12 border-1 px-16 py-14 shadow-sm',
+            outbound ?
+              'bg-vattjom-surface-primary text-white border-vattjom-surface-primary rounded-br-4'
+            : 'bg-background-content text-body border-divider rounded-bl-4'
+          )}
+        >
+          <span className="whitespace-pre-wrap break-words leading-relaxed">{message.body}</span>
+        </div>
         {message.attachments?.length ?
-          <div className="flex flex-col gap-4 items-start">
+          <div className={cx('flex flex-col gap-6 items-start', outbound && 'items-end')}>
             {message.attachments.map((attachment, index) => (
               <Button
                 key={attachment.id ?? index}
-                variant="link"
-                size="md"
+                variant="secondary"
+                size="sm"
+                leftIcon={<Paperclip size={16} />}
                 rightIcon={<Download size={18} />}
                 disabled={!message.id || !attachment.id}
                 loading={downloadingAttachmentId === attachment.id}

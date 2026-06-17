@@ -2,6 +2,7 @@
 
 import { postErrandMessage } from '@services/errand-service/errand-service';
 import { Button, FileUpload, FormControl, FormErrorMessage, Modal, Textarea, UploadFile } from '@sk-web-gui/react';
+import { SendHorizontal } from 'lucide-react';
 import { FC, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm, useWatch } from 'react-hook-form';
 
@@ -77,19 +78,18 @@ export const ErrandNewMessage: FC<{ errandId: string; onSent: () => void }> = ({
   return (
     <>
       <FormProvider {...formMethods}>
-        <form className="flex flex-col gap-24" onSubmit={(event) => void formMethods.handleSubmit(onSubmit)(event)}>
+        <form className="flex flex-col gap-14" onSubmit={(event) => void formMethods.handleSubmit(onSubmit)(event)}>
           <div className="flex flex-col">
-            <p className="font-bold mb-12">Skicka ett meddelande till den sökande</p>
             <FormControl className="w-full" invalid={isOverLimit}>
               <Textarea
                 {...messageRegister}
                 aria-label="Nytt meddelande"
                 placeholder="Skriv ett meddelande"
-                rows={4}
-                className="w-full"
+                rows={3}
+                className="w-full rounded-12"
                 readOnly={formMethods.formState.isSubmitting}
               />
-              <div className="flex justify-between text-small mt-8">
+              <div className="flex justify-between gap-12 text-small mt-6">
                 <span className="text-secondary">Max {MESSAGE_CHARACTER_LIMIT} tecken.</span>
                 <span className={isOverLimit ? 'text-error-surface-primary' : 'text-secondary'}>
                   {message.length} / {MESSAGE_CHARACTER_LIMIT}
@@ -100,17 +100,18 @@ export const ErrandNewMessage: FC<{ errandId: string; onSent: () => void }> = ({
               : null}
             </FormControl>
 
-            <FileUpload.Button
-              {...formMethods.register('files')}
-              appendFiles={files}
-              className="mt-16"
-              maxFileSizeMB={MAX_ATTACHMENT_FILE_SIZE_MB}
-              onInvalid={(error) => {
-                formMethods.setError('files', { type: 'manual', message: error });
-              }}
-            />
-            <div className="flex items-center text-small gap-8 mt-8">
-              <span className="text-secondary">Maximal filstorlek: {MAX_ATTACHMENT_FILE_SIZE_MB} MB.</span>
+            <div className="flex flex-col gap-8 mt-10 desktop:flex-row desktop:items-center desktop:justify-between">
+              <div className="flex flex-wrap items-center gap-8 text-small">
+                <FileUpload.Button
+                  {...formMethods.register('files')}
+                  appendFiles={files}
+                  maxFileSizeMB={MAX_ATTACHMENT_FILE_SIZE_MB}
+                  onInvalid={(error) => {
+                    formMethods.setError('files', { type: 'manual', message: error });
+                  }}
+                />
+                <span className="text-secondary">Max {MAX_ATTACHMENT_FILE_SIZE_MB} MB per fil.</span>
+              </div>
               <Button
                 variant="link"
                 onClick={() => {
@@ -150,16 +151,17 @@ export const ErrandNewMessage: FC<{ errandId: string; onSent: () => void }> = ({
             </div>
           : null}
 
-          <div className="flex flex-col gap-8 items-start">
+          <div className="flex flex-col gap-8 items-end">
             <Button
               type="submit"
               color="vattjom"
               size="md"
               className="w-full desktop:w-fit"
+              rightIcon={<SendHorizontal />}
               loading={formMethods.formState.isSubmitting}
               disabled={isOverLimit || isOverFileLimit}
             >
-              Skicka meddelande
+              Skicka
             </Button>
             {formMethods.formState.errors.root ?
               <FormErrorMessage>{formMethods.formState.errors.root.message}</FormErrorMessage>
