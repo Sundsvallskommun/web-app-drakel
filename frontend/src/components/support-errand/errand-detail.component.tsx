@@ -2,6 +2,7 @@
 
 import { useErrandHeader } from '@components/layout/errand-header-context';
 import { useErrand } from '@hooks/use-errand';
+import { useErrandAttachments } from '@hooks/use-errand-attachments';
 import { useErrandForm } from '@hooks/use-errand-form';
 import { useErrandNotes } from '@hooks/use-errand-notes';
 import { Spinner, Tabs } from '@sk-web-gui/react';
@@ -25,6 +26,19 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   const { setErrand: setHeaderErrand } = useErrandHeader();
   const { form, setField, isDirty, saving, error: saveError, save } = useErrandForm(errand, refresh);
   const { notes, isLoading: notesLoading, error: notesError, refresh: refreshNotes } = useErrandNotes(errandId);
+  // Fetched once here so the tab counters and both attachment tabs share a single source. Use the
+  // resolved errand id (the prop can be an errand number); the hook refetches when it becomes available.
+  const {
+    attachments,
+    isLoading: attachmentsLoading,
+    error: attachmentsError,
+    refresh: refreshAttachments,
+  } = useErrandAttachments(errand?.id ?? errandId);
+
+  // CONVERSATION files belong to the "Bilagor från meddelanden" tab; everything else (application /
+  // generated / errand files) to the "Bilagor" tab.
+  const conversationAttachments = attachments.filter((attachment) => attachment.origin === 'CONVERSATION');
+  const errandAttachments = attachments.filter((attachment) => attachment.origin !== 'CONVERSATION');
 
   // Surface the errand's status/title into the slim app header, and clear it on leave.
   useEffect(() => {
@@ -107,10 +121,16 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               </Tabs.Content>
             </Tabs.Item>
             <Tabs.Item>
-              <Tabs.Button className="text-base">Bilagor</Tabs.Button>
+              <Tabs.Button className="text-base">Bilagor ({errandAttachments.length})</Tabs.Button>
               <Tabs.Content>
                 <div className="pt-24 pb-40 px-24 md:px-40">
-                  <ErrandAttachments errandId={apiErrandId} />
+                  <ErrandAttachments
+                    errandId={apiErrandId}
+                    attachments={errandAttachments}
+                    isLoading={attachmentsLoading}
+                    loadError={!!attachmentsError}
+                    refresh={refreshAttachments}
+                  />
                 </div>
               </Tabs.Content>
             </Tabs.Item>
@@ -123,10 +143,15 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               </Tabs.Content>
             </Tabs.Item>
             <Tabs.Item>
-              <Tabs.Button className="text-base">Bilagor från meddelanden</Tabs.Button>
+              <Tabs.Button className="text-base">Bilagor från meddelanden ({conversationAttachments.length})</Tabs.Button>
               <Tabs.Content>
                 <div className="pt-24 pb-40 px-24 md:px-40">
-                  <ErrandMessageAttachments errandId={apiErrandId} />
+                  <ErrandMessageAttachments
+                    errandId={apiErrandId}
+                    attachments={conversationAttachments}
+                    isLoading={attachmentsLoading}
+                    loadError={!!attachmentsError}
+                  />
                 </div>
               </Tabs.Content>
             </Tabs.Item>

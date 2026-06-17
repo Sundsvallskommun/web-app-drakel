@@ -1,7 +1,7 @@
 'use client';
 
 import { PdfPreview } from '@components/common/pdf-preview.component';
-import { useErrandAttachments } from '@hooks/use-errand-attachments';
+import { Attachment } from '@data-contracts/backend/data-contracts';
 import { uploadAttachment } from '@services/errand-service/errand-service';
 import { CustomOnChangeEventUploadFile, FileUpload, Spinner } from '@sk-web-gui/react';
 import { FC, useState } from 'react';
@@ -15,8 +15,22 @@ import { AttachmentList } from './attachment-list.component';
 const SUMMARY_PDF = 'sammanstallning.pdf';
 const CLIENT_FILES_PDF = 'klientbilagor.pdf';
 
-export const ErrandAttachments: FC<{ errandId: string }> = ({ errandId }) => {
-  const { attachments, isLoading, error, refresh } = useErrandAttachments(errandId);
+interface ErrandAttachmentsProps {
+  errandId: string;
+  /** The errand-level attachments (application / generated / errand files; conversation files excluded). */
+  attachments: Attachment[];
+  isLoading: boolean;
+  loadError: boolean;
+  refresh: () => void;
+}
+
+export const ErrandAttachments: FC<ErrandAttachmentsProps> = ({
+  errandId,
+  attachments,
+  isLoading,
+  loadError,
+  refresh,
+}) => {
   const formMethods = useForm();
   const [uploading, setUploading] = useState<boolean>(false);
   const [actionError, setActionError] = useState<string>();
@@ -25,10 +39,6 @@ export const ErrandAttachments: FC<{ errandId: string }> = ({ errandId }) => {
     attachments.find((attachment) => (attachment.fileName ?? '').toLowerCase() === fileName);
   const summaryAttachment = findByName(SUMMARY_PDF);
   const clientFilesAttachment = findByName(CLIENT_FILES_PDF);
-
-  // Conversation files live in the dedicated "Bilagor från meddelanden" tab; here we show the rest
-  // (application / generated / errand files).
-  const errandAttachments = attachments.filter((attachment) => attachment.origin !== 'CONVERSATION');
 
   const handleUpload = async (event: CustomOnChangeEventUploadFile) => {
     const file = event.target.value?.[0]?.file;
@@ -69,9 +79,9 @@ export const ErrandAttachments: FC<{ errandId: string }> = ({ errandId }) => {
 
           {isLoading ?
             <Spinner size={3} />
-          : error ?
-            <p className="m-0">Det gick inte att hämta bilagor ({String(error)})</p>
-          : <AttachmentList errandId={errandId} attachments={errandAttachments} />}
+          : loadError ?
+            <p className="m-0">Det gick inte att hämta bilagor</p>
+          : <AttachmentList errandId={errandId} attachments={attachments} />}
         </div>
       </FileUpload.Area>
     </FormProvider>
