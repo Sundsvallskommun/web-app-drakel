@@ -65,16 +65,15 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
     <div className="flex flex-col gap-16 h-full">
       <span className="text-large font-semibold">Anteckningar</span>
 
-      {(error || loadError) && (
+      {(error ?? loadError) && (
         <p className="text-error-surface-primary m-0">{error ?? 'Det gick inte att hämta anteckningarna'}</p>
       )}
 
-      {isLoading ? (
+      {isLoading ?
         <Spinner size={3} />
-      ) : notes.length === 0 ? (
+      : notes.length === 0 ?
         <p className="m-0 text-dark-secondary">Det finns inga anteckningar.</p>
-      ) : (
-        <div className="flex flex-col" data-cy="notes-wrapper">
+      : <div className="flex flex-col" data-cy="notes-wrapper">
           {notes.map((note, index) => (
             <div key={note.id ?? index}>
               <div className="py-12 flex justify-between gap-12" data-cy={`note-${index}`}>
@@ -118,7 +117,7 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
             </div>
           ))}
         </div>
-      )}
+      }
 
       <div className="w-full mt-auto flex flex-col items-start gap-12">
         <FormControl id="new-note" className="w-full">
@@ -128,7 +127,9 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
             placeholder="Ny anteckning"
             aria-label="Ny anteckning"
             value={text}
-            onChange={(event) => setText(event.target.value)}
+            onChange={(event) => {
+              setText(event.target.value);
+            }}
             data-cy="note-input"
           />
         </FormControl>
@@ -145,18 +146,32 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
         </Button>
       </div>
 
-      <Modal show={!!editNote} className="w-[43rem]" onClose={() => setEditNote(undefined)} label="Ändra anteckning">
+      <Modal
+        show={!!editNote}
+        className="w-[43rem]"
+        onClose={() => {
+          setEditNote(undefined);
+        }}
+        label="Ändra anteckning"
+      >
         <Modal.Content>
           <Textarea
             rows={5}
             className="w-full"
             value={editText}
-            onChange={(event) => setEditText(event.target.value)}
+            onChange={(event) => {
+              setEditText(event.target.value);
+            }}
             aria-label="Anteckningstext"
           />
         </Modal.Content>
         <Modal.Footer>
-          <Button className="w-full" variant="primary" disabled={editText.trim() === ''} onClick={() => void saveEdit()}>
+          <Button
+            className="w-full"
+            variant="primary"
+            disabled={editText.trim() === ''}
+            onClick={() => void saveEdit()}
+          >
             Spara
           </Button>
         </Modal.Footer>

@@ -30,8 +30,13 @@ export const AppHeader = () => {
             <Logo variant="symbol" className="h-32" />
           </NextLink>
           <ErrandStatusLabel status={errand.status} />
-          <span className="font-bold truncate">
-            {errand.title && errand.title !== EMPTY_ERRAND_TITLE ? errand.title : 'Nytt ärende'}
+          <span className="flex min-w-0 flex-col">
+            <span className="font-bold truncate">
+              {errand.title && errand.title !== EMPTY_ERRAND_TITLE ? errand.title : 'Nytt ärende'}
+            </span>
+            {errand.errandNumber ?
+              <span className="text-small text-secondary truncate">{errand.errandNumber}</span>
+            : null}
           </span>
         </div>
       : <NextLink href={`/${locale}/oversikt`} className="no-underline" aria-label="Till översikten">

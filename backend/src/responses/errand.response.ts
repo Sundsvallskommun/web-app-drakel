@@ -108,6 +108,9 @@ export class Errand {
   id?: string;
   @IsString()
   @IsOptional()
+  errandNumber?: string;
+  @IsString()
+  @IsOptional()
   municipalityId?: string;
   @IsString()
   @IsOptional()

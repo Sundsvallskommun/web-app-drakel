@@ -12,14 +12,6 @@ import { UserController } from './controllers/user.controller';
 
 validateEnv();
 
-const app = new App([
-  IndexController,
-  UserController,
-  HealthController,
-  ErrandController,
-  MessageController,
-  MetadataController,
-  NoteController,
-]);
+const app = new App([IndexController, UserController, HealthController, ErrandController, MessageController, MetadataController, NoteController]);
 
 app.listen();

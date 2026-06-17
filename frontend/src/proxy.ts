@@ -19,7 +19,7 @@ export async function proxy(req: NextRequest) {
   }
 
   if (!isPublicPath(pathname)) {
-    const cookieName = 'connect.sid';
+    const cookieName = 'drakel.sid';
     const token = req.cookies.get(cookieName)?.value ?? '';
 
     const response = await fetch(`${envs.apiUrl}/me`, {

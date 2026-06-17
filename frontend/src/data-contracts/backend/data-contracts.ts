@@ -10,22 +10,6 @@
  * ---------------------------------------------------------------
  */
 
-export interface PermissionsResponse {
-  canEditErrands: boolean;
-}
-
-export interface User {
-  name: string;
-  username: string;
-  role: UserRoleEnum;
-  permissions: PermissionsResponse;
-}
-
-export interface UserApiResponse {
-  data: User;
-  message: string;
-}
-
 export interface ExternalTag {
   key?: string;
   value?: string;
@@ -70,6 +54,7 @@ export interface Parameter {
 
 export interface Errand {
   id?: string;
+  errandNumber?: string;
   municipalityId?: string;
   namespace?: string;
   title?: string;
@@ -154,6 +139,16 @@ export interface FindErrandsQueryDto {
   sort?: string[];
 }
 
+export interface CreateStakeholderDto {
+  role?: string;
+  firstName?: string;
+  lastName?: string;
+  organizationName?: string;
+  externalId?: string;
+  externalIdType?: string;
+  contactChannels?: ContactChannel[];
+}
+
 export interface Attachment {
   id?: string;
   fileName?: string;
@@ -173,6 +168,30 @@ export interface StakeholdersApiResponse {
   message: string;
 }
 
+export interface MessageAttachment {
+  id?: string;
+  fileName?: string;
+  mimeType?: string;
+  fileSize?: number;
+  created?: string;
+}
+
+export interface Message {
+  id?: string;
+  errandId?: string;
+  direction?: string;
+  body?: string;
+  author?: string;
+  inReplyToId?: string;
+  created?: string;
+  attachments?: MessageAttachment[];
+}
+
+export interface MessagesApiResponse {
+  data: Message[];
+  message: string;
+}
+
 export interface Lookup {
   name?: string;
   displayName?: string;
@@ -185,7 +204,23 @@ export interface LookupsApiResponse {
   message: string;
 }
 
+export interface PermissionsResponse {
+  canEditErrands: boolean;
+}
+
+export interface User {
+  name: string;
+  username: string;
+  role: UserRoleEnum;
+  permissions: PermissionsResponse;
+}
+
+export interface UserApiResponse {
+  data: User;
+  message: string;
+}
+
 export enum UserRoleEnum {
-  AppRead = 'app_read',
-  AppAdmin = 'app_admin',
+  AppRead = "app_read",
+  AppAdmin = "app_admin",
 }

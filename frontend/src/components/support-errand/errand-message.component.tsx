@@ -1,19 +1,19 @@
 'use client';
 
-import 'dayjs/locale/sv';
-
 import { downloadMessageAttachment, Message } from '@services/errand-service/errand-service';
 import { useUserStore } from '@services/user-service/user-service';
-import { Avatar, Button, cx, Label } from '@sk-web-gui/react';
+import { Avatar, Button, cx, Label, Spinner } from '@sk-web-gui/react';
 import dayjs from 'dayjs';
+import localeSv from 'dayjs/locale/sv';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { CornerUpLeft, Download, Paperclip, Reply, UserRound } from 'lucide-react';
 import { FC, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 dayjs.extend(relativeTime);
-// Activate Swedish explicitly — a bare locale import can be tree-shaken, leaving fromNow() in English.
-dayjs.locale('sv');
+// Import the locale as a VALUE and register it — a bare `import 'dayjs/locale/sv'` gets tree-shaken,
+// which left fromNow() in English.
+dayjs.locale(localeSv);
 
 /** OUTBOUND = handläggare (our side); anything else is the applicant ("Sökande"). */
 export const senderLabel = (message: Message, username?: string): string => {
@@ -67,9 +67,10 @@ const formatTimeLabel = (created: string): string => {
 const formatAbsolute = (created: string): string => dayjs(created).format('YYYY-MM-DD, HH:mm');
 
 /**
- * A single conversation message rendered as a thread row: sender avatar + a content card holding the
- * header (name · time · "Senaste"), an optional quoted reply (click to jump to it), the body and any
- * attachments. The handläggare can reply to any message via the "Svara" action.
+ * A single conversation message as a chat bubble: OUTBOUND (the handläggare's own, "mine") aligns
+ * right in a blue bubble, INBOUND (the applicant) aligns left in a neutral bubble. Above the bubble a
+ * meta row carries name · time · "Senaste" + the "Svara" action; inside it an optional quoted reply
+ * (click to jump to it) and the body; attachments render below, on the sender's side.
  */
 export const ErrandMessage: FC<{
   message: Message;
@@ -112,42 +113,37 @@ export const ErrandMessage: FC<{
   };
 
   return (
-    <article className="flex gap-12">
+    <article className={cx('flex items-start gap-12', outbound && 'flex-row-reverse')}>
       <Avatar
         size="sm"
         accent
         rounded
         color={outbound ? 'bjornstigen' : 'gronsta'}
-        className="shrink-0 mt-4"
+        className="shrink-0"
         {...(outbound ?
           { initials: getInitials(avatarSource) }
         : { imageElement: <UserRound size={18} strokeWidth={1.75} /> })}
       />
       <div
-        className={cx(
-          'min-w-0 grow flex flex-col gap-y-8 rounded-16 border-1 border-divider bg-background-content px-16 py-12 transition-shadow',
-          isHighlighted && 'ring-2 ring-vattjom-surface-primary'
-        )}
+        className={cx('flex flex-col gap-y-4 min-w-0 max-w-[min(52rem,80%)]', outbound ? 'items-end' : 'items-start')}
       >
-        <header className="flex items-start justify-between gap-12">
-          <div className="flex flex-wrap items-center gap-x-8 gap-y-2 min-w-0">
-            <span className="font-bold text-body truncate">{sender}</span>
-            {message.created ?
-              <time
-                dateTime={message.created}
-                title={formatAbsolute(message.created)}
-                className="text-small text-secondary"
-              >
-                <span className="sr-only">Skickat </span>
-                {formatTimeLabel(message.created)}
-              </time>
-            : null}
-            {isLatest ?
-              <Label rounded inverted color="vattjom" className="text-small">
-                Senaste
-              </Label>
-            : null}
-          </div>
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-2 max-w-full px-2">
+          <span className="font-bold text-body text-small truncate">{sender}</span>
+          {message.created ?
+            <time
+              dateTime={message.created}
+              title={formatAbsolute(message.created)}
+              className="text-small text-secondary"
+            >
+              <span className="sr-only">Skickat </span>
+              {formatTimeLabel(message.created)}
+            </time>
+          : null}
+          {isLatest ?
+            <Label rounded inverted color="vattjom" className="text-small">
+              Senaste
+            </Label>
+          : null}
           <Button
             variant="ghost"
             size="sm"
@@ -160,55 +156,120 @@ export const ErrandMessage: FC<{
           >
             Svara
           </Button>
-        </header>
+        </div>
 
-        {message.inReplyToId ?
-          repliedMessage ?
-            <button
-              type="button"
-              className="flex items-start gap-8 text-left rounded-8 border-l-4 border-vattjom-surface-primary bg-background-200 px-12 py-8 transition hover:brightness-95"
-              aria-label="Hoppa till det citerade meddelandet"
-              onClick={() => {
-                if (repliedMessage.id) {
-                  onJumpTo(repliedMessage.id);
-                }
-              }}
-            >
-              <CornerUpLeft size={16} className="shrink-0 mt-2 text-secondary" />
-              <span className="flex flex-col gap-y-2 min-w-0">
-                <span className="text-small font-bold">{senderLabel(repliedMessage, username)}</span>
-                <span className="text-small text-secondary line-clamp-2 break-words">
-                  {messagePreview(repliedMessage)}
-                </span>
-              </span>
-            </button>
-          : <div className="flex items-center gap-8 rounded-8 border-l-4 border-divider bg-background-200 px-12 py-8 text-small text-secondary">
-              <CornerUpLeft size={16} className="shrink-0" />
-              Svar på ett tidigare meddelande
-            </div>
-
-        : null}
-
-        <p className="m-0 whitespace-pre-wrap break-words text-body leading-relaxed">{message.body}</p>
-
-        {message.attachments?.length ?
-          <div className="flex flex-col gap-6 items-start">
-            {message.attachments.map((attachment, index) => (
-              <Button
-                key={attachment.id ?? index}
-                variant="secondary"
-                size="sm"
-                leftIcon={<Paperclip size={16} />}
-                rightIcon={<Download size={18} />}
-                disabled={!message.id || !attachment.id}
-                loading={downloadingAttachmentId === attachment.id}
-                onClick={() => void downloadAttachment(attachment.id, attachment.fileName)}
+        {/* OUTBOUND (mine) = blue bubble right; INBOUND (Sökande) = neutral bubble left. */}
+        <div
+          className={cx(
+            'flex flex-col gap-y-14 rounded-16 border-1 px-16 py-14 max-w-full shadow-sm',
+            outbound ?
+              'border-vattjom-surface-primary bg-vattjom-surface-primary text-white dark:border-vattjom-background-300 dark:bg-vattjom-background-200 dark:text-vattjom-text-primary'
+            : 'border-divider bg-background-content text-body dark:bg-background-200',
+            isHighlighted && 'ring-2 ring-warning-surface-primary'
+          )}
+        >
+          {message.inReplyToId ?
+            repliedMessage ?
+              <button
+                type="button"
+                className={cx(
+                  'group flex w-full min-w-0 items-stretch overflow-hidden rounded-12 border-1 text-left shadow-sm transition hover:shadow-md',
+                  outbound ?
+                    'border-vattjom-background-300 bg-white text-[#222226] hover:bg-vattjom-background-100'
+                  : 'border-divider bg-background-200 text-body hover:bg-background-100 dark:bg-background-content'
+                )}
+                aria-label="Hoppa till det citerade meddelandet"
+                onClick={() => {
+                  if (repliedMessage.id) {
+                    onJumpTo(repliedMessage.id);
+                  }
+                }}
               >
-                {attachment.fileName ?? 'bilaga'}
-              </Button>
-            ))}
-          </div>
-        : null}
+                <span className="w-6 shrink-0 bg-vattjom-surface-primary" aria-hidden />
+                <span className="flex min-w-0 flex-1 flex-col gap-y-4 px-12 py-10">
+                  <span
+                    className={cx(
+                      'flex items-center gap-6 text-small font-bold',
+                      outbound ? 'text-[#222226]' : 'text-body'
+                    )}
+                  >
+                    <CornerUpLeft size={16} className="shrink-0 text-vattjom-surface-primary" />
+                    <span>Svarar på {senderLabel(repliedMessage, username)}</span>
+                  </span>
+                  <span
+                    className={cx(
+                      'text-small line-clamp-2 break-words',
+                      outbound ? 'text-[#51515c]' : 'text-secondary'
+                    )}
+                  >
+                    {messagePreview(repliedMessage)}
+                  </span>
+                </span>
+              </button>
+            : <div
+                className={cx(
+                  'flex items-center gap-8 rounded-12 border-1 border-l-4 px-12 py-10 text-small shadow-sm',
+                  outbound ?
+                    'border-vattjom-background-300 border-l-vattjom-surface-primary bg-white text-[#51515c]'
+                  : 'border-divider border-l-vattjom-surface-primary bg-background-200 text-secondary dark:bg-background-content'
+                )}
+              >
+                <CornerUpLeft size={16} className="shrink-0 text-vattjom-surface-primary" />
+                Svar på ett tidigare meddelande
+              </div>
+
+          : null}
+
+          <p className="m-0 whitespace-pre-wrap break-words leading-relaxed">{message.body}</p>
+
+          {message.attachments?.length ?
+            <section
+              className={cx(
+                'flex flex-col gap-10 rounded-12 border-1 p-12 shadow-sm',
+                outbound ?
+                  'border-vattjom-background-300 bg-white text-[#222226] dark:border-divider dark:bg-background-content dark:text-body'
+                : 'border-divider bg-background-200 text-body dark:bg-background-content'
+              )}
+              aria-label="Bilagor"
+            >
+              <div className="flex items-center justify-between gap-12 text-small">
+                <div className="flex items-center gap-8 font-bold">
+                  <span className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-vattjom-background-100 text-vattjom-surface-primary">
+                    <Paperclip size={15} />
+                  </span>
+                  <span>Bilagor</span>
+                </div>
+                <span className={cx('shrink-0', outbound ? 'text-[#51515c] dark:text-secondary' : 'text-secondary')}>
+                  {message.attachments.length} {message.attachments.length === 1 ? 'fil' : 'filer'}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {message.attachments.map((attachment, index) => {
+                  const isDownloading = downloadingAttachmentId === attachment.id;
+                  return (
+                    <button
+                      key={attachment.id ?? index}
+                      type="button"
+                      disabled={!message.id || !attachment.id || isDownloading}
+                      className={cx(
+                        'flex w-full min-w-0 items-center gap-8 rounded-8 border-1 px-10 py-8 text-small transition disabled:opacity-60',
+                        outbound ?
+                          'border-vattjom-background-300 bg-background-content text-[#222226] hover:bg-vattjom-background-100 dark:border-divider dark:bg-background-100 dark:text-body dark:hover:bg-background-200'
+                        : 'border-divider bg-background-content text-body hover:bg-background-100 dark:bg-background-100 dark:hover:brightness-110'
+                      )}
+                      onClick={() => void downloadAttachment(attachment.id, attachment.fileName)}
+                    >
+                      <span className="min-w-0 flex-1 truncate text-left">{attachment.fileName ?? 'bilaga'}</span>
+                      {isDownloading ?
+                        <Spinner size={2} className="shrink-0" />
+                      : <Download size={18} className="shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          : null}
+        </div>
 
         {downloadError ?
           <p className="m-0 text-small text-error-surface-primary">{downloadError}</p>

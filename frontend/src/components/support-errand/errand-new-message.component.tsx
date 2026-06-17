@@ -2,8 +2,17 @@
 
 import { Message, postErrandMessage } from '@services/errand-service/errand-service';
 import { useUserStore } from '@services/user-service/user-service';
-import { Button, FileUpload, FormControl, FormErrorMessage, Modal, Textarea, UploadFile } from '@sk-web-gui/react';
-import { Reply, SendHorizontal, X } from 'lucide-react';
+import {
+  Button,
+  CustomOnChangeEventUploadFile,
+  FileUpload,
+  FormControl,
+  FormErrorMessage,
+  Modal,
+  Textarea,
+  UploadFile,
+} from '@sk-web-gui/react';
+import { Paperclip, Reply, SendHorizontal, X } from 'lucide-react';
 import { FC, useEffect, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { useShallow } from 'zustand/react/shallow';
@@ -40,6 +49,13 @@ interface NewMessageForm {
   message: string;
 }
 
+const uploadFileName = (file: UploadFile): string => {
+  if (file.meta.name && file.meta.ending) {
+    return `${file.meta.name}.${file.meta.ending}`;
+  }
+  return file.file.name;
+};
+
 /** Compose + send a new OUTBOUND message (text + optional attachments) to the errand conversation. */
 export const ErrandNewMessage: FC<{
   errandId: string;
@@ -72,8 +88,17 @@ export const ErrandNewMessage: FC<{
   const removeFile = (file: UploadFile) => {
     formMethods.setValue(
       'files',
-      files.filter((f) => f !== file)
+      files.filter((f) => f !== file),
+      { shouldDirty: true, shouldTouch: true, shouldValidate: true }
     );
+  };
+
+  const appendSelectedFiles = (event: CustomOnChangeEventUploadFile) => {
+    formMethods.setValue('files', [...files, ...event.target.value], {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
   };
 
   const onSubmit: SubmitHandler<NewMessageForm> = async (values) => {
@@ -139,14 +164,18 @@ export const ErrandNewMessage: FC<{
               : null}
             </FormControl>
 
-            <div className="flex flex-col gap-8 mt-10 desktop:flex-row desktop:items-center desktop:justify-between">
+            <div className="flex flex-col gap-8 mt-10 md:flex-row md:items-center md:justify-between">
               <div className="flex flex-wrap items-center gap-8 text-small">
                 <FileUpload.Button
-                  {...formMethods.register('files')}
-                  appendFiles={files}
+                  name="files"
+                  appendToContext={false}
                   maxFileSizeMB={MAX_ATTACHMENT_FILE_SIZE_MB}
+                  onChange={appendSelectedFiles}
                   onInvalid={(error) => {
                     formMethods.setError('files', { type: 'manual', message: error });
+                  }}
+                  onValid={() => {
+                    formMethods.clearErrors('files');
                   }}
                 />
                 <span className="text-secondary">Max {MAX_ATTACHMENT_FILE_SIZE_MB} MB per fil.</span>
@@ -169,25 +198,40 @@ export const ErrandNewMessage: FC<{
           </div>
 
           {files.length ?
-            <div className="flex flex-col gap-16">
-              <h3 className="text-large font-normal m-0">Valda filer</h3>
-              <FileUpload.List name="files" showBorder>
+            <section className="flex flex-col gap-8" aria-label="Valda bilagor">
+              <div className="flex items-baseline justify-between gap-12">
+                <h3 className="text-small font-bold m-0">Valda bilagor</h3>
+                <span className="text-small text-secondary">
+                  {files.length} / {MAX_ATTACHMENT_FILES} filer
+                </span>
+              </div>
+              <ul className="m-0 w-full rounded-8 border-1 border-divider bg-background-100 p-8 grid grid-cols-1 gap-8 md:grid-cols-2">
                 {files.map((file, index) => (
-                  <FileUpload.ListItem
+                  <li
                     key={`${file.id ?? file.file.name}-${index}`}
-                    className="break-all"
-                    index={index}
-                    file={file}
-                    actionsProps={{
-                      showRemove: true,
-                      onRemove: () => {
+                    className="min-w-0 rounded-8 border-1 border-divider bg-background-content px-10 py-8 flex items-center gap-8"
+                  >
+                    <Paperclip size={16} className="shrink-0 text-secondary" />
+                    <span className="min-w-0 flex-1 truncate text-small" title={uploadFileName(file)}>
+                      {uploadFileName(file)}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="tertiary"
+                      size="sm"
+                      iconButton
+                      className="shrink-0"
+                      aria-label={`Ta bort ${uploadFileName(file)}`}
+                      onClick={() => {
                         removeFile(file);
-                      },
-                    }}
-                  />
+                      }}
+                    >
+                      <X size={16} />
+                    </Button>
+                  </li>
                 ))}
-              </FileUpload.List>
-            </div>
+              </ul>
+            </section>
           : null}
 
           <div className="flex flex-col gap-8 items-end">
@@ -195,7 +239,7 @@ export const ErrandNewMessage: FC<{
               type="submit"
               color="vattjom"
               size="md"
-              className="w-full desktop:w-fit"
+              className="w-full md:w-fit"
               rightIcon={<SendHorizontal />}
               loading={formMethods.formState.isSubmitting}
               disabled={isOverLimit || isOverFileLimit}

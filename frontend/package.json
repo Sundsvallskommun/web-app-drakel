@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "predev": "yarn generate:middleware-envs",
-    "dev": "cross-env TEST=true next dev",
+    "dev": "cross-env TEST=true sh -c 'next dev -p ${1:-${PORT:-3000}}' --",
     "prebuild": "yarn generate:middleware-envs",
     "build": "next build",
     "prebuild:test": "yarn generate:middleware-envs",

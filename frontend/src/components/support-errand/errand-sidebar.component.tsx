@@ -54,7 +54,7 @@ export const ErrandSidebar: FC<{ sections: SidebarSection[] }> = ({ sections }) 
                 className="relative"
                 leftIcon={<Icon />}
               >
-                {section.badge ? (
+                {section.badge ?
                   <Badge
                     className="absolute -top-10 -right-10"
                     rounded
@@ -63,7 +63,7 @@ export const ErrandSidebar: FC<{ sections: SidebarSection[] }> = ({ sections }) 
                     size="sm"
                     counter={section.badge > 99 ? '99+' : section.badge}
                   />
-                ) : null}
+                : null}
               </Button>
             );
           })}

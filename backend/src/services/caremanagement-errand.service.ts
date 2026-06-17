@@ -4,9 +4,12 @@ import { caremanagementUrl } from '@utils/caremanagement-url';
 
 import { Errand, FinancialAssistanceView, FindErrandsResponse, PatchErrand } from '@/data-contracts/caremanagement/data-contracts';
 import { CreateErrandDto, FindErrandsQueryDto, PatchErrandDto } from '@/dtos/errand.dto';
+import { HttpException } from '@/exceptions/HttpException';
 
 /** Extracts the errand id (last path segment) from a caremanagement Location header. */
 const errandIdFromLocation = (location?: string): string | undefined => location?.split('/').filter(Boolean).pop();
+const isUuid = (value: string): boolean => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+const filterString = (value: string): string => value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
 class CaremanagementErrandService {
   private apiService = new CaremanagementApiService();
@@ -17,6 +20,23 @@ class CaremanagementErrandService {
 
   async getErrand(errandId: string): Promise<ApiResponse<Errand>> {
     return this.apiService.get<Errand>({ url: caremanagementUrl('errands', errandId) });
+  }
+
+  async getErrandByIdentifier(identifier: string): Promise<ApiResponse<Errand>> {
+    if (isUuid(identifier)) {
+      return this.getErrand(identifier);
+    }
+
+    const res = await this.findErrands({
+      filter: `errandNumber:'${filterString(identifier)}'`,
+      page: 0,
+      size: 1,
+    });
+    const errand = res.data.errands?.[0];
+    if (!errand) {
+      throw new HttpException(404, 'Not found');
+    }
+    return { data: errand, message: 'success' };
   }
 
   /**

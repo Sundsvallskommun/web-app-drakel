@@ -132,7 +132,7 @@ export const ErrandInfoPanel: FC<ErrandInfoPanelProps> = ({
           <span className="font-bold">Senast ändrad:</span> {formatDate(errand.modified)}
         </span>
         <span className="break-words">
-          <span className="font-bold">Ärende-id:</span> {errand.id ?? '—'}
+          <span className="font-bold">Ärendenummer:</span> {errand.errandNumber ?? '—'}
         </span>
         <span>
           <span className="font-bold">Ärendetyp:</span> {errand.typeSlug ?? '—'}

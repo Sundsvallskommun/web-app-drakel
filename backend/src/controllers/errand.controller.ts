@@ -48,12 +48,12 @@ export class ErrandController {
     return { data: res.data, message: 'success' };
   }
 
-  @Get('/errands/:errandId')
-  @OpenAPI({ summary: 'Fetch a single errand' })
+  @Get('/errands/:identifier')
+  @OpenAPI({ summary: 'Fetch a single errand by id or errand number' })
   @ResponseSchema(ErrandApiResponse)
   @UseBefore(authMiddleware)
-  async getErrand(@Param('errandId') errandId: string) {
-    const res = await this.errandService.getErrand(errandId);
+  async getErrand(@Param('identifier') identifier: string) {
+    const res = await this.errandService.getErrandByIdentifier(identifier);
     return { data: res.data, message: 'success' };
   }
 
