@@ -49,8 +49,6 @@ const columns: Column[] = [
       </div>
     ),
   },
-  { label: 'Kategori', render: (errand) => errand.category ?? '—' },
-  { label: 'Typ', render: (errand) => errand.type ?? '—' },
   {
     label: 'Registrerad',
     render: (errand) => (

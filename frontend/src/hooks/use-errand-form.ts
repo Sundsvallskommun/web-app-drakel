@@ -5,8 +5,6 @@ import { updateErrand } from '@services/errand-service/errand-service';
 import { useEffect, useState } from 'react';
 
 export interface ErrandForm {
-  category: string;
-  type: string;
   contactReason: string;
   description: string;
   assignedUserId: string;
@@ -15,8 +13,6 @@ export interface ErrandForm {
 }
 
 const fromErrand = (errand?: Errand): ErrandForm => ({
-  category: errand?.category ?? '',
-  type: errand?.type ?? '',
   contactReason: errand?.contactReason ?? '',
   description: errand?.description ?? '',
   assignedUserId: errand?.assignedUserId ?? '',
@@ -52,8 +48,6 @@ export const useErrandForm = (errand: Errand | undefined, onSaved: () => void) =
     setSaving(true);
     setError(undefined);
     const patch: PatchErrandDto = {
-      category: form.category || undefined,
-      type: form.type || undefined,
       contactReason: form.contactReason || undefined,
       description: form.description || undefined,
       assignedUserId: form.assignedUserId || undefined,

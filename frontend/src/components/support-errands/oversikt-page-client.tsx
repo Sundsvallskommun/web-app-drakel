@@ -38,19 +38,13 @@ export const OversiktPageClient = () => {
       if (selectedStatus && errand.status !== selectedStatus) {
         return false;
       }
-      if (filters.category && errand.category !== filters.category) {
-        return false;
-      }
-      if (filters.type && errand.type !== filters.type) {
-        return false;
-      }
       if (filters.priority && errand.priority !== filters.priority) {
         return false;
       }
       if (!search) {
         return true;
       }
-      return [errand.title, errand.errandNumber, errand.category, errand.type, errand.contactReason]
+      return [errand.title, errand.errandNumber, errand.contactReason]
         .filter((value): value is string => Boolean(value))
         .some((value) => value.toLowerCase().includes(search));
     });

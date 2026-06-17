@@ -1,6 +1,5 @@
 'use client';
 
-import { useLookups } from '@hooks/use-lookups';
 import { Button, FormControl, FormLabel, Input, Select } from '@sk-web-gui/react';
 import { ListFilter } from 'lucide-react';
 import NextLink from 'next/link';
@@ -8,12 +7,10 @@ import { useParams } from 'next/navigation';
 import { FC, useState } from 'react';
 
 export interface ErrandFilters {
-  category: string;
-  type: string;
   priority: string;
 }
 
-export const emptyFilters: ErrandFilters = { category: '', type: '', priority: '' };
+export const emptyFilters: ErrandFilters = { priority: '' };
 
 const PRIORITIES = [
   { value: 'LOW', label: 'Låg' },
@@ -31,8 +28,6 @@ interface ErrandsFilterProps {
 /** Overview filter row: search + a collapsible set of dropdown filters, plus the "new errand" action. */
 export const ErrandsFilter: FC<ErrandsFilterProps> = ({ query, onQueryChange, filters, onFilterChange }) => {
   const { locale } = useParams<{ locale: string }>();
-  const { lookups: categories } = useLookups('CATEGORY');
-  const { lookups: types } = useLookups('TYPE');
   const [show, setShow] = useState<boolean>(false);
 
   const activeCount = Object.values(filters).filter(Boolean).length;
@@ -50,7 +45,7 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({ query, onQueryChange, fi
             onChange={(event) => {
               onQueryChange(event.target.value);
             }}
-            placeholder="Sök på titel, ärendenummer, kategori eller typ…"
+            placeholder="Sök på titel eller ärendenummer…"
           />
         </div>
         <div className="flex gap-16">
@@ -75,42 +70,6 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({ query, onQueryChange, fi
 
       {show && (
         <div className="flex flex-wrap gap-16 p-16 bg-background-200 rounded-12">
-          <FormControl id="filter-category" className="min-w-[20rem]">
-            <FormLabel>Kategori</FormLabel>
-            <Select
-              className="w-full"
-              value={filters.category}
-              onChange={(event) => {
-                onFilterChange('category', event.target.value);
-              }}
-            >
-              <Select.Option value="">Alla</Select.Option>
-              {categories.map((lookup) => (
-                <Select.Option key={lookup.name} value={lookup.name ?? ''}>
-                  {lookup.displayName ?? lookup.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl id="filter-type" className="min-w-[20rem]">
-            <FormLabel>Ärendetyp</FormLabel>
-            <Select
-              className="w-full"
-              value={filters.type}
-              onChange={(event) => {
-                onFilterChange('type', event.target.value);
-              }}
-            >
-              <Select.Option value="">Alla</Select.Option>
-              {types.map((lookup) => (
-                <Select.Option key={lookup.name} value={lookup.name ?? ''}>
-                  {lookup.displayName ?? lookup.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </FormControl>
-
           <FormControl id="filter-priority" className="min-w-[20rem]">
             <FormLabel>Prioritet</FormLabel>
             <Select
