@@ -1,10 +1,14 @@
 'use client';
 
-import { postErrandMessage } from '@services/errand-service/errand-service';
+import { Message, postErrandMessage } from '@services/errand-service/errand-service';
+import { useUserStore } from '@services/user-service/user-service';
 import { Button, FileUpload, FormControl, FormErrorMessage, Modal, Textarea, UploadFile } from '@sk-web-gui/react';
-import { SendHorizontal } from 'lucide-react';
-import { FC, useState } from 'react';
+import { Reply, SendHorizontal, X } from 'lucide-react';
+import { FC, useEffect, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm, useWatch } from 'react-hook-form';
+import { useShallow } from 'zustand/react/shallow';
+
+import { messagePreview, senderLabel } from './errand-message.component';
 
 // Matches the backend MESSAGE_BODY_MAX_LENGTH / caremanagement CreateMessage.body limit.
 const MESSAGE_CHARACTER_LIMIT = 8192;
@@ -37,15 +41,29 @@ interface NewMessageForm {
 }
 
 /** Compose + send a new OUTBOUND message (text + optional attachments) to the errand conversation. */
-export const ErrandNewMessage: FC<{ errandId: string; onSent: () => void }> = ({ errandId, onSent }) => {
+export const ErrandNewMessage: FC<{
+  errandId: string;
+  onSent: () => void;
+  /** When set, the message is posted as a reply to this message (its id is sent as inReplyToId). */
+  replyTo?: Message;
+  onCancelReply: () => void;
+}> = ({ errandId, onSent, replyTo, onCancelReply }) => {
   const formMethods = useForm<NewMessageForm>({ defaultValues: { files: [], message: '' }, mode: 'onChange' });
   const [showFileTypes, setShowFileTypes] = useState<boolean>(false);
+  const username = useUserStore(useShallow((state) => state.user.username));
 
   // useWatch (not formMethods.watch()) so the strict React-Compiler lint rule stays happy.
   const files = useWatch({ control: formMethods.control, name: 'files' });
   const message = useWatch({ control: formMethods.control, name: 'message' }) ?? '';
   const isOverLimit = message.length > MESSAGE_CHARACTER_LIMIT;
   const isOverFileLimit = files.length > MAX_ATTACHMENT_FILES;
+
+  // Move focus into the textarea when the handläggare picks a message to reply to.
+  useEffect(() => {
+    if (replyTo) {
+      formMethods.setFocus('message');
+    }
+  }, [replyTo, formMethods]);
 
   const messageRegister = formMethods.register('message', {
     validate: (value) => value.trim().length > 0 || 'Skriv ett meddelande',
@@ -65,7 +83,8 @@ export const ErrandNewMessage: FC<{ errandId: string; onSent: () => void }> = ({
     const result = await postErrandMessage(
       errandId,
       values.message.trim(),
-      values.files.map((file) => file.file)
+      values.files.map((file) => file.file),
+      replyTo?.id
     );
     if (result.error) {
       formMethods.setError('root', { type: 'manual', message: 'Det gick inte att skicka meddelandet' });
@@ -79,12 +98,32 @@ export const ErrandNewMessage: FC<{ errandId: string; onSent: () => void }> = ({
     <>
       <FormProvider {...formMethods}>
         <form className="flex flex-col gap-14" onSubmit={(event) => void formMethods.handleSubmit(onSubmit)(event)}>
+          {replyTo ?
+            <div className="flex items-start gap-8 rounded-12 border-l-4 border-vattjom-surface-primary bg-background-200 px-12 py-8">
+              <Reply size={16} className="shrink-0 mt-2 text-secondary" />
+              <div className="flex flex-col gap-y-2 min-w-0 grow">
+                <span className="text-small font-bold">Svarar på {senderLabel(replyTo, username)}</span>
+                <span className="text-small text-secondary line-clamp-2 break-words">{messagePreview(replyTo)}</span>
+              </div>
+              <Button
+                variant="tertiary"
+                size="sm"
+                iconButton
+                className="shrink-0"
+                aria-label="Avbryt svar"
+                onClick={onCancelReply}
+              >
+                <X size={18} />
+              </Button>
+            </div>
+          : null}
+
           <div className="flex flex-col">
             <FormControl className="w-full" invalid={isOverLimit}>
               <Textarea
                 {...messageRegister}
                 aria-label="Nytt meddelande"
-                placeholder="Skriv ett meddelande"
+                placeholder={replyTo ? 'Skriv ett svar' : 'Skriv ett meddelande'}
                 rows={3}
                 className="w-full rounded-12"
                 readOnly={formMethods.formState.isSubmitting}
@@ -161,7 +200,7 @@ export const ErrandNewMessage: FC<{ errandId: string; onSent: () => void }> = ({
               loading={formMethods.formState.isSubmitting}
               disabled={isOverLimit || isOverFileLimit}
             >
-              Skicka
+              {replyTo ? 'Skicka svar' : 'Skicka'}
             </Button>
             {formMethods.formState.errors.root ?
               <FormErrorMessage>{formMethods.formState.errors.root.message}</FormErrorMessage>

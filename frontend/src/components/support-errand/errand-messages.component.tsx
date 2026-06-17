@@ -1,16 +1,19 @@
 'use client';
 
 import { useErrandMessages } from '@hooks/use-errand-messages';
+import { Message } from '@services/errand-service/errand-service';
 import { Button, Divider, Spinner } from '@sk-web-gui/react';
 import dayjs from 'dayjs';
 import { ArrowDown, MessageSquare } from 'lucide-react';
-import { FC, UIEvent, useEffect, useRef, useState } from 'react';
+import { FC, UIEvent, useEffect, useMemo, useRef, useState } from 'react';
 
 import { ErrandMessage } from './errand-message.component';
 import { ErrandNewMessage } from './errand-new-message.component';
 
 // Messages are revealed in pages so a long thread doesn't render all at once.
 const PAGE_SIZE = 24;
+// How long a jumped-to message stays highlighted after "Hoppa till".
+const HIGHLIGHT_DURATION_MS = 2000;
 
 const formatDateDivider = (created?: string): string => {
   if (!created) {
@@ -30,7 +33,21 @@ export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
   const { messages, isLoading, error, refresh } = useErrandMessages(errandId);
   const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
   const [showScrollButton, setShowScrollButton] = useState<boolean>(false);
+  const [replyTo, setReplyTo] = useState<Message>();
+  const [highlightId, setHighlightId] = useState<string>();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Resolve a reply's parent from the full thread (not the revealed page), so quotes render even when
+  // the quoted message is still paged out.
+  const messagesById = useMemo(() => {
+    const map = new Map<string, Message>();
+    for (const message of messages) {
+      if (message.id) {
+        map.set(message.id, message);
+      }
+    }
+    return map;
+  }, [messages]);
 
   const visible = messages.slice(Math.max(messages.length - visibleCount, 0));
   const hasMore = visibleCount < messages.length;
@@ -50,14 +67,49 @@ export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
     setShowScrollButton(distanceToBottom > 80);
   };
 
+  // Stick to the newest message whenever the thread grows (initial load + after sending).
   useEffect(() => {
     requestAnimationFrame(() => {
       scrollToBottom('auto');
     });
   }, [messages.length]);
 
+  // Scroll to (and briefly highlight) a jumped-to message once it is in the DOM. Re-runs when the
+  // revealed page grows, so a quote pointing at a paged-out message still lands.
+  useEffect(() => {
+    if (!highlightId) {
+      return;
+    }
+    const target = scrollAreaRef.current?.querySelector(`#message-${CSS.escape(highlightId)}`);
+    if (!target) {
+      return;
+    }
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const timer = setTimeout(() => {
+      setHighlightId(undefined);
+    }, HIGHLIGHT_DURATION_MS);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [highlightId, visibleCount]);
+
+  const jumpToMessage = (messageId: string) => {
+    const index = messages.findIndex((message) => message.id === messageId);
+    if (index === -1) {
+      return;
+    }
+    // Reveal enough of the thread for the target to exist before the scroll effect runs.
+    setVisibleCount((prev) => Math.max(prev, messages.length - index));
+    setHighlightId(messageId);
+  };
+
+  const handleSent = () => {
+    refresh();
+    setReplyTo(undefined);
+  };
+
   return (
-    <div className="rounded-12 border-1 border-divider bg-background-content flex flex-col overflow-hidden h-[min(72vh,760px)] min-h-[560px]">
+    <div className="rounded-16 border-1 border-divider bg-background-content flex flex-col overflow-hidden h-[min(72vh,760px)] min-h-[560px]">
       <div className="border-b-1 border-divider px-20 py-16 desktop:px-32">
         <div className="flex flex-col gap-8 desktop:flex-row desktop:items-center desktop:justify-between">
           <div>
@@ -108,7 +160,7 @@ export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
                 <li
                   id={message.id ? `message-${message.id}` : undefined}
                   key={message.id ?? index}
-                  className="flex flex-col gap-y-12"
+                  className="flex flex-col gap-y-12 scroll-mt-16"
                 >
                   {(
                     index === 0 || formatDateDivider(message.created) !== formatDateDivider(visible[index - 1]?.created)
@@ -121,7 +173,15 @@ export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
                       <Divider className="m-0 grow" />
                     </div>
                   : null}
-                  <ErrandMessage message={message} errandId={errandId} isLatest={message.id === latestMessageId} />
+                  <ErrandMessage
+                    message={message}
+                    errandId={errandId}
+                    isLatest={message.id === latestMessageId}
+                    isHighlighted={message.id === highlightId}
+                    repliedMessage={message.inReplyToId ? messagesById.get(message.inReplyToId) : undefined}
+                    onReply={setReplyTo}
+                    onJumpTo={jumpToMessage}
+                  />
                 </li>
               ))}
             </ul>
@@ -150,7 +210,14 @@ export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
       </div>
 
       <div className="border-t-1 border-divider bg-background-content px-20 py-16 desktop:px-32">
-        <ErrandNewMessage errandId={errandId} onSent={refresh} />
+        <ErrandNewMessage
+          errandId={errandId}
+          replyTo={replyTo}
+          onCancelReply={() => {
+            setReplyTo(undefined);
+          }}
+          onSent={handleSent}
+        />
       </div>
     </div>
   );

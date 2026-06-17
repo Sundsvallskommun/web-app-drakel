@@ -16,6 +16,8 @@ interface CaremanagementMessage {
   direction: 'INBOUND' | 'OUTBOUND';
   body: string;
   author?: string;
+  /** Id of the message being replied to; caremanagement requires it to reference a message on the same errand. */
+  inReplyToId?: string;
 }
 
 class CaremanagementMessageService {

@@ -29,6 +29,28 @@ describe('MessageController.createMessage', () => {
     expect(createMessage).toHaveBeenCalledWith('errand-1', { direction: 'OUTBOUND', body: 'Hej', author: 'caseworker01' }, []);
   });
 
+  it('forwards inReplyToId when the message is a reply', async () => {
+    const createMessage = vi.spyOn(CaremanagementMessageService.prototype, 'createMessage').mockResolvedValue({ data: null, message: 'success' });
+    const controller = new MessageController();
+
+    await expect(controller.createMessage(request, 'errand-1', 'Svar', [], 'message-42')).resolves.toEqual({ data: null, message: 'success' });
+
+    expect(createMessage).toHaveBeenCalledWith(
+      'errand-1',
+      { direction: 'OUTBOUND', body: 'Svar', author: 'caseworker01', inReplyToId: 'message-42' },
+      [],
+    );
+  });
+
+  it('omits a blank inReplyToId so the message is posted as a non-reply', async () => {
+    const createMessage = vi.spyOn(CaremanagementMessageService.prototype, 'createMessage').mockResolvedValue({ data: null, message: 'success' });
+    const controller = new MessageController();
+
+    await expect(controller.createMessage(request, 'errand-1', 'Hej', [], '   ')).resolves.toEqual({ data: null, message: 'success' });
+
+    expect(createMessage).toHaveBeenCalledWith('errand-1', { direction: 'OUTBOUND', body: 'Hej', author: 'caseworker01' }, []);
+  });
+
   it('rejects an empty message body before calling caremanagement', async () => {
     const createMessage = vi.spyOn(CaremanagementMessageService.prototype, 'createMessage').mockResolvedValue({ data: null, message: 'success' });
     const controller = new MessageController();
