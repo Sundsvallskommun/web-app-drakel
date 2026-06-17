@@ -80,7 +80,7 @@ export const getErrands = (query: FindErrandsQueryDto = {}): Promise<ServiceResp
     .catch(toServiceError);
 };
 
-/** Fetches a single errand by id. The errand includes its embedded stakeholders. */
+/** Fetches a single errand by id or errand number. The errand includes its embedded stakeholders. */
 export const getErrand = (errandId: string): Promise<ServiceResponse<Errand>> => {
   return apiService
     .get<ApiResponse<Errand>>(`errands/${errandId}`)

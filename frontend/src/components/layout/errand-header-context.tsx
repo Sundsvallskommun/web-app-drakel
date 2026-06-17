@@ -4,6 +4,7 @@ import { createContext, useContext } from 'react';
 
 export interface HeaderErrand {
   id?: string;
+  errandNumber?: string;
   title?: string;
   status?: string;
 }

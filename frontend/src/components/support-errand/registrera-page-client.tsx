@@ -23,11 +23,12 @@ export const RegistreraPageClient = () => {
     initiated.current = true;
 
     void initiateErrand().then((result) => {
-      if (result.error || !result.data?.id) {
+      const routeSegment = result.data?.errandNumber ?? result.data?.id;
+      if (result.error || !routeSegment) {
         setError('Det gick inte att initiera ett nytt ärende');
         return;
       }
-      router.replace(`/${locale}/arende/${result.data.id}`);
+      router.replace(`/${locale}/arende/${encodeURIComponent(routeSegment)}`);
     });
   }, [router, locale]);
 

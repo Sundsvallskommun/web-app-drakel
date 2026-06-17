@@ -24,6 +24,7 @@ interface Column {
 }
 
 const formatDate = (value?: string): string => (value ? dayjs(value).format('YYYY-MM-DD, HH:mm') : '');
+const errandRouteSegment = (errand: Errand): string | undefined => errand.errandNumber ?? errand.id;
 
 const columns: Column[] = [
   { label: 'Status', render: (errand) => <ErrandStatusLabel status={errand.status} /> },
@@ -44,7 +45,7 @@ const columns: Column[] = [
     render: (errand) => (
       <div className="max-w-[280px]">
         <div className="font-bold truncate">{errand.title ?? '(utan titel)'}</div>
-        <div className="text-small truncate">{errand.id}</div>
+        <div className="text-small text-secondary truncate">{errand.errandNumber ?? '—'}</div>
       </div>
     ),
   },
@@ -67,8 +68,9 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({ errands, isLoading, error,
   const { locale } = useParams<{ locale: string }>();
 
   const openErrand = (errand: Errand) => {
-    if (errand.id) {
-      router.push(`/${locale}/arende/${errand.id}`);
+    const routeSegment = errandRouteSegment(errand);
+    if (routeSegment) {
+      router.push(`/${locale}/arende/${encodeURIComponent(routeSegment)}`);
     }
   };
 
@@ -106,7 +108,7 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({ errands, isLoading, error,
                   key={errand.id}
                   tabIndex={0}
                   role="button"
-                  aria-label={`Ärende ${errand.title ?? errand.id}, öppna ärende`}
+                  aria-label={`Ärende ${errand.title ?? errand.errandNumber ?? 'utan titel'}, öppna ärende`}
                   className="cursor-pointer"
                   onClick={() => {
                     openErrand(errand);

@@ -50,7 +50,7 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({ query, onQueryChange, fi
             onChange={(event) => {
               onQueryChange(event.target.value);
             }}
-            placeholder="Sök på titel, kategori, typ eller id…"
+            placeholder="Sök på titel, ärendenummer, kategori eller typ…"
           />
         </div>
         <div className="flex gap-16">

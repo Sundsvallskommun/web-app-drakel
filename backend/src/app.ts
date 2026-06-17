@@ -190,6 +190,9 @@ class App {
 
     this.app.use(
       session({
+        // Unique cookie name so drakel's session doesn't clash with other apps running on
+        // localhost (cookies ignore the port, so a shared `connect.sid` would get clobbered).
+        name: 'drakel.sid',
         secret: SECRET_KEY,
         resave: false,
         saveUninitialized: false,

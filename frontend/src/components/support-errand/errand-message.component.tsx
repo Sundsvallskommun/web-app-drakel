@@ -1,19 +1,19 @@
 'use client';
 
-import 'dayjs/locale/sv';
-
 import { downloadMessageAttachment, Message } from '@services/errand-service/errand-service';
 import { useUserStore } from '@services/user-service/user-service';
-import { Avatar, Button, cx, Label } from '@sk-web-gui/react';
+import { Avatar, Button, cx, Label, Spinner } from '@sk-web-gui/react';
 import dayjs from 'dayjs';
+import localeSv from 'dayjs/locale/sv';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { CornerUpLeft, Download, Paperclip, Reply, UserRound } from 'lucide-react';
 import { FC, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 dayjs.extend(relativeTime);
-// Activate Swedish explicitly — a bare locale import can be tree-shaken, leaving fromNow() in English.
-dayjs.locale('sv');
+// Import the locale as a VALUE and register it — a bare `import 'dayjs/locale/sv'` gets tree-shaken,
+// which left fromNow() in English.
+dayjs.locale(localeSv);
 
 /** OUTBOUND = handläggare (our side); anything else is the applicant ("Sökande"). */
 export const senderLabel = (message: Message, username?: string): string => {
@@ -161,10 +161,10 @@ export const ErrandMessage: FC<{
         {/* OUTBOUND (mine) = blue bubble right; INBOUND (Sökande) = neutral bubble left. */}
         <div
           className={cx(
-            'flex flex-col gap-y-8 rounded-16 px-16 py-12 max-w-full',
+            'flex flex-col gap-y-12 rounded-16 border-1 px-16 py-12 max-w-full shadow-sm',
             outbound ?
-              'bg-vattjom-surface-primary text-white'
-            : 'bg-background-content text-body border-1 border-divider',
+              'border-vattjom-surface-primary bg-vattjom-surface-primary text-white dark:border-vattjom-background-300 dark:bg-vattjom-background-200 dark:text-vattjom-text-primary'
+            : 'border-divider bg-background-content text-body dark:bg-background-200',
             isHighlighted && 'ring-2 ring-warning-surface-primary'
           )}
         >
@@ -173,8 +173,10 @@ export const ErrandMessage: FC<{
               <button
                 type="button"
                 className={cx(
-                  'flex items-start gap-8 text-left rounded-8 border-l-4 px-12 py-8 transition hover:brightness-95',
-                  outbound ? 'border-white/60 bg-white/15' : 'border-vattjom-surface-primary bg-background-200'
+                  'flex items-start gap-8 rounded-8 border-l-4 px-10 py-8 text-left transition',
+                  outbound ?
+                    'border-vattjom-surface-primary bg-white text-[#222226] hover:bg-vattjom-background-100'
+                  : 'border-vattjom-surface-primary bg-vattjom-background-100 text-body hover:bg-vattjom-background-200 dark:bg-background-content'
                 )}
                 aria-label="Hoppa till det citerade meddelandet"
                 onClick={() => {
@@ -185,12 +187,15 @@ export const ErrandMessage: FC<{
               >
                 <CornerUpLeft
                   size={16}
-                  className={cx('shrink-0 mt-2', outbound ? 'text-white/80' : 'text-secondary')}
+                  className={cx('shrink-0 mt-1', outbound ? 'text-vattjom-surface-primary' : 'text-secondary')}
                 />
-                <span className="flex flex-col gap-y-2 min-w-0">
+                <span className="flex min-w-0 flex-col gap-y-2">
                   <span className="text-small font-bold">{senderLabel(repliedMessage, username)}</span>
                   <span
-                    className={cx('text-small line-clamp-2 break-words', outbound ? 'text-white/80' : 'text-secondary')}
+                    className={cx(
+                      'text-small line-clamp-2 break-words',
+                      outbound ? 'text-[#51515c]' : 'text-secondary'
+                    )}
                   >
                     {messagePreview(repliedMessage)}
                   </span>
@@ -198,10 +203,10 @@ export const ErrandMessage: FC<{
               </button>
             : <div
                 className={cx(
-                  'flex items-center gap-8 rounded-8 border-l-4 px-12 py-8 text-small',
+                  'flex items-center gap-8 rounded-8 border-l-4 px-10 py-8 text-small',
                   outbound ?
-                    'border-white/40 bg-white/15 text-white/80'
-                  : 'border-divider bg-background-200 text-secondary'
+                    'border-vattjom-surface-primary bg-white text-[#51515c]'
+                  : 'border-vattjom-surface-primary bg-vattjom-background-100 text-secondary dark:bg-background-content'
                 )}
               >
                 <CornerUpLeft size={16} className="shrink-0" />
@@ -211,30 +216,48 @@ export const ErrandMessage: FC<{
           : null}
 
           <p className="m-0 whitespace-pre-wrap break-words leading-relaxed">{message.body}</p>
-        </div>
 
-        {message.attachments?.length ?
-          <div
-            className={cx('flex flex-wrap gap-6 max-w-full', outbound ? 'justify-end' : 'justify-start')}
-            aria-label="Bilagor"
-          >
-            {message.attachments.map((attachment, index) => (
-              <Button
-                key={attachment.id ?? index}
-                variant="secondary"
-                size="sm"
-                className="min-w-0 max-w-full"
-                leftIcon={<Paperclip size={16} />}
-                rightIcon={<Download size={18} />}
-                disabled={!message.id || !attachment.id}
-                loading={downloadingAttachmentId === attachment.id}
-                onClick={() => void downloadAttachment(attachment.id, attachment.fileName)}
-              >
-                <span className="truncate">{attachment.fileName ?? 'bilaga'}</span>
-              </Button>
-            ))}
-          </div>
-        : null}
+          {message.attachments?.length ?
+            <section
+              className={cx(
+                'flex flex-col gap-8 rounded-12 border-1 p-10',
+                outbound ?
+                  'border-white/25 bg-white/15 dark:border-divider dark:bg-background-content'
+                : 'border-divider bg-background-100 dark:bg-background-content'
+              )}
+              aria-label="Bilagor"
+            >
+              <div className="flex items-center gap-6 text-small font-bold">
+                <Paperclip size={16} className="shrink-0" />
+                <span>Bilagor</span>
+              </div>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {message.attachments.map((attachment, index) => {
+                  const isDownloading = downloadingAttachmentId === attachment.id;
+                  return (
+                    <button
+                      key={attachment.id ?? index}
+                      type="button"
+                      disabled={!message.id || !attachment.id || isDownloading}
+                      className={cx(
+                        'flex w-full min-w-0 items-center gap-8 rounded-8 border-1 px-10 py-8 text-small transition disabled:opacity-60',
+                        outbound ?
+                          'border-white/25 bg-white/15 text-white hover:bg-white/25 dark:border-divider dark:bg-background-100 dark:text-body dark:hover:bg-background-200'
+                        : 'border-divider bg-background-content text-body hover:bg-background-200 dark:bg-background-100 dark:hover:brightness-110'
+                      )}
+                      onClick={() => void downloadAttachment(attachment.id, attachment.fileName)}
+                    >
+                      <span className="min-w-0 flex-1 truncate text-left">{attachment.fileName ?? 'bilaga'}</span>
+                      {isDownloading ?
+                        <Spinner size={2} className="shrink-0" />
+                      : <Download size={18} className="shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          : null}
+        </div>
 
         {downloadError ?
           <p className="m-0 text-small text-error-surface-primary">{downloadError}</p>

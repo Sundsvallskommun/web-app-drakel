@@ -109,7 +109,7 @@ export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
   };
 
   return (
-    <div className="rounded-16 border-1 border-divider bg-background-content flex flex-col overflow-hidden h-[min(72vh,760px)] min-h-[560px]">
+    <div className="rounded-16 border-1 border-divider bg-background-content flex flex-col overflow-hidden">
       <div className="border-b-1 border-divider px-20 py-16 desktop:px-32">
         <div className="flex flex-col gap-8 desktop:flex-row desktop:items-center desktop:justify-between">
           <div>
@@ -124,19 +124,19 @@ export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
         </div>
       </div>
 
-      <div className="relative flex-1 min-h-0 bg-background-100">
+      <div className="relative min-h-[260px] bg-background-100">
         {isLoading ?
-          <div className="h-full flex items-center justify-center">
+          <div className="min-h-[260px] flex items-center justify-center">
             <Spinner size={3} />
           </div>
         : error ?
-          <div className="h-full flex items-center justify-center px-20 text-center">
+          <div className="min-h-[260px] flex items-center justify-center px-20 text-center">
             <p className="m-0">Det gick inte att hämta meddelanden ({String(error)})</p>
           </div>
         : messages.length ?
           <div
             ref={scrollAreaRef}
-            className="h-full overflow-y-auto px-16 py-20 desktop:px-32"
+            className="max-h-[min(44vh,420px)] overflow-y-auto px-16 py-20 desktop:px-32"
             onScroll={updateScrollButton}
             role="log"
             aria-label="Ärendemeddelanden"
@@ -186,7 +186,7 @@ export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
               ))}
             </ul>
           </div>
-        : <div className="h-full flex flex-col items-center justify-center gap-12 text-center text-secondary px-20">
+        : <div className="min-h-[260px] flex flex-col items-center justify-center gap-12 text-center text-secondary px-20">
             <MessageSquare size={42} />
             <div>
               <p className="font-bold text-body m-0">Inga meddelanden än</p>

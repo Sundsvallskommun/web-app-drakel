@@ -26,12 +26,12 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   // Surface the errand's status/title into the slim app header, and clear it on leave.
   useEffect(() => {
     if (errand) {
-      setHeaderErrand({ id: errand.id, title: errand.title, status: errand.status });
+      setHeaderErrand({ id: errand.id, errandNumber: errand.errandNumber, title: errand.title, status: errand.status });
     }
     return () => {
       setHeaderErrand(undefined);
     };
-  }, [errand?.id, errand?.title, errand?.status, setHeaderErrand]);
+  }, [errand?.id, errand?.errandNumber, errand?.title, errand?.status, setHeaderErrand]);
 
   if (isLoading) {
     return (
@@ -46,6 +46,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   }
 
   const heading = errand.title && errand.title !== EMPTY_ERRAND_TITLE ? errand.title : 'Registrera nytt ärende';
+  const apiErrandId = errand.id ?? errandId;
 
   const sections: SidebarSection[] = [
     {
@@ -97,7 +98,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               <Tabs.Button className="text-base">Bilagor</Tabs.Button>
               <Tabs.Content>
                 <div className="pt-24 pb-40 px-24 md:px-40">
-                  <ErrandAttachments errandId={errandId} />
+                  <ErrandAttachments errandId={apiErrandId} />
                 </div>
               </Tabs.Content>
             </Tabs.Item>
@@ -105,7 +106,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               <Tabs.Button className="text-base">Meddelanden</Tabs.Button>
               <Tabs.Content>
                 <div className="pt-24 pb-40 px-24 md:px-40">
-                  <ErrandMessages errandId={errandId} />
+                  <ErrandMessages errandId={apiErrandId} />
                 </div>
               </Tabs.Content>
             </Tabs.Item>

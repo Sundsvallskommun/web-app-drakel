@@ -11,7 +11,7 @@ interface UseErrandResult {
   refresh: () => void;
 }
 
-/** Loads a single errand (including its embedded stakeholders) by id. */
+/** Loads a single errand (including its embedded stakeholders) by id or errand number. */
 export const useErrand = (errandId: string): UseErrandResult => {
   const [errand, setErrand] = useState<Errand>();
   const [isLoading, setIsLoading] = useState<boolean>(true);

@@ -50,7 +50,7 @@ export const OversiktPageClient = () => {
       if (!search) {
         return true;
       }
-      return [errand.title, errand.id, errand.category, errand.type, errand.contactReason]
+      return [errand.title, errand.errandNumber, errand.category, errand.type, errand.contactReason]
         .filter((value): value is string => Boolean(value))
         .some((value) => value.toLowerCase().includes(search));
     });
