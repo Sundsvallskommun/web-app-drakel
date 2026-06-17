@@ -145,7 +145,9 @@ export const downloadAttachment = (errandId: string, attachmentId: string, fileN
 
 /** Fetches an attachment's file as a Blob — used for inline preview (e.g. PDF i iframe). */
 export const getAttachmentBlob = (errandId: string, attachmentId: string): Promise<Blob> =>
-  apiService.get<Blob>(`errands/${errandId}/attachments/${attachmentId}/file`, { responseType: 'blob' }).then((res) => res.data);
+  apiService
+    .get<Blob>(`errands/${errandId}/attachments/${attachmentId}/file`, { responseType: 'blob' })
+    .then((res) => res.data);
 
 /** Uploads a file as a new attachment on an errand (multipart). */
 export const uploadAttachment = (errandId: string, file: File): Promise<ServiceResponse<null>> => {

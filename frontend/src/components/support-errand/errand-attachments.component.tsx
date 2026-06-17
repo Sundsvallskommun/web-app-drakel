@@ -43,7 +43,7 @@ export const ErrandAttachments: FC<{ errandId: string }> = ({ errandId }) => {
   // caremanagement genererar en sammanslagen PDF (sammanstallning.pdf) av alla bilagor — visa den
   // som inline-förhandsgranskning högst upp om den finns på ärendet.
   const summaryAttachment = attachments.find(
-    (attachment) => (attachment.fileName ?? '').toLowerCase() === 'sammanstallning.pdf',
+    (attachment) => (attachment.fileName ?? '').toLowerCase() === 'sammanstallning.pdf'
   );
   const [uploading, setUploading] = useState<boolean>(false);
   const [downloadingId, setDownloadingId] = useState<string>();
@@ -82,9 +82,9 @@ export const ErrandAttachments: FC<{ errandId: string }> = ({ errandId }) => {
 
   return (
     <FormProvider {...formMethods}>
-      {summaryAttachment?.id ? (
+      {summaryAttachment?.id ?
         <PdfPreview errandId={errandId} attachmentId={summaryAttachment.id} title="Sammanställning (PDF)" />
-      ) : null}
+      : null}
 
       <FileUpload.Area onChange={(event) => void handleUpload(event)}>
         <div className="flex flex-col gap-16">

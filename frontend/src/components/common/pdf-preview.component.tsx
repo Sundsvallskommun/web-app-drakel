@@ -53,13 +53,15 @@ export const PdfPreview: FC<PdfPreviewProps> = ({ errandId, attachmentId, title 
         <Disclosure.Button />
       </Disclosure.Header>
       <Disclosure.Content>
-        {isLoading ? (
-          <div className="flex justify-center items-center h-[60rem] text-dark-secondary">Laddar förhandsgranskning...</div>
-        ) : error ? (
-          <div className="flex justify-center items-center h-[20rem] text-error">Kunde inte visa förhandsgranskningen</div>
-        ) : (
-          <iframe src={`${url}#pagemode=none`} className="w-full h-[80rem] border-0" title={title} />
-        )}
+        {isLoading ?
+          <div className="flex justify-center items-center h-[60rem] text-dark-secondary">
+            Laddar förhandsgranskning...
+          </div>
+        : error ?
+          <div className="flex justify-center items-center h-[20rem] text-error">
+            Kunde inte visa förhandsgranskningen
+          </div>
+        : <iframe src={`${url}#pagemode=none`} className="w-full h-[80rem] border-0" title={title} />}
       </Disclosure.Content>
     </Disclosure>
   );
