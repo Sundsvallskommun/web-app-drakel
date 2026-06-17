@@ -127,7 +127,9 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
             placeholder="Ny anteckning"
             aria-label="Ny anteckning"
             value={text}
-            onChange={(event) => { setText(event.target.value); }}
+            onChange={(event) => {
+              setText(event.target.value);
+            }}
             data-cy="note-input"
           />
         </FormControl>
@@ -144,13 +146,22 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
         </Button>
       </div>
 
-      <Modal show={!!editNote} className="w-[43rem]" onClose={() => { setEditNote(undefined); }} label="Ändra anteckning">
+      <Modal
+        show={!!editNote}
+        className="w-[43rem]"
+        onClose={() => {
+          setEditNote(undefined);
+        }}
+        label="Ändra anteckning"
+      >
         <Modal.Content>
           <Textarea
             rows={5}
             className="w-full"
             value={editText}
-            onChange={(event) => { setEditText(event.target.value); }}
+            onChange={(event) => {
+              setEditText(event.target.value);
+            }}
             aria-label="Anteckningstext"
           />
         </Modal.Content>
