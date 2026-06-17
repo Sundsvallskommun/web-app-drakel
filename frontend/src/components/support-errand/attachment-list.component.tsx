@@ -6,8 +6,10 @@ import { downloadUnifiedAttachment } from '@services/errand-service/errand-servi
 import { Button, FileUpload, UploadFile } from '@sk-web-gui/react';
 import { formatFileSize } from '@utils/format-file-size';
 import dayjs from 'dayjs';
-import { Download } from 'lucide-react';
+import { Download, Eye } from 'lucide-react';
 import { FC, useState } from 'react';
+
+import { AttachmentPreviewModal, isPreviewableAttachment } from './attachment-preview-modal.component';
 
 /**
  * Maps a caremanagement attachment onto sk-web-gui's UploadFile shape. Images get the real fetched File
@@ -41,6 +43,7 @@ export const AttachmentList: FC<AttachmentListProps> = ({ errandId, attachments,
   const imagePreviews = useAttachmentImagePreviews(errandId, attachments);
   const [downloadingId, setDownloadingId] = useState<string>();
   const [error, setError] = useState<string>();
+  const [previewAttachment, setPreviewAttachment] = useState<Attachment>();
 
   const download = async (attachment: Attachment) => {
     if (!attachment.id) {
@@ -73,20 +76,42 @@ export const AttachmentList: FC<AttachmentListProps> = ({ errandId, attachments,
             }}
             actionsProps={{
               extraActions: (
-                <Button
-                  size="sm"
-                  variant="tertiary"
-                  iconButton
-                  aria-label={`Ladda ner ${attachment.fileName ?? 'bilaga'}`}
-                  loading={downloadingId === attachment.id}
-                  onClick={() => void download(attachment)}
-                  leftIcon={<Download />}
-                />
+                <>
+                  {isPreviewableAttachment(attachment) && (
+                    <Button
+                      size="sm"
+                      variant="tertiary"
+                      iconButton
+                      aria-label={`Förhandsgranska ${attachment.fileName ?? 'bilaga'}`}
+                      onClick={() => {
+                        setPreviewAttachment(attachment);
+                      }}
+                      leftIcon={<Eye />}
+                    />
+                  )}
+                  <Button
+                    size="sm"
+                    variant="tertiary"
+                    iconButton
+                    aria-label={`Ladda ner ${attachment.fileName ?? 'bilaga'}`}
+                    loading={downloadingId === attachment.id}
+                    onClick={() => void download(attachment)}
+                    leftIcon={<Download />}
+                  />
+                </>
               ),
             }}
           />
         ))}
       </FileUpload.List>
+
+      <AttachmentPreviewModal
+        errandId={errandId}
+        attachment={previewAttachment}
+        onClose={() => {
+          setPreviewAttachment(undefined);
+        }}
+      />
     </div>
   );
 };

@@ -1,14 +1,17 @@
 'use client';
 
+import { Attachment } from '@data-contracts/backend/data-contracts';
 import { downloadMessageAttachment, Message } from '@services/errand-service/errand-service';
 import { useUserStore } from '@services/user-service/user-service';
 import { Avatar, Button, cx, Label, Spinner } from '@sk-web-gui/react';
 import dayjs from 'dayjs';
 import localeSv from 'dayjs/locale/sv';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { CornerUpLeft, Download, Paperclip, Reply, UserRound } from 'lucide-react';
+import { CornerUpLeft, Download, Eye, Paperclip, Reply, UserRound } from 'lucide-react';
 import { FC, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
+
+import { AttachmentPreviewModal, isPreviewableAttachment } from './attachment-preview-modal.component';
 
 dayjs.extend(relativeTime);
 // Import the locale as a VALUE and register it — a bare `import 'dayjs/locale/sv'` gets tree-shaken,
@@ -87,6 +90,17 @@ export const ErrandMessage: FC<{
   );
   const [downloadingAttachmentId, setDownloadingAttachmentId] = useState<string>();
   const [downloadError, setDownloadError] = useState<string>();
+  const [previewAttachment, setPreviewAttachment] = useState<Attachment>();
+
+  // Build the unified Attachment shape the preview/download service expects from a message attachment:
+  // it's a conversation file, so origin + the owning messageId route it through the message endpoint.
+  const toPreviewAttachment = (messageAttachment: NonNullable<Message['attachments']>[number]): Attachment => ({
+    id: messageAttachment.id,
+    fileName: messageAttachment.fileName,
+    mimeType: messageAttachment.mimeType,
+    origin: 'CONVERSATION',
+    messageId: message.id,
+  });
 
   const outbound = message.direction === 'OUTBOUND';
   const sender = senderLabel(message, username);
@@ -236,24 +250,40 @@ export const ErrandMessage: FC<{
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 {message.attachments.map((attachment, index) => {
                   const isDownloading = downloadingAttachmentId === attachment.id;
+                  const fileName = attachment.fileName ?? 'bilaga';
                   return (
-                    <button
+                    <div
                       key={attachment.id ?? index}
-                      type="button"
-                      disabled={!message.id || !attachment.id || isDownloading}
                       className={cx(
-                        'flex w-full min-w-0 items-center gap-8 rounded-8 border-1 px-10 py-8 text-small transition disabled:opacity-60',
-                        outbound ?
-                          'border-divider bg-background-200 text-body hover:bg-background-100'
-                        : 'border-divider bg-background-content text-body hover:bg-background-100'
+                        'flex w-full min-w-0 items-center gap-4 rounded-8 border-1 px-10 py-8 text-small',
+                        outbound ? 'border-divider bg-background-200' : 'border-divider bg-background-content'
                       )}
-                      onClick={() => void downloadAttachment(attachment.id, attachment.fileName)}
                     >
-                      <span className="min-w-0 flex-1 truncate text-left">{attachment.fileName ?? 'bilaga'}</span>
-                      {isDownloading ?
-                        <Spinner size={2} className="shrink-0" />
-                      : <Download size={18} className="shrink-0" />}
-                    </button>
+                      <span className="min-w-0 flex-1 truncate text-left">{fileName}</span>
+                      {isPreviewableAttachment(toPreviewAttachment(attachment)) ?
+                        <button
+                          type="button"
+                          aria-label={`Förhandsgranska ${fileName}`}
+                          className="shrink-0 rounded-4 p-2 transition hover:bg-background-100"
+                          onClick={() => {
+                            setPreviewAttachment(toPreviewAttachment(attachment));
+                          }}
+                        >
+                          <Eye size={18} />
+                        </button>
+                      : null}
+                      <button
+                        type="button"
+                        disabled={!message.id || !attachment.id || isDownloading}
+                        aria-label={`Ladda ner ${fileName}`}
+                        className="shrink-0 rounded-4 p-2 transition hover:bg-background-100 disabled:opacity-60"
+                        onClick={() => void downloadAttachment(attachment.id, attachment.fileName)}
+                      >
+                        {isDownloading ?
+                          <Spinner size={2} />
+                        : <Download size={18} />}
+                      </button>
+                    </div>
                   );
                 })}
               </div>
@@ -265,6 +295,14 @@ export const ErrandMessage: FC<{
           <p className="m-0 text-small text-error-surface-primary">{downloadError}</p>
         : null}
       </div>
+
+      <AttachmentPreviewModal
+        errandId={errandId}
+        attachment={previewAttachment}
+        onClose={() => {
+          setPreviewAttachment(undefined);
+        }}
+      />
     </article>
   );
 };
