@@ -7,10 +7,19 @@ import { ErrandController } from './controllers/errand.controller';
 import { HealthController } from './controllers/health.controller';
 import { MessageController } from './controllers/message.controller';
 import { MetadataController } from './controllers/metadata.controller';
+import { NoteController } from './controllers/note.controller';
 import { UserController } from './controllers/user.controller';
 
 validateEnv();
 
-const app = new App([IndexController, UserController, HealthController, ErrandController, MessageController, MetadataController]);
+const app = new App([
+  IndexController,
+  UserController,
+  HealthController,
+  ErrandController,
+  MessageController,
+  MetadataController,
+  NoteController,
+]);
 
 app.listen();

@@ -3,8 +3,9 @@
 import { useErrandHeader } from '@components/layout/errand-header-context';
 import { useErrand } from '@hooks/use-errand';
 import { useErrandForm } from '@hooks/use-errand-form';
+import { useErrandNotes } from '@hooks/use-errand-notes';
 import { Spinner, Tabs } from '@sk-web-gui/react';
-import { UserCog } from 'lucide-react';
+import { NotebookPen, UserCog } from 'lucide-react';
 import { FC, useEffect, useState } from 'react';
 
 import { ErrandApplicationData } from './errand-application-data.component';
@@ -12,6 +13,7 @@ import { ErrandAttachments } from './errand-attachments.component';
 import { ErrandBasicsTab } from './errand-basics-tab.component';
 import { ErrandInfoPanel } from './errand-info-panel.component';
 import { ErrandMessages } from './errand-messages.component';
+import { ErrandNotes } from './errand-notes.component';
 import { ErrandSidebar, SidebarSection } from './errand-sidebar.component';
 
 // Drafts are created with this sentinel title until the handläggare fills the errand in.
@@ -22,6 +24,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   const [activeTab, setActiveTab] = useState<number>(0);
   const { setErrand: setHeaderErrand } = useErrandHeader();
   const { form, setField, isDirty, saving, error: saveError, save } = useErrandForm(errand, refresh);
+  const { notes, isLoading: notesLoading, error: notesError, refresh: refreshNotes } = useErrandNotes(errandId);
 
   // Surface the errand's status/title into the slim app header, and clear it on leave.
   useEffect(() => {
@@ -61,6 +64,21 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           saving={saving}
           error={saveError}
           onSave={() => void save()}
+        />
+      ),
+    },
+    {
+      key: 'notes',
+      label: 'Anteckningar',
+      icon: NotebookPen,
+      badge: notes.length,
+      component: (
+        <ErrandNotes
+          errandId={errand.id ?? ''}
+          notes={notes}
+          isLoading={notesLoading}
+          loadError={!!notesError}
+          refresh={refreshNotes}
         />
       ),
     },
