@@ -7,6 +7,7 @@ import { Spinner, Tabs } from '@sk-web-gui/react';
 import { UserCog } from 'lucide-react';
 import { FC, useEffect, useState } from 'react';
 
+import { ErrandApplicationData } from './errand-application-data.component';
 import { ErrandAttachments } from './errand-attachments.component';
 import { ErrandBasicsTab } from './errand-basics-tab.component';
 import { ErrandInfoPanel } from './errand-info-panel.component';
@@ -84,6 +85,12 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               <Tabs.Button className="text-base">Grunduppgifter</Tabs.Button>
               <Tabs.Content>
                 <ErrandBasicsTab errand={errand} form={form} setField={setField} />
+              </Tabs.Content>
+            </Tabs.Item>
+            <Tabs.Item>
+              <Tabs.Button className="text-base">Ärendeuppgifter</Tabs.Button>
+              <Tabs.Content>
+                <ErrandApplicationData errand={errand} />
               </Tabs.Content>
             </Tabs.Item>
             <Tabs.Item>

@@ -141,6 +141,10 @@ const downloadBlob = async (path: string, fileName?: string): Promise<void> => {
 export const downloadAttachment = (errandId: string, attachmentId: string, fileName?: string): Promise<void> =>
   downloadBlob(`errands/${errandId}/attachments/${attachmentId}/file`, fileName);
 
+/** Fetches an attachment's file as a Blob — used for inline preview (e.g. PDF i iframe). */
+export const getAttachmentBlob = (errandId: string, attachmentId: string): Promise<Blob> =>
+  apiService.get<Blob>(`errands/${errandId}/attachments/${attachmentId}/file`, { responseType: 'blob' }).then((res) => res.data);
+
 /** Uploads a file as a new attachment on an errand (multipart). */
 export const uploadAttachment = (errandId: string, file: File): Promise<ServiceResponse<null>> => {
   const form = new FormData();

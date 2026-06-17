@@ -1,5 +1,6 @@
 'use client';
 
+import { PdfPreview } from '@components/common/pdf-preview.component';
 import { Attachment } from '@data-contracts/backend/data-contracts';
 import { useErrandAttachments } from '@hooks/use-errand-attachments';
 import { downloadAttachment, uploadAttachment } from '@services/errand-service/errand-service';
@@ -38,6 +39,12 @@ const toUploadFile = (attachment: Attachment): UploadFile => {
 export const ErrandAttachments: FC<{ errandId: string }> = ({ errandId }) => {
   const { attachments, isLoading, error, refresh } = useErrandAttachments(errandId);
   const formMethods = useForm();
+
+  // caremanagement genererar en sammanslagen PDF (sammanstallning.pdf) av alla bilagor — visa den
+  // som inline-förhandsgranskning högst upp om den finns på ärendet.
+  const summaryAttachment = attachments.find(
+    (attachment) => (attachment.fileName ?? '').toLowerCase() === 'sammanstallning.pdf',
+  );
   const [uploading, setUploading] = useState<boolean>(false);
   const [downloadingId, setDownloadingId] = useState<string>();
   const [actionError, setActionError] = useState<string>();
@@ -75,6 +82,10 @@ export const ErrandAttachments: FC<{ errandId: string }> = ({ errandId }) => {
 
   return (
     <FormProvider {...formMethods}>
+      {summaryAttachment?.id ? (
+        <PdfPreview errandId={errandId} attachmentId={summaryAttachment.id} title="Sammanställning (PDF)" />
+      ) : null}
+
       <FileUpload.Area onChange={(event) => void handleUpload(event)}>
         <div className="flex flex-col gap-16">
           <div className="flex items-center justify-between gap-12">
