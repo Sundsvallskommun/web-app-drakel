@@ -1,15 +1,19 @@
-import { execFile } from 'child_process';
+import { execFile } from 'node:child_process';
 import fs from 'node:fs';
-import path from 'path';
-import { promisify } from 'util';
+import path from 'node:path';
+import { promisify } from 'node:util';
 
 import { APIS, API_BASE_URL, CAREMANAGEMENT_BASE_URL } from './config/index';
 
-// Use execFile (no shell) with argument arrays so env-derived values like API_BASE_URL and the
-// swagger URL are passed as inert arguments and can never be interpreted as shell syntax.
 const execFileAsync = promisify(execFile);
 
 const PATH_TO_OUTPUT_DIR = path.resolve(process.cwd(), './src/data-contracts');
+
+// Resolve the locally-installed swagger-typescript-api CLI entry and run it with the current Node
+// binary (process.execPath). This is cross-platform: it avoids spawning `npx`, which fails on Windows
+// when invoked via execFile (no shell to resolve the `.cmd` shim → ENOENT), and never reaches outside
+// the repo's node_modules.
+const SWAGGER_TYPESCRIPT_API_CLI = require.resolve('swagger-typescript-api/cli');
 
 const generateContract = async (name: string, swaggerUrl: string) => {
   const apiDir = `${PATH_TO_OUTPUT_DIR}/${name}`;
@@ -19,27 +23,27 @@ const generateContract = async (name: string, swaggerUrl: string) => {
     fs.mkdirSync(apiDir, { recursive: true });
   }
 
-  try {
-    // -fsS: fail on HTTP errors (so an error page never lands as swagger.json) while staying quiet.
-    await execFileAsync('curl', ['-fsS', '-o', swaggerPath, swaggerUrl]);
-    console.warn(`- ${name} (${swaggerUrl})`);
-
-    const { stdout } = await execFileAsync('npx', [
-      'swagger-typescript-api',
-      'generate',
-      '--modular',
-      '-p',
-      swaggerPath,
-      '-o',
-      apiDir,
-      '--no-client',
-      '--extract-enums',
-    ]);
-    console.warn(`Data-contract-generator: ${stdout}`);
-  } catch (error) {
-    console.error(`error generating ${name}: ${error instanceof Error ? error.message : String(error)}`);
-    throw error;
+  // Download the OpenAPI document with Node's built-in fetch — cross-platform, no `curl` subprocess.
+  // Fail loudly on a non-2xx so an HTML error page can never be written out as swagger.json.
+  const response = await fetch(swaggerUrl);
+  if (!response.ok) {
+    throw new Error(`failed to download ${name} OpenAPI: ${response.status} ${response.statusText}`);
   }
+  fs.writeFileSync(swaggerPath, await response.text());
+  console.warn(`- ${name} (${swaggerUrl})`);
+
+  const { stdout } = await execFileAsync(process.execPath, [
+    SWAGGER_TYPESCRIPT_API_CLI,
+    'generate',
+    '--modular',
+    '-p',
+    swaggerPath,
+    '-o',
+    apiDir,
+    '--no-client',
+    '--extract-enums',
+  ]);
+  console.warn(`Data-contract-generator: ${stdout}`);
 };
 
 const main = async () => {
@@ -48,7 +52,7 @@ const main = async () => {
   console.warn('Downloading and generating api-docs..');
 
   // Gateway APIs — fetched through the shared API gateway (API_BASE_URL). Sequential for...of so
-  // each API is fully downloaded and generated before the next (forEach(async) does not await).
+  // each API is fully downloaded and generated before the next.
   for (const api of APIS) {
     await generateContract(api.name, `${API_BASE_URL}/${api.name}/${api.version}/api-docs`);
   }
@@ -60,7 +64,7 @@ const main = async () => {
   await generateContract('caremanagement', caremanagementOpenApiUrl);
 };
 
-void main().catch(error => {
+void main().catch((error) => {
   console.error(`contract generation failed: ${error instanceof Error ? error.message : String(error)}`);
   process.exitCode = 1;
 });

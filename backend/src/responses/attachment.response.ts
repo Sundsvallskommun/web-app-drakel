@@ -21,6 +21,18 @@ export class Attachment {
   @IsString()
   @IsOptional()
   modified?: string;
+  /** Where the file came from: APPLICATION / CONVERSATION / GENERATED / ERRAND. */
+  @IsString()
+  @IsOptional()
+  origin?: string;
+  /** Who sent the file: CLIENT (applicant) / HANDLAGGARE (caseworker). */
+  @IsString()
+  @IsOptional()
+  senderRole?: string;
+  /** Set on CONVERSATION files — the message the file belongs to (downloaded via the message endpoint). */
+  @IsString()
+  @IsOptional()
+  messageId?: string;
 }
 
 export class AttachmentsApiResponse implements ApiResponse<Attachment[]> {

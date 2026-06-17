@@ -156,6 +156,9 @@ export interface Attachment {
   fileSize?: number;
   created?: string;
   modified?: string;
+  origin?: string;
+  senderRole?: string;
+  messageId?: string;
 }
 
 export interface AttachmentsApiResponse {
@@ -174,6 +177,7 @@ export interface MessageAttachment {
   mimeType?: string;
   fileSize?: number;
   created?: string;
+  senderRole?: string;
 }
 
 export interface Message {
@@ -202,6 +206,22 @@ export interface Lookup {
 export interface LookupsApiResponse {
   data: Lookup[];
   message: string;
+}
+
+export interface CreateNoteDto {
+  /**
+   * @minLength 1
+   * @maxLength 8192
+   */
+  body: string;
+}
+
+export interface UpdateNoteDto {
+  /**
+   * @minLength 1
+   * @maxLength 8192
+   */
+  body: string;
 }
 
 export interface PermissionsResponse {

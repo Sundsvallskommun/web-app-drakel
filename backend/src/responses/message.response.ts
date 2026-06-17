@@ -19,6 +19,10 @@ export class MessageAttachment {
   @IsString()
   @IsOptional()
   created?: string;
+  /** Who sent the file: CLIENT (applicant) / HANDLAGGARE (caseworker). */
+  @IsString()
+  @IsOptional()
+  senderRole?: string;
 }
 
 /** A single message in an errand's conversation, mirroring caremanagement's Message model. */

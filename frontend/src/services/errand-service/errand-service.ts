@@ -1,6 +1,5 @@
 import {
   Attachment,
-  ContactChannel,
   Errand,
   FindErrandsQueryDto,
   FindErrandsResult,
@@ -10,15 +9,6 @@ import {
 import { FinancialAssistanceData } from '@interfaces/financial-assistance';
 import { ServiceResponse } from '@interfaces/services';
 import { ApiResponse, apiService, toServiceError } from '@services/api-service';
-
-/** The fields accepted when adding a stakeholder (matches the backend CreateStakeholderDto). */
-export interface NewStakeholder {
-  role?: string;
-  firstName?: string;
-  lastName?: string;
-  organizationName?: string;
-  contactChannels?: ContactChannel[];
-}
 
 /**
  * A file attached to a conversation message. Returned alongside each message by the backend and
@@ -47,14 +37,6 @@ export interface Message {
   created?: string;
   attachments?: MessageAttachment[];
 }
-
-/** Adds a stakeholder to an errand. The stakeholder is then available on the refetched errand. */
-export const createStakeholder = (errandId: string, stakeholder: NewStakeholder): Promise<ServiceResponse<null>> => {
-  return apiService
-    .post<ApiResponse<null>>(`errands/${errandId}/stakeholders`, stakeholder)
-    .then(() => ({ data: null }))
-    .catch(toServiceError);
-};
 
 const buildParams = (query: FindErrandsQueryDto): Record<string, unknown> => {
   const params: Record<string, unknown> = {};
@@ -152,7 +134,7 @@ const downloadBlob = async (path: string, fileName?: string): Promise<void> => {
 };
 
 /** Downloads an attachment's file (the backend streams it) and triggers a browser save. */
-export const downloadAttachment = (errandId: string, attachmentId: string, fileName?: string): Promise<void> =>
+const downloadAttachment = (errandId: string, attachmentId: string, fileName?: string): Promise<void> =>
   downloadBlob(`errands/${errandId}/attachments/${attachmentId}/file`, fileName);
 
 /** Fetches an attachment's file as a Blob — used for inline preview (e.g. PDF i iframe). */
@@ -160,6 +142,32 @@ export const getAttachmentBlob = (errandId: string, attachmentId: string): Promi
   apiService
     .get<Blob>(`errands/${errandId}/attachments/${attachmentId}/file`, { responseType: 'blob' })
     .then((res) => res.data);
+
+/** Fetches a conversation message attachment's file as a Blob — used for inline preview. */
+const getMessageAttachmentBlob = (errandId: string, messageId: string, attachmentId: string): Promise<Blob> =>
+  apiService
+    .get<Blob>(`errands/${errandId}/messages/${messageId}/attachments/${attachmentId}/file`, { responseType: 'blob' })
+    .then((res) => res.data);
+
+/**
+ * True for files that live on a conversation message. caremanagement returns every file in one unified
+ * attachment list tagged with an `origin`; CONVERSATION files must be downloaded via the message
+ * endpoint (using their `messageId`), everything else via the plain errand attachment endpoint.
+ */
+const isConversationAttachment = (attachment: Attachment): boolean =>
+  attachment.origin === 'CONVERSATION' && !!attachment.messageId;
+
+/** Downloads any unified attachment, routing conversation files through the message endpoint. */
+export const downloadUnifiedAttachment = (errandId: string, attachment: Attachment): Promise<void> =>
+  isConversationAttachment(attachment) && attachment.messageId ?
+    downloadMessageAttachment(errandId, attachment.messageId, attachment.id ?? '', attachment.fileName)
+  : downloadAttachment(errandId, attachment.id ?? '', attachment.fileName);
+
+/** Fetches any unified attachment's file as a Blob (for inline image/PDF preview), routing conversation files. */
+export const getUnifiedAttachmentBlob = (errandId: string, attachment: Attachment): Promise<Blob> =>
+  isConversationAttachment(attachment) && attachment.messageId ?
+    getMessageAttachmentBlob(errandId, attachment.messageId, attachment.id ?? '')
+  : getAttachmentBlob(errandId, attachment.id ?? '');
 
 /** Uploads a file as a new attachment on an errand (multipart). */
 export const uploadAttachment = (errandId: string, file: File): Promise<ServiceResponse<null>> => {

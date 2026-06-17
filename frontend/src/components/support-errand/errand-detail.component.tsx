@@ -11,6 +11,7 @@ import { FC, useEffect, useState } from 'react';
 import { ErrandApplicationData } from './errand-application-data.component';
 import { ErrandAttachments } from './errand-attachments.component';
 import { ErrandInfoPanel } from './errand-info-panel.component';
+import { ErrandMessageAttachments } from './errand-message-attachments.component';
 import { ErrandMessages } from './errand-messages.component';
 import { ErrandNotes } from './errand-notes.component';
 import { ErrandSidebar, SidebarSection } from './errand-sidebar.component';
@@ -118,6 +119,14 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               <Tabs.Content>
                 <div className="pt-24 pb-40 px-24 md:px-40">
                   <ErrandMessages errandId={apiErrandId} />
+                </div>
+              </Tabs.Content>
+            </Tabs.Item>
+            <Tabs.Item>
+              <Tabs.Button className="text-base">Bilagor från meddelanden</Tabs.Button>
+              <Tabs.Content>
+                <div className="pt-24 pb-40 px-24 md:px-40">
+                  <ErrandMessageAttachments errandId={apiErrandId} />
                 </div>
               </Tabs.Content>
             </Tabs.Item>

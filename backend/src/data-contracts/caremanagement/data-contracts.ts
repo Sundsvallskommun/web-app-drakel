@@ -56,6 +56,55 @@ export interface Violation {
   message?: string;
 }
 
+/** One income row of the draft normberäkning (FC income type + amounts). */
+export interface DraftIncomeRow {
+  /**
+   * The FC income-type id
+   * @format int32
+   */
+  typeId?: number;
+  /** The FC income-type name */
+  typeName?: string;
+  /**
+   * The applicant's amount for this income type
+   * @format double
+   */
+  applicantAmount?: number;
+  /** The date the applicant's amount is attributed to (ISO) */
+  applicantAmountDate?: string;
+  /**
+   * The co-applicant's amount for this income type
+   * @format double
+   */
+  coApplicantAmount?: number;
+  /** The date the co-applicant's amount is attributed to (ISO) */
+  coApplicantAmountDate?: string;
+  /** Free-text note (e.g. the SSBTEK source) */
+  note?: string;
+}
+
+/** The (editable) draft normberäkning — FC income rows, not yet created in Lifecare. */
+export interface NormberakningDraft {
+  /** The errand id */
+  errandId?: string;
+  /** The application month (ISO yyyy-MM) */
+  applicationMonth?: string;
+  /** Whether a handläggare has edited the draft (the daily refresh then preserves the rows) */
+  edited?: boolean;
+  /** The income rows */
+  rows?: DraftIncomeRow[];
+  /**
+   * When the draft was created
+   * @format date-time
+   */
+  created?: string;
+  /**
+   * When the draft was last updated
+   * @format date-time
+   */
+  updated?: string;
+}
+
 /** An asset owned by the applicant or co-applicant. */
 export interface Asset {
   /** The category of asset */
@@ -655,6 +704,25 @@ export interface Decision {
   created?: string;
 }
 
+/** Request to read whether the Lifecare utbetalning for an application month has been effectuated. */
+export interface PaymentStatusRequest {
+  /** The applicant's partyId (personId GUID) */
+  applicant: string;
+  /**
+   * The application month (ISO year-month, yyyy-MM) the payment concerns
+   * @pattern ^\d{4}-(0[1-9]|1[0-2])$
+   */
+  applicationMonth: string;
+}
+
+/** Whether the Lifecare utbetalning for the application month has been effectuated. */
+export interface PaymentStatusResponse {
+  /** True when a Lifecare utbetalning concerning the application month has been registered */
+  effectuated?: boolean;
+  /** The date the utbetalning was made (Lifecare PayDate), when effectuated */
+  paymentDate?: string;
+}
+
 /** Request to build and post the SSBTEK-driven normberäkning for an application month. */
 export interface NormberakningRequest {
   /** The applicant's partyId (personId GUID) */
@@ -668,6 +736,12 @@ export interface NormberakningRequest {
   applicationMonth: string;
   /** The id of the caremanagement errand the normberäkning concerns. When present, a Decision(RECOMMENDATION) summarising the income warnings is recorded on the errand for the handläggare to review; when omitted, the normberäkning is built without recording a recommendation. */
   errandId?: string;
+  /** The incomes classified by the operaton regelverk (the evaluate-income-regelverk worker output), as JSON. When present, caremanagement maps these to FC income rows instead of fetching SSBTEK and evaluating the rålista itself. */
+  classifiedIncomes?: string;
+  /** The unhandled-income warnings from the operaton regelverk, recorded on the errand recommendation */
+  unhandledIncomes?: string[];
+  /** The period-over-period change warnings from the operaton regelverk, recorded on the errand recommendation */
+  changeWarnings?: string[];
 }
 
 /** The created Lifecare normberäkning id plus the income warnings to review. */
@@ -681,6 +755,10 @@ export interface NormberakningResponse {
   unhandledIncomes?: string[];
   /** Förmåner whose net income changed beyond the threshold between the periods */
   changeWarnings?: string[];
+  /** Whether this month's normberäkning covers every income type the previous month's did — false means SSBTEK data is still missing and the process should poll again */
+  informationComplete?: boolean;
+  /** Previous-month income types not yet present this month (the SSBTEK data still being awaited) */
+  missingIncomeTypes?: string[];
 }
 
 /** Request to evaluate which financial assistance application a citizen should be offered. */
@@ -840,6 +918,32 @@ export interface Note {
   modified?: string;
 }
 
+/** An EB income warning the handläggare can acknowledge or close. */
+export interface Warning {
+  /** The warning id */
+  id?: string;
+  /** The warning type */
+  type?: WarningTypeEnum;
+  /** A stable key for the income the warning concerns (förmån/inkomsttyp) — the dedup key */
+  sourceKey?: string;
+  /** Human-readable warning text */
+  message?: string;
+  /** The warning status */
+  status?: WarningStatusEnum;
+  /** Whether the warning was closed automatically (its cause resolved) rather than by a handläggare */
+  autoResolved?: boolean;
+  /**
+   * When the warning was created
+   * @format date-time
+   */
+  created?: string;
+  /**
+   * When the warning was last updated
+   * @format date-time
+   */
+  updated?: string;
+}
+
 /** Number of errands assigned to a given user */
 export interface AssigneeCount {
   /** The assigned user id */
@@ -965,6 +1069,8 @@ export interface MessageAttachment {
    * @format int32
    */
   fileSize?: number;
+  /** Who sent the file, derived from the message direction: CLIENT (applicant, INBOUND) or HANDLAGGARE (caseworker, OUTBOUND) */
+  senderRole?: MessageAttachmentSenderRoleEnum;
   /**
    * Created timestamp
    * @format date-time
@@ -985,6 +1091,12 @@ export interface Attachment {
    * @format int32
    */
   fileSize?: number;
+  /** Where the file came from: APPLICATION (citizen's application files), CONVERSATION (sent in a message thread), GENERATED (a consolidated PDF produced by the platform) or ERRAND (uploaded directly to the errand) */
+  origin?: AttachmentOriginEnum;
+  /** Who the file came from: CLIENT (applicant) or HANDLAGGARE (caseworker). May be null for files predating the distinction or with no clear sender. */
+  senderRole?: AttachmentSenderRoleEnum;
+  /** For CONVERSATION attachments, the id of the message the file is attached to — download it via .../messages/{messageId}/attachments/{id}/file. Null for non-conversation attachments, which download via .../attachments/{id}/file. */
+  messageId?: string;
   /**
    * Created timestamp
    * @format date-time
@@ -1328,10 +1440,45 @@ export enum EligibilityResponseReasonCodeEnum {
   ALL_TYPES_TEST = "ALL_TYPES_TEST",
 }
 
+/** The warning type */
+export enum WarningTypeEnum {
+  UNHANDLED_INCOME = "UNHANDLED_INCOME",
+  INCOME_CHANGE = "INCOME_CHANGE",
+  MISSING_SSBTEK = "MISSING_SSBTEK",
+  NEW_INCOME = "NEW_INCOME",
+}
+
+/** The warning status */
+export enum WarningStatusEnum {
+  OPEN = "OPEN",
+  ACKNOWLEDGED = "ACKNOWLEDGED",
+  CLOSED = "CLOSED",
+}
+
 /** Direction */
 export enum MessageDirectionEnum {
   INBOUND = "INBOUND",
   OUTBOUND = "OUTBOUND",
+}
+
+/** Who sent the file, derived from the message direction: CLIENT (applicant, INBOUND) or HANDLAGGARE (caseworker, OUTBOUND) */
+export enum MessageAttachmentSenderRoleEnum {
+  CLIENT = "CLIENT",
+  HANDLAGGARE = "HANDLAGGARE",
+}
+
+/** Where the file came from: APPLICATION (citizen's application files), CONVERSATION (sent in a message thread), GENERATED (a consolidated PDF produced by the platform) or ERRAND (uploaded directly to the errand) */
+export enum AttachmentOriginEnum {
+  APPLICATION = "APPLICATION",
+  CONVERSATION = "CONVERSATION",
+  GENERATED = "GENERATED",
+  ERRAND = "ERRAND",
+}
+
+/** Who the file came from: CLIENT (applicant) or HANDLAGGARE (caseworker). May be null for files predating the distinction or with no clear sender. */
+export enum AttachmentSenderRoleEnum {
+  CLIENT = "CLIENT",
+  HANDLAGGARE = "HANDLAGGARE",
 }
 
 /** The field kind */
@@ -1388,4 +1535,10 @@ export enum UpdateLookupParamsKindEnum {
   TYPE = "TYPE",
   ROLE = "ROLE",
   CONTACT_REASON = "CONTACT_REASON",
+}
+
+/** The target status */
+export enum UpdateWarningParamsStatusEnum {
+  ACKNOWLEDGED = "ACKNOWLEDGED",
+  CLOSED = "CLOSED",
 }

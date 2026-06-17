@@ -3,6 +3,6 @@
   "entry": ["src/server.ts", "src/types/**/*.d.ts", "src/tests/**/*.{test,spec}.ts"],
   "project": ["src/**/*.ts"],
   "ignore": ["src/data-contracts/**"],
-  "ignoreDependencies": ["swagger-typescript-api", "tsconfig-paths"],
+  "ignoreDependencies": ["tsconfig-paths"],
   "ignoreBinaries": ["pm2"]
 }
