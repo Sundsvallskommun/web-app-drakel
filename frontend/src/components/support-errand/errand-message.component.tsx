@@ -12,6 +12,8 @@ import { FC, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 dayjs.extend(relativeTime);
+// Activate Swedish explicitly — a bare locale import can be tree-shaken, leaving fromNow() in English.
+dayjs.locale('sv');
 
 /** OUTBOUND = handläggare (our side); anything else is the applicant ("Sökande"). */
 export const senderLabel = (message: Message, username?: string): string => {
@@ -59,7 +61,7 @@ const getInitials = (value: string): string => {
 // day is already carried by the date divider above the group.
 const formatTimeLabel = (created: string): string => {
   const date = dayjs(created);
-  return date.isSame(dayjs(), 'day') ? date.locale('sv').fromNow() : date.format('HH:mm');
+  return date.isSame(dayjs(), 'day') ? date.fromNow() : date.format('HH:mm');
 };
 
 const formatAbsolute = (created: string): string => dayjs(created).format('YYYY-MM-DD, HH:mm');

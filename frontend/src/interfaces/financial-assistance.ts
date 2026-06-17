@@ -12,24 +12,24 @@ export interface SubmittedChild {
   name?: string;
   schoolName?: string;
 }
-export interface SubmittedCost {
+interface SubmittedCost {
   costType?: string;
   appliedAmount?: number;
   otherSubType?: string;
   specification?: string;
   recipientOrPeriod?: string;
 }
-export interface SubmittedIncome {
+interface SubmittedIncome {
   incomeType?: string;
   amount?: number;
   incomeDate?: string;
   recipient?: string;
 }
-export interface SubmittedPendingBenefit {
+interface SubmittedPendingBenefit {
   benefitName?: string;
   applicantName?: string;
 }
-export interface SubmittedAsset {
+interface SubmittedAsset {
   assetCategory?: string;
   value?: number;
   description?: string;
@@ -42,7 +42,7 @@ export interface SubmittedAsset {
   registrationNumber?: string;
   purchaseDate?: string;
 }
-export interface SubmittedPlanning {
+interface SubmittedPlanning {
   planningType?: string;
   person?: string;
   workExtent?: string;
@@ -52,19 +52,19 @@ export interface SubmittedPlanning {
   sfiCourse?: string;
   otherDescription?: string;
 }
-export interface SubmittedPlannedActivity {
+interface SubmittedPlannedActivity {
   activity?: string;
   person?: string;
   periodFrom?: string;
   periodTo?: string;
 }
-export interface SubmittedJobApplication {
+interface SubmittedJobApplication {
   jobTitle?: string;
   employerAndPlace?: string;
   applicationDate?: string;
   person?: string;
 }
-export interface SubmittedPerson {
+interface SubmittedPerson {
   role?: string;
   paymentMethod?: string;
   clearingNumber?: string;
@@ -192,5 +192,4 @@ const LABELS: Record<string, Record<string, string>> = {
 };
 
 /** Slår upp svensk etikett för ett enum-värde; faller tillbaka på koden om den saknas. */
-export const faLabel = (group: keyof typeof LABELS | string, value?: string): string =>
-  value ? (LABELS[group as string]?.[value] ?? value) : '';
+export const faLabel = (group: string, value?: string): string => (value ? (LABELS[group]?.[value] ?? value) : '');
