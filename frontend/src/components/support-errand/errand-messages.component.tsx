@@ -136,7 +136,7 @@ export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
         : messages.length ?
           <div
             ref={scrollAreaRef}
-            className="max-h-[min(44vh,420px)] overflow-y-auto px-16 py-20 desktop:px-32"
+            className="max-h-[min(62vh,600px)] overflow-y-auto px-16 py-20 desktop:px-32"
             onScroll={updateScrollButton}
             role="log"
             aria-label="Ärendemeddelanden"
