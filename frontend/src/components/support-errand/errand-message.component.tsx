@@ -163,8 +163,8 @@ export const ErrandMessage: FC<{
           className={cx(
             'flex flex-col gap-y-14 rounded-16 border-1 px-16 py-14 max-w-full shadow-sm',
             outbound ?
-              'border-vattjom-surface-primary bg-vattjom-surface-primary text-white dark:border-vattjom-background-300 dark:bg-vattjom-background-200 dark:text-vattjom-text-primary'
-            : 'border-divider bg-background-content text-body dark:bg-background-200',
+              'border-vattjom-background-300 bg-vattjom-surface-accent text-vattjom-text-primary'
+            : 'border-divider bg-background-content text-body',
             isHighlighted && 'ring-2 ring-warning-surface-primary'
           )}
         >
@@ -175,8 +175,8 @@ export const ErrandMessage: FC<{
                 className={cx(
                   'group flex w-full min-w-0 items-stretch overflow-hidden rounded-12 border-1 text-left shadow-sm transition hover:shadow-md',
                   outbound ?
-                    'border-vattjom-background-300 bg-white text-[#222226] hover:bg-vattjom-background-100'
-                  : 'border-divider bg-background-200 text-body hover:bg-background-100 dark:bg-background-content'
+                    'border-vattjom-background-300 bg-background-content text-body hover:bg-background-100'
+                  : 'border-divider bg-background-200 text-body hover:bg-background-100'
                 )}
                 aria-label="Hoppa till det citerade meddelandet"
                 onClick={() => {
@@ -187,21 +187,11 @@ export const ErrandMessage: FC<{
               >
                 <span className="w-6 shrink-0 bg-vattjom-surface-primary" aria-hidden />
                 <span className="flex min-w-0 flex-1 flex-col gap-y-4 px-12 py-10">
-                  <span
-                    className={cx(
-                      'flex items-center gap-6 text-small font-bold',
-                      outbound ? 'text-[#222226]' : 'text-body'
-                    )}
-                  >
+                  <span className="flex items-center gap-6 text-small font-bold text-body">
                     <CornerUpLeft size={16} className="shrink-0 text-vattjom-surface-primary" />
                     <span>Svarar på {senderLabel(repliedMessage, username)}</span>
                   </span>
-                  <span
-                    className={cx(
-                      'text-small line-clamp-2 break-words',
-                      outbound ? 'text-[#51515c]' : 'text-secondary'
-                    )}
-                  >
+                  <span className="text-small line-clamp-2 break-words text-secondary">
                     {messagePreview(repliedMessage)}
                   </span>
                 </span>
@@ -210,8 +200,8 @@ export const ErrandMessage: FC<{
                 className={cx(
                   'flex items-center gap-8 rounded-12 border-1 border-l-4 px-12 py-10 text-small shadow-sm',
                   outbound ?
-                    'border-vattjom-background-300 border-l-vattjom-surface-primary bg-white text-[#51515c]'
-                  : 'border-divider border-l-vattjom-surface-primary bg-background-200 text-secondary dark:bg-background-content'
+                    'border-vattjom-background-300 border-l-vattjom-surface-primary bg-background-content text-secondary'
+                  : 'border-divider border-l-vattjom-surface-primary bg-background-200 text-secondary'
                 )}
               >
                 <CornerUpLeft size={16} className="shrink-0 text-vattjom-surface-primary" />
@@ -227,8 +217,8 @@ export const ErrandMessage: FC<{
               className={cx(
                 'flex flex-col gap-10 rounded-12 border-1 p-12 shadow-sm',
                 outbound ?
-                  'border-vattjom-background-300 bg-white text-[#222226] dark:border-divider dark:bg-background-content dark:text-body'
-                : 'border-divider bg-background-200 text-body dark:bg-background-content'
+                  'border-vattjom-background-300 bg-background-content text-body'
+                : 'border-divider bg-background-200 text-body'
               )}
               aria-label="Bilagor"
             >
@@ -239,7 +229,7 @@ export const ErrandMessage: FC<{
                   </span>
                   <span>Bilagor</span>
                 </div>
-                <span className={cx('shrink-0', outbound ? 'text-[#51515c] dark:text-secondary' : 'text-secondary')}>
+                <span className="shrink-0 text-secondary">
                   {message.attachments.length} {message.attachments.length === 1 ? 'fil' : 'filer'}
                 </span>
               </div>
@@ -254,8 +244,8 @@ export const ErrandMessage: FC<{
                       className={cx(
                         'flex w-full min-w-0 items-center gap-8 rounded-8 border-1 px-10 py-8 text-small transition disabled:opacity-60',
                         outbound ?
-                          'border-vattjom-background-300 bg-background-content text-[#222226] hover:bg-vattjom-background-100 dark:border-divider dark:bg-background-100 dark:text-body dark:hover:bg-background-200'
-                        : 'border-divider bg-background-content text-body hover:bg-background-100 dark:bg-background-100 dark:hover:brightness-110'
+                          'border-divider bg-background-200 text-body hover:bg-background-100'
+                        : 'border-divider bg-background-content text-body hover:bg-background-100'
                       )}
                       onClick={() => void downloadAttachment(attachment.id, attachment.fileName)}
                     >
