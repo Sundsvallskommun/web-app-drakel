@@ -161,7 +161,7 @@ export const ErrandMessage: FC<{
         {/* OUTBOUND (mine) = blue bubble right; INBOUND (Sökande) = neutral bubble left. */}
         <div
           className={cx(
-            'flex flex-col gap-y-12 rounded-16 border-1 px-16 py-12 max-w-full shadow-sm',
+            'flex flex-col gap-y-14 rounded-16 border-1 px-16 py-14 max-w-full shadow-sm',
             outbound ?
               'border-vattjom-surface-primary bg-vattjom-surface-primary text-white dark:border-vattjom-background-300 dark:bg-vattjom-background-200 dark:text-vattjom-text-primary'
             : 'border-divider bg-background-content text-body dark:bg-background-200',
@@ -173,10 +173,10 @@ export const ErrandMessage: FC<{
               <button
                 type="button"
                 className={cx(
-                  'flex items-start gap-8 rounded-8 border-l-4 px-10 py-8 text-left transition',
+                  'group flex w-full min-w-0 items-stretch overflow-hidden rounded-12 border-1 text-left shadow-sm transition hover:shadow-md',
                   outbound ?
-                    'border-vattjom-surface-primary bg-white text-[#222226] hover:bg-vattjom-background-100'
-                  : 'border-vattjom-surface-primary bg-vattjom-background-100 text-body hover:bg-vattjom-background-200 dark:bg-background-content'
+                    'border-vattjom-background-300 bg-white text-[#222226] hover:bg-vattjom-background-100'
+                  : 'border-divider bg-background-200 text-body hover:bg-background-100 dark:bg-background-content'
                 )}
                 aria-label="Hoppa till det citerade meddelandet"
                 onClick={() => {
@@ -185,12 +185,17 @@ export const ErrandMessage: FC<{
                   }
                 }}
               >
-                <CornerUpLeft
-                  size={16}
-                  className={cx('shrink-0 mt-1', outbound ? 'text-vattjom-surface-primary' : 'text-secondary')}
-                />
-                <span className="flex min-w-0 flex-col gap-y-2">
-                  <span className="text-small font-bold">{senderLabel(repliedMessage, username)}</span>
+                <span className="w-6 shrink-0 bg-vattjom-surface-primary" aria-hidden />
+                <span className="flex min-w-0 flex-1 flex-col gap-y-4 px-12 py-10">
+                  <span
+                    className={cx(
+                      'flex items-center gap-6 text-small font-bold',
+                      outbound ? 'text-[#222226]' : 'text-body'
+                    )}
+                  >
+                    <CornerUpLeft size={16} className="shrink-0 text-vattjom-surface-primary" />
+                    <span>Svarar på {senderLabel(repliedMessage, username)}</span>
+                  </span>
                   <span
                     className={cx(
                       'text-small line-clamp-2 break-words',
@@ -203,13 +208,13 @@ export const ErrandMessage: FC<{
               </button>
             : <div
                 className={cx(
-                  'flex items-center gap-8 rounded-8 border-l-4 px-10 py-8 text-small',
+                  'flex items-center gap-8 rounded-12 border-1 border-l-4 px-12 py-10 text-small shadow-sm',
                   outbound ?
-                    'border-vattjom-surface-primary bg-white text-[#51515c]'
-                  : 'border-vattjom-surface-primary bg-vattjom-background-100 text-secondary dark:bg-background-content'
+                    'border-vattjom-background-300 border-l-vattjom-surface-primary bg-white text-[#51515c]'
+                  : 'border-divider border-l-vattjom-surface-primary bg-background-200 text-secondary dark:bg-background-content'
                 )}
               >
-                <CornerUpLeft size={16} className="shrink-0" />
+                <CornerUpLeft size={16} className="shrink-0 text-vattjom-surface-primary" />
                 Svar på ett tidigare meddelande
               </div>
 
@@ -220,16 +225,23 @@ export const ErrandMessage: FC<{
           {message.attachments?.length ?
             <section
               className={cx(
-                'flex flex-col gap-8 rounded-12 border-1 p-10',
+                'flex flex-col gap-10 rounded-12 border-1 p-12 shadow-sm',
                 outbound ?
-                  'border-white/25 bg-white/15 dark:border-divider dark:bg-background-content'
-                : 'border-divider bg-background-100 dark:bg-background-content'
+                  'border-vattjom-background-300 bg-white text-[#222226] dark:border-divider dark:bg-background-content dark:text-body'
+                : 'border-divider bg-background-200 text-body dark:bg-background-content'
               )}
               aria-label="Bilagor"
             >
-              <div className="flex items-center gap-6 text-small font-bold">
-                <Paperclip size={16} className="shrink-0" />
-                <span>Bilagor</span>
+              <div className="flex items-center justify-between gap-12 text-small">
+                <div className="flex items-center gap-8 font-bold">
+                  <span className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-vattjom-background-100 text-vattjom-surface-primary">
+                    <Paperclip size={15} />
+                  </span>
+                  <span>Bilagor</span>
+                </div>
+                <span className={cx('shrink-0', outbound ? 'text-[#51515c] dark:text-secondary' : 'text-secondary')}>
+                  {message.attachments.length} {message.attachments.length === 1 ? 'fil' : 'filer'}
+                </span>
               </div>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 {message.attachments.map((attachment, index) => {
@@ -242,8 +254,8 @@ export const ErrandMessage: FC<{
                       className={cx(
                         'flex w-full min-w-0 items-center gap-8 rounded-8 border-1 px-10 py-8 text-small transition disabled:opacity-60',
                         outbound ?
-                          'border-white/25 bg-white/15 text-white hover:bg-white/25 dark:border-divider dark:bg-background-100 dark:text-body dark:hover:bg-background-200'
-                        : 'border-divider bg-background-content text-body hover:bg-background-200 dark:bg-background-100 dark:hover:brightness-110'
+                          'border-vattjom-background-300 bg-background-content text-[#222226] hover:bg-vattjom-background-100 dark:border-divider dark:bg-background-100 dark:text-body dark:hover:bg-background-200'
+                        : 'border-divider bg-background-content text-body hover:bg-background-100 dark:bg-background-100 dark:hover:brightness-110'
                       )}
                       onClick={() => void downloadAttachment(attachment.id, attachment.fileName)}
                     >
