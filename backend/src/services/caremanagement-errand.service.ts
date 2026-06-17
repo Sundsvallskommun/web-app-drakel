@@ -2,7 +2,7 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 
-import { Errand, FindErrandsResponse, PatchErrand } from '@/data-contracts/caremanagement/data-contracts';
+import { Errand, FinancialAssistanceView, FindErrandsResponse, PatchErrand } from '@/data-contracts/caremanagement/data-contracts';
 import { CreateErrandDto, FindErrandsQueryDto, PatchErrandDto } from '@/dtos/errand.dto';
 import { HttpException } from '@/exceptions/HttpException';
 
@@ -37,6 +37,16 @@ class CaremanagementErrandService {
       throw new HttpException(404, 'Not found');
     }
     return { data: errand, message: 'success' };
+  }
+
+  /**
+   * Fetches the financial-assistance view of an errand, which (unlike the generic GET /errands/{id})
+   * includes the submitted `data` payload. Used for the "Ärendeuppgifter"-tab.
+   */
+  async getFinancialAssistanceView(errandId: string): Promise<ApiResponse<FinancialAssistanceView>> {
+    return this.apiService.get<FinancialAssistanceView>({
+      url: caremanagementUrl('errands', 'financial-assistance', errandId),
+    });
   }
 
   async createErrand(errand: CreateErrandDto): Promise<ApiResponse<Errand>> {

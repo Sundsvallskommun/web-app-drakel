@@ -2,11 +2,9 @@
 
 import { Errand } from '@data-contracts/backend/data-contracts';
 import { faLabel, FinancialAssistanceData, SubmittedChild, swedishMonth } from '@interfaces/financial-assistance';
-import { FC, ReactNode } from 'react';
-
-// Errandets `data` (FinancialAssistanceData) släpps igenom av backend men saknas i det genererade
-// frontend-kontraktets Errand-typ — vi läser ut det med en smal typning.
-type ErrandWithData = Errand & { data?: FinancialAssistanceData };
+import { getApplicationData } from '@services/errand-service/errand-service';
+import { Spinner } from '@sk-web-gui/react';
+import { FC, ReactNode, useEffect, useState } from 'react';
 
 const kr = (value?: number): string | undefined => (value == null ? undefined : `${value} kr`);
 const yesNo = (value?: boolean): string | undefined =>
@@ -38,7 +36,29 @@ const Section: FC<{ heading: string; children: ReactNode }> = ({ heading, childr
  * (FinancialAssistanceData) skrivskyddat för handläggaren.
  */
 export const ErrandApplicationData: FC<{ errand: Errand }> = ({ errand }) => {
-  const data = (errand as ErrandWithData).data;
+  const [data, setData] = useState<FinancialAssistanceData | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    let active = true;
+    setIsLoading(true);
+    void getApplicationData(errand.id ?? '').then((res) => {
+      if (!active) return;
+      setData(res.error ? null : (res.data ?? null));
+      setIsLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [errand.id]);
+
+  if (isLoading) {
+    return (
+      <div className="pt-24 pb-40 px-24 md:px-40">
+        <Spinner size={3} />
+      </div>
+    );
+  }
 
   if (!data) {
     return (

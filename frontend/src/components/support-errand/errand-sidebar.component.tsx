@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, cx } from '@sk-web-gui/react';
+import { Badge, Button, cx } from '@sk-web-gui/react';
 import { ChevronsLeft, ChevronsRight, type LucideIcon } from 'lucide-react';
 import { FC, ReactNode, useState } from 'react';
 
@@ -8,6 +8,8 @@ export interface SidebarSection {
   key: string;
   label: string;
   icon: LucideIcon;
+  /** Optional count shown as a badge on the section's icon (e.g. number of notes). */
+  badge?: number;
   component: ReactNode;
 }
 
@@ -49,8 +51,20 @@ export const ErrandSidebar: FC<{ sections: SidebarSection[] }> = ({ sections }) 
                 color="primary"
                 inverted={selected !== section.key}
                 iconButton
+                className="relative"
                 leftIcon={<Icon />}
-              />
+              >
+                {section.badge ?
+                  <Badge
+                    className="absolute -top-10 -right-10"
+                    rounded
+                    inverted
+                    color="vattjom"
+                    size="sm"
+                    counter={section.badge > 99 ? '99+' : section.badge}
+                  />
+                : null}
+              </Button>
             );
           })}
         </div>
