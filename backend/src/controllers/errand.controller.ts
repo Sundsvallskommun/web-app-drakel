@@ -57,6 +57,15 @@ export class ErrandController {
     return { data: res.data, message: 'success' };
   }
 
+  @Get('/errands/:errandId/application')
+  @OpenAPI({ summary: 'Fetch the submitted financial-assistance application data for an errand' })
+  @UseBefore(authMiddleware)
+  async getApplicationData(@Param('errandId') errandId: string) {
+    // The generic GET /errands/{id} omits the data payload; the financial-assistance view carries it.
+    const res = await this.errandService.getFinancialAssistanceView(errandId);
+    return { data: res.data?.data ?? null, message: 'success' };
+  }
+
   @Post('/errands')
   @HttpCode(201)
   @OpenAPI({ summary: 'Create an errand' })

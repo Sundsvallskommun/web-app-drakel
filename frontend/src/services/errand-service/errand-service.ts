@@ -7,6 +7,7 @@ import {
   PatchErrandDto,
   Stakeholder,
 } from '@data-contracts/backend/data-contracts';
+import { FinancialAssistanceData } from '@interfaces/financial-assistance';
 import { ServiceResponse } from '@interfaces/services';
 import { ApiResponse, apiService, toServiceError } from '@services/api-service';
 
@@ -84,6 +85,17 @@ export const getErrands = (query: FindErrandsQueryDto = {}): Promise<ServiceResp
 export const getErrand = (errandId: string): Promise<ServiceResponse<Errand>> => {
   return apiService
     .get<ApiResponse<Errand>>(`errands/${errandId}`)
+    .then((res) => ({ data: res.data.data }))
+    .catch(toServiceError);
+};
+
+/**
+ * Fetches the submitted financial-assistance application data for an errand. Comes from the
+ * financial-assistance view (the generic errand GET omits the data payload). Null for non-FA errands.
+ */
+export const getApplicationData = (errandId: string): Promise<ServiceResponse<FinancialAssistanceData | null>> => {
+  return apiService
+    .get<ApiResponse<FinancialAssistanceData | null>>(`errands/${errandId}/application`)
     .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);
 };

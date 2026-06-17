@@ -2,7 +2,7 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 
-import { Errand, FindErrandsResponse, PatchErrand } from '@/data-contracts/caremanagement/data-contracts';
+import { Errand, FinancialAssistanceView, FindErrandsResponse, PatchErrand } from '@/data-contracts/caremanagement/data-contracts';
 import { CreateErrandDto, FindErrandsQueryDto, PatchErrandDto } from '@/dtos/errand.dto';
 
 /** Extracts the errand id (last path segment) from a caremanagement Location header. */
@@ -17,6 +17,16 @@ class CaremanagementErrandService {
 
   async getErrand(errandId: string): Promise<ApiResponse<Errand>> {
     return this.apiService.get<Errand>({ url: caremanagementUrl('errands', errandId) });
+  }
+
+  /**
+   * Fetches the financial-assistance view of an errand, which (unlike the generic GET /errands/{id})
+   * includes the submitted `data` payload. Used for the "Ärendeuppgifter"-tab.
+   */
+  async getFinancialAssistanceView(errandId: string): Promise<ApiResponse<FinancialAssistanceView>> {
+    return this.apiService.get<FinancialAssistanceView>({
+      url: caremanagementUrl('errands', 'financial-assistance', errandId),
+    });
   }
 
   async createErrand(errand: CreateErrandDto): Promise<ApiResponse<Errand>> {
