@@ -5,7 +5,7 @@ import { caremanagementUrl } from '@utils/caremanagement-url';
 import { CreateNote, Note } from '@/data-contracts/caremanagement/data-contracts';
 
 /** Body accepted by caremanagement's PATCH .../notes/{noteId} (the contract's UpdateNote). */
-export interface UpdateNote {
+interface UpdateNote {
   body: string;
 }
 
