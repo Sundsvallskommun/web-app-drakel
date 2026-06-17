@@ -67,9 +67,10 @@ const formatTimeLabel = (created: string): string => {
 const formatAbsolute = (created: string): string => dayjs(created).format('YYYY-MM-DD, HH:mm');
 
 /**
- * A single conversation message rendered as a thread row: sender avatar + a content card holding the
- * header (name · time · "Senaste"), an optional quoted reply (click to jump to it), the body and any
- * attachments. The handläggare can reply to any message via the "Svara" action.
+ * A single conversation message as a chat bubble: OUTBOUND (the handläggare's own, "mine") aligns
+ * right in a blue bubble, INBOUND (the applicant) aligns left in a neutral bubble. Above the bubble a
+ * meta row carries name · time · "Senaste" + the "Svara" action; inside it an optional quoted reply
+ * (click to jump to it) and the body; attachments render below, on the sender's side.
  */
 export const ErrandMessage: FC<{
   message: Message;
@@ -112,42 +113,37 @@ export const ErrandMessage: FC<{
   };
 
   return (
-    <article className="flex gap-12">
+    <article className={cx('flex items-start gap-12', outbound && 'flex-row-reverse')}>
       <Avatar
         size="sm"
         accent
         rounded
         color={outbound ? 'bjornstigen' : 'gronsta'}
-        className="shrink-0 mt-4"
+        className="shrink-0"
         {...(outbound ?
           { initials: getInitials(avatarSource) }
         : { imageElement: <UserRound size={18} strokeWidth={1.75} /> })}
       />
       <div
-        className={cx(
-          'min-w-0 grow flex flex-col gap-y-8 rounded-16 border-1 border-divider bg-background-content px-16 py-12 transition-shadow',
-          isHighlighted && 'ring-2 ring-vattjom-surface-primary'
-        )}
+        className={cx('flex flex-col gap-y-4 min-w-0 max-w-[min(52rem,80%)]', outbound ? 'items-end' : 'items-start')}
       >
-        <header className="flex items-start justify-between gap-12">
-          <div className="flex flex-wrap items-center gap-x-8 gap-y-2 min-w-0">
-            <span className="font-bold text-body truncate">{sender}</span>
-            {message.created ?
-              <time
-                dateTime={message.created}
-                title={formatAbsolute(message.created)}
-                className="text-small text-secondary"
-              >
-                <span className="sr-only">Skickat </span>
-                {formatTimeLabel(message.created)}
-              </time>
-            : null}
-            {isLatest ?
-              <Label rounded inverted color="vattjom" className="text-small">
-                Senaste
-              </Label>
-            : null}
-          </div>
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-2 max-w-full px-2">
+          <span className="font-bold text-body text-small truncate">{sender}</span>
+          {message.created ?
+            <time
+              dateTime={message.created}
+              title={formatAbsolute(message.created)}
+              className="text-small text-secondary"
+            >
+              <span className="sr-only">Skickat </span>
+              {formatTimeLabel(message.created)}
+            </time>
+          : null}
+          {isLatest ?
+            <Label rounded inverted color="vattjom" className="text-small">
+              Senaste
+            </Label>
+          : null}
           <Button
             variant="ghost"
             size="sm"
@@ -160,51 +156,81 @@ export const ErrandMessage: FC<{
           >
             Svara
           </Button>
-        </header>
+        </div>
 
-        {message.inReplyToId ?
-          repliedMessage ?
-            <button
-              type="button"
-              className="flex items-start gap-8 text-left rounded-8 border-l-4 border-vattjom-surface-primary bg-background-200 px-12 py-8 transition hover:brightness-95"
-              aria-label="Hoppa till det citerade meddelandet"
-              onClick={() => {
-                if (repliedMessage.id) {
-                  onJumpTo(repliedMessage.id);
-                }
-              }}
-            >
-              <CornerUpLeft size={16} className="shrink-0 mt-2 text-secondary" />
-              <span className="flex flex-col gap-y-2 min-w-0">
-                <span className="text-small font-bold">{senderLabel(repliedMessage, username)}</span>
-                <span className="text-small text-secondary line-clamp-2 break-words">
-                  {messagePreview(repliedMessage)}
+        {/* OUTBOUND (mine) = blue bubble right; INBOUND (Sökande) = neutral bubble left. */}
+        <div
+          className={cx(
+            'flex flex-col gap-y-8 rounded-16 px-16 py-12 max-w-full',
+            outbound ?
+              'bg-vattjom-surface-primary text-white'
+            : 'bg-background-content text-body border-1 border-divider',
+            isHighlighted && 'ring-2 ring-warning-surface-primary'
+          )}
+        >
+          {message.inReplyToId ?
+            repliedMessage ?
+              <button
+                type="button"
+                className={cx(
+                  'flex items-start gap-8 text-left rounded-8 border-l-4 px-12 py-8 transition hover:brightness-95',
+                  outbound ? 'border-white/60 bg-white/15' : 'border-vattjom-surface-primary bg-background-200'
+                )}
+                aria-label="Hoppa till det citerade meddelandet"
+                onClick={() => {
+                  if (repliedMessage.id) {
+                    onJumpTo(repliedMessage.id);
+                  }
+                }}
+              >
+                <CornerUpLeft
+                  size={16}
+                  className={cx('shrink-0 mt-2', outbound ? 'text-white/80' : 'text-secondary')}
+                />
+                <span className="flex flex-col gap-y-2 min-w-0">
+                  <span className="text-small font-bold">{senderLabel(repliedMessage, username)}</span>
+                  <span
+                    className={cx('text-small line-clamp-2 break-words', outbound ? 'text-white/80' : 'text-secondary')}
+                  >
+                    {messagePreview(repliedMessage)}
+                  </span>
                 </span>
-              </span>
-            </button>
-          : <div className="flex items-center gap-8 rounded-8 border-l-4 border-divider bg-background-200 px-12 py-8 text-small text-secondary">
-              <CornerUpLeft size={16} className="shrink-0" />
-              Svar på ett tidigare meddelande
-            </div>
+              </button>
+            : <div
+                className={cx(
+                  'flex items-center gap-8 rounded-8 border-l-4 px-12 py-8 text-small',
+                  outbound ?
+                    'border-white/40 bg-white/15 text-white/80'
+                  : 'border-divider bg-background-200 text-secondary'
+                )}
+              >
+                <CornerUpLeft size={16} className="shrink-0" />
+                Svar på ett tidigare meddelande
+              </div>
 
-        : null}
+          : null}
 
-        <p className="m-0 whitespace-pre-wrap break-words text-body leading-relaxed">{message.body}</p>
+          <p className="m-0 whitespace-pre-wrap break-words leading-relaxed">{message.body}</p>
+        </div>
 
         {message.attachments?.length ?
-          <div className="flex flex-col gap-6 items-start">
+          <div
+            className={cx('flex flex-wrap gap-6 max-w-full', outbound ? 'justify-end' : 'justify-start')}
+            aria-label="Bilagor"
+          >
             {message.attachments.map((attachment, index) => (
               <Button
                 key={attachment.id ?? index}
                 variant="secondary"
                 size="sm"
+                className="min-w-0 max-w-full"
                 leftIcon={<Paperclip size={16} />}
                 rightIcon={<Download size={18} />}
                 disabled={!message.id || !attachment.id}
                 loading={downloadingAttachmentId === attachment.id}
                 onClick={() => void downloadAttachment(attachment.id, attachment.fileName)}
               >
-                {attachment.fileName ?? 'bilaga'}
+                <span className="truncate">{attachment.fileName ?? 'bilaga'}</span>
               </Button>
             ))}
           </div>
