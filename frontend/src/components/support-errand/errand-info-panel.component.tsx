@@ -47,7 +47,10 @@ export const ErrandInfoPanel: FC<ErrandInfoPanelProps> = ({
   // då saknas options och Select:en faller tillbaka på "Välj status" trots att ärendet har en status.
   // Inkludera därför alltid ärendets nuvarande status så den visas och kan behållas.
   const statusOptions = useMemo(() => {
-    const options = statuses.map((lookup) => ({ name: lookup.name ?? '', label: lookup.displayName ?? lookup.name ?? '' }));
+    const options = statuses.map((lookup) => ({
+      name: lookup.name ?? '',
+      label: lookup.displayName ?? lookup.name ?? '',
+    }));
     if (form.status && !options.some((option) => option.name === form.status)) {
       options.unshift({ name: form.status, label: form.status });
     }

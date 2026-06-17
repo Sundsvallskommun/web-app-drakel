@@ -59,9 +59,9 @@ export const ErrandStakeholders: FC<{ errandId: string }> = ({ errandId }) => {
             <div className="flex flex-col">
               <span className="font-bold">{stakeholderName(stakeholder)}</span>
               <span className="text-small">{stakeholderContact(stakeholder)}</span>
-              {stakeholderAddress(stakeholder) ? (
+              {stakeholderAddress(stakeholder) ?
                 <span className="text-small text-dark-secondary">{stakeholderAddress(stakeholder)}</span>
-              ) : null}
+              : null}
             </div>
           </div>
         </div>

@@ -9,7 +9,10 @@ import { FC, ReactNode, useEffect, useState } from 'react';
 import { ErrandStakeholders } from './errand-stakeholders.component';
 
 const kr = (value?: number): string | undefined => (value == null ? undefined : `${value} kr`);
-const yesNo = (value?: boolean): string | undefined => (value == null ? undefined : value ? 'Ja' : 'Nej');
+const yesNo = (value?: boolean): string | undefined =>
+  value == null ? undefined
+  : value ? 'Ja'
+  : 'Nej';
 const childName = (child: SubmittedChild): string =>
   child.name?.trim() ?? [child.firstName, child.lastName].filter(Boolean).join(' ').trim();
 
@@ -33,9 +36,9 @@ const Section: FC<{ heading: string; children: ReactNode }> = ({ heading, childr
 /** The submitted application data (FinancialAssistanceData), grouped into read-only sections. */
 const ApplicationSections: FC<{ data: FinancialAssistanceData }> = ({ data }) => {
   const period =
-    data.periodMonth && data.periodYear
-      ? `${swedishMonth(data.periodMonth)} ${data.periodYear}`
-      : faLabel('periodChoice', data.periodChoice) || undefined;
+    data.periodMonth && data.periodYear ?
+      `${swedishMonth(data.periodMonth)} ${data.periodYear}`
+    : faLabel('periodChoice', data.periodChoice) || undefined;
 
   const assetValue = (asset: NonNullable<FinancialAssistanceData['assets']>[number]): string | undefined => {
     const fromValue = kr(asset.value);
@@ -77,23 +80,23 @@ const ApplicationSections: FC<{ data: FinancialAssistanceData }> = ({ data }) =>
         <Row label="Beskrivning av boende" value={data.housingDescription} />
       </Section>
 
-      {(data.costs ?? []).length > 0 ? (
+      {(data.costs ?? []).length > 0 ?
         <Section heading="Kostnader">
           {(data.costs ?? []).map((cost, index) => (
             <Row
               key={`cost-${index}`}
               label={
-                cost.costType === 'OTHER' && cost.otherSubType
-                  ? `${faLabel('costType', cost.costType)} – ${faLabel('costOtherSubType', cost.otherSubType)}`
-                  : faLabel('costType', cost.costType) || `Kostnad ${index + 1}`
+                cost.costType === 'OTHER' && cost.otherSubType ?
+                  `${faLabel('costType', cost.costType)} – ${faLabel('costOtherSubType', cost.otherSubType)}`
+                : faLabel('costType', cost.costType) || `Kostnad ${index + 1}`
               }
               value={[kr(cost.appliedAmount), cost.specification].filter(Boolean).join(' · ')}
             />
           ))}
         </Section>
-      ) : null}
+      : null}
 
-      {(data.incomes ?? []).length > 0 ? (
+      {(data.incomes ?? []).length > 0 ?
         <Section heading="Inkomster">
           {(data.incomes ?? []).map((income, index) => (
             <Row
@@ -103,17 +106,21 @@ const ApplicationSections: FC<{ data: FinancialAssistanceData }> = ({ data }) =>
             />
           ))}
         </Section>
-      ) : null}
+      : null}
 
-      {(data.pendingBenefits ?? []).length > 0 ? (
+      {(data.pendingBenefits ?? []).length > 0 ?
         <Section heading="Väntande ersättningar">
           {(data.pendingBenefits ?? []).map((benefit, index) => (
-            <Row key={`benefit-${index}`} label={benefit.benefitName ?? `Ersättning ${index + 1}`} value={benefit.applicantName} />
+            <Row
+              key={`benefit-${index}`}
+              label={benefit.benefitName ?? `Ersättning ${index + 1}`}
+              value={benefit.applicantName}
+            />
           ))}
         </Section>
-      ) : null}
+      : null}
 
-      {(data.assets ?? []).length > 0 ? (
+      {(data.assets ?? []).length > 0 ?
         <Section heading="Tillgångar">
           {(data.assets ?? []).map((asset, index) => (
             <Row
@@ -123,9 +130,9 @@ const ApplicationSections: FC<{ data: FinancialAssistanceData }> = ({ data }) =>
             />
           ))}
         </Section>
-      ) : null}
+      : null}
 
-      {(data.plannings ?? []).length > 0 ? (
+      {(data.plannings ?? []).length > 0 ?
         <Section heading="Planering">
           {(data.plannings ?? []).map((planning, index) => (
             <Row
@@ -149,9 +156,9 @@ const ApplicationSections: FC<{ data: FinancialAssistanceData }> = ({ data }) =>
             />
           ))}
         </Section>
-      ) : null}
+      : null}
 
-      {(data.persons ?? []).length > 0 ? (
+      {(data.persons ?? []).length > 0 ?
         <Section heading="Utbetalning och kontaktuppgifter">
           {(data.persons ?? []).map((person, index) => (
             <Row
@@ -168,7 +175,7 @@ const ApplicationSections: FC<{ data: FinancialAssistanceData }> = ({ data }) =>
             />
           ))}
         </Section>
-      ) : null}
+      : null}
 
       <Section heading="Vistelse och försäkran">
         <Row label="Vistas i kommunen under ansökningsmånaden" value={yesNo(data.staysInMunicipality)} />
@@ -207,13 +214,11 @@ export const ErrandApplicationData: FC<{ errand: Errand }> = ({ errand }) => {
         <ErrandStakeholders errandId={errand.id ?? ''} />
       </section>
 
-      {isLoading ? (
+      {isLoading ?
         <Spinner size={3} />
-      ) : data ? (
+      : data ?
         <ApplicationSections data={data} />
-      ) : (
-        <p>Inga inskickade uppgifter att visa för det här ärendet.</p>
-      )}
+      : <p>Inga inskickade uppgifter att visa för det här ärendet.</p>}
     </div>
   );
 };
