@@ -6,11 +6,10 @@ import { getApplicationData } from '@services/errand-service/errand-service';
 import { Spinner } from '@sk-web-gui/react';
 import { FC, ReactNode, useEffect, useState } from 'react';
 
+import { ErrandStakeholders } from './errand-stakeholders.component';
+
 const kr = (value?: number): string | undefined => (value == null ? undefined : `${value} kr`);
-const yesNo = (value?: boolean): string | undefined =>
-  value == null ? undefined
-  : value ? 'Ja'
-  : 'Nej';
+const yesNo = (value?: boolean): string | undefined => (value == null ? undefined : value ? 'Ja' : 'Nej');
 const childName = (child: SubmittedChild): string =>
   child.name?.trim() ?? [child.firstName, child.lastName].filter(Boolean).join(' ').trim();
 
@@ -31,47 +30,12 @@ const Section: FC<{ heading: string; children: ReactNode }> = ({ heading, childr
   </section>
 );
 
-/**
- * Fliken "Ärendeuppgifter" — listar de uppgifter medborgaren skickade in på ärendet
- * (FinancialAssistanceData) skrivskyddat för handläggaren.
- */
-export const ErrandApplicationData: FC<{ errand: Errand }> = ({ errand }) => {
-  const [data, setData] = useState<FinancialAssistanceData | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    let active = true;
-    setIsLoading(true);
-    void getApplicationData(errand.id ?? '').then((res) => {
-      if (!active) return;
-      setData(res.error ? null : (res.data ?? null));
-      setIsLoading(false);
-    });
-    return () => {
-      active = false;
-    };
-  }, [errand.id]);
-
-  if (isLoading) {
-    return (
-      <div className="pt-24 pb-40 px-24 md:px-40">
-        <Spinner size={3} />
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div className="pt-24 pb-40 px-24 md:px-40">
-        <p>Inga inskickade uppgifter att visa för det här ärendet.</p>
-      </div>
-    );
-  }
-
+/** The submitted application data (FinancialAssistanceData), grouped into read-only sections. */
+const ApplicationSections: FC<{ data: FinancialAssistanceData }> = ({ data }) => {
   const period =
-    data.periodMonth && data.periodYear ?
-      `${swedishMonth(data.periodMonth)} ${data.periodYear}`
-    : faLabel('periodChoice', data.periodChoice) || undefined;
+    data.periodMonth && data.periodYear
+      ? `${swedishMonth(data.periodMonth)} ${data.periodYear}`
+      : faLabel('periodChoice', data.periodChoice) || undefined;
 
   const assetValue = (asset: NonNullable<FinancialAssistanceData['assets']>[number]): string | undefined => {
     const fromValue = kr(asset.value);
@@ -88,7 +52,7 @@ export const ErrandApplicationData: FC<{ errand: Errand }> = ({ errand }) => {
   };
 
   return (
-    <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-32">
+    <>
       <div className="flex flex-col gap-8">
         <h2 className="text-h2-sm md:text-h2-md m-0">Inskickade uppgifter</h2>
         <span>Uppgifterna som sökanden lämnade i ansökan via Mina sidor.</span>
@@ -113,23 +77,23 @@ export const ErrandApplicationData: FC<{ errand: Errand }> = ({ errand }) => {
         <Row label="Beskrivning av boende" value={data.housingDescription} />
       </Section>
 
-      {(data.costs ?? []).length > 0 ?
+      {(data.costs ?? []).length > 0 ? (
         <Section heading="Kostnader">
           {(data.costs ?? []).map((cost, index) => (
             <Row
               key={`cost-${index}`}
               label={
-                cost.costType === 'OTHER' && cost.otherSubType ?
-                  `${faLabel('costType', cost.costType)} – ${faLabel('costOtherSubType', cost.otherSubType)}`
-                : faLabel('costType', cost.costType) || `Kostnad ${index + 1}`
+                cost.costType === 'OTHER' && cost.otherSubType
+                  ? `${faLabel('costType', cost.costType)} – ${faLabel('costOtherSubType', cost.otherSubType)}`
+                  : faLabel('costType', cost.costType) || `Kostnad ${index + 1}`
               }
               value={[kr(cost.appliedAmount), cost.specification].filter(Boolean).join(' · ')}
             />
           ))}
         </Section>
-      : null}
+      ) : null}
 
-      {(data.incomes ?? []).length > 0 ?
+      {(data.incomes ?? []).length > 0 ? (
         <Section heading="Inkomster">
           {(data.incomes ?? []).map((income, index) => (
             <Row
@@ -139,21 +103,17 @@ export const ErrandApplicationData: FC<{ errand: Errand }> = ({ errand }) => {
             />
           ))}
         </Section>
-      : null}
+      ) : null}
 
-      {(data.pendingBenefits ?? []).length > 0 ?
+      {(data.pendingBenefits ?? []).length > 0 ? (
         <Section heading="Väntande ersättningar">
           {(data.pendingBenefits ?? []).map((benefit, index) => (
-            <Row
-              key={`benefit-${index}`}
-              label={benefit.benefitName ?? `Ersättning ${index + 1}`}
-              value={benefit.applicantName}
-            />
+            <Row key={`benefit-${index}`} label={benefit.benefitName ?? `Ersättning ${index + 1}`} value={benefit.applicantName} />
           ))}
         </Section>
-      : null}
+      ) : null}
 
-      {(data.assets ?? []).length > 0 ?
+      {(data.assets ?? []).length > 0 ? (
         <Section heading="Tillgångar">
           {(data.assets ?? []).map((asset, index) => (
             <Row
@@ -163,9 +123,9 @@ export const ErrandApplicationData: FC<{ errand: Errand }> = ({ errand }) => {
             />
           ))}
         </Section>
-      : null}
+      ) : null}
 
-      {(data.plannings ?? []).length > 0 ?
+      {(data.plannings ?? []).length > 0 ? (
         <Section heading="Planering">
           {(data.plannings ?? []).map((planning, index) => (
             <Row
@@ -189,9 +149,9 @@ export const ErrandApplicationData: FC<{ errand: Errand }> = ({ errand }) => {
             />
           ))}
         </Section>
-      : null}
+      ) : null}
 
-      {(data.persons ?? []).length > 0 ?
+      {(data.persons ?? []).length > 0 ? (
         <Section heading="Utbetalning och kontaktuppgifter">
           {(data.persons ?? []).map((person, index) => (
             <Row
@@ -208,13 +168,52 @@ export const ErrandApplicationData: FC<{ errand: Errand }> = ({ errand }) => {
             />
           ))}
         </Section>
-      : null}
+      ) : null}
 
       <Section heading="Vistelse och försäkran">
         <Row label="Vistas i kommunen under ansökningsmånaden" value={yesNo(data.staysInMunicipality)} />
         <Row label="Beskrivning av vistelse" value={data.stayDescription} />
         <Row label="Försäkran lämnad" value={yesNo(data.attestation)} />
       </Section>
+    </>
+  );
+};
+
+/**
+ * Fliken "Ärendeuppgifter" — intressenterna på ärendet listas högst upp (skrivskyddat), därefter de
+ * uppgifter medborgaren skickade in (FinancialAssistanceData).
+ */
+export const ErrandApplicationData: FC<{ errand: Errand }> = ({ errand }) => {
+  const [data, setData] = useState<FinancialAssistanceData | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    let active = true;
+    setIsLoading(true);
+    void getApplicationData(errand.id ?? '').then((res) => {
+      if (!active) return;
+      setData(res.error ? null : (res.data ?? null));
+      setIsLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [errand.id]);
+
+  return (
+    <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-32">
+      <section className="flex flex-col gap-12">
+        <h2 className="text-h2-sm md:text-h2-md m-0">Intressenter</h2>
+        <ErrandStakeholders errandId={errand.id ?? ''} />
+      </section>
+
+      {isLoading ? (
+        <Spinner size={3} />
+      ) : data ? (
+        <ApplicationSections data={data} />
+      ) : (
+        <p>Inga inskickade uppgifter att visa för det här ärendet.</p>
+      )}
     </div>
   );
 };

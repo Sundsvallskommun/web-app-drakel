@@ -6,7 +6,7 @@ import { useStatuses } from '@hooks/use-statuses';
 import { useUserStore } from '@services/user-service/user-service';
 import { Button, Divider, FormControl, FormLabel, Input, Select } from '@sk-web-gui/react';
 import dayjs from 'dayjs';
-import { FC } from 'react';
+import { FC, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 const PRIORITIES = [
@@ -42,6 +42,17 @@ export const ErrandInfoPanel: FC<ErrandInfoPanelProps> = ({
 }) => {
   const { statuses } = useStatuses();
   const username = useUserStore(useShallow((state) => state.user.username));
+
+  // Statusalternativen kommer från STATUS-metadata, men den listan är ofta tom i caremanagement —
+  // då saknas options och Select:en faller tillbaka på "Välj status" trots att ärendet har en status.
+  // Inkludera därför alltid ärendets nuvarande status så den visas och kan behållas.
+  const statusOptions = useMemo(() => {
+    const options = statuses.map((lookup) => ({ name: lookup.name ?? '', label: lookup.displayName ?? lookup.name ?? '' }));
+    if (form.status && !options.some((option) => option.name === form.status)) {
+      options.unshift({ name: form.status, label: form.status });
+    }
+    return options;
+  }, [statuses, form.status]);
 
   return (
     <div className="flex flex-col gap-16">
@@ -80,9 +91,9 @@ export const ErrandInfoPanel: FC<ErrandInfoPanelProps> = ({
           }}
         >
           <Select.Option value="">Välj status</Select.Option>
-          {statuses.map((lookup) => (
-            <Select.Option key={lookup.name} value={lookup.name ?? ''}>
-              {lookup.displayName ?? lookup.name}
+          {statusOptions.map((option) => (
+            <Select.Option key={option.name} value={option.name}>
+              {option.label}
             </Select.Option>
           ))}
         </Select>

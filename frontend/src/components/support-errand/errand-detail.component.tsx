@@ -10,7 +10,6 @@ import { FC, useEffect, useState } from 'react';
 
 import { ErrandApplicationData } from './errand-application-data.component';
 import { ErrandAttachments } from './errand-attachments.component';
-import { ErrandBasicsTab } from './errand-basics-tab.component';
 import { ErrandInfoPanel } from './errand-info-panel.component';
 import { ErrandMessages } from './errand-messages.component';
 import { ErrandNotes } from './errand-notes.component';
@@ -100,12 +99,6 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
             current={activeTab}
             onTabChange={setActiveTab}
           >
-            <Tabs.Item>
-              <Tabs.Button className="text-base">Grunduppgifter</Tabs.Button>
-              <Tabs.Content>
-                <ErrandBasicsTab errand={errand} form={form} setField={setField} />
-              </Tabs.Content>
-            </Tabs.Item>
             <Tabs.Item>
               <Tabs.Button className="text-base">Ärendeuppgifter</Tabs.Button>
               <Tabs.Content>
