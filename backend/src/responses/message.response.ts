@@ -39,6 +39,10 @@ export class Message {
   @IsString()
   @IsOptional()
   author?: string;
+  /** Id of the message this one replies to, when it is a reply (always on the same errand). */
+  @IsString()
+  @IsOptional()
+  inReplyToId?: string;
   @IsString()
   @IsOptional()
   created?: string;

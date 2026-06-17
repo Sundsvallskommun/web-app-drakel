@@ -41,6 +41,8 @@ export interface Message {
   direction?: 'INBOUND' | 'OUTBOUND';
   body?: string;
   author?: string;
+  /** Id of the message this one replies to, when it is a reply (always on the same errand). */
+  inReplyToId?: string;
   created?: string;
   attachments?: MessageAttachment[];
 }
@@ -167,18 +169,24 @@ export const getErrandMessages = (errandId: string): Promise<ServiceResponse<Mes
 /**
  * Posts a message (with optional file attachments) to an errand's conversation. Sent as multipart:
  * a `body` text field plus zero or more `files`. The backend marks it OUTBOUND and stamps the author
- * from the session, so the handläggare only supplies the text and files.
+ * from the session, so the handläggare only supplies the text, files and an optional reply target.
+ *
+ * `inReplyToId`, when set, is the id of the message being replied to (must be on the same errand).
  */
 export const postErrandMessage = (
   errandId: string,
   body: string,
-  files: File[] = []
+  files: File[] = [],
+  inReplyToId?: string
 ): Promise<ServiceResponse<null>> => {
   const form = new FormData();
   form.append('body', body);
   files.forEach((file) => {
     form.append('files', file);
   });
+  if (inReplyToId) {
+    form.append('inReplyToId', inReplyToId);
+  }
   // Empty headers let axios set the multipart boundary instead of the default JSON content-type.
   return apiService
     .post<ApiResponse<null>>(`errands/${errandId}/messages`, form, { headers: {} })

@@ -37,6 +37,16 @@ const normalizeMessageBody = (body: unknown): string => {
   return trimmedBody;
 };
 
+// Optional reply target. The client may send a blank/missing field; only a non-empty string is a real
+// reply, so anything else is dropped and the message is posted as a top-level (non-reply) message.
+const normalizeInReplyToId = (inReplyToId: unknown): string | undefined => {
+  if (typeof inReplyToId !== 'string') {
+    return undefined;
+  }
+  const trimmed = inReplyToId.trim();
+  return trimmed.length ? trimmed : undefined;
+};
+
 /** Owns the conversation-message sub-resource of an errand (list, post, download attachment). */
 @Controller()
 export class MessageController {
@@ -64,12 +74,16 @@ export class MessageController {
     // normalizeMessageBody still validates defensively (handles missing/duplicate-field cases).
     @BodyParam('body') body: string,
     @UploadedFiles('files', messageAttachmentUploadOptions) files?: UploadedFileLike[],
+    // Optional id of the message this one replies to (a plain string, like `body`). caremanagement
+    // validates that it references a message on the same errand.
+    @BodyParam('inReplyToId', { required: false }) inReplyToId?: string,
   ) {
     // Every message a handläggare posts is OUTBOUND (caseworker → applicant), authored by the logged-in
     // user. Both are decided here, never trusted from the client (mirrors the initiateErrand flow).
+    const replyTo = normalizeInReplyToId(inReplyToId);
     await this.messageService.createMessage(
       errandId,
-      { direction: 'OUTBOUND', body: normalizeMessageBody(body), author: req.user.username },
+      { direction: 'OUTBOUND', body: normalizeMessageBody(body), author: req.user.username, ...(replyTo ? { inReplyToId: replyTo } : {}) },
       files ?? [],
     );
     return { data: null, message: 'success' };

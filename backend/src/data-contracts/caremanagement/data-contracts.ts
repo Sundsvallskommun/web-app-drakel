@@ -20,8 +20,8 @@ export interface Problem {
   instance?: string;
   /** @format uri */
   type?: string;
-  detail?: string;
   title?: string;
+  detail?: string;
   /** @format int32 */
   status?: number;
 }
@@ -632,6 +632,8 @@ export interface CreateMessage {
    * @maxLength 64
    */
   author?: string;
+  /** Id of the message this one replies to. Optional; when set it must reference a message on the same errand. */
+  inReplyToId?: string;
 }
 
 /** Decision recorded against an errand. Both system-generated decisions (e.g. a DMN-evaluated recommendation produced by a BPMN process) and human decisions (e.g. a handläggare approving a payment) are stored here, distinguished by `decisionType`. The list on the errand grows over time and is the audit trail of every decision made on the case. */
@@ -754,6 +756,28 @@ export interface EligibilityResponse {
   hasCoApplicant?: boolean;
 }
 
+/** Request to create the Lifecare aktualisering (case intake) for an application month. */
+export interface ActualisationRequest {
+  /** The applicant's partyId (personId GUID) */
+  applicant: string;
+  /**
+   * The application month (ISO year-month, yyyy-MM); the aktualisering's intake date is the first day of this month
+   * @pattern ^\d{4}-(0[1-9]|1[0-2])$
+   */
+  applicationMonth: string;
+  /** The id of the caremanagement errand the aktualisering concerns. When present, a Decision(ACTUALISATION) recording the created Lifecare aktualisering id is added to the errand's audit trail; when omitted, the aktualisering is created without recording anything on an errand. */
+  errandId?: string;
+}
+
+/** The created Lifecare aktualisering id. */
+export interface ActualisationResponse {
+  /**
+   * The id of the aktualisering created in Lifecare FC
+   * @format int32
+   */
+  actualisationId?: number;
+}
+
 /** PatchErrand model — patchable envelope fields only */
 export interface PatchErrand {
   /** Title for the errand */
@@ -768,6 +792,52 @@ export interface PatchErrand {
   reporterUserId?: string;
   /** User id of the assignee */
   assignedUserId?: string;
+}
+
+export interface UpdateNote {
+  /**
+   * @minLength 0
+   * @maxLength 8192
+   */
+  body: string;
+  /**
+   * @minLength 0
+   * @maxLength 64
+   */
+  modifiedBy?: string;
+}
+
+/** Note attached to an errand */
+export interface Note {
+  /** Unique identifier */
+  id?: string;
+  /** Errand id this note belongs to */
+  errandId?: string;
+  /**
+   * Note body
+   * @example "Spoke to family today, awaiting docs."
+   */
+  body?: string;
+  /**
+   * Author user id
+   * @example "jane01doe"
+   */
+  author?: string;
+  /**
+   * Created timestamp
+   * @format date-time
+   */
+  created?: string;
+  /**
+   * User id of the last editor
+   * @example "jane01doe"
+   */
+  modifiedBy?: string;
+  /**
+   * Last modified timestamp; null until the note has been edited
+   * @format date-time
+   */
+  modified?: string;
 }
 
 /** Number of errands assigned to a given user */
@@ -859,29 +929,6 @@ export interface StatusHistoryEntry {
   changedAt?: string;
 }
 
-/** Note attached to an errand */
-export interface Note {
-  /** Unique identifier */
-  id?: string;
-  /** Errand id this note belongs to */
-  errandId?: string;
-  /**
-   * Note body
-   * @example "Spoke to family today, awaiting docs."
-   */
-  body?: string;
-  /**
-   * Author user id
-   * @example "jane01doe"
-   */
-  author?: string;
-  /**
-   * Created timestamp
-   * @format date-time
-   */
-  created?: string;
-}
-
 /** A message in the errand's conversation */
 export interface Message {
   /** Unique identifier */
@@ -894,6 +941,8 @@ export interface Message {
   body?: string;
   /** Author id */
   author?: string;
+  /** Id of the message this one replies to, when it is a reply (same errand) */
+  inReplyToId?: string;
   /**
    * Created timestamp
    * @format date-time
@@ -1057,6 +1106,7 @@ export enum AssetAssetCategoryEnum {
   REAL_ESTATE = "REAL_ESTATE",
   COMPANY = "COMPANY",
   VEHICLE = "VEHICLE",
+  OTHER = "OTHER",
 }
 
 /** Type of real estate property */
