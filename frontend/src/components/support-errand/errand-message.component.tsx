@@ -7,7 +7,7 @@ import { Avatar, Button, cx, Label, Spinner } from '@sk-web-gui/react';
 import dayjs from 'dayjs';
 import localeSv from 'dayjs/locale/sv';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { CornerUpLeft, Download, Eye, Paperclip, Reply, UserRound } from 'lucide-react';
+import { CornerUpLeft, Download, Eye, Reply, UserRound } from 'lucide-react';
 import { FC, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -177,7 +177,7 @@ export const ErrandMessage: FC<{
           className={cx(
             'flex flex-col gap-y-14 rounded-16 border-1 px-16 py-14 w-full shadow-sm',
             outbound ?
-              'border-vattjom-background-300 bg-vattjom-surface-accent text-vattjom-text-primary'
+              'border-vattjom-background-300 bg-vattjom-background-100 text-vattjom-text-primary'
             : 'border-divider bg-background-content text-body',
             isHighlighted && 'ring-2 ring-warning-surface-primary'
           )}
@@ -226,52 +226,47 @@ export const ErrandMessage: FC<{
 
           <p className="m-0 whitespace-pre-wrap break-words leading-relaxed">{message.body}</p>
 
-          {/* No wrapper card — just a light label, then each attachment as its own outlined chip that
-              flows beside the others and wraps where it fits. Colours inherit from the bubble so they
-              stay legible on both bubble types; each chip keeps its preview + download actions. */}
+          {/* No wrapper card and no label — the files speak for themselves. Each attachment is its own
+              outlined chip that flows beside the others and wraps where it fits; colours inherit from the
+              bubble so they stay legible on both bubble types. Each chip carries a clear "Visa" + download. */}
           {message.attachments?.length ?
-            <section className="flex flex-col gap-6" aria-label="Bilagor">
-              <span className="flex items-center gap-6 text-small font-bold">
-                <Paperclip size={15} className="shrink-0" />
-                {message.attachments.length === 1 ? 'Bilaga' : `${message.attachments.length} bilagor`}
-              </span>
-              <div className="flex flex-wrap gap-8">
-                {message.attachments.map((attachment, index) => {
-                  const isDownloading = downloadingAttachmentId === attachment.id;
-                  const fileName = attachment.fileName ?? 'bilaga';
-                  return (
-                    <div
-                      key={attachment.id ?? index}
-                      className="flex min-w-0 max-w-full items-center gap-4 rounded-8 border-1 border-divider px-10 py-6 text-small"
-                    >
-                      <span className="min-w-0 truncate text-left">{fileName}</span>
-                      {isPreviewableAttachment(toPreviewAttachment(attachment)) ?
-                        <button
-                          type="button"
-                          aria-label={`Förhandsgranska ${fileName}`}
-                          className="shrink-0 rounded-4 p-2 transition hover:bg-background-100"
-                          onClick={() => {
-                            setPreviewAttachment(toPreviewAttachment(attachment));
-                          }}
-                        >
-                          <Eye size={18} />
-                        </button>
-                      : null}
+            <section className="flex flex-wrap gap-8" aria-label="Bilagor">
+              {message.attachments.map((attachment, index) => {
+                const isDownloading = downloadingAttachmentId === attachment.id;
+                const fileName = attachment.fileName ?? 'bilaga';
+                return (
+                  <div
+                    key={attachment.id ?? index}
+                    className="flex min-w-0 max-w-full items-center gap-4 rounded-8 border-1 border-divider py-6 pl-10 pr-6 text-small"
+                  >
+                    <span className="min-w-0 truncate text-left">{fileName}</span>
+                    {isPreviewableAttachment(toPreviewAttachment(attachment)) ?
                       <button
                         type="button"
-                        disabled={!message.id || !attachment.id || isDownloading}
-                        aria-label={`Ladda ner ${fileName}`}
-                        className="shrink-0 rounded-4 p-2 transition hover:bg-background-100 disabled:opacity-60"
-                        onClick={() => void downloadAttachment(attachment.id, attachment.fileName)}
+                        aria-label={`Visa ${fileName}`}
+                        className="flex shrink-0 items-center gap-4 rounded-4 px-6 py-2 transition hover:bg-background-100"
+                        onClick={() => {
+                          setPreviewAttachment(toPreviewAttachment(attachment));
+                        }}
                       >
-                        {isDownloading ?
-                          <Spinner size={2} />
-                        : <Download size={18} />}
+                        <Eye size={16} />
+                        Visa
                       </button>
-                    </div>
-                  );
-                })}
-              </div>
+                    : null}
+                    <button
+                      type="button"
+                      disabled={!message.id || !attachment.id || isDownloading}
+                      aria-label={`Ladda ner ${fileName}`}
+                      className="shrink-0 rounded-4 p-2 transition hover:bg-background-100 disabled:opacity-60"
+                      onClick={() => void downloadAttachment(attachment.id, attachment.fileName)}
+                    >
+                      {isDownloading ?
+                        <Spinner size={2} />
+                      : <Download size={18} />}
+                    </button>
+                  </div>
+                );
+              })}
             </section>
           : null}
         </div>
