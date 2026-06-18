@@ -63,7 +63,7 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
 
   return (
     <div className="flex flex-col gap-16 h-full">
-      <span className="text-large font-semibold">Anteckningar</span>
+      <h2 className="text-h4-sm md:text-h4-md m-0">Anteckningar</h2>
 
       {(error ?? loadError) && (
         <p className="text-error-surface-primary m-0">{error ?? 'Det gick inte att hämta anteckningarna'}</p>
