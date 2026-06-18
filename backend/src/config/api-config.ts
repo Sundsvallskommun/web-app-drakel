@@ -4,6 +4,11 @@ export const APIS = [
     name: 'simulatorserver',
     version: '2.0',
   },
+  {
+    // Citizen — resolves a stakeholder's partyId (externalId) to their personnummer for display.
+    name: 'citizen',
+    version: '3.0',
+  },
 ] as const;
 
 // NOTE: caremanagement is intentionally NOT in APIS. Runtime calls are built by caremanagementUrl,

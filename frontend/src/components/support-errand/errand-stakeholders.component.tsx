@@ -58,6 +58,9 @@ export const ErrandStakeholders: FC<{ errandId: string }> = ({ errandId }) => {
             <Avatar initials={getInitials(stakeholderName(stakeholder))} rounded color="vattjom" />
             <div className="flex flex-col">
               <span className="font-bold">{stakeholderName(stakeholder)}</span>
+              {stakeholder.personalNumber ?
+                <span className="text-small text-dark-secondary">Personnummer: {stakeholder.personalNumber}</span>
+              : null}
               <span className="text-small">{stakeholderContact(stakeholder)}</span>
               {stakeholderAddress(stakeholder) ?
                 <span className="text-small text-dark-secondary">{stakeholderAddress(stakeholder)}</span>

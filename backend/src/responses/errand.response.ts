@@ -46,6 +46,10 @@ export class Stakeholder {
   @IsString()
   @IsOptional()
   externalIdType?: string;
+  /** Personnummer resolved from externalId (partyId) via the Citizen API; only set for private persons. */
+  @IsString()
+  @IsOptional()
+  personalNumber?: string;
   @IsString()
   @IsOptional()
   role?: string;
