@@ -1,29 +1,14 @@
 'use client';
 
-import { DraftIncomeRow, updateNormberakningDraft } from '@services/normberakning-service';
-import { Button, Input } from '@sk-web-gui/react';
-import { Plus, Trash2 } from 'lucide-react';
-import { FC, useEffect, useState } from 'react';
+import { addNormRow, deleteNormRow, NormIncomeRow, restoreNormRow, updateNormRow } from '@services/normberakning-service';
+import { Button, Input, Select, Table } from '@sk-web-gui/react';
+import { formatAmount } from '@utils/format-amount';
+import { Plus, RotateCcw, Trash2 } from 'lucide-react';
+import { FC, useState } from 'react';
 
-// Amounts are held as strings while editing (so the inputs stay controlled) and parsed on save.
-interface EditableRow {
-  key: string;
-  typeId?: number;
-  typeName: string;
-  applicantAmount: string;
-  coApplicantAmount: string;
-  note: string;
-}
+import { NormberakningSummaBox } from './normberakning-summa-box.component';
 
-const toEditableRows = (rows: DraftIncomeRow[]): EditableRow[] =>
-  rows.map((row, index) => ({
-    key: `row-${row.typeId ?? 'custom'}-${index}`,
-    typeId: row.typeId,
-    typeName: row.typeName ?? '',
-    applicantAmount: row.applicantAmount?.toString() ?? '',
-    coApplicantAmount: row.coApplicantAmount?.toString() ?? '',
-    note: row.note ?? '',
-  }));
+const RECIPIENT_LABELS: Record<string, string> = { APPLICANT: 'Sökande', CO_APPLICANT: 'Medsökande' };
 
 const parseAmount = (value: string): number | undefined => {
   const normalized = value.trim().replace(',', '.');
@@ -34,141 +19,278 @@ const parseAmount = (value: string): number | undefined => {
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
+const displayAmount = (value?: number): string => (value == null ? '—' : formatAmount(value));
+
 interface NormberakningIncomesProps {
   errandId: string;
-  rows: DraftIncomeRow[];
-  onSaved: () => void;
+  rows: NormIncomeRow[];
+  incomeSum?: number;
+  onChanged: () => void;
 }
 
 /**
- * Editable income rows of the draft normberäkning. caremanagement income rows (with an FC typeId) show
- * the type name read-only; handläggare can edit the amounts/note on any row and add their own rows.
+ * INKOMSTER section of the draft normberäkning. Each row is per (income type, recipient): the process
+ * value is read-only (system/SSBTEK), the handläggare value + note are editable, and the effective value
+ * is what the calculation uses. Handläggare can also add their own rows and soft-delete/restore rows.
  */
-export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({ errandId, rows, onSaved }) => {
-  const [editableRows, setEditableRows] = useState<EditableRow[]>(() => toEditableRows(rows));
-  const [saving, setSaving] = useState<boolean>(false);
+export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({ errandId, rows, incomeSum, onChanged }) => {
+  const [savingId, setSavingId] = useState<string>();
   const [error, setError] = useState<string>();
 
-  // Re-sync when the loaded draft changes (e.g. after a save refresh).
-  useEffect(() => {
-    setEditableRows(toEditableRows(rows));
-  }, [rows]);
-
-  const updateRow = (key: string, field: keyof EditableRow, value: string) => {
-    setEditableRows((current) => current.map((row) => (row.key === key ? { ...row, [field]: value } : row)));
-  };
-
-  const addRow = () => {
-    setEditableRows((current) => [
-      ...current,
-      {
-        key: `new-${current.length}-${Date.now()}`,
-        typeName: '',
-        applicantAmount: '',
-        coApplicantAmount: '',
-        note: '',
-      },
-    ]);
-  };
-
-  const removeRow = (key: string) => {
-    setEditableRows((current) => current.filter((row) => row.key !== key));
-  };
-
-  const save = async () => {
-    setSaving(true);
+  const runRowAction = async (rowId: string, action: () => Promise<{ error?: unknown }>) => {
+    setSavingId(rowId);
     setError(undefined);
-    const payload: DraftIncomeRow[] = editableRows.map((row) => ({
-      typeId: row.typeId,
-      typeName: row.typeName.trim() || undefined,
-      applicantAmount: parseAmount(row.applicantAmount),
-      coApplicantAmount: parseAmount(row.coApplicantAmount),
-      note: row.note.trim() || undefined,
-    }));
-    const result = await updateNormberakningDraft(errandId, payload);
-    setSaving(false);
+    const result = await action();
+    setSavingId(undefined);
     if (result.error) {
-      setError('Det gick inte att spara inkomsterna');
+      setError('Det gick inte att spara ändringen');
       return;
     }
-    onSaved();
+    onChanged();
+  };
+
+  const saveRow = (row: NormIncomeRow, amount: string, date: string, note: string) => {
+    void runRowAction(row.id ?? '', () =>
+      updateNormRow(errandId, 'incomes', row.id ?? '', {
+        handlaggareAmount: parseAmount(amount),
+        handlaggareAmountDate: date.trim() || undefined,
+        note: note.trim() || undefined,
+      })
+    );
   };
 
   return (
     <div className="flex flex-col gap-16 py-24">
-      <div className="flex flex-col gap-8">
-        <div className="hidden md:grid grid-cols-[2fr_1fr_1fr_2fr_auto] gap-12 text-small font-bold text-dark-secondary px-2">
-          <span>Inkomsttyp</span>
-          <span>Sökande (kr)</span>
-          <span>Medsökande (kr)</span>
-          <span>Notering</span>
-          <span className="sr-only">Åtgärder</span>
-        </div>
-
-        {editableRows.length === 0 ?
-          <p className="m-0 text-dark-secondary">Inga inkomstrader. Lägg till en rad nedan.</p>
-        : editableRows.map((row) => (
-            <div key={row.key} className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_2fr_auto] gap-12 items-center">
-              {row.typeId ?
-                <span className="font-bold text-small">{row.typeName || 'Inkomst'}</span>
-              : <Input
-                  size="sm"
-                  value={row.typeName}
-                  placeholder="Inkomsttyp"
-                  onChange={(event) => {
-                    updateRow(row.key, 'typeName', event.target.value);
-                  }}
-                />
-              }
-              <Input
-                size="sm"
-                inputMode="decimal"
-                value={row.applicantAmount}
-                onChange={(event) => {
-                  updateRow(row.key, 'applicantAmount', event.target.value);
-                }}
-              />
-              <Input
-                size="sm"
-                inputMode="decimal"
-                value={row.coApplicantAmount}
-                onChange={(event) => {
-                  updateRow(row.key, 'coApplicantAmount', event.target.value);
-                }}
-              />
-              <Input
-                size="sm"
-                value={row.note}
-                placeholder="Notering"
-                onChange={(event) => {
-                  updateRow(row.key, 'note', event.target.value);
-                }}
-              />
-              <Button
-                size="sm"
-                variant="tertiary"
-                iconButton
-                aria-label="Ta bort rad"
-                leftIcon={<Trash2 />}
-                onClick={() => {
-                  removeRow(row.key);
-                }}
-              />
-            </div>
-          ))
-        }
-      </div>
+      <NormberakningSummaBox label="Summa inkomster" value={displayAmount(incomeSum)} />
 
       {error && <p className="text-error-surface-primary m-0">{error}</p>}
 
-      <div className="flex flex-wrap gap-12">
-        <Button variant="secondary" leftIcon={<Plus />} onClick={addRow}>
-          Lägg till rad
-        </Button>
-        <Button color="vattjom" variant="primary" loading={saving} loadingText="Sparar…" onClick={() => void save()}>
-          Spara inkomster
-        </Button>
-      </div>
+      <Table dense background>
+        <Table.Header>
+          <Table.HeaderColumn>Typ</Table.HeaderColumn>
+          <Table.HeaderColumn>Mottagare</Table.HeaderColumn>
+          <Table.HeaderColumn>Process</Table.HeaderColumn>
+          <Table.HeaderColumn>Handläggare</Table.HeaderColumn>
+          <Table.HeaderColumn>Datum</Table.HeaderColumn>
+          <Table.HeaderColumn>Effektivt</Table.HeaderColumn>
+          <Table.HeaderColumn>Anmärkning</Table.HeaderColumn>
+          <Table.HeaderColumn>
+            <span className="sr-only">Åtgärder</span>
+          </Table.HeaderColumn>
+        </Table.Header>
+        <Table.Body>
+          {rows.length === 0 ?
+            <Table.Row>
+              <Table.Column>Inga inkomstrader</Table.Column>
+            </Table.Row>
+          : rows.map((row, index) => (
+              <IncomeRow
+                key={row.id ?? index}
+                row={row}
+                saving={savingId === row.id}
+                onSave={saveRow}
+                onDelete={() => {
+                  void runRowAction(row.id ?? '', () => deleteNormRow(errandId, 'incomes', row.id ?? ''));
+                }}
+                onRestore={() => {
+                  void runRowAction(row.id ?? '', () => restoreNormRow(errandId, 'incomes', row.id ?? ''));
+                }}
+              />
+            ))
+          }
+          <AddIncomeRow errandId={errandId} onAdded={onChanged} onError={setError} />
+        </Table.Body>
+      </Table>
     </div>
+  );
+};
+
+/** A single editable income row (handläggare amount/date/note); process and effective are read-only. */
+const IncomeRow: FC<{
+  row: NormIncomeRow;
+  saving: boolean;
+  onSave: (row: NormIncomeRow, amount: string, date: string, note: string) => void;
+  onDelete: () => void;
+  onRestore: () => void;
+}> = ({ row, saving, onSave, onDelete, onRestore }) => {
+  const [amount, setAmount] = useState<string>(row.handlaggareAmount?.toString() ?? '');
+  const [date, setDate] = useState<string>(row.handlaggareAmountDate ?? '');
+  const [note, setNote] = useState<string>(row.note ?? '');
+
+  const recipient = RECIPIENT_LABELS[row.recipient ?? ''] ?? row.recipient ?? '—';
+
+  if (row.deleted) {
+    return (
+      <Table.Row className="opacity-50">
+        <Table.Column>
+          <span className="line-through">{row.typeName ?? 'Inkomst'}</span>
+        </Table.Column>
+        <Table.Column>{recipient}</Table.Column>
+        <Table.Column>—</Table.Column>
+        <Table.Column>—</Table.Column>
+        <Table.Column>—</Table.Column>
+        <Table.Column>—</Table.Column>
+        <Table.Column>
+          <span className="italic">Borttagen</span>
+        </Table.Column>
+        <Table.Column>
+          <Button size="sm" variant="tertiary" iconButton aria-label="Återställ rad" leftIcon={<RotateCcw />} onClick={onRestore} />
+        </Table.Column>
+      </Table.Row>
+    );
+  }
+
+  const dirty =
+    amount !== (row.handlaggareAmount?.toString() ?? '') ||
+    date !== (row.handlaggareAmountDate ?? '') ||
+    note !== (row.note ?? '');
+
+  return (
+    <Table.Row>
+      <Table.Column>
+        <span className="font-bold">{row.typeName ?? 'Inkomst'}</span>
+      </Table.Column>
+      <Table.Column>{recipient}</Table.Column>
+      <Table.Column className="tabular-nums text-dark-secondary">{displayAmount(row.processAmount)}</Table.Column>
+      <Table.Column>
+        <Input
+          size="sm"
+          inputMode="decimal"
+          value={amount}
+          onChange={(event) => {
+            setAmount(event.target.value);
+          }}
+        />
+      </Table.Column>
+      <Table.Column>
+        <Input
+          size="sm"
+          placeholder="ÅÅÅÅ-MM-DD"
+          value={date}
+          onChange={(event) => {
+            setDate(event.target.value);
+          }}
+        />
+      </Table.Column>
+      <Table.Column className="tabular-nums font-bold">{displayAmount(row.effectiveAmount)}</Table.Column>
+      <Table.Column>
+        <Input
+          size="sm"
+          value={note}
+          onChange={(event) => {
+            setNote(event.target.value);
+          }}
+        />
+      </Table.Column>
+      <Table.Column>
+        <div className="flex gap-4">
+          <Button
+            size="sm"
+            variant="primary"
+            color="vattjom"
+            disabled={!dirty}
+            loading={saving}
+            onClick={() => {
+              onSave(row, amount, date, note);
+            }}
+          >
+            Spara
+          </Button>
+          <Button size="sm" variant="tertiary" iconButton aria-label="Ta bort rad" leftIcon={<Trash2 />} onClick={onDelete} />
+        </div>
+      </Table.Column>
+    </Table.Row>
+  );
+};
+
+/** The last table row for adding a handläggare income row. */
+const AddIncomeRow: FC<{ errandId: string; onAdded: () => void; onError: (message: string) => void }> = ({
+  errandId,
+  onAdded,
+  onError,
+}) => {
+  const [typeName, setTypeName] = useState<string>('');
+  const [recipient, setRecipient] = useState<string>('APPLICANT');
+  const [amount, setAmount] = useState<string>('');
+  const [note, setNote] = useState<string>('');
+  const [adding, setAdding] = useState<boolean>(false);
+
+  const add = async () => {
+    if (!typeName.trim()) {
+      onError('Ange en inkomsttyp');
+      return;
+    }
+    setAdding(true);
+    const result = await addNormRow(errandId, 'incomes', {
+      typeName: typeName.trim(),
+      recipient,
+      handlaggareAmount: parseAmount(amount),
+      note: note.trim() || undefined,
+    });
+    setAdding(false);
+    if (result.error) {
+      onError('Det gick inte att lägga till raden');
+      return;
+    }
+    setTypeName('');
+    setAmount('');
+    setNote('');
+    onAdded();
+  };
+
+  return (
+    <Table.Row>
+      <Table.Column>
+        <Input
+          size="sm"
+          placeholder="Inkomsttyp"
+          value={typeName}
+          onChange={(event) => {
+            setTypeName(event.target.value);
+          }}
+        />
+      </Table.Column>
+      <Table.Column>
+        <Select
+          size="sm"
+          value={recipient}
+          onChange={(event) => {
+            setRecipient(event.target.value);
+          }}
+        >
+          <Select.Option value="APPLICANT">Sökande</Select.Option>
+          <Select.Option value="CO_APPLICANT">Medsökande</Select.Option>
+        </Select>
+      </Table.Column>
+      <Table.Column>—</Table.Column>
+      <Table.Column>
+        <Input
+          size="sm"
+          inputMode="decimal"
+          placeholder="Belopp"
+          value={amount}
+          onChange={(event) => {
+            setAmount(event.target.value);
+          }}
+        />
+      </Table.Column>
+      <Table.Column>—</Table.Column>
+      <Table.Column>—</Table.Column>
+      <Table.Column>
+        <Input
+          size="sm"
+          placeholder="Anmärkning"
+          value={note}
+          onChange={(event) => {
+            setNote(event.target.value);
+          }}
+        />
+      </Table.Column>
+      <Table.Column>
+        <Button size="sm" variant="secondary" leftIcon={<Plus />} loading={adding} onClick={() => void add()}>
+          Lägg till
+        </Button>
+      </Table.Column>
+    </Table.Row>
   );
 };

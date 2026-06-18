@@ -1,35 +1,26 @@
-import { Type } from 'class-transformer';
-import { IsArray, IsInt, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsInt, IsNumber, IsOptional, IsString } from 'class-validator';
 
-/** One income row sent when editing the draft normberäkning. */
-export class DraftIncomeRowDto {
-  @IsInt()
-  @IsOptional()
-  typeId?: number;
-  @IsString()
-  @IsOptional()
-  typeName?: string;
-  @IsNumber()
-  @IsOptional()
-  applicantAmount?: number;
-  @IsString()
-  @IsOptional()
-  applicantAmountDate?: string;
-  @IsNumber()
-  @IsOptional()
-  coApplicantAmount?: number;
-  @IsString()
-  @IsOptional()
-  coApplicantAmountDate?: string;
-  @IsString()
-  @IsOptional()
-  note?: string;
-}
-
-/** Body for editing the draft normberäkning — the full set of income rows to persist. */
-export class UpdateNormberakningDraftDto {
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => DraftIncomeRowDto)
-  rows!: DraftIncomeRowDto[];
+/**
+ * Fields accepted when adding (POST) or editing (PATCH) a draft normberäkning row. The union of the
+ * three sections' inputs — caremanagement validates the section-specific shape. Handläggare only ever
+ * set their own value/note; the process values are system-owned and read-only.
+ */
+export class NormRowInputDto {
+  // Income
+  @IsInt() @IsOptional() typeId?: number;
+  @IsString() @IsOptional() typeName?: string;
+  @IsString() @IsOptional() recipient?: string;
+  @IsNumber() @IsOptional() handlaggareAmount?: number;
+  @IsString() @IsOptional() handlaggareAmountDate?: string;
+  // Expense
+  @IsString() @IsOptional() costType?: string;
+  @IsString() @IsOptional() otherSubType?: string;
+  @IsString() @IsOptional() specification?: string;
+  // Person
+  @IsString() @IsOptional() partyId?: string;
+  @IsString() @IsOptional() role?: string;
+  @IsString() @IsOptional() name?: string;
+  @IsInt() @IsOptional() handlaggareDays?: number;
+  // Shared
+  @IsString() @IsOptional() note?: string;
 }

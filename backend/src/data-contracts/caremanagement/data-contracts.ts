@@ -56,55 +56,6 @@ export interface Violation {
   message?: string;
 }
 
-/** One income row of the draft normberäkning (FC income type + amounts). */
-export interface DraftIncomeRow {
-  /**
-   * The FC income-type id
-   * @format int32
-   */
-  typeId?: number;
-  /** The FC income-type name */
-  typeName?: string;
-  /**
-   * The applicant's amount for this income type
-   * @format double
-   */
-  applicantAmount?: number;
-  /** The date the applicant's amount is attributed to (ISO) */
-  applicantAmountDate?: string;
-  /**
-   * The co-applicant's amount for this income type
-   * @format double
-   */
-  coApplicantAmount?: number;
-  /** The date the co-applicant's amount is attributed to (ISO) */
-  coApplicantAmountDate?: string;
-  /** Free-text note (e.g. the SSBTEK source) */
-  note?: string;
-}
-
-/** The (editable) draft normberäkning — FC income rows, not yet created in Lifecare. */
-export interface NormberakningDraft {
-  /** The errand id */
-  errandId?: string;
-  /** The application month (ISO yyyy-MM) */
-  applicationMonth?: string;
-  /** Whether a handläggare has edited the draft (the daily refresh then preserves the rows) */
-  edited?: boolean;
-  /** The income rows */
-  rows?: DraftIncomeRow[];
-  /**
-   * When the draft was created
-   * @format date-time
-   */
-  created?: string;
-  /**
-   * When the draft was last updated
-   * @format date-time
-   */
-  updated?: string;
-}
-
 /** An asset owned by the applicant or co-applicant. */
 export interface Asset {
   /** The category of asset */
@@ -704,6 +655,227 @@ export interface Decision {
   created?: string;
 }
 
+/** Request to create an EB income warning on an errand (no Lifecare round-trip). */
+export interface CreateWarningRequest {
+  /**
+   * The warning type
+   * @minLength 1
+   */
+  type: CreateWarningRequestTypeEnum;
+  /**
+   * Human-readable warning text
+   * @minLength 1
+   */
+  message: string;
+  /** A stable key for the income the warning concerns (förmån/inkomsttyp) — the dedup key. Derived from the message when omitted. */
+  sourceKey?: string;
+}
+
+/** An EB income warning the handläggare can acknowledge or close. */
+export interface Warning {
+  /** The warning id */
+  id?: string;
+  /** The warning type */
+  type?: WarningTypeEnum;
+  /** A stable key for the income the warning concerns (förmån/inkomsttyp) — the dedup key */
+  sourceKey?: string;
+  /** Human-readable warning text */
+  message?: string;
+  /** The warning status */
+  status?: WarningStatusEnum;
+  /** Whether the warning was closed automatically (its cause resolved) rather than by a handläggare */
+  autoResolved?: boolean;
+  /**
+   * When the warning was created
+   * @format date-time
+   */
+  created?: string;
+  /**
+   * When the warning was last updated
+   * @format date-time
+   */
+  updated?: string;
+}
+
+/** What a handläggare sends to add or patch a person row (identity + handläggare-writable fields only). */
+export interface NormPersonInput {
+  /** The party id of the household member */
+  partyId?: string;
+  /** The role of the household member */
+  role?: NormPersonInputRoleEnum;
+  /** The name of the household member */
+  name?: string;
+  /**
+   * The number of days the handläggare decided
+   * @format int32
+   */
+  handlaggareDays?: number;
+  /** Free-text note */
+  note?: string;
+}
+
+/** One person row of the normberäkning draft (household member, process vs handläggare days). */
+export interface NormPersonRow {
+  /** The row id */
+  id?: string;
+  /** Who created the row: the process or a handläggare */
+  origin?: NormPersonRowOriginEnum;
+  /** The party id of the household member */
+  partyId?: string;
+  /** The role of the household member */
+  role?: NormPersonRowRoleEnum;
+  /** The name of the household member */
+  name?: string;
+  /**
+   * The number of days in the home the process derived
+   * @format int32
+   */
+  processDays?: number;
+  /**
+   * The number of days a handläggare decided; overrides the process value when set
+   * @format int32
+   */
+  handlaggareDays?: number;
+  /**
+   * The number of days actually used (handläggare value when set, otherwise process value)
+   * @format int32
+   */
+  effectiveDays?: number;
+  /** Whether the row is soft-deleted (excluded from the calculation, not resurrected by the daily refresh) */
+  deleted?: boolean;
+  /** Free-text note */
+  note?: string;
+  /**
+   * When the row was created
+   * @format date-time
+   */
+  created?: string;
+  /**
+   * When the row was last updated
+   * @format date-time
+   */
+  updated?: string;
+}
+
+/** What a handläggare sends to add or patch an income row (identity + handläggare-writable fields only). */
+export interface NormIncomeInput {
+  /**
+   * The FC income-type id
+   * @format int32
+   */
+  typeId?: number;
+  /** The FC income-type name */
+  typeName?: string;
+  /** Whose income this is */
+  recipient?: NormIncomeInputRecipientEnum;
+  /** The amount the handläggare decided */
+  handlaggareAmount?: number;
+  /**
+   * The date the handläggare amount is attributed to
+   * @format date-time
+   */
+  handlaggareAmountDate?: string;
+  /** Free-text note */
+  note?: string;
+}
+
+/** One income row of the normberäkning draft (FC income type + recipient, process vs handläggare amount). */
+export interface NormIncomeRow {
+  /** The row id */
+  id?: string;
+  /** Who created the row: the process or a handläggare */
+  origin?: NormIncomeRowOriginEnum;
+  /**
+   * The FC income-type id
+   * @format int32
+   */
+  typeId?: number;
+  /** The FC income-type name */
+  typeName?: string;
+  /** Whose income this is */
+  recipient?: NormIncomeRowRecipientEnum;
+  /** The amount the process decided (from the classified SSBTEK income) */
+  processAmount?: number;
+  /**
+   * The date the process amount is attributed to
+   * @format date-time
+   */
+  processAmountDate?: string;
+  /** The amount a handläggare decided; overrides the process amount when set */
+  handlaggareAmount?: number;
+  /**
+   * The date the handläggare amount is attributed to
+   * @format date-time
+   */
+  handlaggareAmountDate?: string;
+  /** The amount actually used (handläggare amount when set, otherwise process amount) */
+  effectiveAmount?: number;
+  /** Whether the row is soft-deleted (excluded from the calculation, not resurrected by the daily refresh) */
+  deleted?: boolean;
+  /** Free-text note */
+  note?: string;
+  /**
+   * When the row was created
+   * @format date-time
+   */
+  created?: string;
+  /**
+   * When the row was last updated
+   * @format date-time
+   */
+  updated?: string;
+}
+
+/** What a handläggare sends to add or patch an expense row (identity + handläggare-writable fields only). */
+export interface NormExpenseInput {
+  /** The cost type */
+  costType?: string;
+  /** The other sub-type (when the cost type is 'other') */
+  otherSubType?: string;
+  /** The cost specification */
+  specification?: string;
+  /** The amount the handläggare decided */
+  handlaggareAmount?: number;
+  /** Free-text note */
+  note?: string;
+}
+
+/** One expense row of the normberäkning draft (applied cost, process vs handläggare amount). */
+export interface NormExpenseRow {
+  /** The row id */
+  id?: string;
+  /** Who created the row: the process or a handläggare */
+  origin?: NormExpenseRowOriginEnum;
+  /** The cost type */
+  costType?: string;
+  /** The other sub-type (when the cost type is 'other') */
+  otherSubType?: string;
+  /** The cost specification */
+  specification?: string;
+  /** The amount the citizen applied for */
+  appliedAmount?: number;
+  /** The amount the regelverk allowed (the process amount) */
+  processAmount?: number;
+  /** The amount a handläggare decided; overrides the process amount when set */
+  handlaggareAmount?: number;
+  /** The amount actually used (handläggare amount when set, otherwise process amount) */
+  effectiveAmount?: number;
+  /** Whether the row is soft-deleted (excluded from the calculation, not resurrected by the daily refresh) */
+  deleted?: boolean;
+  /** Free-text note */
+  note?: string;
+  /**
+   * When the row was created
+   * @format date-time
+   */
+  created?: string;
+  /**
+   * When the row was last updated
+   * @format date-time
+   */
+  updated?: string;
+}
+
 /** Request to read whether the Lifecare utbetalning for an application month has been effectuated. */
 export interface PaymentStatusRequest {
   /** The applicant's partyId (personId GUID) */
@@ -918,32 +1090,6 @@ export interface Note {
   modified?: string;
 }
 
-/** An EB income warning the handläggare can acknowledge or close. */
-export interface Warning {
-  /** The warning id */
-  id?: string;
-  /** The warning type */
-  type?: WarningTypeEnum;
-  /** A stable key for the income the warning concerns (förmån/inkomsttyp) — the dedup key */
-  sourceKey?: string;
-  /** Human-readable warning text */
-  message?: string;
-  /** The warning status */
-  status?: WarningStatusEnum;
-  /** Whether the warning was closed automatically (its cause resolved) rather than by a handläggare */
-  autoResolved?: boolean;
-  /**
-   * When the warning was created
-   * @format date-time
-   */
-  created?: string;
-  /**
-   * When the warning was last updated
-   * @format date-time
-   */
-  updated?: string;
-}
-
 /** Number of errands assigned to a given user */
 export interface AssigneeCount {
   /** The assigned user id */
@@ -1150,6 +1296,41 @@ export interface FinancialAssistanceView {
   touched?: string;
   /** The typed financial assistance application payload */
   data?: FinancialAssistanceData;
+}
+
+/** The full draft normberäkning — header, the three sections (personer, inkomster, utgifter) and the section sums. */
+export interface NormberakningDraft {
+  /** The errand id */
+  errandId?: string;
+  /** The application month (ISO yyyy-MM) */
+  applicationMonth?: string;
+  /**
+   * The selected norm id
+   * @format int32
+   */
+  normId?: number;
+  /** The selected norm type */
+  normType?: string;
+  /** The person rows (personer) */
+  persons?: NormPersonRow[];
+  /** The income rows (inkomster) */
+  incomes?: NormIncomeRow[];
+  /** The expense rows (utgifter) */
+  expenses?: NormExpenseRow[];
+  /** The sum of the effective income amounts */
+  incomeSum?: number;
+  /** The sum of the effective expense amounts */
+  expenseSum?: number;
+  /**
+   * When the draft was created
+   * @format date-time
+   */
+  created?: string;
+  /**
+   * When the draft was last updated
+   * @format date-time
+   */
+  updated?: string;
 }
 
 /** A child pre-filled from Lifecare for a financial assistance renewal. Carries only what Lifecare provides — personnummer and name; the citizen completes residence, school etc. on the form. */
@@ -1418,6 +1599,80 @@ export enum CreateMessageDirectionEnum {
   OUTBOUND = "OUTBOUND",
 }
 
+/**
+ * The warning type
+ * @minLength 1
+ */
+export enum CreateWarningRequestTypeEnum {
+  UNHANDLED_INCOME = "UNHANDLED_INCOME",
+  INCOME_CHANGE = "INCOME_CHANGE",
+  MISSING_SSBTEK = "MISSING_SSBTEK",
+  NEW_INCOME = "NEW_INCOME",
+  NEW_EXPENSE = "NEW_EXPENSE",
+  NEW_PERSON = "NEW_PERSON",
+  INCOME_DROPPED = "INCOME_DROPPED",
+  HOUSEHOLD_CHANGE = "HOUSEHOLD_CHANGE",
+}
+
+/** The warning type */
+export enum WarningTypeEnum {
+  UNHANDLED_INCOME = "UNHANDLED_INCOME",
+  INCOME_CHANGE = "INCOME_CHANGE",
+  MISSING_SSBTEK = "MISSING_SSBTEK",
+  NEW_INCOME = "NEW_INCOME",
+}
+
+/** The warning status */
+export enum WarningStatusEnum {
+  OPEN = "OPEN",
+  ACKNOWLEDGED = "ACKNOWLEDGED",
+  CLOSED = "CLOSED",
+}
+
+/** The role of the household member */
+export enum NormPersonInputRoleEnum {
+  APPLICANT = "APPLICANT",
+  CO_APPLICANT = "CO_APPLICANT",
+  CHILD = "CHILD",
+}
+
+/** Who created the row: the process or a handläggare */
+export enum NormPersonRowOriginEnum {
+  SYSTEM = "SYSTEM",
+  HANDLAGGARE = "HANDLAGGARE",
+}
+
+/** The role of the household member */
+export enum NormPersonRowRoleEnum {
+  APPLICANT = "APPLICANT",
+  CO_APPLICANT = "CO_APPLICANT",
+  CHILD = "CHILD",
+}
+
+/** Whose income this is */
+export enum NormIncomeInputRecipientEnum {
+  APPLICANT = "APPLICANT",
+  CO_APPLICANT = "CO_APPLICANT",
+}
+
+/** Who created the row: the process or a handläggare */
+export enum NormIncomeRowOriginEnum {
+  SYSTEM = "SYSTEM",
+  HANDLAGGARE = "HANDLAGGARE",
+}
+
+/** Whose income this is */
+export enum NormIncomeRowRecipientEnum {
+  APPLICANT = "APPLICANT",
+  CO_APPLICANT = "CO_APPLICANT",
+}
+
+/** Who created the row: the process or a handläggare */
+export enum NormExpenseRowOriginEnum {
+  SYSTEM = "SYSTEM",
+  HANDLAGGARE = "HANDLAGGARE",
+}
+
 /** The errand type slug to create the application against */
 export enum ApplicationSuggestionTypeSlugEnum {
   FinancialAssistanceNew = "financial-assistance-new",
@@ -1438,21 +1693,6 @@ export enum EligibilityResponseReasonCodeEnum {
   CIVILSTAND_CHANGED = "CIVILSTAND_CHANGED",
   EXISTING_CASE = "EXISTING_CASE",
   ALL_TYPES_TEST = "ALL_TYPES_TEST",
-}
-
-/** The warning type */
-export enum WarningTypeEnum {
-  UNHANDLED_INCOME = "UNHANDLED_INCOME",
-  INCOME_CHANGE = "INCOME_CHANGE",
-  MISSING_SSBTEK = "MISSING_SSBTEK",
-  NEW_INCOME = "NEW_INCOME",
-}
-
-/** The warning status */
-export enum WarningStatusEnum {
-  OPEN = "OPEN",
-  ACKNOWLEDGED = "ACKNOWLEDGED",
-  CLOSED = "CLOSED",
 }
 
 /** Direction */

@@ -22,7 +22,8 @@ export const useErrandNormberakning = (errandId: string): UseErrandNormberakning
     }
     setIsLoading(true);
     void getNormberakningDraft(errandId).then((res) => {
-      if (res.error) {
+      // A 404 means no draft normberäkning exists yet for this errand — a normal state, not an error.
+      if (res.error && res.error !== 404) {
         setError(res.error);
         setDraft(undefined);
       } else {

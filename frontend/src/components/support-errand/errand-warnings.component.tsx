@@ -11,6 +11,10 @@ const WARNING_TYPE_LABELS: Record<string, string> = {
   INCOME_CHANGE: 'Inkomständring',
   MISSING_SSBTEK: 'Saknas i SSBTEK',
   NEW_INCOME: 'Ny inkomst',
+  NEW_EXPENSE: 'Ny utgift',
+  NEW_PERSON: 'Ny person',
+  INCOME_DROPPED: 'Bortfallen inkomst',
+  HOUSEHOLD_CHANGE: 'Ändrad hushållssammansättning',
 };
 
 interface ErrandWarningsProps {
