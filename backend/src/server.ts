@@ -10,6 +10,7 @@ import { MessageController } from './controllers/message.controller';
 import { MetadataController } from './controllers/metadata.controller';
 import { NormberakningController } from './controllers/normberakning.controller';
 import { NoteController } from './controllers/note.controller';
+import { PaymentController } from './controllers/payment.controller';
 import { UserController } from './controllers/user.controller';
 import { WarningController } from './controllers/warning.controller';
 
@@ -26,6 +27,7 @@ const app = new App([
   NoteController,
   NormberakningController,
   WarningController,
+  PaymentController,
 ]);
 
 app.listen();

@@ -20,6 +20,7 @@ import { ErrandMessages } from './errand-messages.component';
 import { ErrandNormberakning } from './errand-normberakning.component';
 import { ErrandNotes } from './errand-notes.component';
 import { ErrandSidebar, SidebarSection } from './errand-sidebar.component';
+import { ErrandUtbetalning } from './errand-utbetalning.component';
 import { ErrandWarnings } from './errand-warnings.component';
 
 // Drafts are created with this sentinel title until the handläggare fills the errand in.
@@ -177,6 +178,14 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               <Tabs.Content>
                 <div className="pt-24 pb-40 px-24 md:px-40">
                   <ErrandBeslut errandId={apiErrandId} />
+                </div>
+              </Tabs.Content>
+            </Tabs.Item>
+            <Tabs.Item>
+              <Tabs.Button className="text-base">Utbetalning</Tabs.Button>
+              <Tabs.Content>
+                <div className="pt-24 pb-40 px-24 md:px-40">
+                  <ErrandUtbetalning errandId={apiErrandId} />
                 </div>
               </Tabs.Content>
             </Tabs.Item>
