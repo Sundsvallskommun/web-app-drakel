@@ -7,6 +7,7 @@ import { ErrandController } from './controllers/errand.controller';
 import { HealthController } from './controllers/health.controller';
 import { MessageController } from './controllers/message.controller';
 import { MetadataController } from './controllers/metadata.controller';
+import { NormberakningController } from './controllers/normberakning.controller';
 import { NoteController } from './controllers/note.controller';
 import { UserController } from './controllers/user.controller';
 import { WarningController } from './controllers/warning.controller';
@@ -21,6 +22,7 @@ const app = new App([
   MessageController,
   MetadataController,
   NoteController,
+  NormberakningController,
   WarningController,
 ]);
 

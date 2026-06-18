@@ -16,6 +16,7 @@ import { ErrandAttachments } from './errand-attachments.component';
 import { ErrandInfoPanel } from './errand-info-panel.component';
 import { ErrandMessageAttachments } from './errand-message-attachments.component';
 import { ErrandMessages } from './errand-messages.component';
+import { ErrandNormberakning } from './errand-normberakning.component';
 import { ErrandNotes } from './errand-notes.component';
 import { ErrandSidebar, SidebarSection } from './errand-sidebar.component';
 import { ErrandWarnings } from './errand-warnings.component';
@@ -28,21 +29,25 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   const [activeTab, setActiveTab] = useState<number>(0);
   const { setErrand: setHeaderErrand } = useErrandHeader();
   const { form, setField, isDirty, saving, error: saveError, save } = useErrandForm(errand, refresh);
-  const { notes, isLoading: notesLoading, error: notesError, refresh: refreshNotes } = useErrandNotes(errandId);
+  // The route param can be an errand NUMBER (not a UUID); caremanagement sub-resources (notes,
+  // warnings, attachments) require the errand's UUID. Gate those fetches on the resolved errand.id so
+  // we never call them with a non-UUID identifier (which caremanagement rejects with a 400).
+  const resolvedErrandId = errand?.id ?? '';
+  const { notes, isLoading: notesLoading, error: notesError, refresh: refreshNotes } =
+    useErrandNotes(resolvedErrandId);
   const {
     warnings,
     isLoading: warningsLoading,
     error: warningsError,
     refresh: refreshWarnings,
-  } = useErrandWarnings(errand?.id ?? errandId);
-  // Fetched once here so the tab counters and both attachment tabs share a single source. Use the
-  // resolved errand id (the prop can be an errand number); the hook refetches when it becomes available.
+  } = useErrandWarnings(resolvedErrandId);
+  // Fetched once here so the tab counters and both attachment tabs share a single source.
   const {
     attachments,
     isLoading: attachmentsLoading,
     error: attachmentsError,
     refresh: refreshAttachments,
-  } = useErrandAttachments(errand?.id ?? errandId);
+  } = useErrandAttachments(resolvedErrandId);
 
   // Only OPEN warnings are actionable — acknowledged/closed ones disappear from the sidebar.
   const openWarnings = warnings.filter((warning) => warning.status === 'OPEN');
@@ -152,6 +157,14 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               <Tabs.Button className="text-base">Ärendeuppgifter</Tabs.Button>
               <Tabs.Content>
                 <ErrandApplicationData errand={errand} />
+              </Tabs.Content>
+            </Tabs.Item>
+            <Tabs.Item>
+              <Tabs.Button className="text-base">Normberäkning</Tabs.Button>
+              <Tabs.Content>
+                <div className="pt-24 pb-40 px-24 md:px-40">
+                  <ErrandNormberakning errandId={apiErrandId} />
+                </div>
               </Tabs.Content>
             </Tabs.Item>
             <Tabs.Item>

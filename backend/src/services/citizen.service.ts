@@ -19,7 +19,7 @@ class CitizenService {
     const url = `${getApiBase('citizen')}/${MUNICIPALITY_ID}/${partyId}/personnumber`;
     try {
       const res = await this.apiService.get<string>({ url });
-      const personnumber = res.data?.toString().trim() || '';
+      const personnumber = res.data?.trim() || '';
       return personnumber.length > 0 ? personnumber : null;
     } catch {
       console.error('Failed to resolve personnummer for partyId', partyId);

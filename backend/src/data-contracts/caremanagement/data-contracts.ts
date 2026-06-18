@@ -1510,6 +1510,20 @@ export enum CreateLookupParamsKindEnum {
   CONTACT_REASON = "CONTACT_REASON",
 }
 
+/** Only return attachments with this origin */
+export enum ReadAttachmentsParamsOriginEnum {
+  APPLICATION = "APPLICATION",
+  CONVERSATION = "CONVERSATION",
+  GENERATED = "GENERATED",
+  ERRAND = "ERRAND",
+}
+
+/** Only return attachments from this sender */
+export enum ReadAttachmentsParamsSenderRoleEnum {
+  CLIENT = "CLIENT",
+  HANDLAGGARE = "HANDLAGGARE",
+}
+
 /** Lookup kind */
 export enum ReadLookupParamsKindEnum {
   CATEGORY = "CATEGORY",

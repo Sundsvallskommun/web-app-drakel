@@ -41,6 +41,10 @@ class CaremanagementApiService {
     return this.request<T>({ ...config, method: 'POST' });
   }
 
+  public async put<T>(config: AxiosRequestConfig): Promise<CaremanagementResponse<T>> {
+    return this.request<T>({ ...config, method: 'PUT' });
+  }
+
   public async patch<T>(config: AxiosRequestConfig): Promise<CaremanagementResponse<T>> {
     return this.request<T>({ ...config, method: 'PATCH' });
   }
