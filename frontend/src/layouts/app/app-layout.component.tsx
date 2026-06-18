@@ -3,13 +3,11 @@
 import 'dayjs/locale/sv';
 
 import { useUserStore } from '@services/user-service/user-service';
-import { GuiProvider } from '@sk-web-gui/react';
-import { useLocalStorage } from '@utils/use-localstorage.hook';
+import { ColorSchemeMode, GuiProvider } from '@sk-web-gui/react';
 import dayjs from 'dayjs';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import utc from 'dayjs/plugin/utc';
 import { ReactNode, useEffect } from 'react';
-import { useShallow } from 'zustand/react/shallow';
 
 dayjs.extend(utc);
 dayjs.locale('sv');
@@ -37,15 +35,15 @@ interface ClientApplicationProps {
 }
 
 const AppLayout = ({ children }: ClientApplicationProps) => {
-  const colorScheme = useLocalStorage(useShallow((state) => state.colorScheme));
   const getMe = useUserStore((state) => state.getMe);
 
   useEffect(() => {
     void getMe();
   }, [getMe]);
 
+  // Force light mode for now (ignores the stored/system preference).
   return (
-    <GuiProvider colorScheme={colorScheme}>
+    <GuiProvider colorScheme={ColorSchemeMode.Light}>
       {children}
       {/* <InactivityMonitor /> */}
     </GuiProvider>

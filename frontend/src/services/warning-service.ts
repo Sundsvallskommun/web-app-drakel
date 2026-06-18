@@ -39,9 +39,16 @@ export const getWarnings = (errandId: string): Promise<ServiceResponse<Warning[]
     .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);
 
-/** Acknowledges a warning so it is no longer OPEN (and disappears from the sidebar). */
+/** Acknowledges a warning so it is no longer OPEN (and disappears from the current list). */
 export const acknowledgeWarning = (errandId: string, warningId: string): Promise<ServiceResponse<null>> =>
   apiService
     .patch<ApiResponse<null>>(`errands/${errandId}/warnings/${warningId}`, { status: 'ACKNOWLEDGED' })
+    .then(() => ({ data: null }))
+    .catch(toServiceError);
+
+/** Re-opens an acknowledged/closed warning (sets it back to OPEN). */
+export const reopenWarning = (errandId: string, warningId: string): Promise<ServiceResponse<null>> =>
+  apiService
+    .patch<ApiResponse<null>>(`errands/${errandId}/warnings/${warningId}`, { status: 'OPEN' })
     .then(() => ({ data: null }))
     .catch(toServiceError);

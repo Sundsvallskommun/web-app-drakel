@@ -114,7 +114,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
       component: (
         <ErrandWarnings
           errandId={errand.id ?? ''}
-          warnings={openWarnings}
+          warnings={warnings}
           isLoading={warningsLoading}
           loadError={!!warningsError}
           refresh={refreshWarnings}
@@ -163,7 +163,11 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               <Tabs.Button className="text-base">Normberäkning</Tabs.Button>
               <Tabs.Content>
                 <div className="pt-24 pb-40 px-24 md:px-40">
-                  <ErrandNormberakning errandId={apiErrandId} warnings={openWarnings} />
+                  <ErrandNormberakning
+                    errandId={apiErrandId}
+                    warnings={openWarnings}
+                    onWarningsChanged={refreshWarnings}
+                  />
                 </div>
               </Tabs.Content>
             </Tabs.Item>

@@ -8,7 +8,8 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 export const useLocalStorage = create(
   persist<LocalStorage>(
     (set) => ({
-      colorScheme: ColorSchemeMode.System,
+      // Default to light mode for now (instead of following the system preference).
+      colorScheme: ColorSchemeMode.Light,
       setColorScheme: (colorScheme) => set(() => ({ colorScheme })),
     }),
     {

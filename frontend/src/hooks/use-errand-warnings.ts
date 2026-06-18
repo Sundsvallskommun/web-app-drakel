@@ -10,6 +10,8 @@ interface UseErrandWarningsResult {
   refresh: () => void;
 }
 
+const timestamp = (warning: Warning): number => new Date(warning.created ?? warning.updated ?? 0).getTime();
+
 /** Loads an errand's EB income warnings. Shared by the sidebar panel and its count badge. */
 export const useErrandWarnings = (errandId: string): UseErrandWarningsResult => {
   const [warnings, setWarnings] = useState<Warning[]>([]);
@@ -27,7 +29,8 @@ export const useErrandWarnings = (errandId: string): UseErrandWarningsResult => 
         setWarnings([]);
       } else {
         setError(undefined);
-        setWarnings(res.data ?? []);
+        // Newest first, by timestamp.
+        setWarnings([...(res.data ?? [])].sort((a, b) => timestamp(b) - timestamp(a)));
       }
       setIsLoading(false);
     });

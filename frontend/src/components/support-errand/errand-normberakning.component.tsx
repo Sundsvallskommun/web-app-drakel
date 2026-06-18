@@ -36,7 +36,11 @@ const FilterField: FC<{ label: string; required?: boolean; children: ReactNode }
  * FC: incomes and expenses are editable; the final result (Underskott/Överskott) is computed in Lifecare
  * and not exposed by the API yet.
  */
-export const ErrandNormberakning: FC<{ errandId: string; warnings: Warning[] }> = ({ errandId, warnings }) => {
+export const ErrandNormberakning: FC<{
+  errandId: string;
+  warnings: Warning[];
+  onWarningsChanged: () => void;
+}> = ({ errandId, warnings, onWarningsChanged }) => {
   const { draft, isLoading, error, refresh } = useErrandNormberakning(errandId);
   const [activeTab, setActiveTab] = useState<number>(0);
 
@@ -101,7 +105,7 @@ export const ErrandNormberakning: FC<{ errandId: string; warnings: Warning[] }> 
           <Tabs.Content>
             {personWarnings.length > 0 ?
               <div className="pt-24">
-                <NormberakningWarnings warnings={personWarnings} />
+                <NormberakningWarnings errandId={errandId} warnings={personWarnings} onAcknowledged={onWarningsChanged} />
               </div>
             : null}
             <NormberakningFamilj persons={draft.persons ?? []} />
@@ -112,7 +116,7 @@ export const ErrandNormberakning: FC<{ errandId: string; warnings: Warning[] }> 
           <Tabs.Content>
             {incomeWarnings.length > 0 ?
               <div className="pt-24">
-                <NormberakningWarnings warnings={incomeWarnings} />
+                <NormberakningWarnings errandId={errandId} warnings={incomeWarnings} onAcknowledged={onWarningsChanged} />
               </div>
             : null}
             <NormberakningIncomes
@@ -128,7 +132,7 @@ export const ErrandNormberakning: FC<{ errandId: string; warnings: Warning[] }> 
           <Tabs.Content>
             {expenseWarnings.length > 0 ?
               <div className="pt-24">
-                <NormberakningWarnings warnings={expenseWarnings} />
+                <NormberakningWarnings errandId={errandId} warnings={expenseWarnings} onAcknowledged={onWarningsChanged} />
               </div>
             : null}
             <NormberakningExpenses

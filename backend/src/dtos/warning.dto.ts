@@ -1,7 +1,7 @@
 import { IsIn, IsString } from 'class-validator';
 
-/** The two statuses a handläggare can set a warning to: acknowledge it or close it. */
-export const WARNING_STATUS_UPDATES = ['ACKNOWLEDGED', 'CLOSED'] as const;
+/** The statuses a handläggare can set a warning to: re-open it, acknowledge it or close it. */
+export const WARNING_STATUS_UPDATES = ['OPEN', 'ACKNOWLEDGED', 'CLOSED'] as const;
 
 export class UpdateWarningStatusDto {
   @IsString()
