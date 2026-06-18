@@ -4,8 +4,8 @@ import { caremanagementUrl } from '@utils/caremanagement-url';
 
 import { Warning } from '@/data-contracts/caremanagement/data-contracts';
 
-/** The two statuses a handläggare can set a warning to (acknowledge or close it). */
-type WarningStatusUpdate = 'ACKNOWLEDGED' | 'CLOSED';
+/** The statuses a handläggare can set a warning to: re-open it, acknowledge it or close it. */
+type WarningStatusUpdate = 'OPEN' | 'ACKNOWLEDGED' | 'CLOSED';
 
 /** Warnings live under the financial-assistance view of an errand (not the generic errand resource). */
 class CaremanagementWarningService {

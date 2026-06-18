@@ -1903,6 +1903,7 @@ export enum UpdateLookupParamsKindEnum {
 
 /** The target status */
 export enum UpdateWarningParamsStatusEnum {
+  OPEN = "OPEN",
   ACKNOWLEDGED = "ACKNOWLEDGED",
   CLOSED = "CLOSED",
 }
