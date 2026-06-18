@@ -1,13 +1,10 @@
 'use client';
 
+import { useErrandBeslut } from '@hooks/use-errand-beslut';
 import { useErrandNormberakning } from '@hooks/use-errand-normberakning';
+import { createBeslut } from '@services/beslut-service';
 import { Button, FormControl, FormLabel, Input, Select, Spinner, Tabs } from '@sk-web-gui/react';
-import {
-  BeslutOption,
-  PLACEHOLDER_BESLUT_OPTIONS,
-  resolveBeslutAmount,
-  resolveBeslutPeriod,
-} from '@utils/beslut';
+import { resolveBeslutAmount, resolveBeslutPeriod } from '@utils/beslut';
 import { formatAmount } from '@utils/format-amount';
 import dayjs from 'dayjs';
 import { FC, useEffect, useMemo, useState } from 'react';
@@ -15,52 +12,74 @@ import { FC, useEffect, useMemo, useState } from 'react';
 const todayDate = (): string => dayjs().format('YYYY-MM-DD');
 
 /**
- * "Beslut" tab — the foundation of the Nytt beslut form (mirroring Lifecare's BESLUT /
- * BESLUTSMEDDELANDE view). Datum is prefilled with today and Från/Till with the application month from
- * the normberäkning. Beslutsfattare and Tjänst are intentionally omitted.
- *
- * Several data sources are not exposed by caremanagement yet and are stubbed behind TODO(api) seams:
- * the beslut alternatives, the recommended beslut/amount from the normberäkning, and saving the beslut.
+ * "Beslut" tab — the Nytt beslut form (mirroring Lifecare's BESLUT / BESLUTSMEDDELANDE view). Datum,
+ * Beslut and Från/Till are prefilled from the automated recommendation (falling back to today and the
+ * normberäkning month); Belopp is 0 for an avslag, otherwise the recommended amount. Beslutsfattare and
+ * Tjänst are intentionally omitted.
  */
 export const ErrandBeslut: FC<{ errandId: string }> = ({ errandId }) => {
-  const { draft, isLoading } = useErrandNormberakning(errandId);
+  const { draft, isLoading: draftLoading } = useErrandNormberakning(errandId);
+  const { options, recommendation, isLoading: beslutLoading, refresh } = useErrandBeslut(errandId);
 
-  // TODO(api): beslut alternatives should come from caremanagement; no decisions/lookup endpoint
-  // exists yet (see @utils/beslut). Placeholder list keeps the foundation functional.
-  const options = PLACEHOLDER_BESLUT_OPTIONS;
-
-  // TODO(api): the recommended beslut and its amount come from the normberäkning result
-  // (Decision RECOMMENDATION), which caremanagement does not expose yet. Modelled as getters so the
-  // wiring point is explicit; both return undefined until the endpoint lands.
-  const getRecommendedOption = (): BeslutOption | undefined => undefined;
-  const getRecommendedAmount = (): number | undefined => undefined;
-  const recommendedOption = getRecommendedOption();
-  const recommendedAmount = getRecommendedAmount();
-
-  const period = useMemo(() => resolveBeslutPeriod(draft), [draft]);
+  const period = useMemo(() => resolveBeslutPeriod(recommendation, draft), [recommendation, draft]);
 
   const [date, setDate] = useState<string>(todayDate);
-  const [beslutCode, setBeslutCode] = useState<string>(recommendedOption?.code ?? '');
+  const [beslutCode, setBeslutCode] = useState<string>('');
   const [fromDate, setFromDate] = useState<string>(period.fromDate);
   const [toDate, setToDate] = useState<string>(period.toDate);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [saveError, setSaveError] = useState<string>();
+  const [saved, setSaved] = useState<boolean>(false);
 
-  // Prefill Från/Till once the period resolves from the (async) normberäkning draft.
+  // Prefill from the recommendation (and resolved period) once they load.
+  useEffect(() => {
+    setDate(recommendation?.decisionDate ?? todayDate());
+    setBeslutCode(recommendation?.value ?? '');
+  }, [recommendation]);
   useEffect(() => {
     setFromDate(period.fromDate);
     setToDate(period.toDate);
   }, [period.fromDate, period.toDate]);
 
-  const selectedOption = options.find((option) => option.code === beslutCode) ?? recommendedOption;
-  const amount = resolveBeslutAmount(selectedOption, recommendedAmount);
+  const selectedOption = options.find((option) => option.code === beslutCode);
+  const recommendedOption = options.find((option) => option.code === recommendation?.value);
+  const amount = resolveBeslutAmount(selectedOption, recommendation?.amount);
+
+  const recommendationLabel =
+    recommendedOption?.displayName ??
+    recommendation?.value ??
+    '— (ingen rekommendation från normberäkningen ännu)';
 
   const resetForm = (): void => {
-    setDate(todayDate());
-    setBeslutCode(recommendedOption?.code ?? '');
+    setDate(recommendation?.decisionDate ?? todayDate());
+    setBeslutCode(recommendation?.value ?? '');
     setFromDate(period.fromDate);
     setToDate(period.toDate);
+    setSaveError(undefined);
+    setSaved(false);
   };
 
-  if (isLoading) {
+  const save = async (): Promise<void> => {
+    setSaving(true);
+    setSaveError(undefined);
+    setSaved(false);
+    const result = await createBeslut(errandId, {
+      value: beslutCode,
+      amount: amount ?? 0,
+      decisionDate: date,
+      periodFrom: fromDate,
+      periodTo: toDate,
+    });
+    setSaving(false);
+    if (result.error) {
+      setSaveError('Det gick inte att spara beslutet');
+      return;
+    }
+    setSaved(true);
+    refresh();
+  };
+
+  if (draftLoading || beslutLoading) {
     return (
       <div className="flex justify-center my-32">
         <Spinner size={4} />
@@ -102,13 +121,13 @@ export const ErrandBeslut: FC<{ errandId: string }> = ({ errandId }) => {
                   >
                     <Select.Option value="">Välj beslut</Select.Option>
                     {options.map((option) => (
-                      <Select.Option key={option.code} value={option.code}>
-                        {option.label}
+                      <Select.Option key={option.code} value={option.code ?? ''}>
+                        {option.displayName ?? option.code}
                       </Select.Option>
                     ))}
                   </Select>
                   <span className="text-small text-dark-secondary mt-4">
-                    Rekommenderat beslut: {recommendedOption?.label ?? '— (hämtas från normberäkningen)'}
+                    Rekommenderat beslut: {recommendationLabel}
                   </span>
                 </FormControl>
 
@@ -122,7 +141,7 @@ export const ErrandBeslut: FC<{ errandId: string }> = ({ errandId }) => {
 
                 <FormControl id="beslut-belopp" className="w-full">
                   <FormLabel>Belopp</FormLabel>
-                  {/* Avslag ⇒ 0; annars beloppet från normberäkningen (TODO(api): ej exponerat ännu). */}
+                  {/* Avslag ⇒ 0; annars beloppet från normberäkningen (rekommendationen). */}
                   <Input readOnly size="sm" value={formatAmount(amount ?? 0)} />
                 </FormControl>
 
@@ -151,12 +170,21 @@ export const ErrandBeslut: FC<{ errandId: string }> = ({ errandId }) => {
                 </FormControl>
               </div>
 
+              {saveError && <p className="text-error-surface-primary m-0">{saveError}</p>}
+              {saved && <p className="text-dark-secondary m-0">Beslutet sparades.</p>}
+
               <div className="flex gap-16">
                 <Button variant="secondary" onClick={resetForm}>
                   Avbryt
                 </Button>
-                {/* TODO(api): no create-decision endpoint in the BFF yet (decisions are set aside). */}
-                <Button color="vattjom" variant="primary" disabled>
+                <Button
+                  color="vattjom"
+                  variant="primary"
+                  disabled={!beslutCode || saving}
+                  loading={saving}
+                  loadingText="Sparar…"
+                  onClick={() => void save()}
+                >
                   Spara
                 </Button>
               </div>

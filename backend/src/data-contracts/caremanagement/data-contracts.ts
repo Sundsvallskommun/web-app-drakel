@@ -646,6 +646,25 @@ export interface Decision {
   value?: string;
   /** Optional human-readable description or motivation for the decision */
   description?: string;
+  /** Optional decision amount, in SEK. For a financial-assistance beslut this is the granted belopp (0 for a rejection); for a recommendation it is the recommended amount when the pipeline has computed one. */
+  amount?: number;
+  /** Optional decision message (beslutsmeddelande) communicated to the applicant — the free-text justification shown on the decision letter, kept separate from the internal `description`. */
+  decisionMessage?: string;
+  /**
+   * Optional date the decision applies (the handläggare-chosen beslutsdatum), distinct from the server-assigned `created` audit timestamp.
+   * @format date
+   */
+  decisionDate?: string;
+  /**
+   * Optional start of the period the decision covers (the month applied for, for a financial-assistance beslut).
+   * @format date
+   */
+  periodFrom?: string;
+  /**
+   * Optional end of the period the decision covers.
+   * @format date
+   */
+  periodTo?: string;
   /** Identifier of the actor that produced the decision. Use the handläggare userId for human decisions or a system identifier (e.g. `operaton`, `dmn-engine`) for automated ones. */
   createdBy?: string;
   /**
@@ -1435,6 +1454,8 @@ export interface FinancialAssistanceView {
   touched?: string;
   /** The typed financial assistance application payload */
   data?: FinancialAssistanceData;
+  /** The most recent automated recommendation on the errand (the latest RECOMMENDATION decision the handläggare reviews), or null when none has been produced. Carries the recommended value and, when the pipeline has computed it, the recommended amount/period to prefill the Beslut form. */
+  recommendation?: Decision;
 }
 
 /** A child pre-filled from Lifecare for a financial assistance renewal. Carries only what Lifecare provides — personnummer and name; the citizen completes residence, school etc. on the form. */
@@ -1453,6 +1474,16 @@ export interface RenewalPrefill {
   lifecareChecked?: boolean;
 }
 
+/** An allowed decision outcome (beslutsalternativ) for an errand type. */
+export interface DecisionOption {
+  /** The decision outcome code, stored on the Decision row's value */
+  code?: string;
+  /** Human-readable label for the outcome */
+  displayName?: string;
+  /** Whether the outcome carries a belopp — true for outcomes that grant an amount, false for ones that imply 0 (e.g. avslag) */
+  carriesAmount?: boolean;
+}
+
 /** Form descriptor for an errand type slug — statuses, roles and the fields its data payload should carry. */
 export interface ErrandTypeSchema {
   /** The errand type slug */
@@ -1467,6 +1498,8 @@ export interface ErrandTypeSchema {
   roles?: RoleDefinition[];
   /** The fields the type's data payload should carry, as form guidance */
   fields?: FieldDescriptor[];
+  /** The allowed decision outcomes (beslutsalternativ) a handläggare may record on the type; empty when the type defines none */
+  decisionOptions?: DecisionOption[];
 }
 
 /** Form-guidance descriptor for a single data field of an errand type. */

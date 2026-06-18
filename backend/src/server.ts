@@ -3,6 +3,7 @@ import validateEnv from '@utils/validateEnv';
 
 import App from '@/app';
 
+import { DecisionController } from './controllers/decision.controller';
 import { ErrandController } from './controllers/errand.controller';
 import { HealthController } from './controllers/health.controller';
 import { MessageController } from './controllers/message.controller';
@@ -19,6 +20,7 @@ const app = new App([
   UserController,
   HealthController,
   ErrandController,
+  DecisionController,
   MessageController,
   MetadataController,
   NoteController,
