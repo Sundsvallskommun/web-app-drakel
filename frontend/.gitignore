@@ -50,3 +50,6 @@ yarn-error.log*
 .vercel
 .npmrc
 .yarnrc
+
+# Generated OpenAPI specs — only an intermediate for contract generation, never committed
+**/data-contracts/**/swagger.json
