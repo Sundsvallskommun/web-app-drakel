@@ -1,5 +1,6 @@
 'use client';
 
+import { PdfPreview } from '@components/common/pdf-preview.component';
 import { Attachment } from '@data-contracts/backend/data-contracts';
 import { Spinner } from '@sk-web-gui/react';
 import { FC } from 'react';
@@ -10,23 +11,31 @@ interface ErrandMessageAttachmentsProps {
   errandId: string;
   /** The conversation attachments (origin CONVERSATION) shared in the errand's messages. */
   attachments: Attachment[];
+  /** The consolidated client conversation files PDF (klientbilagor.pdf), previewed at the top when present. */
+  summaryAttachment?: Attachment;
   isLoading: boolean;
   loadError: boolean;
 }
 
 /**
  * Lists every file shared in the errand's conversation (origin CONVERSATION) in one place — separate
- * from the Bilagor tab, which shows application/generated/errand files. Downloads route through the
- * message endpoint automatically (handled in AttachmentList via each attachment's messageId).
+ * from the Bilagor tab, which shows application/generated/errand files. A consolidated PDF of all
+ * client conversation files (klientbilagor.pdf) is previewed at the top, mirroring the Bilagor tab's
+ * sammanstallning.pdf. Downloads route through the message endpoint automatically (AttachmentList).
  */
 export const ErrandMessageAttachments: FC<ErrandMessageAttachmentsProps> = ({
   errandId,
   attachments,
+  summaryAttachment,
   isLoading,
   loadError,
 }) => {
   return (
     <div className="flex flex-col gap-16">
+      {summaryAttachment?.id ?
+        <PdfPreview errandId={errandId} attachmentId={summaryAttachment.id} title="Klientbilagor (PDF)" />
+      : null}
+
       <span className="font-bold">Bilagor från meddelanden</span>
 
       {isLoading ?

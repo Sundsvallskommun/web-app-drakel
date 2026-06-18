@@ -7,6 +7,7 @@ import { useErrandForm } from '@hooks/use-errand-form';
 import { useErrandNotes } from '@hooks/use-errand-notes';
 import { useErrandWarnings } from '@hooks/use-errand-warnings';
 import { Spinner, Tabs } from '@sk-web-gui/react';
+import { CLIENT_FILES_PDF } from '@utils/attachment-names';
 import { AlertTriangle, NotebookPen, UserCog } from 'lucide-react';
 import { FC, useEffect, useState } from 'react';
 
@@ -46,9 +47,16 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   // Only OPEN warnings are actionable — acknowledged/closed ones disappear from the sidebar.
   const openWarnings = warnings.filter((warning) => warning.status === 'OPEN');
 
+  // The consolidated client conversation files PDF (origin CONVERSATION) — previewed atop the
+  // message-attachments tab, so it's excluded from that tab's file list below to avoid showing twice.
+  const conversationSummaryAttachment = attachments.find(
+    (attachment) => (attachment.fileName ?? '').toLowerCase() === CLIENT_FILES_PDF
+  );
   // CONVERSATION files belong to the "Bilagor från meddelanden" tab; everything else (application /
   // generated / errand files) to the "Bilagor" tab.
-  const conversationAttachments = attachments.filter((attachment) => attachment.origin === 'CONVERSATION');
+  const conversationAttachments = attachments.filter(
+    (attachment) => attachment.origin === 'CONVERSATION' && attachment.id !== conversationSummaryAttachment?.id
+  );
   const errandAttachments = attachments.filter((attachment) => attachment.origin !== 'CONVERSATION');
 
   // Surface the errand's status/title into the slim app header, and clear it on leave.
@@ -175,6 +183,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                   <ErrandMessageAttachments
                     errandId={apiErrandId}
                     attachments={conversationAttachments}
+                    summaryAttachment={conversationSummaryAttachment}
                     isLoading={attachmentsLoading}
                     loadError={!!attachmentsError}
                   />

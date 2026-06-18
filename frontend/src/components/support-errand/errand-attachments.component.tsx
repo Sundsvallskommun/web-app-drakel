@@ -4,16 +4,11 @@ import { PdfPreview } from '@components/common/pdf-preview.component';
 import { Attachment } from '@data-contracts/backend/data-contracts';
 import { uploadAttachment } from '@services/errand-service/errand-service';
 import { CustomOnChangeEventUploadFile, FileUpload, Spinner } from '@sk-web-gui/react';
+import { SUMMARY_PDF } from '@utils/attachment-names';
 import { FC, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { AttachmentList } from './attachment-list.component';
-
-// The two consolidated PDFs caremanagement keeps on the errand, previewed inline at the top:
-// sammanstallning.pdf = the submitted application summary; klientbilagor.pdf = every client-sent
-// conversation file merged into one (rebuilt whenever the client sends a new attachment).
-const SUMMARY_PDF = 'sammanstallning.pdf';
-const CLIENT_FILES_PDF = 'klientbilagor.pdf';
 
 interface ErrandAttachmentsProps {
   errandId: string;
@@ -35,10 +30,9 @@ export const ErrandAttachments: FC<ErrandAttachmentsProps> = ({
   const [uploading, setUploading] = useState<boolean>(false);
   const [actionError, setActionError] = useState<string>();
 
-  const findByName = (fileName: string) =>
-    attachments.find((attachment) => (attachment.fileName ?? '').toLowerCase() === fileName);
-  const summaryAttachment = findByName(SUMMARY_PDF);
-  const clientFilesAttachment = findByName(CLIENT_FILES_PDF);
+  const summaryAttachment = attachments.find(
+    (attachment) => (attachment.fileName ?? '').toLowerCase() === SUMMARY_PDF
+  );
 
   const handleUpload = async (event: CustomOnChangeEventUploadFile) => {
     const file = event.target.value?.[0]?.file;
@@ -60,9 +54,6 @@ export const ErrandAttachments: FC<ErrandAttachmentsProps> = ({
     <FormProvider {...formMethods}>
       {summaryAttachment?.id ?
         <PdfPreview errandId={errandId} attachmentId={summaryAttachment.id} title="Sammanställning (PDF)" />
-      : null}
-      {clientFilesAttachment?.id ?
-        <PdfPreview errandId={errandId} attachmentId={clientFilesAttachment.id} title="Klientbilagor (PDF)" />
       : null}
 
       <FileUpload.Area onChange={(event) => void handleUpload(event)}>
