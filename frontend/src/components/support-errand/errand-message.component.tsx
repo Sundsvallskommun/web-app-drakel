@@ -70,10 +70,12 @@ const formatTimeLabel = (created: string): string => {
 const formatAbsolute = (created: string): string => dayjs(created).format('YYYY-MM-DD, HH:mm');
 
 /**
- * A single conversation message as a chat bubble: OUTBOUND (the handläggare's own, "mine") aligns
- * right in a blue bubble, INBOUND (the applicant) aligns left in a neutral bubble. Above the bubble a
- * meta row carries name · time · "Senaste" + the "Svara" action; inside it an optional quoted reply
- * (click to jump to it) and the body; attachments render below, on the sender's side.
+ * A single conversation message. Every message is left-aligned and fills the available width (no
+ * right/left hopping per sender) so the thread reads like a clean, top-to-bottom list — easier for
+ * non-technical handläggare to follow. The sender is still distinguished by avatar + bubble colour:
+ * OUTBOUND (the handläggare's own) gets a soft blue bubble, INBOUND (the applicant) a neutral one.
+ * Above the bubble a meta row carries name · time · "Senaste" + the "Svara" action; inside it an
+ * optional quoted reply (click to jump to it) and the body; attachments render below.
  */
 export const ErrandMessage: FC<{
   message: Message;
@@ -127,7 +129,7 @@ export const ErrandMessage: FC<{
   };
 
   return (
-    <article className={cx('flex items-start gap-12', outbound && 'flex-row-reverse')}>
+    <article className="flex items-start gap-12">
       <Avatar
         size="sm"
         accent
@@ -138,9 +140,7 @@ export const ErrandMessage: FC<{
           { initials: getInitials(avatarSource) }
         : { imageElement: <UserRound size={18} strokeWidth={1.75} /> })}
       />
-      <div
-        className={cx('flex flex-col gap-y-4 min-w-0 max-w-[min(52rem,80%)]', outbound ? 'items-end' : 'items-start')}
-      >
+      <div className="flex flex-col gap-y-4 min-w-0 w-full items-start">
         <div className="flex flex-wrap items-center gap-x-8 gap-y-2 max-w-full px-2">
           <span className="font-bold text-body text-small truncate">{sender}</span>
           {message.created ?
@@ -172,10 +172,10 @@ export const ErrandMessage: FC<{
           </Button>
         </div>
 
-        {/* OUTBOUND (mine) = blue bubble right; INBOUND (Sökande) = neutral bubble left. */}
+        {/* Sender shown by colour only (not side): OUTBOUND = soft blue bubble, INBOUND = neutral. */}
         <div
           className={cx(
-            'flex flex-col gap-y-14 rounded-16 border-1 px-16 py-14 max-w-full shadow-sm',
+            'flex flex-col gap-y-14 rounded-16 border-1 px-16 py-14 w-full shadow-sm',
             outbound ?
               'border-vattjom-background-300 bg-vattjom-surface-accent text-vattjom-text-primary'
             : 'border-divider bg-background-content text-body',
@@ -226,40 +226,25 @@ export const ErrandMessage: FC<{
 
           <p className="m-0 whitespace-pre-wrap break-words leading-relaxed">{message.body}</p>
 
+          {/* No wrapper card — just a light label, then each attachment as its own outlined chip that
+              flows beside the others and wraps where it fits. Colours inherit from the bubble so they
+              stay legible on both bubble types; each chip keeps its preview + download actions. */}
           {message.attachments?.length ?
-            <section
-              className={cx(
-                'flex flex-col gap-10 rounded-12 border-1 p-12 shadow-sm',
-                outbound ?
-                  'border-vattjom-background-300 bg-background-content text-body'
-                : 'border-divider bg-background-200 text-body'
-              )}
-              aria-label="Bilagor"
-            >
-              <div className="flex items-center justify-between gap-12 text-small">
-                <div className="flex items-center gap-8 font-bold">
-                  <span className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-vattjom-background-100 text-vattjom-surface-primary">
-                    <Paperclip size={15} />
-                  </span>
-                  <span>Bilagor</span>
-                </div>
-                <span className="shrink-0 text-secondary">
-                  {message.attachments.length} {message.attachments.length === 1 ? 'fil' : 'filer'}
-                </span>
-              </div>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <section className="flex flex-col gap-6" aria-label="Bilagor">
+              <span className="flex items-center gap-6 text-small font-bold">
+                <Paperclip size={15} className="shrink-0" />
+                {message.attachments.length === 1 ? 'Bilaga' : `${message.attachments.length} bilagor`}
+              </span>
+              <div className="flex flex-wrap gap-8">
                 {message.attachments.map((attachment, index) => {
                   const isDownloading = downloadingAttachmentId === attachment.id;
                   const fileName = attachment.fileName ?? 'bilaga';
                   return (
                     <div
                       key={attachment.id ?? index}
-                      className={cx(
-                        'flex w-full min-w-0 items-center gap-4 rounded-8 border-1 px-10 py-8 text-small',
-                        outbound ? 'border-divider bg-background-200' : 'border-divider bg-background-content'
-                      )}
+                      className="flex min-w-0 max-w-full items-center gap-4 rounded-8 border-1 border-divider px-10 py-6 text-small"
                     >
-                      <span className="min-w-0 flex-1 truncate text-left">{fileName}</span>
+                      <span className="min-w-0 truncate text-left">{fileName}</span>
                       {isPreviewableAttachment(toPreviewAttachment(attachment)) ?
                         <button
                           type="button"
