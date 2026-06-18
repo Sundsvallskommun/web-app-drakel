@@ -13,6 +13,7 @@ import { FC, useEffect, useState } from 'react';
 
 import { ErrandApplicationData } from './errand-application-data.component';
 import { ErrandAttachments } from './errand-attachments.component';
+import { ErrandBeslut } from './errand-beslut.component';
 import { ErrandInfoPanel } from './errand-info-panel.component';
 import { ErrandMessageAttachments } from './errand-message-attachments.component';
 import { ErrandMessages } from './errand-messages.component';
@@ -168,6 +169,14 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                     warnings={openWarnings}
                     onWarningsChanged={refreshWarnings}
                   />
+                </div>
+              </Tabs.Content>
+            </Tabs.Item>
+            <Tabs.Item>
+              <Tabs.Button className="text-base">Beslut</Tabs.Button>
+              <Tabs.Content>
+                <div className="pt-24 pb-40 px-24 md:px-40">
+                  <ErrandBeslut errandId={apiErrandId} />
                 </div>
               </Tabs.Content>
             </Tabs.Item>
