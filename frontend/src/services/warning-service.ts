@@ -17,6 +17,21 @@ export interface Warning {
   updated?: string;
 }
 
+/** Human-readable Swedish labels for the caremanagement warning types. */
+const WARNING_TYPE_LABELS: Record<string, string> = {
+  UNHANDLED_INCOME: 'Ej hanterad inkomst',
+  INCOME_CHANGE: 'Inkomständring',
+  MISSING_SSBTEK: 'Saknas i SSBTEK',
+  NEW_INCOME: 'Ny inkomst',
+  NEW_EXPENSE: 'Ny utgift',
+  NEW_PERSON: 'Ny person',
+  INCOME_DROPPED: 'Bortfallen inkomst',
+  HOUSEHOLD_CHANGE: 'Ändrad hushållssammansättning',
+};
+
+/** The label for a warning type — falls back to the raw code, or a generic label when missing. */
+export const warningTypeLabel = (type?: string): string => (type ? (WARNING_TYPE_LABELS[type] ?? type) : 'Varning');
+
 /** Fetches the EB income warnings on an errand. */
 export const getWarnings = (errandId: string): Promise<ServiceResponse<Warning[]>> =>
   apiService

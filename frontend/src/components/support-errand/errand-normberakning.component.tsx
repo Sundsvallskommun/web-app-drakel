@@ -1,6 +1,7 @@
 'use client';
 
 import { useErrandNormberakning } from '@hooks/use-errand-normberakning';
+import { Warning } from '@services/warning-service';
 import { FormControl, FormLabel, Input, Spinner, Tabs } from '@sk-web-gui/react';
 import { FC, ReactNode, useState } from 'react';
 
@@ -8,6 +9,12 @@ import { NormberakningExpenses } from './normberakning-expenses.component';
 import { NormberakningFamilj } from './normberakning-familj.component';
 import { NormberakningGemensamma } from './normberakning-gemensamma.component';
 import { NormberakningIncomes } from './normberakning-incomes.component';
+import { NormberakningWarnings } from './normberakning-warnings.component';
+
+// Which normberäkning sub-tab each warning type belongs to.
+const INCOME_WARNING_TYPES = new Set(['UNHANDLED_INCOME', 'INCOME_CHANGE', 'MISSING_SSBTEK', 'NEW_INCOME', 'INCOME_DROPPED']);
+const EXPENSE_WARNING_TYPES = new Set(['NEW_EXPENSE']);
+const PERSON_WARNING_TYPES = new Set(['NEW_PERSON', 'HOUSEHOLD_CHANGE']);
 
 const FilterField: FC<{ label: string; required?: boolean; children: ReactNode }> = ({
   label,
@@ -29,9 +36,13 @@ const FilterField: FC<{ label: string; required?: boolean; children: ReactNode }
  * FC: incomes and expenses are editable; the final result (Underskott/Överskott) is computed in Lifecare
  * and not exposed by the API yet.
  */
-export const ErrandNormberakning: FC<{ errandId: string }> = ({ errandId }) => {
+export const ErrandNormberakning: FC<{ errandId: string; warnings: Warning[] }> = ({ errandId, warnings }) => {
   const { draft, isLoading, error, refresh } = useErrandNormberakning(errandId);
   const [activeTab, setActiveTab] = useState<number>(0);
+
+  const incomeWarnings = warnings.filter((warning) => INCOME_WARNING_TYPES.has(warning.type ?? ''));
+  const expenseWarnings = warnings.filter((warning) => EXPENSE_WARNING_TYPES.has(warning.type ?? ''));
+  const personWarnings = warnings.filter((warning) => PERSON_WARNING_TYPES.has(warning.type ?? ''));
 
   if (isLoading) {
     return (
@@ -88,12 +99,22 @@ export const ErrandNormberakning: FC<{ errandId: string }> = ({ errandId }) => {
         <Tabs.Item>
           <Tabs.Button>Familj</Tabs.Button>
           <Tabs.Content>
+            {personWarnings.length > 0 ?
+              <div className="pt-24">
+                <NormberakningWarnings warnings={personWarnings} />
+              </div>
+            : null}
             <NormberakningFamilj persons={draft.persons ?? []} />
           </Tabs.Content>
         </Tabs.Item>
         <Tabs.Item>
           <Tabs.Button>Inkomster</Tabs.Button>
           <Tabs.Content>
+            {incomeWarnings.length > 0 ?
+              <div className="pt-24">
+                <NormberakningWarnings warnings={incomeWarnings} />
+              </div>
+            : null}
             <NormberakningIncomes
               errandId={errandId}
               rows={draft.incomes ?? []}
@@ -105,6 +126,11 @@ export const ErrandNormberakning: FC<{ errandId: string }> = ({ errandId }) => {
         <Tabs.Item>
           <Tabs.Button>Utgifter</Tabs.Button>
           <Tabs.Content>
+            {expenseWarnings.length > 0 ?
+              <div className="pt-24">
+                <NormberakningWarnings warnings={expenseWarnings} />
+              </div>
+            : null}
             <NormberakningExpenses
               errandId={errandId}
               rows={draft.expenses ?? []}

@@ -1,21 +1,9 @@
 'use client';
 
-import { acknowledgeWarning, Warning } from '@services/warning-service';
+import { acknowledgeWarning, Warning, warningTypeLabel } from '@services/warning-service';
 import { Button, Spinner } from '@sk-web-gui/react';
 import { AlertTriangle } from 'lucide-react';
 import { FC, useState } from 'react';
-
-// Human-readable labels for the caremanagement warning types.
-const WARNING_TYPE_LABELS: Record<string, string> = {
-  UNHANDLED_INCOME: 'Ej hanterad inkomst',
-  INCOME_CHANGE: 'Inkomständring',
-  MISSING_SSBTEK: 'Saknas i SSBTEK',
-  NEW_INCOME: 'Ny inkomst',
-  NEW_EXPENSE: 'Ny utgift',
-  NEW_PERSON: 'Ny person',
-  INCOME_DROPPED: 'Bortfallen inkomst',
-  HOUSEHOLD_CHANGE: 'Ändrad hushållssammansättning',
-};
 
 interface ErrandWarningsProps {
   errandId: string;
@@ -67,7 +55,7 @@ export const ErrandWarnings: FC<ErrandWarningsProps> = ({ errandId, warnings, is
                 <AlertTriangle size={20} className="shrink-0 mt-2 text-warning-surface-primary" />
                 <div className="flex flex-col gap-2">
                   {warning.type ?
-                    <span className="font-bold text-small">{WARNING_TYPE_LABELS[warning.type] ?? warning.type}</span>
+                    <span className="font-bold text-small">{warningTypeLabel(warning.type)}</span>
                   : null}
                   <span className="text-small break-words">{warning.message}</span>
                 </div>
