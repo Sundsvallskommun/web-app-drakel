@@ -5,8 +5,9 @@ import { useErrand } from '@hooks/use-errand';
 import { useErrandAttachments } from '@hooks/use-errand-attachments';
 import { useErrandForm } from '@hooks/use-errand-form';
 import { useErrandNotes } from '@hooks/use-errand-notes';
+import { useErrandWarnings } from '@hooks/use-errand-warnings';
 import { Spinner, Tabs } from '@sk-web-gui/react';
-import { NotebookPen, UserCog } from 'lucide-react';
+import { AlertTriangle, NotebookPen, UserCog } from 'lucide-react';
 import { FC, useEffect, useState } from 'react';
 
 import { ErrandApplicationData } from './errand-application-data.component';
@@ -16,6 +17,7 @@ import { ErrandMessageAttachments } from './errand-message-attachments.component
 import { ErrandMessages } from './errand-messages.component';
 import { ErrandNotes } from './errand-notes.component';
 import { ErrandSidebar, SidebarSection } from './errand-sidebar.component';
+import { ErrandWarnings } from './errand-warnings.component';
 
 // Drafts are created with this sentinel title until the handläggare fills the errand in.
 const EMPTY_ERRAND_TITLE = 'Empty errand';
@@ -26,6 +28,12 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   const { setErrand: setHeaderErrand } = useErrandHeader();
   const { form, setField, isDirty, saving, error: saveError, save } = useErrandForm(errand, refresh);
   const { notes, isLoading: notesLoading, error: notesError, refresh: refreshNotes } = useErrandNotes(errandId);
+  const {
+    warnings,
+    isLoading: warningsLoading,
+    error: warningsError,
+    refresh: refreshWarnings,
+  } = useErrandWarnings(errand?.id ?? errandId);
   // Fetched once here so the tab counters and both attachment tabs share a single source. Use the
   // resolved errand id (the prop can be an errand number); the hook refetches when it becomes available.
   const {
@@ -34,6 +42,9 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     error: attachmentsError,
     refresh: refreshAttachments,
   } = useErrandAttachments(errand?.id ?? errandId);
+
+  // Only OPEN warnings are actionable — acknowledged/closed ones disappear from the sidebar.
+  const openWarnings = warnings.filter((warning) => warning.status === 'OPEN');
 
   // CONVERSATION files belong to the "Bilagor från meddelanden" tab; everything else (application /
   // generated / errand files) to the "Bilagor" tab.
@@ -79,6 +90,21 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           saving={saving}
           error={saveError}
           onSave={() => void save()}
+        />
+      ),
+    },
+    {
+      key: 'warnings',
+      label: 'Varningar',
+      icon: AlertTriangle,
+      badge: openWarnings.length,
+      component: (
+        <ErrandWarnings
+          errandId={errand.id ?? ''}
+          warnings={openWarnings}
+          isLoading={warningsLoading}
+          loadError={!!warningsError}
+          refresh={refreshWarnings}
         />
       ),
     },

@@ -31,6 +31,7 @@ export interface Stakeholder {
   id?: string;
   externalId?: string;
   externalIdType?: string;
+  personalNumber?: string;
   role?: string;
   firstName?: string;
   lastName?: string;
@@ -240,7 +241,32 @@ export interface UserApiResponse {
   message: string;
 }
 
+export interface UpdateWarningStatusDto {
+  status: UpdateWarningStatusDtoStatusEnum;
+}
+
+export interface Warning {
+  id?: string;
+  type?: string;
+  sourceKey?: string;
+  message?: string;
+  status?: string;
+  autoResolved?: boolean;
+  created?: string;
+  updated?: string;
+}
+
+export interface WarningsApiResponse {
+  data: Warning[];
+  message: string;
+}
+
 export enum UserRoleEnum {
   AppRead = "app_read",
   AppAdmin = "app_admin",
+}
+
+export enum UpdateWarningStatusDtoStatusEnum {
+  ACKNOWLEDGED = "ACKNOWLEDGED",
+  CLOSED = "CLOSED",
 }

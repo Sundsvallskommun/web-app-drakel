@@ -9,9 +9,19 @@ import { MessageController } from './controllers/message.controller';
 import { MetadataController } from './controllers/metadata.controller';
 import { NoteController } from './controllers/note.controller';
 import { UserController } from './controllers/user.controller';
+import { WarningController } from './controllers/warning.controller';
 
 validateEnv();
 
-const app = new App([IndexController, UserController, HealthController, ErrandController, MessageController, MetadataController, NoteController]);
+const app = new App([
+  IndexController,
+  UserController,
+  HealthController,
+  ErrandController,
+  MessageController,
+  MetadataController,
+  NoteController,
+  WarningController,
+]);
 
 app.listen();

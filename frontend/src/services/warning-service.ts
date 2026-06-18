@@ -1,0 +1,32 @@
+import { ServiceResponse } from '@interfaces/services';
+import { ApiResponse, apiService, toServiceError } from '@services/api-service';
+
+/**
+ * An EB income warning on an errand (caremanagement Warning). Defined locally — like {@link Note} —
+ * mirroring the backend Warning response. `status` is OPEN until a handläggare acknowledges or closes it.
+ */
+export interface Warning {
+  id?: string;
+  /** UNHANDLED_INCOME / INCOME_CHANGE / MISSING_SSBTEK / NEW_INCOME. */
+  type?: string;
+  sourceKey?: string;
+  message?: string;
+  status?: 'OPEN' | 'ACKNOWLEDGED' | 'CLOSED';
+  autoResolved?: boolean;
+  created?: string;
+  updated?: string;
+}
+
+/** Fetches the EB income warnings on an errand. */
+export const getWarnings = (errandId: string): Promise<ServiceResponse<Warning[]>> =>
+  apiService
+    .get<ApiResponse<Warning[]>>(`errands/${errandId}/warnings`)
+    .then((res) => ({ data: res.data.data }))
+    .catch(toServiceError);
+
+/** Acknowledges a warning so it is no longer OPEN (and disappears from the sidebar). */
+export const acknowledgeWarning = (errandId: string, warningId: string): Promise<ServiceResponse<null>> =>
+  apiService
+    .patch<ApiResponse<null>>(`errands/${errandId}/warnings/${warningId}`, { status: 'ACKNOWLEDGED' })
+    .then(() => ({ data: null }))
+    .catch(toServiceError);
