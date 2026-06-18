@@ -143,7 +143,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     // The AppShell provides the bg-background-100 page background and full height; the sidebar sits
     // flush against the right edge while the main content is padded.
     <div className="flex w-full h-full overflow-hidden">
-      <main className="flex-grow min-w-0 flex justify-center px-24 md:px-40 pt-24 pb-40 overflow-y-auto">
+      <main className="flex-grow min-w-0 flex justify-center px-24 md:px-40 pt-24 pb-40 overflow-y-auto mb-40">
         <div className="w-full max-w-errand flex flex-col gap-16">
           <h1 className="m-0 break-words">{heading}</h1>
 
@@ -155,7 +155,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
             onTabChange={setActiveTab}
           >
             <Tabs.Item>
-              <Tabs.Button className="text-base">Ärendeuppgifter</Tabs.Button>
+              <Tabs.Button className="text-base ml-10">Ärendeuppgifter</Tabs.Button>
               <Tabs.Content>
                 <ErrandApplicationData errand={errand} />
               </Tabs.Content>
