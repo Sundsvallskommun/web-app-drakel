@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
@@ -17,14 +18,17 @@ const SWAGGER_TYPESCRIPT_API_CLI = require.resolve('swagger-typescript-api/cli')
 
 const generateContract = async (name: string, swaggerUrl: string) => {
   const apiDir = `${PATH_TO_OUTPUT_DIR}/${name}`;
-  const swaggerPath = `${apiDir}/swagger.json`;
+  // The downloaded spec is only an intermediate for the generator — keep it OUT of src (a .json under
+  // src would be type-checked by tsc and break the build, e.g. the citizen API serves YAML). Write it to
+  // a temp file and remove it afterwards.
+  const swaggerPath = path.join(os.tmpdir(), `drakel-contract-${name}.spec`);
 
   if (!fs.existsSync(apiDir)) {
     fs.mkdirSync(apiDir, { recursive: true });
   }
 
   // Download the OpenAPI document with Node's built-in fetch — cross-platform, no `curl` subprocess.
-  // Fail loudly on a non-2xx so an HTML error page can never be written out as swagger.json.
+  // Fail loudly on a non-2xx so an HTML error page can never be written out as a spec.
   const response = await fetch(swaggerUrl);
   if (!response.ok) {
     throw new Error(`failed to download ${name} OpenAPI: ${response.status} ${response.statusText}`);
@@ -32,18 +36,22 @@ const generateContract = async (name: string, swaggerUrl: string) => {
   fs.writeFileSync(swaggerPath, await response.text());
   console.warn(`- ${name} (${swaggerUrl})`);
 
-  const { stdout } = await execFileAsync(process.execPath, [
-    SWAGGER_TYPESCRIPT_API_CLI,
-    'generate',
-    '--modular',
-    '-p',
-    swaggerPath,
-    '-o',
-    apiDir,
-    '--no-client',
-    '--extract-enums',
-  ]);
-  console.warn(`Data-contract-generator: ${stdout}`);
+  try {
+    const { stdout } = await execFileAsync(process.execPath, [
+      SWAGGER_TYPESCRIPT_API_CLI,
+      'generate',
+      '--modular',
+      '-p',
+      swaggerPath,
+      '-o',
+      apiDir,
+      '--no-client',
+      '--extract-enums',
+    ]);
+    console.warn(`Data-contract-generator: ${stdout}`);
+  } finally {
+    fs.rmSync(swaggerPath, { force: true });
+  }
 };
 
 const main = async () => {

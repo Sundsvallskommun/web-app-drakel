@@ -4,7 +4,7 @@ import CaremanagementNormberakningService, { NormSection } from '@services/carem
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
-import { NormRowInputDto } from '@/dtos/normberakning.dto';
+import { NormHeaderInputDto, NormRowInputDto } from '@/dtos/normberakning.dto';
 import { HttpException } from '@/exceptions/HttpException';
 import { NormberakningDraftApiResponse } from '@/responses/normberakning.response';
 
@@ -33,6 +33,15 @@ export class NormberakningController {
   @UseBefore(authMiddleware)
   async getDraft(@Param('errandId') errandId: string) {
     const res = await this.normberakningService.readDraft(errandId);
+    return { data: res.data, message: 'success' };
+  }
+
+  @Patch('/errands/:errandId/normberakning/draft/header')
+  @OpenAPI({ summary: 'Edit the draft normberäkning header (norm, dates, household size)' })
+  @ResponseSchema(NormberakningDraftApiResponse)
+  @UseBefore(authMiddleware, validationMiddleware(NormHeaderInputDto, 'body'))
+  async updateHeader(@Param('errandId') errandId: string, @Body() input: NormHeaderInputDto) {
+    const res = await this.normberakningService.updateHeader(errandId, input);
     return { data: res.data, message: 'success' };
   }
 

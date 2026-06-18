@@ -1,6 +1,6 @@
 'use client';
 
-import { addNormRow, deleteNormRow, NormIncomeRow, restoreNormRow, updateNormRow } from '@services/normberakning-service';
+import { addNormRow, deleteNormRow, NormExpenseRow, restoreNormRow, updateNormRow } from '@services/normberakning-service';
 import { Button, Input, Table } from '@sk-web-gui/react';
 import { formatAmount } from '@utils/format-amount';
 import { Plus, RotateCcw, Trash2 } from 'lucide-react';
@@ -19,19 +19,35 @@ const parseAmount = (value: string): number | undefined => {
 
 const displayAmount = (value?: number): string => (value == null ? '—' : formatAmount(value));
 
-interface NormberakningIncomesProps {
+const expenseLabel = (row: NormExpenseRow): string => {
+  if (row.specification?.trim()) {
+    return row.specification;
+  }
+  return row.costType ?? '—';
+};
+
+interface NormberakningExpensesProps {
   errandId: string;
-  rows: NormIncomeRow[];
-  incomeSum?: number;
+  rows: NormExpenseRow[];
+  sum?: number;
+  summaLabel: string;
+  /** Which expense bucket new rows are added to. */
+  bucket: 'EXPENSE' | 'SPECIAL_EXPENSE';
   onChanged: () => void;
 }
 
 /**
- * INKOMSTER section — one row per income type with an applicant (S) and co-applicant (M) side. The
- * process amount is read-only (system/SSBTEK, shown as the input placeholder); the handläggare amount +
- * date + note are editable. Handläggare can also add their own rows and soft-delete/restore rows.
+ * UTGIFTER (bucket EXPENSE) and LEVNADSKOSTNADER I ÖVRIGT (bucket SPECIAL_EXPENSE) share the same shape
+ * — applied / process / handläggare / effective amounts. The handläggare amount + note are editable.
  */
-export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({ errandId, rows, incomeSum, onChanged }) => {
+export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
+  errandId,
+  rows,
+  sum,
+  summaLabel,
+  bucket,
+  onChanged,
+}) => {
   const [savingId, setSavingId] = useState<string>();
   const [error, setError] = useState<string>();
 
@@ -49,17 +65,17 @@ export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({ errandId, 
 
   return (
     <div className="flex flex-col gap-16 py-24">
-      <NormberakningSummaBox label="Summa inkomster" value={displayAmount(incomeSum)} />
+      <NormberakningSummaBox label={summaLabel} value={displayAmount(sum)} />
 
       {error && <p className="text-error-surface-primary m-0">{error}</p>}
 
       <Table dense background>
         <Table.Header>
           <Table.HeaderColumn>Typ</Table.HeaderColumn>
-          <Table.HeaderColumn>Belopp S</Table.HeaderColumn>
-          <Table.HeaderColumn>Datum S</Table.HeaderColumn>
-          <Table.HeaderColumn>Belopp M</Table.HeaderColumn>
-          <Table.HeaderColumn>Datum M</Table.HeaderColumn>
+          <Table.HeaderColumn>Ansökt</Table.HeaderColumn>
+          <Table.HeaderColumn>Process</Table.HeaderColumn>
+          <Table.HeaderColumn>Handläggare</Table.HeaderColumn>
+          <Table.HeaderColumn>Effektivt</Table.HeaderColumn>
           <Table.HeaderColumn>Anmärkning</Table.HeaderColumn>
           <Table.HeaderColumn>
             <span className="sr-only">Åtgärder</span>
@@ -68,10 +84,10 @@ export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({ errandId, 
         <Table.Body>
           {rows.length === 0 ?
             <Table.Row>
-              <Table.Column>Inga inkomstrader</Table.Column>
+              <Table.Column>Inga rader</Table.Column>
             </Table.Row>
           : rows.map((row, index) => (
-              <IncomeRow
+              <ExpenseRow
                 key={row.id ?? index}
                 errandId={errandId}
                 row={row}
@@ -80,35 +96,30 @@ export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({ errandId, 
               />
             ))
           }
-          <AddIncomeRow errandId={errandId} onAdded={onChanged} onError={setError} />
+          <AddExpenseRow errandId={errandId} bucket={bucket} onAdded={onChanged} onError={setError} />
         </Table.Body>
       </Table>
     </div>
   );
 };
 
-/** A single editable income row (handläggare S/M amount, date, note); process and effective are read-only. */
-const IncomeRow: FC<{
+/** A single editable expense row (handläggare amount + note); applied/process/effective are read-only. */
+const ExpenseRow: FC<{
   errandId: string;
-  row: NormIncomeRow;
+  row: NormExpenseRow;
   saving: boolean;
   onAction: (rowId: string, action: () => Promise<{ error?: unknown }>) => void;
 }> = ({ errandId, row, saving, onAction }) => {
-  const [applicantAmount, setApplicantAmount] = useState<string>(row.applicantHandlaggareAmount?.toString() ?? '');
-  const [applicantDate, setApplicantDate] = useState<string>(row.applicantAmountDate ?? '');
-  const [coapplicantAmount, setCoapplicantAmount] = useState<string>(row.coapplicantHandlaggareAmount?.toString() ?? '');
-  const [coapplicantDate, setCoapplicantDate] = useState<string>(row.coapplicantAmountDate ?? '');
+  const [amount, setAmount] = useState<string>(row.handlaggareAmount?.toString() ?? '');
   const [note, setNote] = useState<string>(row.note ?? '');
-
   const rowId = row.id ?? '';
 
   if (row.deleted) {
     return (
       <Table.Row className="opacity-50">
         <Table.Column>
-          <span className="line-through">{row.typeName ?? 'Inkomst'}</span>
+          <span className="line-through">{expenseLabel(row)}</span>
         </Table.Column>
-        <Table.Column>—</Table.Column>
         <Table.Column>—</Table.Column>
         <Table.Column>—</Table.Column>
         <Table.Column>—</Table.Column>
@@ -123,7 +134,7 @@ const IncomeRow: FC<{
             aria-label="Återställ rad"
             leftIcon={<RotateCcw />}
             onClick={() => {
-              onAction(rowId, () => restoreNormRow(errandId, 'incomes', rowId));
+              onAction(rowId, () => restoreNormRow(errandId, 'expenses', rowId));
             }}
           />
         </Table.Column>
@@ -131,20 +142,12 @@ const IncomeRow: FC<{
     );
   }
 
-  const dirty =
-    applicantAmount !== (row.applicantHandlaggareAmount?.toString() ?? '') ||
-    applicantDate !== (row.applicantAmountDate ?? '') ||
-    coapplicantAmount !== (row.coapplicantHandlaggareAmount?.toString() ?? '') ||
-    coapplicantDate !== (row.coapplicantAmountDate ?? '') ||
-    note !== (row.note ?? '');
+  const dirty = amount !== (row.handlaggareAmount?.toString() ?? '') || note !== (row.note ?? '');
 
   const save = () => {
     onAction(rowId, () =>
-      updateNormRow(errandId, 'incomes', rowId, {
-        applicantHandlaggareAmount: parseAmount(applicantAmount),
-        applicantAmountDate: applicantDate.trim() || undefined,
-        coapplicantHandlaggareAmount: parseAmount(coapplicantAmount),
-        coapplicantAmountDate: coapplicantDate.trim() || undefined,
+      updateNormRow(errandId, 'expenses', rowId, {
+        handlaggareAmount: parseAmount(amount),
         note: note.trim() || undefined,
       })
     );
@@ -152,51 +155,21 @@ const IncomeRow: FC<{
 
   return (
     <Table.Row>
-      <Table.Column>
-        <span className="font-bold">{row.typeName ?? 'Inkomst'}</span>
-      </Table.Column>
-      <Table.Column>
-        <Input
-          size="sm"
-          inputMode="decimal"
-          placeholder={displayAmount(row.applicantProcessAmount)}
-          value={applicantAmount}
-          onChange={(event) => {
-            setApplicantAmount(event.target.value);
-          }}
-        />
-      </Table.Column>
-      <Table.Column>
-        <Input
-          size="sm"
-          placeholder="ÅÅÅÅ-MM-DD"
-          value={applicantDate}
-          onChange={(event) => {
-            setApplicantDate(event.target.value);
-          }}
-        />
-      </Table.Column>
+      <Table.Column>{expenseLabel(row)}</Table.Column>
+      <Table.Column className="tabular-nums text-dark-secondary">{displayAmount(row.appliedAmount)}</Table.Column>
+      <Table.Column className="tabular-nums text-dark-secondary">{displayAmount(row.processAmount)}</Table.Column>
       <Table.Column>
         <Input
           size="sm"
           inputMode="decimal"
-          placeholder={displayAmount(row.coapplicantProcessAmount)}
-          value={coapplicantAmount}
+          placeholder={displayAmount(row.processAmount)}
+          value={amount}
           onChange={(event) => {
-            setCoapplicantAmount(event.target.value);
+            setAmount(event.target.value);
           }}
         />
       </Table.Column>
-      <Table.Column>
-        <Input
-          size="sm"
-          placeholder="ÅÅÅÅ-MM-DD"
-          value={coapplicantDate}
-          onChange={(event) => {
-            setCoapplicantDate(event.target.value);
-          }}
-        />
-      </Table.Column>
+      <Table.Column className="tabular-nums font-bold">{displayAmount(row.effectiveAmount)}</Table.Column>
       <Table.Column>
         <Input
           size="sm"
@@ -218,7 +191,7 @@ const IncomeRow: FC<{
             aria-label="Ta bort rad"
             leftIcon={<Trash2 />}
             onClick={() => {
-              onAction(rowId, () => deleteNormRow(errandId, 'incomes', rowId));
+              onAction(rowId, () => deleteNormRow(errandId, 'expenses', rowId));
             }}
           />
         </div>
@@ -227,28 +200,29 @@ const IncomeRow: FC<{
   );
 };
 
-/** The last table row for adding a handläggare income row. */
-const AddIncomeRow: FC<{ errandId: string; onAdded: () => void; onError: (message: string) => void }> = ({
-  errandId,
-  onAdded,
-  onError,
-}) => {
-  const [typeName, setTypeName] = useState<string>('');
-  const [applicantAmount, setApplicantAmount] = useState<string>('');
-  const [coapplicantAmount, setCoapplicantAmount] = useState<string>('');
+/** The last table row for adding a handläggare expense row (costType OTHER + free-text specification). */
+const AddExpenseRow: FC<{
+  errandId: string;
+  bucket: 'EXPENSE' | 'SPECIAL_EXPENSE';
+  onAdded: () => void;
+  onError: (message: string) => void;
+}> = ({ errandId, bucket, onAdded, onError }) => {
+  const [specification, setSpecification] = useState<string>('');
+  const [amount, setAmount] = useState<string>('');
   const [note, setNote] = useState<string>('');
   const [adding, setAdding] = useState<boolean>(false);
 
   const add = async () => {
-    if (!typeName.trim()) {
-      onError('Ange en inkomsttyp');
+    if (!specification.trim()) {
+      onError('Ange en typ/specifikation');
       return;
     }
     setAdding(true);
-    const result = await addNormRow(errandId, 'incomes', {
-      typeName: typeName.trim(),
-      applicantHandlaggareAmount: parseAmount(applicantAmount),
-      coapplicantHandlaggareAmount: parseAmount(coapplicantAmount),
+    const result = await addNormRow(errandId, 'expenses', {
+      bucket,
+      costType: 'OTHER',
+      specification: specification.trim(),
+      handlaggareAmount: parseAmount(amount),
       note: note.trim() || undefined,
     });
     setAdding(false);
@@ -256,9 +230,8 @@ const AddIncomeRow: FC<{ errandId: string; onAdded: () => void; onError: (messag
       onError('Det gick inte att lägga till raden');
       return;
     }
-    setTypeName('');
-    setApplicantAmount('');
-    setCoapplicantAmount('');
+    setSpecification('');
+    setAmount('');
     setNote('');
     onAdded();
   };
@@ -268,33 +241,23 @@ const AddIncomeRow: FC<{ errandId: string; onAdded: () => void; onError: (messag
       <Table.Column>
         <Input
           size="sm"
-          placeholder="Inkomsttyp"
-          value={typeName}
+          placeholder="Typ/specifikation"
+          value={specification}
           onChange={(event) => {
-            setTypeName(event.target.value);
+            setSpecification(event.target.value);
           }}
         />
       </Table.Column>
-      <Table.Column>
-        <Input
-          size="sm"
-          inputMode="decimal"
-          placeholder="Belopp S"
-          value={applicantAmount}
-          onChange={(event) => {
-            setApplicantAmount(event.target.value);
-          }}
-        />
-      </Table.Column>
+      <Table.Column>—</Table.Column>
       <Table.Column>—</Table.Column>
       <Table.Column>
         <Input
           size="sm"
           inputMode="decimal"
-          placeholder="Belopp M"
-          value={coapplicantAmount}
+          placeholder="Belopp"
+          value={amount}
           onChange={(event) => {
-            setCoapplicantAmount(event.target.value);
+            setAmount(event.target.value);
           }}
         />
       </Table.Column>

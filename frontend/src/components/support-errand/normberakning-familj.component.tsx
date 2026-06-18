@@ -1,11 +1,16 @@
 'use client';
 
 import { NormPersonRow } from '@services/normberakning-service';
-import { Button, Table } from '@sk-web-gui/react';
-import { Plus } from 'lucide-react';
+import { Button, Icon, Table } from '@sk-web-gui/react';
+import { Check, Plus } from 'lucide-react';
 import { FC } from 'react';
 
-const ROLE_LABELS: Record<string, string> = { APPLICANT: 'Sökande', CO_APPLICANT: 'Medsökande', CHILD: 'Barn' };
+const ROLE_LABELS: Record<string, string> = {
+  APPLICANT: 'Sökande',
+  CO_APPLICANT: 'Medsökande',
+  CHILD: 'Barn',
+  UMGANGESBARN: 'Umgängesbarn',
+};
 
 const days = (value?: number): string => (value == null ? '—' : String(value));
 
@@ -29,12 +34,13 @@ export const NormberakningFamilj: FC<{ persons: NormPersonRow[] }> = ({ persons 
 
       <Table dense background>
         <Table.Header>
+          <Table.HeaderColumn>Omfattas</Table.HeaderColumn>
           <Table.HeaderColumn>Namn</Table.HeaderColumn>
           <Table.HeaderColumn>Roll</Table.HeaderColumn>
-          <Table.HeaderColumn>Dagar (process)</Table.HeaderColumn>
-          <Table.HeaderColumn>Dagar (handläggare)</Table.HeaderColumn>
-          <Table.HeaderColumn>Dagar (effektivt)</Table.HeaderColumn>
-          <Table.HeaderColumn>Anmärkning</Table.HeaderColumn>
+          <Table.HeaderColumn>Ingår från</Table.HeaderColumn>
+          <Table.HeaderColumn>Ingår till</Table.HeaderColumn>
+          <Table.HeaderColumn>Dagar</Table.HeaderColumn>
+          <Table.HeaderColumn>Normintervall</Table.HeaderColumn>
         </Table.Header>
         <Table.Body>
           {visiblePersons.length === 0 ?
@@ -43,12 +49,17 @@ export const NormberakningFamilj: FC<{ persons: NormPersonRow[] }> = ({ persons 
             </Table.Row>
           : visiblePersons.map((person, index) => (
               <Table.Row key={person.id ?? index}>
+                <Table.Column>
+                  {person.included ?
+                    <Icon icon={<Check />} aria-label="Omfattas" />
+                  : <span className="sr-only">Omfattas inte</span>}
+                </Table.Column>
                 <Table.Column>{person.name ?? '—'}</Table.Column>
                 <Table.Column>{ROLE_LABELS[person.role ?? ''] ?? person.role ?? '—'}</Table.Column>
-                <Table.Column className="tabular-nums">{days(person.processDays)}</Table.Column>
-                <Table.Column className="tabular-nums">{days(person.handlaggareDays)}</Table.Column>
+                <Table.Column>{person.deviationFromDate ?? '—'}</Table.Column>
+                <Table.Column>{person.deviationToDate ?? '—'}</Table.Column>
                 <Table.Column className="tabular-nums">{days(person.effectiveDays)}</Table.Column>
-                <Table.Column>{person.note ?? ''}</Table.Column>
+                <Table.Column>{person.normInterval ?? '—'}</Table.Column>
               </Table.Row>
             ))
           }
@@ -56,7 +67,7 @@ export const NormberakningFamilj: FC<{ persons: NormPersonRow[] }> = ({ persons 
       </Table>
 
       <p className="text-small text-dark-secondary m-0">
-        Familjeraderna kommer från beräkningen. Redigering (dagar/personer) kan kopplas på när det behövs.
+        Familjeraderna kommer från beräkningen. Redigering (omfattas/dagar/personer) kan kopplas på när det behövs.
       </p>
     </div>
   );

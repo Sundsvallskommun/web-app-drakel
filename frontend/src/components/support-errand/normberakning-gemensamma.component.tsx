@@ -11,25 +11,29 @@ const Field: FC<{ label: string; value: string }> = ({ label, value }) => (
   </div>
 );
 
+interface NormberakningGemensammaProps {
+  hasCustomHouseholdSize?: boolean;
+  householdSize?: number;
+}
+
 /**
- * Lifecare's GEMENSAMMA KOSTNADER view (visual foundation). The household size and shared-cost amounts
- * are computed in Lifecare and not exposed by caremanagement, so the fields are a structural shell.
+ * GEMENSAMMA KOSTNADER view. The household size comes from the draft header (read-only here); the
+ * per-household-size amounts are computed in Lifecare and not exposed by the API yet.
  */
-export const NormberakningGemensamma: FC = () => (
+export const NormberakningGemensamma: FC<NormberakningGemensammaProps> = ({ hasCustomHouseholdSize, householdSize }) => (
   <div className="flex flex-col gap-16 py-24">
-    <Checkbox defaultChecked disabled>
+    <Checkbox checked={!!hasCustomHouseholdSize} disabled>
       Annan hushållsstorlek
     </Checkbox>
 
     <div className="grid grid-cols-2 md:grid-cols-4 gap-24">
-      <Field label="Antal personer" value="—" />
-      <Field label="Hushållsstorlek" value="—" />
+      <Field label="Hushållsstorlek" value={householdSize == null ? '—' : String(householdSize)} />
       <Field label="Belopp för 1 persons hushåll" value="—" />
       <Field label="Summa" value="—" />
     </div>
 
     <p className="text-small text-dark-secondary m-0">
-      Exponeras inte av caremanagement-API:t ännu – visuell grund.
+      Beloppen för gemensamma kostnader beräknas i Lifecare och exponeras inte av API:t ännu.
     </p>
   </div>
 );

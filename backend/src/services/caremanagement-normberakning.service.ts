@@ -8,7 +8,7 @@ import {
   NormIncomeRow,
   NormPersonRow,
 } from '@/data-contracts/caremanagement/data-contracts';
-import { NormRowInputDto } from '@/dtos/normberakning.dto';
+import { NormHeaderInputDto, NormRowInputDto } from '@/dtos/normberakning.dto';
 
 /** The three editable sections of the draft normberäkning. */
 export type NormSection = 'persons' | 'incomes' | 'expenses';
@@ -29,6 +29,11 @@ class CaremanagementNormberakningService {
 
   async readDraft(errandId: string): Promise<ApiResponse<NormberakningDraft>> {
     return this.apiService.get<NormberakningDraft>({ url: this.draftUrl(errandId) });
+  }
+
+  /** Updates the draft header (norm, calculation dates, household size). */
+  async updateHeader(errandId: string, input: NormHeaderInputDto): Promise<ApiResponse<NormberakningDraft>> {
+    return this.apiService.patch<NormberakningDraft>({ url: this.draftUrl(errandId, 'header'), data: input });
   }
 
   /** Adds a handläggare row to a section. */

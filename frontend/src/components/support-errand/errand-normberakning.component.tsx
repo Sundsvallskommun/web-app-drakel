@@ -4,22 +4,10 @@ import { useErrandNormberakning } from '@hooks/use-errand-normberakning';
 import { FormControl, FormLabel, Input, Spinner, Tabs } from '@sk-web-gui/react';
 import { FC, ReactNode, useState } from 'react';
 
-import { NormberakningCostTable } from './normberakning-cost-table.component';
+import { NormberakningExpenses } from './normberakning-expenses.component';
 import { NormberakningFamilj } from './normberakning-familj.component';
 import { NormberakningGemensamma } from './normberakning-gemensamma.component';
 import { NormberakningIncomes } from './normberakning-incomes.component';
-import { NormberakningUtgifter } from './normberakning-utgifter.component';
-
-/** Derives the application period (Från/Till) from the ISO application month (yyyy-MM). */
-const monthRange = (applicationMonth?: string): { from: string; to: string } => {
-  const match = /^(\d{4})-(\d{2})$/.exec(applicationMonth ?? '');
-  if (!match) {
-    return { from: '', to: '' };
-  }
-  const [, year = '', month = ''] = match;
-  const lastDay = new Date(Number(year), Number(month), 0).getDate();
-  return { from: `${year}-${month}-01`, to: `${year}-${month}-${String(lastDay).padStart(2, '0')}` };
-};
 
 const FilterField: FC<{ label: string; required?: boolean; children: ReactNode }> = ({
   label,
@@ -36,10 +24,10 @@ const FilterField: FC<{ label: string; required?: boolean; children: ReactNode }
 );
 
 /**
- * The "Normberäkning" tab, laid out like Lifecare's Beräkning view (filter row + result box + sub-tabs
- * FAMILJ / INKOMSTER / UTGIFTER / LEVNADSKOSTNADER I ÖVRIGT / GEMENSAMMA KOSTNADER). caremanagement only
- * exposes the editable income draft today, so INKOMSTER is functional and the other views + the result
- * are visual foundations until the API exposes them (the calculation runs in Lifecare).
+ * The "Normberäkning" tab, laid out like Lifecare's Beräkning view (header + sub-tabs FAMILJ /
+ * INKOMSTER / UTGIFTER / LEVNADSKOSTNADER I ÖVRIGT / GEMENSAMMA KOSTNADER). The draft mirrors Lifecare
+ * FC: incomes and expenses are editable; the final result (Underskott/Överskott) is computed in Lifecare
+ * and not exposed by the API yet.
  */
 export const ErrandNormberakning: FC<{ errandId: string }> = ({ errandId }) => {
   const { draft, isLoading, error, refresh } = useErrandNormberakning(errandId);
@@ -66,8 +54,6 @@ export const ErrandNormberakning: FC<{ errandId: string }> = ({ errandId }) => {
     );
   }
 
-  const range = monthRange(draft.applicationMonth);
-
   return (
     <div className="flex flex-col gap-24">
       <h2 className="text-h3-sm md:text-h3-md m-0">Beräkning</h2>
@@ -75,19 +61,19 @@ export const ErrandNormberakning: FC<{ errandId: string }> = ({ errandId }) => {
       <div className="flex flex-wrap items-start justify-between gap-24">
         <div className="flex flex-wrap items-end gap-12">
           <FilterField label="Från" required>
-            <Input readOnly size="sm" value={range.from} placeholder="—" />
+            <Input readOnly size="sm" value={draft.calculationFromDate ?? ''} placeholder="—" />
           </FilterField>
           <FilterField label="Till" required>
-            <Input readOnly size="sm" value={range.to} placeholder="—" />
+            <Input readOnly size="sm" value={draft.calculationToDate ?? ''} placeholder="—" />
           </FilterField>
           <FilterField label="Norm" required>
             <Input readOnly size="sm" value={draft.normType ?? ''} placeholder="—" />
           </FilterField>
           <FilterField label="Beräkningsdatum">
-            <Input readOnly size="sm" value="" placeholder="—" />
+            <Input readOnly size="sm" value={draft.calculationDate ?? ''} placeholder="—" />
           </FilterField>
           <FilterField label="Avser ansökan">
-            <Input readOnly size="sm" value="" placeholder="—" />
+            <Input readOnly size="sm" value={draft.applicationMonth ?? ''} placeholder="—" />
           </FilterField>
         </div>
 
@@ -119,19 +105,36 @@ export const ErrandNormberakning: FC<{ errandId: string }> = ({ errandId }) => {
         <Tabs.Item>
           <Tabs.Button>Utgifter</Tabs.Button>
           <Tabs.Content>
-            <NormberakningUtgifter rows={draft.expenses ?? []} expenseSum={draft.expenseSum} />
+            <NormberakningExpenses
+              errandId={errandId}
+              rows={draft.expenses ?? []}
+              sum={draft.expenseSum}
+              summaLabel="Summa utgifter"
+              bucket="EXPENSE"
+              onChanged={refresh}
+            />
           </Tabs.Content>
         </Tabs.Item>
         <Tabs.Item>
           <Tabs.Button>Levnadskostnader i övrigt</Tabs.Button>
           <Tabs.Content>
-            <NormberakningCostTable summaLabel="Summa särskilda kostnader" />
+            <NormberakningExpenses
+              errandId={errandId}
+              rows={draft.specialExpenses ?? []}
+              sum={draft.specialExpenseSum}
+              summaLabel="Summa särskilda kostnader"
+              bucket="SPECIAL_EXPENSE"
+              onChanged={refresh}
+            />
           </Tabs.Content>
         </Tabs.Item>
         <Tabs.Item>
           <Tabs.Button>Gemensamma kostnader</Tabs.Button>
           <Tabs.Content>
-            <NormberakningGemensamma />
+            <NormberakningGemensamma
+              hasCustomHouseholdSize={draft.hasCustomHouseholdSize}
+              householdSize={draft.householdSize}
+            />
           </Tabs.Content>
         </Tabs.Item>
       </Tabs>

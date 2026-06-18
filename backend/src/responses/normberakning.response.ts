@@ -3,21 +3,25 @@ import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsInt, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 /**
- * The normberäkning draft has three sections (persons · incomes · expenses). Each row carries a
- * read-only process value (set by the system), an editable handläggare value, and the resulting
- * effective value (handläggare value when set, otherwise the process value).
+ * The normberäkning draft mirrors the Lifecare FC "Beräkning" view: one income row per type (with an
+ * applicant (S) and co-applicant (M) side), expenses split into EXPENSE / SPECIAL_EXPENSE buckets, the
+ * covered persons, and a header (norm + dates + household size). Each value comes in three flavours:
+ * a read-only process value (system), an editable handläggare value, and the resulting effective value.
  */
 export class NormPersonRow {
   @IsString() @IsOptional() id?: string;
-  /** SYSTEM or HANDLAGGARE. */
   @IsString() @IsOptional() origin?: string;
   @IsString() @IsOptional() partyId?: string;
-  /** APPLICANT, CO_APPLICANT or CHILD. */
   @IsString() @IsOptional() role?: string;
   @IsString() @IsOptional() name?: string;
   @IsInt() @IsOptional() processDays?: number;
   @IsInt() @IsOptional() handlaggareDays?: number;
   @IsInt() @IsOptional() effectiveDays?: number;
+  @IsBoolean() @IsOptional() included?: boolean;
+  @IsString() @IsOptional() deviationFromDate?: string;
+  @IsString() @IsOptional() deviationToDate?: string;
+  @IsString() @IsOptional() normInterval?: string;
+  @IsNumber() @IsOptional() jobbstimulansAmount?: number;
   @IsBoolean() @IsOptional() deleted?: boolean;
   @IsString() @IsOptional() note?: string;
 }
@@ -27,13 +31,14 @@ export class NormIncomeRow {
   @IsString() @IsOptional() origin?: string;
   @IsInt() @IsOptional() typeId?: number;
   @IsString() @IsOptional() typeName?: string;
-  /** APPLICANT or CO_APPLICANT. */
-  @IsString() @IsOptional() recipient?: string;
-  @IsNumber() @IsOptional() processAmount?: number;
-  @IsString() @IsOptional() processAmountDate?: string;
-  @IsNumber() @IsOptional() handlaggareAmount?: number;
-  @IsString() @IsOptional() handlaggareAmountDate?: string;
-  @IsNumber() @IsOptional() effectiveAmount?: number;
+  @IsNumber() @IsOptional() applicantProcessAmount?: number;
+  @IsNumber() @IsOptional() applicantHandlaggareAmount?: number;
+  @IsNumber() @IsOptional() applicantEffectiveAmount?: number;
+  @IsString() @IsOptional() applicantAmountDate?: string;
+  @IsNumber() @IsOptional() coapplicantProcessAmount?: number;
+  @IsNumber() @IsOptional() coapplicantHandlaggareAmount?: number;
+  @IsNumber() @IsOptional() coapplicantEffectiveAmount?: number;
+  @IsString() @IsOptional() coapplicantAmountDate?: string;
   @IsBoolean() @IsOptional() deleted?: boolean;
   @IsString() @IsOptional() note?: string;
 }
@@ -41,6 +46,8 @@ export class NormIncomeRow {
 export class NormExpenseRow {
   @IsString() @IsOptional() id?: string;
   @IsString() @IsOptional() origin?: string;
+  /** EXPENSE or SPECIAL_EXPENSE (set by the DMN). */
+  @IsString() @IsOptional() bucket?: string;
   @IsString() @IsOptional() costType?: string;
   @IsString() @IsOptional() otherSubType?: string;
   @IsString() @IsOptional() specification?: string;
@@ -52,17 +59,23 @@ export class NormExpenseRow {
   @IsString() @IsOptional() note?: string;
 }
 
-/** The editable draft normberäkning — three sections plus the system-computed sums. */
 export class NormberakningDraft {
   @IsString() @IsOptional() errandId?: string;
   @IsString() @IsOptional() applicationMonth?: string;
   @IsInt() @IsOptional() normId?: number;
   @IsString() @IsOptional() normType?: string;
+  @IsString() @IsOptional() calculationFromDate?: string;
+  @IsString() @IsOptional() calculationToDate?: string;
+  @IsString() @IsOptional() calculationDate?: string;
+  @IsBoolean() @IsOptional() hasCustomHouseholdSize?: boolean;
+  @IsInt() @IsOptional() householdSize?: number;
   @IsArray() @ValidateNested({ each: true }) @Type(() => NormPersonRow) @IsOptional() persons?: NormPersonRow[];
   @IsArray() @ValidateNested({ each: true }) @Type(() => NormIncomeRow) @IsOptional() incomes?: NormIncomeRow[];
   @IsArray() @ValidateNested({ each: true }) @Type(() => NormExpenseRow) @IsOptional() expenses?: NormExpenseRow[];
+  @IsArray() @ValidateNested({ each: true }) @Type(() => NormExpenseRow) @IsOptional() specialExpenses?: NormExpenseRow[];
   @IsNumber() @IsOptional() incomeSum?: number;
   @IsNumber() @IsOptional() expenseSum?: number;
+  @IsNumber() @IsOptional() specialExpenseSum?: number;
   @IsString() @IsOptional() created?: string;
   @IsString() @IsOptional() updated?: string;
 }

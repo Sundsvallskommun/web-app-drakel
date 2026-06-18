@@ -137,3 +137,6 @@ data/
 
 # certs
 cert/
+
+# Generated OpenAPI specs — only an intermediate for contract generation, never committed
+**/data-contracts/**/swagger.json

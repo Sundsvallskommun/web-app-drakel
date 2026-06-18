@@ -710,6 +710,22 @@ export interface NormPersonInput {
    * @format int32
    */
   handlaggareDays?: number;
+  /** Whether the household member is included in the norm */
+  included?: boolean;
+  /**
+   * The start date of the member's deviation from the household
+   * @format date
+   */
+  deviationFromDate?: string;
+  /**
+   * The end date of the member's deviation from the household
+   * @format date
+   */
+  deviationToDate?: string;
+  /** The norm interval applied to the member */
+  normInterval?: string;
+  /** The jobbstimulans amount applied to the member */
+  jobbstimulansAmount?: number;
   /** Free-text note */
   note?: string;
 }
@@ -741,6 +757,22 @@ export interface NormPersonRow {
    * @format int32
    */
   effectiveDays?: number;
+  /** Whether the household member is included in the norm */
+  included?: boolean;
+  /**
+   * The start date of the member's deviation from the household
+   * @format date
+   */
+  deviationFromDate?: string;
+  /**
+   * The end date of the member's deviation from the household
+   * @format date
+   */
+  deviationToDate?: string;
+  /** The norm interval applied to the member */
+  normInterval?: string;
+  /** The jobbstimulans amount applied to the member */
+  jobbstimulansAmount?: number;
   /** Whether the row is soft-deleted (excluded from the calculation, not resurrected by the daily refresh) */
   deleted?: boolean;
   /** Free-text note */
@@ -766,20 +798,25 @@ export interface NormIncomeInput {
   typeId?: number;
   /** The FC income-type name */
   typeName?: string;
-  /** Whose income this is */
-  recipient?: NormIncomeInputRecipientEnum;
-  /** The amount the handläggare decided */
-  handlaggareAmount?: number;
+  /** The amount the handläggare decided for the applicant */
+  applicantHandlaggareAmount?: number;
   /**
-   * The date the handläggare amount is attributed to
+   * The date the applicant amount is attributed to
    * @format date-time
    */
-  handlaggareAmountDate?: string;
+  applicantAmountDate?: string;
+  /** The amount the handläggare decided for the co-applicant */
+  coapplicantHandlaggareAmount?: number;
+  /**
+   * The date the co-applicant amount is attributed to
+   * @format date-time
+   */
+  coapplicantAmountDate?: string;
   /** Free-text note */
   note?: string;
 }
 
-/** One income row of the normberäkning draft (FC income type + recipient, process vs handläggare amount). */
+/** One income row of the normberäkning draft (FC income type with applicant/co-applicant sides, process vs handläggare amounts). */
 export interface NormIncomeRow {
   /** The row id */
   id?: string;
@@ -792,24 +829,28 @@ export interface NormIncomeRow {
   typeId?: number;
   /** The FC income-type name */
   typeName?: string;
-  /** Whose income this is */
-  recipient?: NormIncomeRowRecipientEnum;
-  /** The amount the process decided (from the classified SSBTEK income) */
-  processAmount?: number;
+  /** The amount the process decided for the applicant (from the classified SSBTEK income) */
+  applicantProcessAmount?: number;
+  /** The amount a handläggare decided for the applicant; overrides the process amount when set */
+  applicantHandlaggareAmount?: number;
+  /** The amount actually used for the applicant (handläggare amount when set, otherwise process amount) */
+  applicantEffectiveAmount?: number;
   /**
-   * The date the process amount is attributed to
+   * The date the applicant amount is attributed to
    * @format date-time
    */
-  processAmountDate?: string;
-  /** The amount a handläggare decided; overrides the process amount when set */
-  handlaggareAmount?: number;
+  applicantAmountDate?: string;
+  /** The amount the process decided for the co-applicant (from the classified SSBTEK income) */
+  coapplicantProcessAmount?: number;
+  /** The amount a handläggare decided for the co-applicant; overrides the process amount when set */
+  coapplicantHandlaggareAmount?: number;
+  /** The amount actually used for the co-applicant (handläggare amount when set, otherwise process amount) */
+  coapplicantEffectiveAmount?: number;
   /**
-   * The date the handläggare amount is attributed to
+   * The date the co-applicant amount is attributed to
    * @format date-time
    */
-  handlaggareAmountDate?: string;
-  /** The amount actually used (handläggare amount when set, otherwise process amount) */
-  effectiveAmount?: number;
+  coapplicantAmountDate?: string;
   /** Whether the row is soft-deleted (excluded from the calculation, not resurrected by the daily refresh) */
   deleted?: boolean;
   /** Free-text note */
@@ -830,6 +871,8 @@ export interface NormIncomeRow {
 export interface NormExpenseInput {
   /** The cost type */
   costType?: string;
+  /** Which Lifecare bucket the expense posts to */
+  bucket?: NormExpenseInputBucketEnum;
   /** The other sub-type (when the cost type is 'other') */
   otherSubType?: string;
   /** The cost specification */
@@ -846,6 +889,8 @@ export interface NormExpenseRow {
   id?: string;
   /** Who created the row: the process or a handläggare */
   origin?: NormExpenseRowOriginEnum;
+  /** Which Lifecare bucket the expense posts to */
+  bucket?: NormExpenseRowBucketEnum;
   /** The cost type */
   costType?: string;
   /** The other sub-type (when the cost type is 'other') */
@@ -1090,6 +1135,100 @@ export interface Note {
   modified?: string;
 }
 
+/** Handläggare edit of the normberäkning header — norm, calculation dates and custom household size. */
+export interface NormHeaderInput {
+  /**
+   * The selected FC norm id (Norm)
+   * @format int32
+   */
+  normId?: number;
+  /** The norm type */
+  normType?: NormHeaderInputNormTypeEnum;
+  /**
+   * Calculation period start (Från)
+   * @format date
+   */
+  calculationFromDate?: string;
+  /**
+   * Calculation period end (Till)
+   * @format date
+   */
+  calculationToDate?: string;
+  /**
+   * Calculation date (Beräkningsdatum)
+   * @format date
+   */
+  calculationDate?: string;
+  /** Whether a custom household size is used (Annan hushållsstorlek) */
+  hasCustomHouseholdSize?: boolean;
+  /**
+   * The custom household size (Hushållsstorlek)
+   * @format int32
+   */
+  householdSize?: number;
+}
+
+/** The full draft normberäkning — header, the three sections (personer, inkomster, utgifter) and the section sums. */
+export interface NormberakningDraft {
+  /** The errand id */
+  errandId?: string;
+  /** The application month (ISO yyyy-MM) */
+  applicationMonth?: string;
+  /**
+   * The selected norm id
+   * @format int32
+   */
+  normId?: number;
+  /** The selected norm type */
+  normType?: string;
+  /**
+   * The start date of the calculation period
+   * @format date
+   */
+  calculationFromDate?: string;
+  /**
+   * The end date of the calculation period
+   * @format date
+   */
+  calculationToDate?: string;
+  /**
+   * The date the calculation is performed
+   * @format date
+   */
+  calculationDate?: string;
+  /** Whether the household size has been overridden by a handläggare */
+  hasCustomHouseholdSize?: boolean;
+  /**
+   * The household size used for the norm
+   * @format int32
+   */
+  householdSize?: number;
+  /** The person rows (personer) */
+  persons?: NormPersonRow[];
+  /** The income rows (inkomster) */
+  incomes?: NormIncomeRow[];
+  /** The expense rows (utgifter) */
+  expenses?: NormExpenseRow[];
+  /** The special expense rows (särskilda utgifter) */
+  specialExpenses?: NormExpenseRow[];
+  /** The sum of the effective income amounts */
+  incomeSum?: number;
+  /** The sum of the effective expense amounts */
+  expenseSum?: number;
+  /** The sum of the effective special expense amounts */
+  specialExpenseSum?: number;
+  /**
+   * When the draft was created
+   * @format date-time
+   */
+  created?: string;
+  /**
+   * When the draft was last updated
+   * @format date-time
+   */
+  updated?: string;
+}
+
 /** Number of errands assigned to a given user */
 export interface AssigneeCount {
   /** The assigned user id */
@@ -1296,41 +1435,6 @@ export interface FinancialAssistanceView {
   touched?: string;
   /** The typed financial assistance application payload */
   data?: FinancialAssistanceData;
-}
-
-/** The full draft normberäkning — header, the three sections (personer, inkomster, utgifter) and the section sums. */
-export interface NormberakningDraft {
-  /** The errand id */
-  errandId?: string;
-  /** The application month (ISO yyyy-MM) */
-  applicationMonth?: string;
-  /**
-   * The selected norm id
-   * @format int32
-   */
-  normId?: number;
-  /** The selected norm type */
-  normType?: string;
-  /** The person rows (personer) */
-  persons?: NormPersonRow[];
-  /** The income rows (inkomster) */
-  incomes?: NormIncomeRow[];
-  /** The expense rows (utgifter) */
-  expenses?: NormExpenseRow[];
-  /** The sum of the effective income amounts */
-  incomeSum?: number;
-  /** The sum of the effective expense amounts */
-  expenseSum?: number;
-  /**
-   * When the draft was created
-   * @format date-time
-   */
-  created?: string;
-  /**
-   * When the draft was last updated
-   * @format date-time
-   */
-  updated?: string;
 }
 
 /** A child pre-filled from Lifecare for a financial assistance renewal. Carries only what Lifecare provides — personnummer and name; the citizen completes residence, school etc. on the form. */
@@ -1649,28 +1753,28 @@ export enum NormPersonRowRoleEnum {
   CHILD = "CHILD",
 }
 
-/** Whose income this is */
-export enum NormIncomeInputRecipientEnum {
-  APPLICANT = "APPLICANT",
-  CO_APPLICANT = "CO_APPLICANT",
-}
-
 /** Who created the row: the process or a handläggare */
 export enum NormIncomeRowOriginEnum {
   SYSTEM = "SYSTEM",
   HANDLAGGARE = "HANDLAGGARE",
 }
 
-/** Whose income this is */
-export enum NormIncomeRowRecipientEnum {
-  APPLICANT = "APPLICANT",
-  CO_APPLICANT = "CO_APPLICANT",
+/** Which Lifecare bucket the expense posts to */
+export enum NormExpenseInputBucketEnum {
+  EXPENSE = "EXPENSE",
+  SPECIAL_EXPENSE = "SPECIAL_EXPENSE",
 }
 
 /** Who created the row: the process or a handläggare */
 export enum NormExpenseRowOriginEnum {
   SYSTEM = "SYSTEM",
   HANDLAGGARE = "HANDLAGGARE",
+}
+
+/** Which Lifecare bucket the expense posts to */
+export enum NormExpenseRowBucketEnum {
+  EXPENSE = "EXPENSE",
+  SPECIAL_EXPENSE = "SPECIAL_EXPENSE",
 }
 
 /** The errand type slug to create the application against */
@@ -1693,6 +1797,12 @@ export enum EligibilityResponseReasonCodeEnum {
   CIVILSTAND_CHANGED = "CIVILSTAND_CHANGED",
   EXISTING_CASE = "EXISTING_CASE",
   ALL_TYPES_TEST = "ALL_TYPES_TEST",
+}
+
+/** The norm type */
+export enum NormHeaderInputNormTypeEnum {
+  RIKSNORM = "RIKSNORM",
+  OTHER_NORM = "OTHER_NORM",
 }
 
 /** Direction */

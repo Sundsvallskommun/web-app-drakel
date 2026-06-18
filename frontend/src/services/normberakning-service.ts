@@ -1,45 +1,55 @@
 import { ServiceResponse } from '@interfaces/services';
 import { ApiResponse, apiService, toServiceError } from '@services/api-service';
 
-/** The three editable sections of the draft normberäkning. */
+/** The three editable row sections of the draft normberäkning. */
 export type NormSection = 'persons' | 'incomes' | 'expenses';
 
 /**
- * Draft rows. Defined locally — like {@link Note} — mirroring the backend response. Every row carries a
- * read-only process value (system-set), an editable handläggare value, and the resulting effective
- * value (handläggare when set, otherwise process). `origin` = SYSTEM | HANDLAGGARE.
+ * Draft rows mirror the Lifecare FC "Beräkning" view. Defined locally — like {@link Note}. Every value
+ * comes as a read-only process value (system), an editable handläggare value, and the effective value
+ * (handläggare when set, otherwise process). `origin` = SYSTEM | HANDLAGGARE.
  */
 export interface NormPersonRow {
   id?: string;
   origin?: string;
   partyId?: string;
-  role?: 'APPLICANT' | 'CO_APPLICANT' | 'CHILD';
+  role?: 'APPLICANT' | 'CO_APPLICANT' | 'CHILD' | 'UMGANGESBARN';
   name?: string;
   processDays?: number;
   handlaggareDays?: number;
   effectiveDays?: number;
+  included?: boolean;
+  deviationFromDate?: string;
+  deviationToDate?: string;
+  normInterval?: string;
+  jobbstimulansAmount?: number;
   deleted?: boolean;
   note?: string;
 }
 
+/** One income row per type, with an applicant (S) and co-applicant (M) side. */
 export interface NormIncomeRow {
   id?: string;
   origin?: string;
   typeId?: number;
   typeName?: string;
-  recipient?: 'APPLICANT' | 'CO_APPLICANT';
-  processAmount?: number;
-  processAmountDate?: string;
-  handlaggareAmount?: number;
-  handlaggareAmountDate?: string;
-  effectiveAmount?: number;
+  applicantProcessAmount?: number;
+  applicantHandlaggareAmount?: number;
+  applicantEffectiveAmount?: number;
+  applicantAmountDate?: string;
+  coapplicantProcessAmount?: number;
+  coapplicantHandlaggareAmount?: number;
+  coapplicantEffectiveAmount?: number;
+  coapplicantAmountDate?: string;
   deleted?: boolean;
   note?: string;
 }
 
+/** An expense row; `bucket` separates ordinary expenses (EXPENSE) from special expenses (SPECIAL_EXPENSE). */
 export interface NormExpenseRow {
   id?: string;
   origin?: string;
+  bucket?: 'EXPENSE' | 'SPECIAL_EXPENSE';
   costType?: string;
   otherSubType?: string;
   specification?: string;
@@ -56,11 +66,18 @@ export interface NormberakningDraft {
   applicationMonth?: string;
   normId?: number;
   normType?: string;
+  calculationFromDate?: string;
+  calculationToDate?: string;
+  calculationDate?: string;
+  hasCustomHouseholdSize?: boolean;
+  householdSize?: number;
   persons?: NormPersonRow[];
   incomes?: NormIncomeRow[];
   expenses?: NormExpenseRow[];
+  specialExpenses?: NormExpenseRow[];
   incomeSum?: number;
   expenseSum?: number;
+  specialExpenseSum?: number;
   created?: string;
   updated?: string;
 }
@@ -69,22 +86,44 @@ export interface NormberakningDraft {
 export interface NormRowInput {
   typeId?: number;
   typeName?: string;
-  recipient?: string;
-  handlaggareAmount?: number;
-  handlaggareAmountDate?: string;
+  applicantHandlaggareAmount?: number;
+  applicantAmountDate?: string;
+  coapplicantHandlaggareAmount?: number;
+  coapplicantAmountDate?: string;
   costType?: string;
+  bucket?: string;
   otherSubType?: string;
   specification?: string;
+  handlaggareAmount?: number;
   partyId?: string;
   role?: string;
   name?: string;
   handlaggareDays?: number;
+  included?: boolean;
+  deviationFromDate?: string;
+  deviationToDate?: string;
+  normInterval?: string;
+  jobbstimulansAmount?: number;
   note?: string;
+}
+
+/**
+ * Fields sent when editing the draft header (norm, calculation dates, household size).
+ * @public — header editing is not wired into the UI yet (the header is read-only for now).
+ */
+export interface NormHeaderInput {
+  normId?: number;
+  normType?: string;
+  calculationFromDate?: string;
+  calculationToDate?: string;
+  calculationDate?: string;
+  hasCustomHouseholdSize?: boolean;
+  householdSize?: number;
 }
 
 type NormRow = NormPersonRow | NormIncomeRow | NormExpenseRow;
 
-/** Fetches the three-section draft normberäkning for an errand. */
+/** Fetches the Lifecare-aligned draft normberäkning for an errand. */
 export const getNormberakningDraft = (errandId: string): Promise<ServiceResponse<NormberakningDraft>> =>
   apiService
     .get<ApiResponse<NormberakningDraft>>(`errands/${errandId}/normberakning/draft`)
@@ -102,7 +141,7 @@ export const addNormRow = (
     .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);
 
-/** Sets the handläggare value/note on a row. */
+/** Sets the handläggare value(s)/note on a row. */
 export const updateNormRow = (
   errandId: string,
   section: NormSection,
@@ -133,5 +172,18 @@ export const restoreNormRow = (
 ): Promise<ServiceResponse<NormRow>> =>
   apiService
     .post<ApiResponse<NormRow>>(`errands/${errandId}/normberakning/draft/${section}/${rowId}/restore`, {})
+    .then((res) => ({ data: res.data.data }))
+    .catch(toServiceError);
+
+/**
+ * Updates the draft header (norm, calculation dates, household size).
+ * @public — not wired into the UI yet (the header is read-only for now).
+ */
+export const updateNormHeader = (
+  errandId: string,
+  input: NormHeaderInput
+): Promise<ServiceResponse<NormberakningDraft>> =>
+  apiService
+    .patch<ApiResponse<NormberakningDraft>>(`errands/${errandId}/normberakning/draft/header`, input)
     .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);
