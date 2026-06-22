@@ -83,8 +83,8 @@ export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
         <Table.Header>
           <Table.HeaderColumn>Typ</Table.HeaderColumn>
           <Table.HeaderColumn>Ansökt</Table.HeaderColumn>
-          <Table.HeaderColumn>Process</Table.HeaderColumn>
-          <Table.HeaderColumn>Effektivt</Table.HeaderColumn>
+          <Table.HeaderColumn>Förslag</Table.HeaderColumn>
+          <Table.HeaderColumn>Godkänt</Table.HeaderColumn>
           <Table.HeaderColumn>Anmärkning</Table.HeaderColumn>
           <Table.HeaderColumn>
             <span className="sr-only">Åtgärder</span>
@@ -113,7 +113,7 @@ export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
   );
 };
 
-/** A single editable expense row: the Effektivt amount (writes caseworkerAmount) + note are editable; applied/process are read-only. */
+/** A single editable expense row: the Godkänt amount (writes caseworkerAmount) + note are editable; applied/process are read-only. */
 const ExpenseRow: FC<{
   errandId: string;
   row: NormExpenseRow;
