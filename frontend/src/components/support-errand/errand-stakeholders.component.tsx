@@ -4,6 +4,7 @@ import { Stakeholder } from '@data-contracts/backend/data-contracts';
 import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
 import { Avatar, Spinner } from '@sk-web-gui/react';
 import { getInitials } from '@utils/get-initials';
+import { compareByRole, stakeholderRoleLabel } from '@utils/stakeholder-role';
 import { FC } from 'react';
 
 const stakeholderName = (stakeholder: Stakeholder): string => {
@@ -44,15 +45,18 @@ export const ErrandStakeholders: FC<{ errandId: string }> = ({ errandId }) => {
     return <p className="m-0">Inga intressenter</p>;
   }
 
+  // Sökande (applicant) first, then co-applicant etc.
+  const orderedStakeholders = [...stakeholders].sort(compareByRole);
+
   return (
     <div className="flex flex-col gap-16">
-      {stakeholders.map((stakeholder, index) => (
+      {orderedStakeholders.map((stakeholder, index) => (
         <div
           key={stakeholder.id ?? index}
           className="border-1 border-divider rounded-12 overflow-hidden bg-background-content"
         >
           <div className="bg-vattjom-surface-primary text-white px-16 py-8 font-bold">
-            {stakeholder.role ?? 'Intressent'}
+            {stakeholderRoleLabel(stakeholder.role) || 'Intressent'}
           </div>
           <div className="p-16 flex items-center gap-16">
             <Avatar initials={getInitials(stakeholderName(stakeholder))} rounded color="vattjom" />

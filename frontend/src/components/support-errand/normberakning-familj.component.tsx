@@ -2,15 +2,9 @@
 
 import { NormPersonRow } from '@services/normberakning-service';
 import { Button, Icon, Table } from '@sk-web-gui/react';
+import { stakeholderRoleLabel } from '@utils/stakeholder-role';
 import { Check, Plus } from 'lucide-react';
 import { FC } from 'react';
-
-const ROLE_LABELS: Record<string, string> = {
-  APPLICANT: 'Sökande',
-  CO_APPLICANT: 'Medsökande',
-  CHILD: 'Barn',
-  UMGANGESBARN: 'Umgängesbarn',
-};
 
 const days = (value?: number): string => (value == null ? '—' : String(value));
 
@@ -55,7 +49,7 @@ export const NormberakningFamilj: FC<{ persons: NormPersonRow[] }> = ({ persons 
                   : <span className="sr-only">Omfattas inte</span>}
                 </Table.Column>
                 <Table.Column>{person.name ?? '—'}</Table.Column>
-                <Table.Column>{ROLE_LABELS[person.role ?? ''] ?? person.role ?? '—'}</Table.Column>
+                <Table.Column>{stakeholderRoleLabel(person.role) || '—'}</Table.Column>
                 <Table.Column>{person.deviationFromDate ?? '—'}</Table.Column>
                 <Table.Column>{person.deviationToDate ?? '—'}</Table.Column>
                 <Table.Column className="tabular-nums">{days(person.effectiveDays)}</Table.Column>
