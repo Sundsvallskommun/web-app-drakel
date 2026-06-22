@@ -12,7 +12,7 @@ module.exports = {
     extend: {
       maxWidth: {
         content: 'var(--sk-spacing-max-content)',
-        errand: '1080px',
+        errand: '1400px',
       },
     },
   },
