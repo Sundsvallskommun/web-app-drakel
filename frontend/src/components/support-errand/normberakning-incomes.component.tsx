@@ -1,7 +1,7 @@
 'use client';
 
-import { addNormRow, deleteNormRow, NormIncomeRow, restoreNormRow, updateNormRow } from '@services/normberakning-service';
-import { Button, DatePicker, Input, Table } from '@sk-web-gui/react';
+import { addNormRow, deleteNormRow, NormIncomeRow, restoreNormRow, TypeOption, updateNormRow } from '@services/normberakning-service';
+import { Button, DatePicker, Input, Select, Table } from '@sk-web-gui/react';
 import { formatAmount } from '@utils/format-amount';
 import dayjs from 'dayjs';
 import { Plus, RotateCcw, Trash2 } from 'lucide-react';
@@ -27,6 +27,7 @@ interface NormberakningIncomesProps {
   errandId: string;
   rows: NormIncomeRow[];
   incomeSum?: number;
+  incomeTypes: TypeOption[];
   onChanged: () => void;
 }
 
@@ -35,7 +36,13 @@ interface NormberakningIncomesProps {
  * process amount is read-only (system/SSBTEK, shown as the input placeholder); the handläggare amount +
  * date + note are editable. Handläggare can also add their own rows and soft-delete/restore rows.
  */
-export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({ errandId, rows, incomeSum, onChanged }) => {
+export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({
+  errandId,
+  rows,
+  incomeSum,
+  incomeTypes,
+  onChanged,
+}) => {
   const [savingId, setSavingId] = useState<string>();
   const [error, setError] = useState<string>();
 
@@ -84,7 +91,7 @@ export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({ errandId, 
               />
             ))
           }
-          <AddIncomeRow errandId={errandId} onAdded={onChanged} onError={setError} />
+          <AddIncomeRow errandId={errandId} incomeTypes={incomeTypes} onAdded={onChanged} onError={setError} />
         </Table.Body>
       </Table>
     </div>
@@ -234,11 +241,12 @@ const IncomeRow: FC<{
 };
 
 /** The last table row for adding a handläggare income row. */
-const AddIncomeRow: FC<{ errandId: string; onAdded: () => void; onError: (message: string) => void }> = ({
-  errandId,
-  onAdded,
-  onError,
-}) => {
+const AddIncomeRow: FC<{
+  errandId: string;
+  incomeTypes: TypeOption[];
+  onAdded: () => void;
+  onError: (message: string) => void;
+}> = ({ errandId, incomeTypes, onAdded, onError }) => {
   const [typeName, setTypeName] = useState<string>('');
   const [applicantAmount, setApplicantAmount] = useState<string>('');
   const [applicantDate, setApplicantDate] = useState<string>('');
@@ -278,14 +286,21 @@ const AddIncomeRow: FC<{ errandId: string; onAdded: () => void; onError: (messag
   return (
     <Table.Row>
       <Table.Column>
-        <Input
+        <Select
           size="sm"
-          placeholder="Inkomsttyp"
+          className="max-w-[16rem]"
           value={typeName}
           onChange={(event) => {
             setTypeName(event.target.value);
           }}
-        />
+        >
+          <Select.Option value="">Välj inkomsttyp</Select.Option>
+          {incomeTypes.map((type) => (
+            <Select.Option key={type.code} value={type.displayName ?? ''}>
+              {type.displayName ?? type.code}
+            </Select.Option>
+          ))}
+        </Select>
       </Table.Column>
       <Table.Column>
         <Input

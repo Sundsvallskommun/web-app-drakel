@@ -123,6 +123,32 @@ export interface NormHeaderInput {
 
 type NormRow = NormPersonRow | NormIncomeRow | NormExpenseRow;
 
+/** A selectable income/cost type — the code stored on the row plus its Swedish display label. */
+export interface TypeOption {
+  code?: string;
+  displayName?: string;
+}
+
+/** The labelled type catalogues used by the add-row dropdowns. */
+export interface NormberakningTypes {
+  incomeTypes: TypeOption[];
+  costTypes: TypeOption[];
+  livingCostTypes: TypeOption[];
+}
+
+/** Fetches the labelled income/cost type catalogues (global for the financial-assistance type). */
+export const getNormberakningTypes = (): Promise<ServiceResponse<NormberakningTypes>> =>
+  apiService
+    .get<ApiResponse<Partial<NormberakningTypes>>>('normberakning/types')
+    .then((res) => ({
+      data: {
+        incomeTypes: res.data.data.incomeTypes ?? [],
+        costTypes: res.data.data.costTypes ?? [],
+        livingCostTypes: res.data.data.livingCostTypes ?? [],
+      },
+    }))
+    .catch(toServiceError);
+
 /** Fetches the Lifecare-aligned draft normberäkning for an errand. */
 export const getNormberakningDraft = (errandId: string): Promise<ServiceResponse<NormberakningDraft>> =>
   apiService

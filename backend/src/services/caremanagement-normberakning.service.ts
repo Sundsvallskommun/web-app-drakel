@@ -4,6 +4,7 @@ import { caremanagementUrl } from '@utils/caremanagement-url';
 
 import {
   CalculationDraft,
+  FinancialAssistanceMetadata,
   NormExpenseRow,
   NormIncomeRow,
   NormPersonRow,
@@ -29,6 +30,13 @@ class CaremanagementNormberakningService {
 
   async readDraft(errandId: string): Promise<ApiResponse<CalculationDraft>> {
     return this.apiService.get<CalculationDraft>({ url: this.draftUrl(errandId) });
+  }
+
+  /** The labelled income/cost type catalogues for the add-row dropdowns. */
+  async readTypes(): Promise<ApiResponse<FinancialAssistanceMetadata>> {
+    return this.apiService.get<FinancialAssistanceMetadata>({
+      url: caremanagementUrl('errands', 'financial-assistance', 'metadata'),
+    });
   }
 
   /** Updates the draft header (norm, calculation dates, household size). */

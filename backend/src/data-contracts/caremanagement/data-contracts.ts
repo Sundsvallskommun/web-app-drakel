@@ -164,7 +164,7 @@ export interface Child {
 
 /** A cost the applicant is applying for assistance with. */
 export interface Cost {
-  /** The type of cost */
+  /** The type of cost — boendekostnader (EXPENSE) and levnadskostnader i övrigt (SPECIAL_EXPENSE); see GET .../errands/financial-assistance/metadata for the labelled catalogue */
   costType?: CostCostTypeEnum;
   /** The amount applied for */
   appliedAmount?: number;
@@ -263,7 +263,7 @@ export interface FinancialAssistanceData {
 
 /** An income reported by the applicant or co-applicant. */
 export interface Income {
-  /** The type of income */
+  /** The type of income (see GET .../errands/financial-assistance/metadata for the labelled catalogue) */
   incomeType?: IncomeIncomeTypeEnum;
   /** The income amount */
   amount?: number;
@@ -1564,6 +1564,24 @@ export interface RenewalPrefill {
   lifecareChecked?: boolean;
 }
 
+/** EB type catalogues for the frontend dropdowns: income, cost and living-cost types. */
+export interface FinancialAssistanceMetadata {
+  /** The income types (inkomster) */
+  incomeTypes?: TypeOption[];
+  /** The cost types (kostnader — boendekostnader), shown as the first cost dropdown */
+  costTypes?: TypeOption[];
+  /** The living-cost types (levnadskostnader i övrigt), shown as the second cost dropdown */
+  livingCostTypes?: TypeOption[];
+}
+
+/** A selectable EB type — the code stored on the payload plus its Swedish display label. */
+export interface TypeOption {
+  /** The type code, stored on the payload (incomeType / costType) */
+  code?: string;
+  /** Human-readable Swedish label for the type */
+  displayName?: string;
+}
+
 /** An allowed decision outcome (decision alternatives) for an errand type. */
 export interface DecisionOption {
   /** The decision outcome code, stored on the Decision row's value */
@@ -1655,19 +1673,23 @@ export enum ChildResidenceExtentEnum {
   OTHER = "OTHER",
 }
 
-/** The type of cost */
+/** The type of cost — boendekostnader (EXPENSE) and levnadskostnader i övrigt (SPECIAL_EXPENSE); see GET .../errands/financial-assistance/metadata for the labelled catalogue */
 export enum CostCostTypeEnum {
-  RENT = "RENT",
-  ELECTRICITY = "ELECTRICITY",
-  HOME_INSURANCE = "HOME_INSURANCE",
-  INTERNET = "INTERNET",
-  UNEMPLOYMENT_FUND = "UNEMPLOYMENT_FUND",
+  UNEMPLOYMENT_FUND_FEE = "UNEMPLOYMENT_FUND_FEE",
+  WORK_TRAVEL = "WORK_TRAVEL",
+  HOUSING_COST = "HOUSING_COST",
+  ELECTRICITY_1 = "ELECTRICITY_1",
+  ELECTRICITY_2 = "ELECTRICITY_2",
   UNION_FEE = "UNION_FEE",
-  TRAVEL_APPROVED = "TRAVEL_APPROVED",
-  TRAVEL_MEDICAL_TRANSPORT = "TRAVEL_MEDICAL_TRANSPORT",
+  HOME_INSURANCE = "HOME_INSURANCE",
+  CHILDCARE_FEE = "CHILDCARE_FEE",
+  BROADBAND_INTERNET = "BROADBAND_INTERNET",
+  GLASSES = "GLASSES",
+  VISITATION_COST = "VISITATION_COST",
   MEDICAL_CARE = "MEDICAL_CARE",
   MEDICINE = "MEDICINE",
-  OTHER = "OTHER",
+  DENTAL_CARE = "DENTAL_CARE",
+  OTHER_EXPENSE = "OTHER_EXPENSE",
 }
 
 /** Sub type when the cost type is OTHER */
@@ -1715,15 +1737,37 @@ export enum FinancialAssistanceDataHousingFormEnum {
   LIVING_WITH_PARENTS = "LIVING_WITH_PARENTS",
 }
 
-/** The type of income */
+/** The type of income (see GET .../errands/financial-assistance/metadata for the labelled catalogue) */
 export enum IncomeIncomeTypeEnum {
+  UNEMPLOYMENT_BENEFIT = "UNEMPLOYMENT_BENEFIT",
+  UNEMPLOYMENT_OR_ALPHA_BENEFIT = "UNEMPLOYMENT_OR_ALPHA_BENEFIT",
+  ACTIVITY_COMPENSATION = "ACTIVITY_COMPENSATION",
+  ACTIVITY_SUPPORT = "ACTIVITY_SUPPORT",
+  ALPHA_BENEFIT = "ALPHA_BENEFIT",
+  CHILD_ALLOWANCE = "CHILD_ALLOWANCE",
+  CHILD_PENSION = "CHILD_PENSION",
+  HOUSING_ALLOWANCE = "HOUSING_ALLOWANCE",
+  HOUSING_SUPPLEMENT = "HOUSING_SUPPLEMENT",
+  CSN_GRANT = "CSN_GRANT",
+  CSN_LOAN = "CSN_LOAN",
+  DAILY_ALLOWANCE_FK = "DAILY_ALLOWANCE_FK",
+  SURVIVOR_SUPPORT = "SURVIVOR_SUPPORT",
+  ESTABLISHMENT_BENEFIT = "ESTABLISHMENT_BENEFIT",
+  PARENTAL_BENEFIT = "PARENTAL_BENEFIT",
+  LODGING_ALLOWANCE = "LODGING_ALLOWANCE",
+  CAPITAL_INCOME = "CAPITAL_INCOME",
+  SALARY_AFTER_TAX = "SALARY_AFTER_TAX",
+  PENSION = "PENSION",
+  PENSION_ANNUITY_CARE = "PENSION_ANNUITY_CARE",
+  SICKNESS_COMPENSATION = "SICKNESS_COMPENSATION",
+  SICKNESS_BENEFIT = "SICKNESS_BENEFIT",
+  TAX_REFUND = "TAX_REFUND",
+  SWISH_DEPOSITS_TRANSFERS = "SWISH_DEPOSITS_TRANSFERS",
+  MAINTENANCE_SUPPORT = "MAINTENANCE_SUPPORT",
+  CARE_ALLOWANCE = "CARE_ALLOWANCE",
+  ELDERLY_SUPPORT = "ELDERLY_SUPPORT",
+  SURPLUS_FROM_PREVIOUS_MONTH = "SURPLUS_FROM_PREVIOUS_MONTH",
   OTHER_INCOME = "OTHER_INCOME",
-  FINANCIAL_AID_OTHER_MUNICIPALITY = "FINANCIAL_AID_OTHER_MUNICIPALITY",
-  SALARY = "SALARY",
-  SWISH_DEPOSITS = "SWISH_DEPOSITS",
-  OCCUPATIONAL_PENSION_INSURANCE = "OCCUPATIONAL_PENSION_INSURANCE",
-  CHILD_SUPPORT = "CHILD_SUPPORT",
-  RENT_SHARE_FROM_CHILD = "RENT_SHARE_FROM_CHILD",
 }
 
 /** Who received the income */

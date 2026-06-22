@@ -1,7 +1,7 @@
 'use client';
 
-import { addNormRow, deleteNormRow, NormExpenseRow, restoreNormRow, updateNormRow } from '@services/normberakning-service';
-import { Button, Input, Table } from '@sk-web-gui/react';
+import { addNormRow, deleteNormRow, NormExpenseRow, restoreNormRow, TypeOption, updateNormRow } from '@services/normberakning-service';
+import { Button, Input, Select, Table } from '@sk-web-gui/react';
 import { formatAmount } from '@utils/format-amount';
 import { Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { FC, useState } from 'react';
@@ -19,11 +19,12 @@ const parseAmount = (value: string): number | undefined => {
 
 const displayAmount = (value?: number): string => (value == null ? '—' : formatAmount(value));
 
-const expenseLabel = (row: NormExpenseRow): string => {
+const expenseLabel = (row: NormExpenseRow, typeLabels: Record<string, string>): string => {
   if (row.specification?.trim()) {
     return row.specification;
   }
-  return row.costType ?? '—';
+  const code = row.costType ?? '';
+  return typeLabels[code] ?? (code || '—');
 };
 
 interface NormberakningExpensesProps {
@@ -33,6 +34,8 @@ interface NormberakningExpensesProps {
   summaLabel: string;
   /** Which expense bucket new rows are added to. */
   bucket: 'EXPENSE' | 'SPECIAL_EXPENSE';
+  /** The labelled cost-type catalogue for this bucket (add-row dropdown + row labels). */
+  types: TypeOption[];
   onChanged: () => void;
 }
 
@@ -46,8 +49,15 @@ export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
   sum,
   summaLabel,
   bucket,
+  types,
   onChanged,
 }) => {
+  const typeLabels: Record<string, string> = {};
+  for (const type of types) {
+    if (type.code) {
+      typeLabels[type.code] = type.displayName ?? type.code;
+    }
+  }
   const [savingId, setSavingId] = useState<string>();
   const [error, setError] = useState<string>();
 
@@ -91,12 +101,13 @@ export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
                 key={row.id ?? index}
                 errandId={errandId}
                 row={row}
+                typeLabels={typeLabels}
                 saving={savingId === row.id}
                 onAction={(rowId, action) => void runRowAction(rowId, action)}
               />
             ))
           }
-          <AddExpenseRow errandId={errandId} bucket={bucket} onAdded={onChanged} onError={setError} />
+          <AddExpenseRow errandId={errandId} bucket={bucket} types={types} onAdded={onChanged} onError={setError} />
         </Table.Body>
       </Table>
     </div>
@@ -107,9 +118,10 @@ export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
 const ExpenseRow: FC<{
   errandId: string;
   row: NormExpenseRow;
+  typeLabels: Record<string, string>;
   saving: boolean;
   onAction: (rowId: string, action: () => Promise<{ error?: unknown }>) => void;
-}> = ({ errandId, row, saving, onAction }) => {
+}> = ({ errandId, row, typeLabels, saving, onAction }) => {
   const [amount, setAmount] = useState<string>(row.caseworkerAmount?.toString() ?? '');
   const [note, setNote] = useState<string>(row.note ?? '');
   const rowId = row.id ?? '';
@@ -118,8 +130,9 @@ const ExpenseRow: FC<{
     return (
       <Table.Row className="opacity-50">
         <Table.Column>
-          <span className="line-through">{expenseLabel(row)}</span>
+          <span className="line-through">{expenseLabel(row, typeLabels)}</span>
         </Table.Column>
+        <Table.Column>—</Table.Column>
         <Table.Column>—</Table.Column>
         <Table.Column>—</Table.Column>
         <Table.Column>—</Table.Column>
@@ -155,7 +168,9 @@ const ExpenseRow: FC<{
 
   return (
     <Table.Row>
-      <Table.Column>{expenseLabel(row)}</Table.Column>
+      <Table.Column>
+        <span className="font-bold">{expenseLabel(row, typeLabels)}</span>
+      </Table.Column>
       <Table.Column className="tabular-nums text-dark-secondary">{displayAmount(row.appliedAmount)}</Table.Column>
       <Table.Column className="tabular-nums text-dark-secondary">{displayAmount(row.processAmount)}</Table.Column>
       <Table.Column>
@@ -201,28 +216,28 @@ const ExpenseRow: FC<{
   );
 };
 
-/** The last table row for adding a handläggare expense row (costType OTHER + free-text specification). */
+/** The last table row for adding a handläggare expense row (costType picked from the catalogue). */
 const AddExpenseRow: FC<{
   errandId: string;
   bucket: 'EXPENSE' | 'SPECIAL_EXPENSE';
+  types: TypeOption[];
   onAdded: () => void;
   onError: (message: string) => void;
-}> = ({ errandId, bucket, onAdded, onError }) => {
-  const [specification, setSpecification] = useState<string>('');
+}> = ({ errandId, bucket, types, onAdded, onError }) => {
+  const [costType, setCostType] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
   const [note, setNote] = useState<string>('');
   const [adding, setAdding] = useState<boolean>(false);
 
   const add = async () => {
-    if (!specification.trim()) {
-      onError('Ange en typ/specifikation');
+    if (!costType) {
+      onError('Välj en typ');
       return;
     }
     setAdding(true);
     const result = await addNormRow(errandId, 'expenses', {
       bucket,
-      costType: 'OTHER',
-      specification: specification.trim(),
+      costType,
       caseworkerAmount: parseAmount(amount),
       note: note.trim() || undefined,
     });
@@ -231,7 +246,7 @@ const AddExpenseRow: FC<{
       onError('Det gick inte att lägga till raden');
       return;
     }
-    setSpecification('');
+    setCostType('');
     setAmount('');
     setNote('');
     onAdded();
@@ -240,14 +255,21 @@ const AddExpenseRow: FC<{
   return (
     <Table.Row>
       <Table.Column>
-        <Input
+        <Select
           size="sm"
-          placeholder="Typ/specifikation"
-          value={specification}
+          className="max-w-[16rem]"
+          value={costType}
           onChange={(event) => {
-            setSpecification(event.target.value);
+            setCostType(event.target.value);
           }}
-        />
+        >
+          <Select.Option value="">Välj typ</Select.Option>
+          {types.map((type) => (
+            <Select.Option key={type.code} value={type.code ?? ''}>
+              {type.displayName ?? type.code}
+            </Select.Option>
+          ))}
+        </Select>
       </Table.Column>
       <Table.Column>—</Table.Column>
       <Table.Column>—</Table.Column>

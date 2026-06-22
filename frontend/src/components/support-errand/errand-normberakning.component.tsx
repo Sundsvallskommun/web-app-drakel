@@ -1,6 +1,7 @@
 'use client';
 
 import { useErrandNormberakning } from '@hooks/use-errand-normberakning';
+import { useNormberakningTypes } from '@hooks/use-normberakning-types';
 import { Warning } from '@services/warning-service';
 import { FormControl, FormLabel, Input, Spinner, Tabs } from '@sk-web-gui/react';
 import { FC, ReactNode, useState } from 'react';
@@ -42,6 +43,7 @@ export const ErrandNormberakning: FC<{
   onWarningsChanged: () => void;
 }> = ({ errandId, warnings, onWarningsChanged }) => {
   const { draft, isLoading, error, refresh } = useErrandNormberakning(errandId);
+  const types = useNormberakningTypes();
   const [activeTab, setActiveTab] = useState<number>(0);
 
   const incomeWarnings = warnings.filter((warning) => INCOME_WARNING_TYPES.has(warning.type ?? ''));
@@ -125,6 +127,7 @@ export const ErrandNormberakning: FC<{
               errandId={errandId}
               rows={draft.incomes ?? []}
               incomeSum={draft.incomeSum}
+              incomeTypes={types.incomeTypes}
               onChanged={refresh}
             />
           </Tabs.Content>
@@ -143,6 +146,7 @@ export const ErrandNormberakning: FC<{
               sum={draft.expenseSum}
               summaLabel="Summa utgifter"
               bucket="EXPENSE"
+              types={types.costTypes}
               onChanged={refresh}
             />
           </Tabs.Content>
@@ -156,6 +160,7 @@ export const ErrandNormberakning: FC<{
               sum={draft.specialExpenseSum}
               summaLabel="Summa särskilda kostnader"
               bucket="SPECIAL_EXPENSE"
+              types={types.livingCostTypes}
               onChanged={refresh}
             />
           </Tabs.Content>

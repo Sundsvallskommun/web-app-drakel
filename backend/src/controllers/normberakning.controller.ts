@@ -36,6 +36,14 @@ export class NormberakningController {
     return { data: res.data, message: 'success' };
   }
 
+  @Get('/normberakning/types')
+  @OpenAPI({ summary: 'Labelled income/cost type catalogues for the add-row dropdowns' })
+  @UseBefore(authMiddleware)
+  async getTypes() {
+    const res = await this.normberakningService.readTypes();
+    return { data: res.data, message: 'success' };
+  }
+
   @Patch('/errands/:errandId/normberakning/draft/header')
   @OpenAPI({ summary: 'Edit the draft normberäkning header (norm, dates, household size)' })
   @ResponseSchema(NormberakningDraftApiResponse)
