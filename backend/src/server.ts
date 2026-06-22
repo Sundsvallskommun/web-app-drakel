@@ -3,6 +3,7 @@ import validateEnv from '@utils/validateEnv';
 
 import App from '@/app';
 
+import { BevakningController } from './controllers/bevakning.controller';
 import { DecisionController } from './controllers/decision.controller';
 import { ErrandController } from './controllers/errand.controller';
 import { HealthController } from './controllers/health.controller';
@@ -30,6 +31,7 @@ const app = new App([
   WarningController,
   PaymentController,
   SectionApprovalController,
+  BevakningController,
 ]);
 
 app.listen();

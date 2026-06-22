@@ -3,19 +3,21 @@
 import { useErrandHeader } from '@components/layout/errand-header-context';
 import { useErrand } from '@hooks/use-errand';
 import { useErrandAttachments } from '@hooks/use-errand-attachments';
+import { useErrandBevakningar } from '@hooks/use-errand-bevakningar';
 import { useErrandForm } from '@hooks/use-errand-form';
 import { useErrandNotes } from '@hooks/use-errand-notes';
 import { useErrandSectionApprovals } from '@hooks/use-errand-section-approvals';
 import { useErrandWarnings } from '@hooks/use-errand-warnings';
 import { Spinner, Tabs } from '@sk-web-gui/react';
 import { CLIENT_FILES_PDF } from '@utils/attachment-names';
-import { AlertTriangle, NotebookPen, UserCog } from 'lucide-react';
+import { AlertTriangle, Bell, NotebookPen, UserCog } from 'lucide-react';
 import { FC, useEffect, useState } from 'react';
 
 import { ErrandApplicationData } from './errand-application-data.component';
 import { ErrandAttachments } from './errand-attachments.component';
 import { ErrandAvsluta } from './errand-avsluta.component';
 import { ErrandBeslut } from './errand-beslut.component';
+import { ErrandBevakningar } from './errand-bevakningar.component';
 import { ErrandInfoPanel } from './errand-info-panel.component';
 import { ErrandMessageAttachments } from './errand-message-attachments.component';
 import { ErrandMessages } from './errand-messages.component';
@@ -56,6 +58,12 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
 
   // Section approvals are shared between the per-section checkboxes and the sidebar "Avsluta" button.
   const { approvals, pendingSection, setApproval } = useErrandSectionApprovals(resolvedErrandId);
+  const {
+    bevakningar,
+    isLoading: bevakningarLoading,
+    error: bevakningarError,
+    refresh: refreshBevakningar,
+  } = useErrandBevakningar(resolvedErrandId);
 
   // Only OPEN warnings are actionable — acknowledged/closed ones disappear from the sidebar.
   const openWarnings = warnings.filter((warning) => warning.status === 'OPEN');
@@ -142,6 +150,21 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           isLoading={notesLoading}
           loadError={!!notesError}
           refresh={refreshNotes}
+        />
+      ),
+    },
+    {
+      key: 'bevakningar',
+      label: 'Bevakningar',
+      icon: Bell,
+      badge: bevakningar.length,
+      component: (
+        <ErrandBevakningar
+          errandId={errand.id ?? ''}
+          bevakningar={bevakningar}
+          isLoading={bevakningarLoading}
+          loadError={!!bevakningarError}
+          refresh={refreshBevakningar}
         />
       ),
     },

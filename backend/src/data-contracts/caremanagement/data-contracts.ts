@@ -316,6 +316,61 @@ export interface Planning {
   otherDescription?: string;
 }
 
+/** Request to create or replace an EB bevakning on an errand. */
+export interface BevakningRequest {
+  /**
+   * Short headline for the bevakning
+   * @minLength 1
+   */
+  title: string;
+  /** Free-text details of what to watch for */
+  description?: string;
+  /**
+   * When the watch becomes relevant (bevakningsdatum)
+   * @format date
+   */
+  startDate: string;
+  /**
+   * When the watch ends — open-ended when omitted. Must not be before the start date.
+   * @format date
+   */
+  endDate?: string;
+  /** The handläggare who created the bevakning */
+  createdBy?: string;
+}
+
+/** An EB bevakning (date-bound watch/reminder) on an errand. */
+export interface Bevakning {
+  /** The bevakning id */
+  id?: string;
+  /** Short headline for the bevakning */
+  title?: string;
+  /** Free-text details of what to watch for */
+  description?: string;
+  /**
+   * When the watch becomes relevant (bevakningsdatum)
+   * @format date
+   */
+  startDate?: string;
+  /**
+   * When the watch ends — open-ended when omitted
+   * @format date
+   */
+  endDate?: string;
+  /** The handläggare who created the bevakning */
+  createdBy?: string;
+  /**
+   * When the bevakning was created
+   * @format date-time
+   */
+  created?: string;
+  /**
+   * When the bevakning was last updated
+   * @format date-time
+   */
+  updated?: string;
+}
+
 /** NamespaceConfig model */
 export interface NamespaceConfig {
   /**
