@@ -164,7 +164,7 @@ export interface Child {
 
 /** A cost the applicant is applying for assistance with. */
 export interface Cost {
-  /** The type of cost — boendekostnader (EXPENSE) and levnadskostnader i övrigt (SPECIAL_EXPENSE); see GET .../errands/financial-assistance/metadata for the labelled catalogue */
+  /** The type of cost */
   costType?: CostCostTypeEnum;
   /** The amount applied for */
   appliedAmount?: number;
@@ -263,7 +263,7 @@ export interface FinancialAssistanceData {
 
 /** An income reported by the applicant or co-applicant. */
 export interface Income {
-  /** The type of income — the complete handläggare set; SSBTEK-sourced types are handläggare-only, the rest are reportable in Mina sidor (see GET .../errands/financial-assistance/metadata for the labelled catalogue + citizenReportable flag) */
+  /** The type of income */
   incomeType?: IncomeIncomeTypeEnum;
   /** The income amount */
   amount?: number;
@@ -1072,6 +1072,8 @@ export interface NormExpenseInput {
   otherSubType?: string;
   /** The cost specification */
   specification?: string;
+  /** The amount applied for (ansökt). Honoured only when creating a new row; ignored on a patch. */
+  appliedAmount?: number;
   /** The amount the caseworker decided */
   caseworkerAmount?: number;
   /** Free-text note */
@@ -1747,23 +1749,25 @@ export interface RenewalPrefill {
   lifecareChecked?: boolean;
 }
 
-/** EB type catalogues for the frontend dropdowns: income, cost and living-cost types. */
+/** EB type catalogue for the frontend dropdowns: income and cost types with labels, groups and the citizen flag. */
 export interface FinancialAssistanceMetadata {
   /** The income types (inkomster) */
   incomeTypes?: TypeOption[];
-  /** The cost types (kostnader — boendekostnader), shown as the first cost dropdown */
+  /** The cost types (kostnader), grouped by their Mina-sidor form section */
   costTypes?: TypeOption[];
-  /** The living-cost types (levnadskostnader i övrigt), shown as the second cost dropdown */
-  livingCostTypes?: TypeOption[];
 }
 
-/** A selectable EB type — the code stored on the payload, its Swedish label and whether the citizen reports it in Mina sidor. */
+/** A selectable EB income/cost type — the payload code plus its Mina-sidor + Lifecare labels, form group and citizen flag. */
 export interface TypeOption {
-  /** The type code, stored on the payload (incomeType / costType) */
+  /** The type code, as stored on the payload (incomeType / costType) */
   code?: string;
-  /** Human-readable Swedish label for the type */
-  displayName?: string;
-  /** Whether the type is shown on the citizen Mina-sidor form (true) or is handläggare-only, e.g. an SSBTEK-sourced income (false) */
+  /** The citizen Mina-sidor label */
+  externalDisplayName?: string;
+  /** The matching Lifecare handläggare-dropdown label, or null when there is no Lifecare counterpart */
+  internalDisplayName?: string;
+  /** Stable code for the Mina-sidor form section the type is shown under; null for income */
+  group?: TypeOptionGroupEnum;
+  /** Whether the type is offered on the citizen Mina-sidor form */
   citizenReportable?: boolean;
 }
 
@@ -1858,23 +1862,19 @@ export enum ChildResidenceExtentEnum {
   OTHER = "OTHER",
 }
 
-/** The type of cost — boendekostnader (EXPENSE) and levnadskostnader i övrigt (SPECIAL_EXPENSE); see GET .../errands/financial-assistance/metadata for the labelled catalogue */
+/** The type of cost */
 export enum CostCostTypeEnum {
-  UNEMPLOYMENT_FUND_FEE = "UNEMPLOYMENT_FUND_FEE",
-  WORK_TRAVEL = "WORK_TRAVEL",
-  HOUSING_COST = "HOUSING_COST",
-  ELECTRICITY_1 = "ELECTRICITY_1",
-  ELECTRICITY_2 = "ELECTRICITY_2",
-  UNION_FEE = "UNION_FEE",
+  RENT = "RENT",
+  ELECTRICITY = "ELECTRICITY",
   HOME_INSURANCE = "HOME_INSURANCE",
-  CHILDCARE_FEE = "CHILDCARE_FEE",
-  BROADBAND_INTERNET = "BROADBAND_INTERNET",
-  GLASSES = "GLASSES",
-  VISITATION_COST = "VISITATION_COST",
+  INTERNET = "INTERNET",
+  UNEMPLOYMENT_FUND = "UNEMPLOYMENT_FUND",
+  UNION_FEE = "UNION_FEE",
+  TRAVEL_APPROVED = "TRAVEL_APPROVED",
+  TRAVEL_MEDICAL_TRANSPORT = "TRAVEL_MEDICAL_TRANSPORT",
   MEDICAL_CARE = "MEDICAL_CARE",
   MEDICINE = "MEDICINE",
-  DENTAL_CARE = "DENTAL_CARE",
-  OTHER_EXPENSE = "OTHER_EXPENSE",
+  OTHER = "OTHER",
 }
 
 /** Sub type when the cost type is OTHER */
@@ -1922,41 +1922,15 @@ export enum FinancialAssistanceDataHousingFormEnum {
   LIVING_WITH_PARENTS = "LIVING_WITH_PARENTS",
 }
 
-/** The type of income — the complete handläggare set; SSBTEK-sourced types are handläggare-only, the rest are reportable in Mina sidor (see GET .../errands/financial-assistance/metadata for the labelled catalogue + citizenReportable flag) */
+/** The type of income */
 export enum IncomeIncomeTypeEnum {
-  UNEMPLOYMENT_BENEFIT = "UNEMPLOYMENT_BENEFIT",
-  UNEMPLOYMENT_OR_ALPHA_BENEFIT = "UNEMPLOYMENT_OR_ALPHA_BENEFIT",
-  ACTIVITY_COMPENSATION = "ACTIVITY_COMPENSATION",
-  ACTIVITY_SUPPORT = "ACTIVITY_SUPPORT",
-  ALPHA_BENEFIT = "ALPHA_BENEFIT",
-  CHILD_ALLOWANCE = "CHILD_ALLOWANCE",
-  CHILD_PENSION = "CHILD_PENSION",
-  HOUSING_ALLOWANCE = "HOUSING_ALLOWANCE",
-  HOUSING_SUPPLEMENT = "HOUSING_SUPPLEMENT",
-  CSN_GRANT = "CSN_GRANT",
-  CSN_LOAN = "CSN_LOAN",
-  DAILY_ALLOWANCE_FK = "DAILY_ALLOWANCE_FK",
-  SURVIVOR_SUPPORT = "SURVIVOR_SUPPORT",
+  OTHER_INCOME = "OTHER_INCOME",
   FINANCIAL_AID_OTHER_MUNICIPALITY = "FINANCIAL_AID_OTHER_MUNICIPALITY",
-  ESTABLISHMENT_BENEFIT = "ESTABLISHMENT_BENEFIT",
-  PARENTAL_BENEFIT = "PARENTAL_BENEFIT",
-  RENT_SHARE_FROM_CHILD = "RENT_SHARE_FROM_CHILD",
-  LODGING_ALLOWANCE = "LODGING_ALLOWANCE",
-  CAPITAL_INCOME = "CAPITAL_INCOME",
-  SALARY_AFTER_TAX = "SALARY_AFTER_TAX",
-  PENSION = "PENSION",
-  PENSION_ANNUITY_CARE = "PENSION_ANNUITY_CARE",
-  SICKNESS_COMPENSATION = "SICKNESS_COMPENSATION",
-  SICKNESS_BENEFIT = "SICKNESS_BENEFIT",
-  TAX_REFUND = "TAX_REFUND",
-  SWISH_DEPOSITS_TRANSFERS = "SWISH_DEPOSITS_TRANSFERS",
+  SALARY = "SALARY",
+  SWISH_DEPOSITS = "SWISH_DEPOSITS",
   OCCUPATIONAL_PENSION_INSURANCE = "OCCUPATIONAL_PENSION_INSURANCE",
   CHILD_SUPPORT = "CHILD_SUPPORT",
-  MAINTENANCE_SUPPORT = "MAINTENANCE_SUPPORT",
-  CARE_ALLOWANCE = "CARE_ALLOWANCE",
-  ELDERLY_SUPPORT = "ELDERLY_SUPPORT",
-  SURPLUS_FROM_PREVIOUS_MONTH = "SURPLUS_FROM_PREVIOUS_MONTH",
-  OTHER_INCOME = "OTHER_INCOME",
+  RENT_SHARE_FROM_CHILD = "RENT_SHARE_FROM_CHILD",
 }
 
 /** Who received the income */
@@ -2203,6 +2177,14 @@ export enum AttachmentSenderRoleEnum {
   CASEWORKER = "CASEWORKER",
 }
 
+/** Stable code for the Mina-sidor form section the type is shown under; null for income */
+export enum TypeOptionGroupEnum {
+  HOUSING = "HOUSING",
+  WORK_AND_STUDIES = "WORK_AND_STUDIES",
+  HEALTH = "HEALTH",
+  OTHER = "OTHER",
+}
+
 /** The field kind */
 export enum FieldDescriptorTypeEnum {
   STRING = "STRING",
@@ -2221,6 +2203,7 @@ export enum ReadLookupsParamsKindEnum {
   TYPE = "TYPE",
   ROLE = "ROLE",
   CONTACT_REASON = "CONTACT_REASON",
+  JOURNAL_ENTRY_TYPE = "JOURNAL_ENTRY_TYPE",
 }
 
 /** Lookup kind */
@@ -2230,6 +2213,7 @@ export enum CreateLookupParamsKindEnum {
   TYPE = "TYPE",
   ROLE = "ROLE",
   CONTACT_REASON = "CONTACT_REASON",
+  JOURNAL_ENTRY_TYPE = "JOURNAL_ENTRY_TYPE",
 }
 
 /** Only return attachments with this origin */
@@ -2253,6 +2237,7 @@ export enum ReadLookupParamsKindEnum {
   TYPE = "TYPE",
   ROLE = "ROLE",
   CONTACT_REASON = "CONTACT_REASON",
+  JOURNAL_ENTRY_TYPE = "JOURNAL_ENTRY_TYPE",
 }
 
 /** Lookup kind */
@@ -2262,6 +2247,7 @@ export enum DeleteLookupParamsKindEnum {
   TYPE = "TYPE",
   ROLE = "ROLE",
   CONTACT_REASON = "CONTACT_REASON",
+  JOURNAL_ENTRY_TYPE = "JOURNAL_ENTRY_TYPE",
 }
 
 /** Lookup kind */
@@ -2271,6 +2257,7 @@ export enum UpdateLookupParamsKindEnum {
   TYPE = "TYPE",
   ROLE = "ROLE",
   CONTACT_REASON = "CONTACT_REASON",
+  JOURNAL_ENTRY_TYPE = "JOURNAL_ENTRY_TYPE",
 }
 
 /** The target status */

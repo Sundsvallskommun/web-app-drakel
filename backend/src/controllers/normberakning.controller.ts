@@ -4,11 +4,23 @@ import CaremanagementNormberakningService, { NormSection } from '@services/carem
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
+import { TypeOption } from '@/data-contracts/caremanagement/data-contracts';
 import { NormHeaderInputDto, NormRowInputDto } from '@/dtos/normberakning.dto';
 import { HttpException } from '@/exceptions/HttpException';
 import { NormberakningDraftApiResponse } from '@/responses/normberakning.response';
 
 const NORM_SECTIONS: readonly string[] = ['persons', 'incomes', 'expenses'];
+
+// caremanagement returns one costTypes list grouped by Mina-sidor section (group = enum code). The
+// HOUSING section is Lifecare's boendekostnader (the Utgifter / EXPENSE bucket); the other sections
+// (WORK_AND_STUDIES / HEALTH / OTHER) are levnadskostnader i övrigt (the SPECIAL_EXPENSE bucket).
+const HOUSING_GROUP = 'HOUSING';
+
+/** Maps an API type to the frontend dropdown shape, using the Lifecare handläggare label. */
+const toDropdownOption = (type: TypeOption): { code?: string; displayName?: string } => ({
+  code: type.code,
+  displayName: type.internalDisplayName ?? type.externalDisplayName ?? type.code,
+});
 
 /** Validates the section path segment so we never forward an unknown section to caremanagement. */
 const toSection = (section: string): NormSection => {
@@ -41,7 +53,16 @@ export class NormberakningController {
   @UseBefore(authMiddleware)
   async getTypes() {
     const res = await this.normberakningService.readTypes();
-    return { data: res.data, message: 'success' };
+    const costTypes = res.data?.costTypes ?? [];
+    // Split the single costTypes list into the two normberäkning buckets via the Mina-sidor group.
+    return {
+      data: {
+        incomeTypes: (res.data?.incomeTypes ?? []).map(toDropdownOption),
+        costTypes: costTypes.filter((type) => type.group === HOUSING_GROUP).map(toDropdownOption),
+        livingCostTypes: costTypes.filter((type) => type.group !== HOUSING_GROUP).map(toDropdownOption),
+      },
+      message: 'success',
+    };
   }
 
   @Patch('/errands/:errandId/normberakning/draft/header')
