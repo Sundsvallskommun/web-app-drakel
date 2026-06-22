@@ -13,7 +13,7 @@ import { NormberakningWarnings } from './normberakning-warnings.component';
 
 // Which normberäkning sub-tab each warning type belongs to.
 const INCOME_WARNING_TYPES = new Set(['UNHANDLED_INCOME', 'INCOME_CHANGE', 'MISSING_SSBTEK', 'NEW_INCOME', 'INCOME_DROPPED']);
-const EXPENSE_WARNING_TYPES = new Set(['NEW_EXPENSE']);
+const EXPENSE_WARNING_TYPES = new Set(['NEW_EXPENSE', 'EXPENSE_REVIEW', 'EXPENSE_CAPPED']);
 const PERSON_WARNING_TYPES = new Set(['NEW_PERSON', 'HOUSEHOLD_CHANGE']);
 
 const FilterField: FC<{ label: string; required?: boolean; children: ReactNode }> = ({

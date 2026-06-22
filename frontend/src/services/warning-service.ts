@@ -27,6 +27,8 @@ const WARNING_TYPE_LABELS: Record<string, string> = {
   NEW_PERSON: 'Ny person',
   INCOME_DROPPED: 'Bortfallen inkomst',
   HOUSEHOLD_CHANGE: 'Ändrad hushållssammansättning',
+  EXPENSE_REVIEW: 'Kräver skälighetsbedömning',
+  EXPENSE_CAPPED: 'Utgift över tak',
 };
 
 /** The label for a warning type — falls back to the raw code, or a generic label when missing. */
