@@ -222,6 +222,7 @@ const AddExpenseRow: FC<{
   onError: (message: string) => void;
 }> = ({ errandId, bucket, types, onAdded, onError }) => {
   const [costType, setCostType] = useState<string>('');
+  const [applied, setApplied] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
   const [note, setNote] = useState<string>('');
   const [adding, setAdding] = useState<boolean>(false);
@@ -235,6 +236,7 @@ const AddExpenseRow: FC<{
     const result = await addNormRow(errandId, 'expenses', {
       bucket,
       costType,
+      appliedAmount: parseAmount(applied),
       caseworkerAmount: parseAmount(amount),
       note: note.trim() || undefined,
     });
@@ -244,6 +246,7 @@ const AddExpenseRow: FC<{
       return;
     }
     setCostType('');
+    setApplied('');
     setAmount('');
     setNote('');
     onAdded();
@@ -268,7 +271,18 @@ const AddExpenseRow: FC<{
           ))}
         </Select>
       </Table.Column>
-      <Table.Column>—</Table.Column>
+      <Table.Column>
+        <Input
+          size="sm"
+          inputMode="decimal"
+          className="max-w-[9rem]"
+          placeholder="Ansökt"
+          value={applied}
+          onChange={(event) => {
+            setApplied(event.target.value);
+          }}
+        />
+      </Table.Column>
       <Table.Column>—</Table.Column>
       <Table.Column>
         <Input

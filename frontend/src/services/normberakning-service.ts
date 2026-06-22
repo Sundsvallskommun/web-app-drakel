@@ -95,6 +95,8 @@ export interface NormRowInput {
   otherSubType?: string;
   specification?: string;
   caseworkerAmount?: number;
+  /** The applied (ansökt) amount — only honoured by the API on expense create, not on update. */
+  appliedAmount?: number;
   partyId?: string;
   role?: string;
   name?: string;

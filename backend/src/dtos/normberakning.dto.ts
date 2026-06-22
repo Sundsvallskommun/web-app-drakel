@@ -19,6 +19,8 @@ export class NormRowInputDto {
   @IsString() @IsOptional() otherSubType?: string;
   @IsString() @IsOptional() specification?: string;
   @IsNumber() @IsOptional() caseworkerAmount?: number;
+  /** The applied (ansökt) amount — honoured on expense create only; PATCH ignores it. */
+  @IsNumber() @IsOptional() appliedAmount?: number;
   // Person
   @IsString() @IsOptional() partyId?: string;
   @IsString() @IsOptional() role?: string;
