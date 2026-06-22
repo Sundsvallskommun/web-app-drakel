@@ -6,7 +6,7 @@ import { useStatuses } from '@hooks/use-statuses';
 import { useUserStore } from '@services/user-service/user-service';
 import { Button, Divider, FormControl, FormLabel, Input, Select } from '@sk-web-gui/react';
 import dayjs from 'dayjs';
-import { FC, useMemo } from 'react';
+import { FC, ReactNode, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 const PRIORITIES = [
@@ -25,6 +25,8 @@ interface ErrandInfoPanelProps {
   saving: boolean;
   error?: string;
   onSave: () => void;
+  /** Rendered under the "Spara ärende" divider (the sidebar's "Avsluta ärende" action). */
+  avslutaSlot?: ReactNode;
 }
 
 /**
@@ -39,6 +41,7 @@ export const ErrandInfoPanel: FC<ErrandInfoPanelProps> = ({
   saving,
   error,
   onSave,
+  avslutaSlot,
 }) => {
   const { statuses } = useStatuses();
   const username = useUserStore(useShallow((state) => state.user.username));
@@ -137,6 +140,8 @@ export const ErrandInfoPanel: FC<ErrandInfoPanelProps> = ({
       </Button>
 
       <Divider />
+
+      {avslutaSlot}
 
       <div className="flex flex-col gap-8 text-small">
         <span>

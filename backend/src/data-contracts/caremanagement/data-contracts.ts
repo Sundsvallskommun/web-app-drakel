@@ -1154,6 +1154,29 @@ export interface Note {
   modified?: string;
 }
 
+/** Set the approval state of an EB view section. */
+export interface SectionApprovalRequest {
+  /** Whether the section is approved (true) or its approval withdrawn (false) */
+  approved: boolean;
+  /** The handläggare approving the section (stored when approving, ignored when withdrawing) */
+  approvedBy?: string;
+}
+
+/** A handläggare's approval of one section of the EB view (calculation / payment / decision). */
+export interface SectionApproval {
+  /** The section this approval concerns */
+  section?: SectionApprovalSectionEnum;
+  /** Whether the section has been verified as approved by a handläggare */
+  approved?: boolean;
+  /** The handläggare who approved the section (null while not approved) */
+  approvedBy?: string;
+  /**
+   * When the section was approved (null while not approved)
+   * @format date-time
+   */
+  approvedAt?: string;
+}
+
 /** Handläggare edit of the normberäkning header — norm, calculation dates and custom household size. */
 export interface NormHeaderInput {
   /**
@@ -1456,6 +1479,18 @@ export interface FinancialAssistanceView {
   data?: FinancialAssistanceData;
   /** The most recent automated recommendation on the errand (the latest RECOMMENDATION decision the handläggare reviews), or null when none has been produced. Carries the recommended value and, when the pipeline has computed it, the recommended amount/period to prefill the Beslut form. */
   recommendation?: Decision;
+  /** The handläggare approval state of the three EB view sections (calculation, payment, decision) — whether each has been verified as approved. Always present with all three sections. */
+  sectionApprovals?: SectionApprovals;
+}
+
+/** The handläggare approval state of the three EB view sections (calculation, payment, decision). */
+export interface SectionApprovals {
+  /** Approval of the normberäkning (beräkning) section */
+  calculation?: SectionApproval;
+  /** Approval of the utbetalning (payment) section */
+  payment?: SectionApproval;
+  /** Approval of the beslut (decision) section */
+  decision?: SectionApproval;
 }
 
 /** A child pre-filled from Lifecare for a financial assistance renewal. Carries only what Lifecare provides — personnummer and name; the citizen completes residence, school etc. on the form. */
@@ -1832,6 +1867,13 @@ export enum EligibilityResponseReasonCodeEnum {
   ALL_TYPES_TEST = "ALL_TYPES_TEST",
 }
 
+/** The section this approval concerns */
+export enum SectionApprovalSectionEnum {
+  CALCULATION = "CALCULATION",
+  PAYMENT = "PAYMENT",
+  DECISION = "DECISION",
+}
+
 /** The norm type */
 export enum NormHeaderInputNormTypeEnum {
   RIKSNORM = "RIKSNORM",
@@ -1939,4 +1981,17 @@ export enum UpdateWarningParamsStatusEnum {
   OPEN = "OPEN",
   ACKNOWLEDGED = "ACKNOWLEDGED",
   CLOSED = "CLOSED",
+}
+
+/** The section to approve */
+export enum SetSectionApprovalParamsSectionEnum {
+  CALCULATION = "CALCULATION",
+  PAYMENT = "PAYMENT",
+  DECISION = "DECISION",
+}
+
+export enum SetSectionApprovalParamsEnum {
+  CALCULATION = "CALCULATION",
+  PAYMENT = "PAYMENT",
+  DECISION = "DECISION",
 }

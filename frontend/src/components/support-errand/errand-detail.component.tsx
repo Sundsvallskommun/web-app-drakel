@@ -5,6 +5,7 @@ import { useErrand } from '@hooks/use-errand';
 import { useErrandAttachments } from '@hooks/use-errand-attachments';
 import { useErrandForm } from '@hooks/use-errand-form';
 import { useErrandNotes } from '@hooks/use-errand-notes';
+import { useErrandSectionApprovals } from '@hooks/use-errand-section-approvals';
 import { useErrandWarnings } from '@hooks/use-errand-warnings';
 import { Spinner, Tabs } from '@sk-web-gui/react';
 import { CLIENT_FILES_PDF } from '@utils/attachment-names';
@@ -13,6 +14,7 @@ import { FC, useEffect, useState } from 'react';
 
 import { ErrandApplicationData } from './errand-application-data.component';
 import { ErrandAttachments } from './errand-attachments.component';
+import { ErrandAvsluta } from './errand-avsluta.component';
 import { ErrandBeslut } from './errand-beslut.component';
 import { ErrandInfoPanel } from './errand-info-panel.component';
 import { ErrandMessageAttachments } from './errand-message-attachments.component';
@@ -22,6 +24,7 @@ import { ErrandNotes } from './errand-notes.component';
 import { ErrandSidebar, SidebarSection } from './errand-sidebar.component';
 import { ErrandUtbetalning } from './errand-utbetalning.component';
 import { ErrandWarnings } from './errand-warnings.component';
+import { SectionApprovalCheckbox } from './section-approval-checkbox.component';
 
 // Drafts are created with this sentinel title until the handläggare fills the errand in.
 const EMPTY_ERRAND_TITLE = 'Empty errand';
@@ -50,6 +53,9 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     error: attachmentsError,
     refresh: refreshAttachments,
   } = useErrandAttachments(resolvedErrandId);
+
+  // Section approvals are shared between the per-section checkboxes and the sidebar "Avsluta" button.
+  const { approvals, pendingSection, setApproval } = useErrandSectionApprovals(resolvedErrandId);
 
   // Only OPEN warnings are actionable — acknowledged/closed ones disappear from the sidebar.
   const openWarnings = warnings.filter((warning) => warning.status === 'OPEN');
@@ -105,6 +111,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           saving={saving}
           error={saveError}
           onSave={() => void save()}
+          avslutaSlot={<ErrandAvsluta errandId={apiErrandId} approvals={approvals} onClosed={refresh} />}
         />
       ),
     },
@@ -164,11 +171,17 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
             <Tabs.Item>
               <Tabs.Button className="text-base">Normberäkning</Tabs.Button>
               <Tabs.Content>
-                <div className="pt-24 pb-40 px-24 md:px-40">
+                <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
                   <ErrandNormberakning
                     errandId={apiErrandId}
                     warnings={openWarnings}
                     onWarningsChanged={refreshWarnings}
+                  />
+                  <SectionApprovalCheckbox
+                    label="Godkänn normberäkning"
+                    approval={approvals.calculation}
+                    disabled={pendingSection === 'CALCULATION'}
+                    onChange={(approved) => void setApproval('CALCULATION', approved)}
                   />
                 </div>
               </Tabs.Content>
@@ -176,16 +189,28 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
             <Tabs.Item>
               <Tabs.Button className="text-base">Beslut</Tabs.Button>
               <Tabs.Content>
-                <div className="pt-24 pb-40 px-24 md:px-40">
+                <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
                   <ErrandBeslut errandId={apiErrandId} />
+                  <SectionApprovalCheckbox
+                    label="Godkänn beslut"
+                    approval={approvals.decision}
+                    disabled={pendingSection === 'DECISION'}
+                    onChange={(approved) => void setApproval('DECISION', approved)}
+                  />
                 </div>
               </Tabs.Content>
             </Tabs.Item>
             <Tabs.Item>
               <Tabs.Button className="text-base">Utbetalning</Tabs.Button>
               <Tabs.Content>
-                <div className="pt-24 pb-40 px-24 md:px-40">
+                <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
                   <ErrandUtbetalning errandId={apiErrandId} />
+                  <SectionApprovalCheckbox
+                    label="Godkänn utbetalning"
+                    approval={approvals.payment}
+                    disabled={pendingSection === 'PAYMENT'}
+                    onChange={(approved) => void setApproval('PAYMENT', approved)}
+                  />
                 </div>
               </Tabs.Content>
             </Tabs.Item>

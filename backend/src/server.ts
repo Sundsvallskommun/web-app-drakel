@@ -11,6 +11,7 @@ import { MetadataController } from './controllers/metadata.controller';
 import { NormberakningController } from './controllers/normberakning.controller';
 import { NoteController } from './controllers/note.controller';
 import { PaymentController } from './controllers/payment.controller';
+import { SectionApprovalController } from './controllers/section-approval.controller';
 import { UserController } from './controllers/user.controller';
 import { WarningController } from './controllers/warning.controller';
 
@@ -28,6 +29,7 @@ const app = new App([
   NormberakningController,
   WarningController,
   PaymentController,
+  SectionApprovalController,
 ]);
 
 app.listen();
