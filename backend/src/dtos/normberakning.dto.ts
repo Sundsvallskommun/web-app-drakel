@@ -9,26 +9,26 @@ export class NormRowInputDto {
   // Income (one row per type, applicant (S) + co-applicant (M) side)
   @IsInt() @IsOptional() typeId?: number;
   @IsString() @IsOptional() typeName?: string;
-  @IsNumber() @IsOptional() applicantHandlaggareAmount?: number;
+  @IsNumber() @IsOptional() applicantCaseworkerAmount?: number;
   @IsString() @IsOptional() applicantAmountDate?: string;
-  @IsNumber() @IsOptional() coapplicantHandlaggareAmount?: number;
+  @IsNumber() @IsOptional() coapplicantCaseworkerAmount?: number;
   @IsString() @IsOptional() coapplicantAmountDate?: string;
   // Expense (bucket = EXPENSE | SPECIAL_EXPENSE)
   @IsString() @IsOptional() costType?: string;
   @IsString() @IsOptional() bucket?: string;
   @IsString() @IsOptional() otherSubType?: string;
   @IsString() @IsOptional() specification?: string;
-  @IsNumber() @IsOptional() handlaggareAmount?: number;
+  @IsNumber() @IsOptional() caseworkerAmount?: number;
   // Person
   @IsString() @IsOptional() partyId?: string;
   @IsString() @IsOptional() role?: string;
   @IsString() @IsOptional() name?: string;
-  @IsInt() @IsOptional() handlaggareDays?: number;
+  @IsInt() @IsOptional() caseworkerDays?: number;
   @IsBoolean() @IsOptional() included?: boolean;
   @IsString() @IsOptional() deviationFromDate?: string;
   @IsString() @IsOptional() deviationToDate?: string;
   @IsString() @IsOptional() normInterval?: string;
-  @IsNumber() @IsOptional() jobbstimulansAmount?: number;
+  @IsNumber() @IsOptional() jobStimulusAmount?: number;
   // Shared
   @IsString() @IsOptional() note?: string;
 }

@@ -98,9 +98,9 @@ const IncomeRow: FC<{
   saving: boolean;
   onAction: (rowId: string, action: () => Promise<{ error?: unknown }>) => void;
 }> = ({ errandId, row, saving, onAction }) => {
-  const [applicantAmount, setApplicantAmount] = useState<string>(row.applicantHandlaggareAmount?.toString() ?? '');
+  const [applicantAmount, setApplicantAmount] = useState<string>(row.applicantCaseworkerAmount?.toString() ?? '');
   const [applicantDate, setApplicantDate] = useState<string>(toDateInput(row.applicantAmountDate));
-  const [coapplicantAmount, setCoapplicantAmount] = useState<string>(row.coapplicantHandlaggareAmount?.toString() ?? '');
+  const [coapplicantAmount, setCoapplicantAmount] = useState<string>(row.coapplicantCaseworkerAmount?.toString() ?? '');
   const [coapplicantDate, setCoapplicantDate] = useState<string>(toDateInput(row.coapplicantAmountDate));
   const [note, setNote] = useState<string>(row.note ?? '');
 
@@ -136,18 +136,18 @@ const IncomeRow: FC<{
   }
 
   const dirty =
-    applicantAmount !== (row.applicantHandlaggareAmount?.toString() ?? '') ||
+    applicantAmount !== (row.applicantCaseworkerAmount?.toString() ?? '') ||
     applicantDate !== toDateInput(row.applicantAmountDate) ||
-    coapplicantAmount !== (row.coapplicantHandlaggareAmount?.toString() ?? '') ||
+    coapplicantAmount !== (row.coapplicantCaseworkerAmount?.toString() ?? '') ||
     coapplicantDate !== toDateInput(row.coapplicantAmountDate) ||
     note !== (row.note ?? '');
 
   const save = () => {
     onAction(rowId, () =>
       updateNormRow(errandId, 'incomes', rowId, {
-        applicantHandlaggareAmount: parseAmount(applicantAmount),
+        applicantCaseworkerAmount: parseAmount(applicantAmount),
         applicantAmountDate: applicantDate.trim() || undefined,
-        coapplicantHandlaggareAmount: parseAmount(coapplicantAmount),
+        coapplicantCaseworkerAmount: parseAmount(coapplicantAmount),
         coapplicantAmountDate: coapplicantDate.trim() || undefined,
         note: note.trim() || undefined,
       })
@@ -255,9 +255,9 @@ const AddIncomeRow: FC<{ errandId: string; onAdded: () => void; onError: (messag
     setAdding(true);
     const result = await addNormRow(errandId, 'incomes', {
       typeName: typeName.trim(),
-      applicantHandlaggareAmount: parseAmount(applicantAmount),
+      applicantCaseworkerAmount: parseAmount(applicantAmount),
       applicantAmountDate: applicantDate || undefined,
-      coapplicantHandlaggareAmount: parseAmount(coapplicantAmount),
+      coapplicantCaseworkerAmount: parseAmount(coapplicantAmount),
       coapplicantAmountDate: coapplicantDate || undefined,
       note: note.trim() || undefined,
     });

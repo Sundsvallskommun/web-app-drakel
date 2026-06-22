@@ -21,7 +21,6 @@ const statusColor = (status: string): LabelColor => {
       return 'warning';
     case 'SOLVED':
     case 'CLOSED':
-    case 'AVSLUTAD':
       return 'primary';
     default:
       return 'tertiary';

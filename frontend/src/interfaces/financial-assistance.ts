@@ -124,7 +124,7 @@ export const swedishMonth = (month?: number): string =>
 const LABELS: Record<string, Record<string, string>> = {
   applicationType: { NEW: 'Nyansökan', RENEWAL: 'Återansökan', SUPPLEMENTARY: 'Tilläggsansökan' },
   maritalStatus: { SINGLE: 'Ensamstående', COHABITING: 'Gift eller sambo' },
-  normType: { RIKSNORM: 'Riksnorm', OTHER_NORM: 'Annan norm' },
+  normType: { NATIONAL_NORM: 'Riksnorm', OTHER_NORM: 'Annan norm' },
   periodChoice: { CURRENT_MONTH: 'Denna månad', NEXT_MONTH: 'Nästa månad', OTHER_BENEFIT: 'Annat bistånd' },
   housingForm: {
     NO_HOUSING_OR_INSTITUTION: 'Utan bostad eller bor på stödboende/institution',
@@ -170,15 +170,15 @@ const LABELS: Record<string, Record<string, string>> = {
     VEHICLE: 'Fordon',
     OTHER: 'Konst, smycken eller andra övriga tillgångar',
   },
-  propertyType: { BOSTADSRATT: 'Bostadsrätt', VILLA: 'Villa', FASTIGHET: 'Fastighet', FRITIDSHUS: 'Fritidshus' },
+  propertyType: { CONDOMINIUM: 'Bostadsrätt', HOUSE: 'Villa', PROPERTY: 'Fastighet', HOLIDAY_HOME: 'Fritidshus' },
   vehicleType: {
-    BIL: 'Bil',
-    BAT: 'Båt',
-    MC: 'MC',
-    HUSVAGN: 'Husvagn',
+    CAR: 'Bil',
+    BOAT: 'Båt',
+    MOTORCYCLE: 'MC',
+    CARAVAN: 'Husvagn',
     MOPED: 'Moped',
-    SNOSKOTER: 'Snöskoter',
-    ANNAT: 'Annat',
+    SNOWMOBILE: 'Snöskoter',
+    OTHER: 'Annat',
   },
   planningType: {
     WORK: 'Arbete',

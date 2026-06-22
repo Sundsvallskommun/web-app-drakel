@@ -42,7 +42,6 @@ const statusIcon = (key: string | null): LucideIcon => {
       return FilePlus;
     case 'SOLVED':
     case 'CLOSED':
-    case 'AVSLUTAD':
       return CircleCheckBig;
     default:
       return CircleDot;

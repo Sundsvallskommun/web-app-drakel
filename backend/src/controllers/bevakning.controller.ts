@@ -5,7 +5,7 @@ import CaremanagementBevakningService from '@services/caremanagement-bevakning.s
 import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, Req, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
-import { BevakningRequest } from '@/data-contracts/caremanagement/data-contracts';
+import { MonitoringRequest } from '@/data-contracts/caremanagement/data-contracts';
 import { BevakningInputDto } from '@/dtos/bevakning.dto';
 import { BevakningApiResponse, BevakningarApiResponse } from '@/responses/bevakning.response';
 
@@ -29,7 +29,7 @@ export class BevakningController {
   @ResponseSchema(BevakningApiResponse)
   @UseBefore(authMiddleware, validationMiddleware(BevakningInputDto, 'body'))
   async createBevakning(@Req() req: RequestWithUser, @Param('errandId') errandId: string, @Body() input: BevakningInputDto) {
-    const body: BevakningRequest = {
+    const body: MonitoringRequest = {
       title: input.title,
       description: input.description,
       startDate: input.startDate,
@@ -50,7 +50,7 @@ export class BevakningController {
     @Param('bevakningId') bevakningId: string,
     @Body() input: BevakningInputDto,
   ) {
-    const body: BevakningRequest = {
+    const body: MonitoringRequest = {
       title: input.title,
       description: input.description,
       startDate: input.startDate,

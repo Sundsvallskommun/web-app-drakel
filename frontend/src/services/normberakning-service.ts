@@ -7,22 +7,22 @@ export type NormSection = 'persons' | 'incomes' | 'expenses';
 /**
  * Draft rows mirror the Lifecare FC "Beräkning" view. Defined locally — like {@link Note}. Every value
  * comes as a read-only process value (system), an editable handläggare value, and the effective value
- * (handläggare when set, otherwise process). `origin` = SYSTEM | HANDLAGGARE.
+ * (handläggare when set, otherwise process). `origin` = SYSTEM | CASEWORKER.
  */
 export interface NormPersonRow {
   id?: string;
   origin?: string;
   partyId?: string;
-  role?: 'APPLICANT' | 'CO_APPLICANT' | 'CHILD' | 'UMGANGESBARN';
+  role?: 'APPLICANT' | 'CO_APPLICANT' | 'CHILD' | 'VISITATION_CHILD';
   name?: string;
   processDays?: number;
-  handlaggareDays?: number;
+  caseworkerDays?: number;
   effectiveDays?: number;
   included?: boolean;
   deviationFromDate?: string;
   deviationToDate?: string;
   normInterval?: string;
-  jobbstimulansAmount?: number;
+  jobStimulusAmount?: number;
   deleted?: boolean;
   note?: string;
 }
@@ -34,11 +34,11 @@ export interface NormIncomeRow {
   typeId?: number;
   typeName?: string;
   applicantProcessAmount?: number;
-  applicantHandlaggareAmount?: number;
+  applicantCaseworkerAmount?: number;
   applicantEffectiveAmount?: number;
   applicantAmountDate?: string;
   coapplicantProcessAmount?: number;
-  coapplicantHandlaggareAmount?: number;
+  coapplicantCaseworkerAmount?: number;
   coapplicantEffectiveAmount?: number;
   coapplicantAmountDate?: string;
   deleted?: boolean;
@@ -55,7 +55,7 @@ export interface NormExpenseRow {
   specification?: string;
   appliedAmount?: number;
   processAmount?: number;
-  handlaggareAmount?: number;
+  caseworkerAmount?: number;
   effectiveAmount?: number;
   deleted?: boolean;
   note?: string;
@@ -86,24 +86,24 @@ export interface NormberakningDraft {
 export interface NormRowInput {
   typeId?: number;
   typeName?: string;
-  applicantHandlaggareAmount?: number;
+  applicantCaseworkerAmount?: number;
   applicantAmountDate?: string;
-  coapplicantHandlaggareAmount?: number;
+  coapplicantCaseworkerAmount?: number;
   coapplicantAmountDate?: string;
   costType?: string;
   bucket?: string;
   otherSubType?: string;
   specification?: string;
-  handlaggareAmount?: number;
+  caseworkerAmount?: number;
   partyId?: string;
   role?: string;
   name?: string;
-  handlaggareDays?: number;
+  caseworkerDays?: number;
   included?: boolean;
   deviationFromDate?: string;
   deviationToDate?: string;
   normInterval?: string;
-  jobbstimulansAmount?: number;
+  jobStimulusAmount?: number;
   note?: string;
 }
 

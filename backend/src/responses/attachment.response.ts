@@ -25,7 +25,7 @@ export class Attachment {
   @IsString()
   @IsOptional()
   origin?: string;
-  /** Who sent the file: CLIENT (applicant) / HANDLAGGARE (caseworker). */
+  /** Who sent the file: CLIENT (applicant) / CASEWORKER (caseworker). */
   @IsString()
   @IsOptional()
   senderRole?: string;

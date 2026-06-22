@@ -2,47 +2,51 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 
-import { Bevakning, BevakningRequest } from '@/data-contracts/caremanagement/data-contracts';
+import { Monitoring, MonitoringRequest } from '@/data-contracts/caremanagement/data-contracts';
 
-/** Extracts the bevakning id (last path segment) from a caremanagement Location header. */
-const bevakningIdFromLocation = (location?: string): string | undefined => location?.split('/').filter(Boolean).pop();
+/** Extracts the monitoring id (last path segment) from a caremanagement Location header. */
+const monitoringIdFromLocation = (location?: string): string | undefined => location?.split('/').filter(Boolean).pop();
 
-/** Owns the bevakning (date-bound watch/reminder) sub-resource of a financial-assistance errand. */
+/**
+ * Owns the bevakning (date-bound watch/reminder) sub-resource of a financial-assistance errand.
+ * caremanagement calls this resource "monitorings"; we keep the Swedish "bevakning" name towards the
+ * frontend.
+ */
 class CaremanagementBevakningService {
   private apiService = new CaremanagementApiService();
 
-  async readBevakningar(errandId: string): Promise<ApiResponse<Bevakning[]>> {
-    return this.apiService.get<Bevakning[]>({
-      url: caremanagementUrl('errands', 'financial-assistance', errandId, 'bevakningar'),
+  async readBevakningar(errandId: string): Promise<ApiResponse<Monitoring[]>> {
+    return this.apiService.get<Monitoring[]>({
+      url: caremanagementUrl('errands', 'financial-assistance', errandId, 'monitorings'),
     });
   }
 
-  async getBevakning(errandId: string, bevakningId: string): Promise<ApiResponse<Bevakning>> {
-    return this.apiService.get<Bevakning>({
-      url: caremanagementUrl('errands', 'financial-assistance', errandId, 'bevakningar', bevakningId),
+  async getBevakning(errandId: string, bevakningId: string): Promise<ApiResponse<Monitoring>> {
+    return this.apiService.get<Monitoring>({
+      url: caremanagementUrl('errands', 'financial-assistance', errandId, 'monitorings', bevakningId),
     });
   }
 
   /** Creates a bevakning. caremanagement returns 201 + Location (empty body), so resolve it by id. */
-  async createBevakning(errandId: string, body: BevakningRequest): Promise<ApiResponse<Bevakning>> {
-    const created = await this.apiService.post<Bevakning>({
-      url: caremanagementUrl('errands', 'financial-assistance', errandId, 'bevakningar'),
+  async createBevakning(errandId: string, body: MonitoringRequest): Promise<ApiResponse<Monitoring>> {
+    const created = await this.apiService.post<Monitoring>({
+      url: caremanagementUrl('errands', 'financial-assistance', errandId, 'monitorings'),
       data: body,
     });
-    const bevakningId = bevakningIdFromLocation(created.location);
+    const bevakningId = monitoringIdFromLocation(created.location);
     return bevakningId ? this.getBevakning(errandId, bevakningId) : created;
   }
 
-  async updateBevakning(errandId: string, bevakningId: string, body: BevakningRequest): Promise<ApiResponse<Bevakning>> {
-    return this.apiService.put<Bevakning>({
-      url: caremanagementUrl('errands', 'financial-assistance', errandId, 'bevakningar', bevakningId),
+  async updateBevakning(errandId: string, bevakningId: string, body: MonitoringRequest): Promise<ApiResponse<Monitoring>> {
+    return this.apiService.put<Monitoring>({
+      url: caremanagementUrl('errands', 'financial-assistance', errandId, 'monitorings', bevakningId),
       data: body,
     });
   }
 
   async deleteBevakning(errandId: string, bevakningId: string): Promise<ApiResponse<null>> {
     return this.apiService.delete<null>({
-      url: caremanagementUrl('errands', 'financial-assistance', errandId, 'bevakningar', bevakningId),
+      url: caremanagementUrl('errands', 'financial-assistance', errandId, 'monitorings', bevakningId),
     });
   }
 }

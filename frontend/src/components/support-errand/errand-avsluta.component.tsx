@@ -6,7 +6,7 @@ import { Button, Modal } from '@sk-web-gui/react';
 import { FC, useState } from 'react';
 
 // The status an errand gets when avslutat.
-const CLOSED_STATUS = 'AVSLUTAD';
+const CLOSED_STATUS = 'CLOSED';
 
 const SECTION_LABELS: Record<SectionKey, string> = {
   CALCULATION: 'Normberäkning',
@@ -16,7 +16,7 @@ const SECTION_LABELS: Record<SectionKey, string> = {
 
 /**
  * "Avsluta ärende" button for the sidebar. When not every section is approved, asks the handläggare to
- * confirm before closing; otherwise closes directly. Closing sets the errand status to AVSLUTAD.
+ * confirm before closing; otherwise closes directly. Closing sets the errand status to CLOSED.
  */
 export const ErrandAvsluta: FC<{ errandId: string; approvals: SectionApprovals; onClosed: () => void }> = ({
   errandId,

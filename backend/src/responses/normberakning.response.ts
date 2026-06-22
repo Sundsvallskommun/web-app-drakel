@@ -15,13 +15,13 @@ export class NormPersonRow {
   @IsString() @IsOptional() role?: string;
   @IsString() @IsOptional() name?: string;
   @IsInt() @IsOptional() processDays?: number;
-  @IsInt() @IsOptional() handlaggareDays?: number;
+  @IsInt() @IsOptional() caseworkerDays?: number;
   @IsInt() @IsOptional() effectiveDays?: number;
   @IsBoolean() @IsOptional() included?: boolean;
   @IsString() @IsOptional() deviationFromDate?: string;
   @IsString() @IsOptional() deviationToDate?: string;
   @IsString() @IsOptional() normInterval?: string;
-  @IsNumber() @IsOptional() jobbstimulansAmount?: number;
+  @IsNumber() @IsOptional() jobStimulusAmount?: number;
   @IsBoolean() @IsOptional() deleted?: boolean;
   @IsString() @IsOptional() note?: string;
 }
@@ -32,11 +32,11 @@ export class NormIncomeRow {
   @IsInt() @IsOptional() typeId?: number;
   @IsString() @IsOptional() typeName?: string;
   @IsNumber() @IsOptional() applicantProcessAmount?: number;
-  @IsNumber() @IsOptional() applicantHandlaggareAmount?: number;
+  @IsNumber() @IsOptional() applicantCaseworkerAmount?: number;
   @IsNumber() @IsOptional() applicantEffectiveAmount?: number;
   @IsString() @IsOptional() applicantAmountDate?: string;
   @IsNumber() @IsOptional() coapplicantProcessAmount?: number;
-  @IsNumber() @IsOptional() coapplicantHandlaggareAmount?: number;
+  @IsNumber() @IsOptional() coapplicantCaseworkerAmount?: number;
   @IsNumber() @IsOptional() coapplicantEffectiveAmount?: number;
   @IsString() @IsOptional() coapplicantAmountDate?: string;
   @IsBoolean() @IsOptional() deleted?: boolean;
@@ -53,7 +53,7 @@ export class NormExpenseRow {
   @IsString() @IsOptional() specification?: string;
   @IsNumber() @IsOptional() appliedAmount?: number;
   @IsNumber() @IsOptional() processAmount?: number;
-  @IsNumber() @IsOptional() handlaggareAmount?: number;
+  @IsNumber() @IsOptional() caseworkerAmount?: number;
   @IsNumber() @IsOptional() effectiveAmount?: number;
   @IsBoolean() @IsOptional() deleted?: boolean;
   @IsString() @IsOptional() note?: string;

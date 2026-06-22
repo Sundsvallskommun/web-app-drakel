@@ -3,7 +3,7 @@ import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 
 import {
-  NormberakningDraft,
+  CalculationDraft,
   NormExpenseRow,
   NormIncomeRow,
   NormPersonRow,
@@ -24,16 +24,16 @@ class CaremanagementNormberakningService {
   private apiService = new CaremanagementApiService();
 
   private draftUrl(errandId: string, ...rest: string[]): string {
-    return caremanagementUrl('errands', 'financial-assistance', errandId, 'normberakning', 'draft', ...rest);
+    return caremanagementUrl('errands', 'financial-assistance', errandId, 'calculation', 'draft', ...rest);
   }
 
-  async readDraft(errandId: string): Promise<ApiResponse<NormberakningDraft>> {
-    return this.apiService.get<NormberakningDraft>({ url: this.draftUrl(errandId) });
+  async readDraft(errandId: string): Promise<ApiResponse<CalculationDraft>> {
+    return this.apiService.get<CalculationDraft>({ url: this.draftUrl(errandId) });
   }
 
   /** Updates the draft header (norm, calculation dates, household size). */
-  async updateHeader(errandId: string, input: NormHeaderInputDto): Promise<ApiResponse<NormberakningDraft>> {
-    return this.apiService.patch<NormberakningDraft>({ url: this.draftUrl(errandId, 'header'), data: input });
+  async updateHeader(errandId: string, input: NormHeaderInputDto): Promise<ApiResponse<CalculationDraft>> {
+    return this.apiService.patch<CalculationDraft>({ url: this.draftUrl(errandId, 'header'), data: input });
   }
 
   /** Adds a handläggare row to a section. */

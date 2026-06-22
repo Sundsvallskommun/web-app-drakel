@@ -110,7 +110,7 @@ const ExpenseRow: FC<{
   saving: boolean;
   onAction: (rowId: string, action: () => Promise<{ error?: unknown }>) => void;
 }> = ({ errandId, row, saving, onAction }) => {
-  const [amount, setAmount] = useState<string>(row.handlaggareAmount?.toString() ?? '');
+  const [amount, setAmount] = useState<string>(row.caseworkerAmount?.toString() ?? '');
   const [note, setNote] = useState<string>(row.note ?? '');
   const rowId = row.id ?? '';
 
@@ -142,12 +142,12 @@ const ExpenseRow: FC<{
     );
   }
 
-  const dirty = amount !== (row.handlaggareAmount?.toString() ?? '') || note !== (row.note ?? '');
+  const dirty = amount !== (row.caseworkerAmount?.toString() ?? '') || note !== (row.note ?? '');
 
   const save = () => {
     onAction(rowId, () =>
       updateNormRow(errandId, 'expenses', rowId, {
-        handlaggareAmount: parseAmount(amount),
+        caseworkerAmount: parseAmount(amount),
         note: note.trim() || undefined,
       })
     );
@@ -223,7 +223,7 @@ const AddExpenseRow: FC<{
       bucket,
       costType: 'OTHER',
       specification: specification.trim(),
-      handlaggareAmount: parseAmount(amount),
+      caseworkerAmount: parseAmount(amount),
       note: note.trim() || undefined,
     });
     setAdding(false);
