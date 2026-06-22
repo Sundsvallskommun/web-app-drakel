@@ -19,6 +19,7 @@ import { ErrandAvsluta } from './errand-avsluta.component';
 import { ErrandBeslut } from './errand-beslut.component';
 import { ErrandBevakningar } from './errand-bevakningar.component';
 import { ErrandInfoPanel } from './errand-info-panel.component';
+import { ErrandJournal } from './errand-journal.component';
 import { ErrandMessageAttachments } from './errand-message-attachments.component';
 import { ErrandMessages } from './errand-messages.component';
 import { ErrandNormberakning } from './errand-normberakning.component';
@@ -256,6 +257,14 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               <Tabs.Content>
                 <div className="pt-24 pb-40 px-24 md:px-40">
                   <ErrandMessages errandId={apiErrandId} />
+                </div>
+              </Tabs.Content>
+            </Tabs.Item>
+            <Tabs.Item>
+              <Tabs.Button className="text-base">Journal</Tabs.Button>
+              <Tabs.Content>
+                <div className="pt-24 pb-40 px-24 md:px-40">
+                  <ErrandJournal errandId={apiErrandId} />
                 </div>
               </Tabs.Content>
             </Tabs.Item>

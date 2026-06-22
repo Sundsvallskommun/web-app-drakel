@@ -263,7 +263,7 @@ export interface FinancialAssistanceData {
 
 /** An income reported by the applicant or co-applicant. */
 export interface Income {
-  /** The type of income (see GET .../errands/financial-assistance/metadata for the labelled catalogue) */
+  /** The type of income — the complete handläggare set; SSBTEK-sourced types are handläggare-only, the rest are reportable in Mina sidor (see GET .../errands/financial-assistance/metadata for the labelled catalogue + citizenReportable flag) */
   incomeType?: IncomeIncomeTypeEnum;
   /** The income amount */
   amount?: number;
@@ -689,6 +689,127 @@ export interface CreateMessage {
   author?: string;
   /** Id of the message this one replies to. Optional; when set it must reference a message on the same errand. */
   inReplyToId?: string;
+}
+
+export interface CreateJournalEntry {
+  /**
+   * Journal entry type (Lifecare 'Typ'/Journaltyp)
+   * @minLength 0
+   * @maxLength 255
+   * @example "Journalfört meddelande"
+   */
+  type: string;
+  /**
+   * Heading (Lifecare 'Rubrik')
+   * @minLength 0
+   * @maxLength 255
+   * @example "Journalfört meddelande: 2025-05-30 Info"
+   */
+  heading: string;
+  /**
+   * Free-text body of the journal entry; optional
+   * @minLength 0
+   * @maxLength 1048576
+   * @example "Hej! Vill bara informera att jag fått jobb på Mejeriet."
+   */
+  text?: string;
+  /**
+   * Documented date (Lifecare 'Datum')
+   * @format date
+   * @example "2025-05-30"
+   */
+  entryDate: string;
+  /**
+   * Documented time (Lifecare 'Tid'); optional
+   * @example "14:30"
+   */
+  entryTime?: string;
+  /**
+   * User id of the author (Lifecare 'Upprättad av'); optional
+   * @minLength 0
+   * @maxLength 64
+   * @example "carola01winberg"
+   */
+  createdBy?: string;
+}
+
+export interface LockJournalEntry {
+  /**
+   * User id of whoever locks the entry; optional
+   * @minLength 0
+   * @maxLength 64
+   * @example "carola01winberg"
+   */
+  lockedBy?: string;
+}
+
+/** A journalanteckning (case-journal entry) attached to an errand */
+export interface JournalEntry {
+  /** Unique identifier */
+  id?: string;
+  /** Errand id this journal entry belongs to */
+  errandId?: string;
+  /**
+   * Journal entry type (Lifecare 'Typ'/Journaltyp). A municipality-configured value; see the metadata catalogue for a provisional set.
+   * @example "Journalfört meddelande"
+   */
+  type?: string;
+  /**
+   * Heading (Lifecare 'Rubrik')
+   * @example "Journalfört meddelande: 2025-05-30 Info"
+   */
+  heading?: string;
+  /**
+   * Free-text body of the journal entry
+   * @example "Hej! Vill bara informera att jag fått jobb på Mejeriet."
+   */
+  text?: string;
+  /**
+   * Documented date (Lifecare 'Datum'), distinct from the system created timestamp
+   * @format date
+   * @example "2025-05-30"
+   */
+  entryDate?: string;
+  /**
+   * Documented time (Lifecare 'Tid'); optional
+   * @example "14:30"
+   */
+  entryTime?: string;
+  /**
+   * Skrivskydd status — WORKING is an editable arbetsanteckning, LOCKED is an upprättad handling
+   * @example "WORKING"
+   */
+  status?: JournalEntryStatusEnum;
+  /**
+   * User id of the author (Lifecare 'Upprättad av'/'Ägare')
+   * @example "carola01winberg"
+   */
+  createdBy?: string;
+  /**
+   * Created timestamp
+   * @format date-time
+   */
+  created?: string;
+  /**
+   * User id of the last editor (Lifecare 'Ändrat av'); null until the entry has been edited
+   * @example "ebb14eri"
+   */
+  modifiedBy?: string;
+  /**
+   * Last modified timestamp; null until the entry has been edited
+   * @format date-time
+   */
+  modified?: string;
+  /**
+   * User id of whoever locked the entry; null while WORKING
+   * @example "carola01winberg"
+   */
+  lockedBy?: string;
+  /**
+   * Timestamp when the entry was locked (became an upprättad handling); null while WORKING
+   * @format date-time
+   */
+  locked?: string;
 }
 
 /** Decision recorded against an errand. Both system-generated decisions (e.g. a DMN-evaluated recommendation produced by a BPMN process) and human decisions (e.g. a caseworker approving a payment) are stored here, distinguished by `decisionType`. The list on the errand grows over time and is the audit trail of every decision made on the case. */
@@ -1209,6 +1330,48 @@ export interface Note {
   modified?: string;
 }
 
+export interface UpdateJournalEntry {
+  /**
+   * Journal entry type (Lifecare 'Typ'/Journaltyp)
+   * @minLength 0
+   * @maxLength 255
+   * @example "Journalfört meddelande"
+   */
+  type: string;
+  /**
+   * Heading (Lifecare 'Rubrik')
+   * @minLength 0
+   * @maxLength 255
+   * @example "Journalfört meddelande: 2025-05-30 Info"
+   */
+  heading: string;
+  /**
+   * Free-text body of the journal entry; optional
+   * @minLength 0
+   * @maxLength 1048576
+   * @example "Hej! Vill bara informera att jag fått jobb på Mejeriet."
+   */
+  text?: string;
+  /**
+   * Documented date (Lifecare 'Datum')
+   * @format date
+   * @example "2025-05-30"
+   */
+  entryDate: string;
+  /**
+   * Documented time (Lifecare 'Tid'); optional
+   * @example "14:30"
+   */
+  entryTime?: string;
+  /**
+   * User id of the editor (Lifecare 'Ändrat av'); optional
+   * @minLength 0
+   * @maxLength 64
+   * @example "ebb14eri"
+   */
+  modifiedBy?: string;
+}
+
 /** Set the approval state of an EB view section. */
 export interface SectionApprovalRequest {
   /** Whether the section is approved (true) or its approval withdrawn (false) */
@@ -1491,6 +1654,26 @@ export interface Attachment {
   modified?: string;
 }
 
+/** Journal metadata — the provisional catalogue of selectable journal entry types. */
+export interface JournalEntryMetadata {
+  /** Selectable journal entry types */
+  types?: JournalEntryType[];
+}
+
+/** A selectable journal entry type — the code and the Swedish Lifecare label. */
+export interface JournalEntryType {
+  /**
+   * The type code
+   * @example "JOURNALED_MESSAGE"
+   */
+  code?: string;
+  /**
+   * Human-readable Swedish label (the Lifecare 'Typ' value)
+   * @example "Journalfört meddelande"
+   */
+  displayName?: string;
+}
+
 /** A financial assistance errand with its typed application payload. */
 export interface FinancialAssistanceView {
   /** Unique id */
@@ -1574,12 +1757,14 @@ export interface FinancialAssistanceMetadata {
   livingCostTypes?: TypeOption[];
 }
 
-/** A selectable EB type — the code stored on the payload plus its Swedish display label. */
+/** A selectable EB type — the code stored on the payload, its Swedish label and whether the citizen reports it in Mina sidor. */
 export interface TypeOption {
   /** The type code, stored on the payload (incomeType / costType) */
   code?: string;
   /** Human-readable Swedish label for the type */
   displayName?: string;
+  /** Whether the type is shown on the citizen Mina-sidor form (true) or is handläggare-only, e.g. an SSBTEK-sourced income (false) */
+  citizenReportable?: boolean;
 }
 
 /** An allowed decision outcome (decision alternatives) for an errand type. */
@@ -1737,7 +1922,7 @@ export enum FinancialAssistanceDataHousingFormEnum {
   LIVING_WITH_PARENTS = "LIVING_WITH_PARENTS",
 }
 
-/** The type of income (see GET .../errands/financial-assistance/metadata for the labelled catalogue) */
+/** The type of income — the complete handläggare set; SSBTEK-sourced types are handläggare-only, the rest are reportable in Mina sidor (see GET .../errands/financial-assistance/metadata for the labelled catalogue + citizenReportable flag) */
 export enum IncomeIncomeTypeEnum {
   UNEMPLOYMENT_BENEFIT = "UNEMPLOYMENT_BENEFIT",
   UNEMPLOYMENT_OR_ALPHA_BENEFIT = "UNEMPLOYMENT_OR_ALPHA_BENEFIT",
@@ -1752,8 +1937,10 @@ export enum IncomeIncomeTypeEnum {
   CSN_LOAN = "CSN_LOAN",
   DAILY_ALLOWANCE_FK = "DAILY_ALLOWANCE_FK",
   SURVIVOR_SUPPORT = "SURVIVOR_SUPPORT",
+  FINANCIAL_AID_OTHER_MUNICIPALITY = "FINANCIAL_AID_OTHER_MUNICIPALITY",
   ESTABLISHMENT_BENEFIT = "ESTABLISHMENT_BENEFIT",
   PARENTAL_BENEFIT = "PARENTAL_BENEFIT",
+  RENT_SHARE_FROM_CHILD = "RENT_SHARE_FROM_CHILD",
   LODGING_ALLOWANCE = "LODGING_ALLOWANCE",
   CAPITAL_INCOME = "CAPITAL_INCOME",
   SALARY_AFTER_TAX = "SALARY_AFTER_TAX",
@@ -1763,6 +1950,8 @@ export enum IncomeIncomeTypeEnum {
   SICKNESS_BENEFIT = "SICKNESS_BENEFIT",
   TAX_REFUND = "TAX_REFUND",
   SWISH_DEPOSITS_TRANSFERS = "SWISH_DEPOSITS_TRANSFERS",
+  OCCUPATIONAL_PENSION_INSURANCE = "OCCUPATIONAL_PENSION_INSURANCE",
+  CHILD_SUPPORT = "CHILD_SUPPORT",
   MAINTENANCE_SUPPORT = "MAINTENANCE_SUPPORT",
   CARE_ALLOWANCE = "CARE_ALLOWANCE",
   ELDERLY_SUPPORT = "ELDERLY_SUPPORT",
@@ -1868,6 +2057,15 @@ export enum NotificationSubTypeEnum {
 export enum CreateMessageDirectionEnum {
   INBOUND = "INBOUND",
   OUTBOUND = "OUTBOUND",
+}
+
+/**
+ * Skrivskydd status — WORKING is an editable arbetsanteckning, LOCKED is an upprättad handling
+ * @example "WORKING"
+ */
+export enum JournalEntryStatusEnum {
+  WORKING = "WORKING",
+  LOCKED = "LOCKED",
 }
 
 /**
