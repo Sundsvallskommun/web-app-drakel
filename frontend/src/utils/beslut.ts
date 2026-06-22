@@ -3,7 +3,7 @@ import { NormberakningDraft } from '@services/normberakning-service';
 import dayjs from 'dayjs';
 
 /** An avslag is a beslutsalternativ that grants no belopp (carriesAmount === false). */
-export const isAvslag = (option: BeslutOption | undefined): boolean => option?.carriesAmount === false;
+const isAvslag = (option: BeslutOption | undefined): boolean => option?.carriesAmount === false;
 
 /**
  * The paid amount for a beslut: 0 for an avslag, otherwise the recommended amount from the

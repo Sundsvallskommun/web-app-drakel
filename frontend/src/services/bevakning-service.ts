@@ -37,17 +37,6 @@ export const createBevakning = (errandId: string, input: BevakningInput): Promis
     .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);
 
-/** Replaces a bevakning. */
-export const updateBevakning = (
-  errandId: string,
-  bevakningId: string,
-  input: BevakningInput
-): Promise<ServiceResponse<Bevakning>> =>
-  apiService
-    .put<ApiResponse<Bevakning>>(`errands/${errandId}/bevakningar/${bevakningId}`, input)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
-
 /** Deletes a bevakning. */
 export const deleteBevakning = (errandId: string, bevakningId: string): Promise<ServiceResponse<null>> =>
   apiService
