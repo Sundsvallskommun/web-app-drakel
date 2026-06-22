@@ -84,7 +84,6 @@ export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
           <Table.HeaderColumn>Typ</Table.HeaderColumn>
           <Table.HeaderColumn>Ansökt</Table.HeaderColumn>
           <Table.HeaderColumn>Process</Table.HeaderColumn>
-          <Table.HeaderColumn>Handläggare</Table.HeaderColumn>
           <Table.HeaderColumn>Effektivt</Table.HeaderColumn>
           <Table.HeaderColumn>Anmärkning</Table.HeaderColumn>
           <Table.HeaderColumn>
@@ -114,7 +113,7 @@ export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
   );
 };
 
-/** A single editable expense row (handläggare amount + note); applied/process/effective are read-only. */
+/** A single editable expense row: the Effektivt amount (writes caseworkerAmount) + note are editable; applied/process are read-only. */
 const ExpenseRow: FC<{
   errandId: string;
   row: NormExpenseRow;
@@ -132,7 +131,6 @@ const ExpenseRow: FC<{
         <Table.Column>
           <span className="line-through">{expenseLabel(row, typeLabels)}</span>
         </Table.Column>
-        <Table.Column>—</Table.Column>
         <Table.Column>—</Table.Column>
         <Table.Column>—</Table.Column>
         <Table.Column>—</Table.Column>
@@ -178,14 +176,13 @@ const ExpenseRow: FC<{
           size="sm"
           inputMode="decimal"
           className="max-w-[9rem]"
-          placeholder={displayAmount(row.processAmount)}
+          placeholder={displayAmount(row.effectiveAmount)}
           value={amount}
           onChange={(event) => {
             setAmount(event.target.value);
           }}
         />
       </Table.Column>
-      <Table.Column className="tabular-nums font-bold">{displayAmount(row.effectiveAmount)}</Table.Column>
       <Table.Column>
         <Input
           size="sm"
@@ -285,7 +282,6 @@ const AddExpenseRow: FC<{
           }}
         />
       </Table.Column>
-      <Table.Column>—</Table.Column>
       <Table.Column>
         <Input
           size="sm"
