@@ -98,7 +98,11 @@ export const ErrandInfoPanel: FC<ErrandInfoPanelProps> = ({
             setField('status', event.target.value);
           }}
         >
-          <Select.Option value="">Välj status</Select.Option>
+          {!form.status && (
+            <Select.Option value="" disabled>
+              Ej satt
+            </Select.Option>
+          )}
           {statusOptions.map((option) => (
             <Select.Option key={option.name} value={option.name}>
               {option.label}
@@ -117,7 +121,11 @@ export const ErrandInfoPanel: FC<ErrandInfoPanelProps> = ({
             setField('priority', event.target.value);
           }}
         >
-          <Select.Option value="">Välj prioritet</Select.Option>
+          {!form.priority && (
+            <Select.Option value="" disabled>
+              Ej satt
+            </Select.Option>
+          )}
           {PRIORITIES.map((option) => (
             <Select.Option key={option.value} value={option.value}>
               {option.label}
