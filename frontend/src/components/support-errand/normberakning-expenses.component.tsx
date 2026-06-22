@@ -162,6 +162,7 @@ const ExpenseRow: FC<{
         <Input
           size="sm"
           inputMode="decimal"
+          className="max-w-[9rem]"
           placeholder={displayAmount(row.processAmount)}
           value={amount}
           onChange={(event) => {
@@ -254,6 +255,7 @@ const AddExpenseRow: FC<{
         <Input
           size="sm"
           inputMode="decimal"
+          className="max-w-[9rem]"
           placeholder="Belopp"
           value={amount}
           onChange={(event) => {

@@ -1,8 +1,9 @@
 'use client';
 
 import { addNormRow, deleteNormRow, NormIncomeRow, restoreNormRow, updateNormRow } from '@services/normberakning-service';
-import { Button, Input, Table } from '@sk-web-gui/react';
+import { Button, DatePicker, Input, Table } from '@sk-web-gui/react';
 import { formatAmount } from '@utils/format-amount';
+import dayjs from 'dayjs';
 import { Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { FC, useState } from 'react';
 
@@ -18,6 +19,9 @@ const parseAmount = (value: string): number | undefined => {
 };
 
 const displayAmount = (value?: number): string => (value == null ? '—' : formatAmount(value));
+
+// caremanagement stores the income amount dates as date-time; the field only needs the day (yyyy-MM-dd).
+const toDateInput = (value?: string): string => (value ? dayjs(value).format('YYYY-MM-DD') : '');
 
 interface NormberakningIncomesProps {
   errandId: string;
@@ -95,9 +99,9 @@ const IncomeRow: FC<{
   onAction: (rowId: string, action: () => Promise<{ error?: unknown }>) => void;
 }> = ({ errandId, row, saving, onAction }) => {
   const [applicantAmount, setApplicantAmount] = useState<string>(row.applicantHandlaggareAmount?.toString() ?? '');
-  const [applicantDate, setApplicantDate] = useState<string>(row.applicantAmountDate ?? '');
+  const [applicantDate, setApplicantDate] = useState<string>(toDateInput(row.applicantAmountDate));
   const [coapplicantAmount, setCoapplicantAmount] = useState<string>(row.coapplicantHandlaggareAmount?.toString() ?? '');
-  const [coapplicantDate, setCoapplicantDate] = useState<string>(row.coapplicantAmountDate ?? '');
+  const [coapplicantDate, setCoapplicantDate] = useState<string>(toDateInput(row.coapplicantAmountDate));
   const [note, setNote] = useState<string>(row.note ?? '');
 
   const rowId = row.id ?? '';
@@ -133,9 +137,9 @@ const IncomeRow: FC<{
 
   const dirty =
     applicantAmount !== (row.applicantHandlaggareAmount?.toString() ?? '') ||
-    applicantDate !== (row.applicantAmountDate ?? '') ||
+    applicantDate !== toDateInput(row.applicantAmountDate) ||
     coapplicantAmount !== (row.coapplicantHandlaggareAmount?.toString() ?? '') ||
-    coapplicantDate !== (row.coapplicantAmountDate ?? '') ||
+    coapplicantDate !== toDateInput(row.coapplicantAmountDate) ||
     note !== (row.note ?? '');
 
   const save = () => {
@@ -158,6 +162,7 @@ const IncomeRow: FC<{
       <Table.Column>
         <Input
           size="sm"
+          className="max-w-[9rem]"
           inputMode="decimal"
           placeholder={displayAmount(row.applicantProcessAmount)}
           value={applicantAmount}
@@ -167,9 +172,9 @@ const IncomeRow: FC<{
         />
       </Table.Column>
       <Table.Column>
-        <Input
+        <DatePicker
+          type="date"
           size="sm"
-          placeholder="ÅÅÅÅ-MM-DD"
           value={applicantDate}
           onChange={(event) => {
             setApplicantDate(event.target.value);
@@ -179,6 +184,7 @@ const IncomeRow: FC<{
       <Table.Column>
         <Input
           size="sm"
+          className="max-w-[9rem]"
           inputMode="decimal"
           placeholder={displayAmount(row.coapplicantProcessAmount)}
           value={coapplicantAmount}
@@ -188,9 +194,9 @@ const IncomeRow: FC<{
         />
       </Table.Column>
       <Table.Column>
-        <Input
+        <DatePicker
+          type="date"
           size="sm"
-          placeholder="ÅÅÅÅ-MM-DD"
           value={coapplicantDate}
           onChange={(event) => {
             setCoapplicantDate(event.target.value);
@@ -278,6 +284,7 @@ const AddIncomeRow: FC<{ errandId: string; onAdded: () => void; onError: (messag
       <Table.Column>
         <Input
           size="sm"
+          className="max-w-[9rem]"
           inputMode="decimal"
           placeholder="Belopp S"
           value={applicantAmount}
@@ -290,6 +297,7 @@ const AddIncomeRow: FC<{ errandId: string; onAdded: () => void; onError: (messag
       <Table.Column>
         <Input
           size="sm"
+          className="max-w-[9rem]"
           inputMode="decimal"
           placeholder="Belopp M"
           value={coapplicantAmount}
