@@ -27,6 +27,7 @@ import { ErrandNotes } from './errand-notes.component';
 import { ErrandSidebar, SidebarSection } from './errand-sidebar.component';
 import { ErrandUtbetalning } from './errand-utbetalning.component';
 import { ErrandWarnings } from './errand-warnings.component';
+import { LockableSection } from './lockable-section.component';
 import { SectionApprovalCheckbox } from './section-approval-checkbox.component';
 
 // Drafts are created with this sentinel title until the handläggare fills the errand in.
@@ -196,11 +197,13 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               <Tabs.Button className="text-base">Normberäkning</Tabs.Button>
               <Tabs.Content>
                 <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
-                  <ErrandNormberakning
-                    errandId={apiErrandId}
-                    warnings={openWarnings}
-                    onWarningsChanged={refreshWarnings}
-                  />
+                  <LockableSection locked={!!approvals.calculation?.approved}>
+                    <ErrandNormberakning
+                      errandId={apiErrandId}
+                      warnings={openWarnings}
+                      onWarningsChanged={refreshWarnings}
+                    />
+                  </LockableSection>
                   <SectionApprovalCheckbox
                     label="Godkänn normberäkning"
                     approval={approvals.calculation}
@@ -214,7 +217,9 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               <Tabs.Button className="text-base">Beslut</Tabs.Button>
               <Tabs.Content>
                 <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
-                  <ErrandBeslut errandId={apiErrandId} />
+                  <LockableSection locked={!!approvals.decision?.approved}>
+                    <ErrandBeslut errandId={apiErrandId} />
+                  </LockableSection>
                   <SectionApprovalCheckbox
                     label="Godkänn beslut"
                     approval={approvals.decision}
