@@ -48,7 +48,9 @@ export const ErrandNormberakning: FC<{
   const expenseWarnings = warnings.filter((warning) => EXPENSE_WARNING_TYPES.has(warning.type ?? ''));
   const personWarnings = warnings.filter((warning) => PERSON_WARNING_TYPES.has(warning.type ?? ''));
 
-  if (isLoading) {
+  // Only show the full spinner on the first load. On a refetch (after editing/deleting a row) keep the
+  // table mounted with the current draft so the scroll position is preserved instead of jumping to top.
+  if (isLoading && !draft) {
     return (
       <div className="flex justify-center my-32">
         <Spinner size={4} />
