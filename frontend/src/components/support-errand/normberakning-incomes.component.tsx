@@ -241,7 +241,9 @@ const AddIncomeRow: FC<{ errandId: string; onAdded: () => void; onError: (messag
 }) => {
   const [typeName, setTypeName] = useState<string>('');
   const [applicantAmount, setApplicantAmount] = useState<string>('');
+  const [applicantDate, setApplicantDate] = useState<string>('');
   const [coapplicantAmount, setCoapplicantAmount] = useState<string>('');
+  const [coapplicantDate, setCoapplicantDate] = useState<string>('');
   const [note, setNote] = useState<string>('');
   const [adding, setAdding] = useState<boolean>(false);
 
@@ -254,7 +256,9 @@ const AddIncomeRow: FC<{ errandId: string; onAdded: () => void; onError: (messag
     const result = await addNormRow(errandId, 'incomes', {
       typeName: typeName.trim(),
       applicantHandlaggareAmount: parseAmount(applicantAmount),
+      applicantAmountDate: applicantDate || undefined,
       coapplicantHandlaggareAmount: parseAmount(coapplicantAmount),
+      coapplicantAmountDate: coapplicantDate || undefined,
       note: note.trim() || undefined,
     });
     setAdding(false);
@@ -264,7 +268,9 @@ const AddIncomeRow: FC<{ errandId: string; onAdded: () => void; onError: (messag
     }
     setTypeName('');
     setApplicantAmount('');
+    setApplicantDate('');
     setCoapplicantAmount('');
+    setCoapplicantDate('');
     setNote('');
     onAdded();
   };
@@ -293,7 +299,16 @@ const AddIncomeRow: FC<{ errandId: string; onAdded: () => void; onError: (messag
           }}
         />
       </Table.Column>
-      <Table.Column>—</Table.Column>
+      <Table.Column>
+        <DatePicker
+          type="date"
+          size="sm"
+          value={applicantDate}
+          onChange={(event) => {
+            setApplicantDate(event.target.value);
+          }}
+        />
+      </Table.Column>
       <Table.Column>
         <Input
           size="sm"
@@ -306,7 +321,16 @@ const AddIncomeRow: FC<{ errandId: string; onAdded: () => void; onError: (messag
           }}
         />
       </Table.Column>
-      <Table.Column>—</Table.Column>
+      <Table.Column>
+        <DatePicker
+          type="date"
+          size="sm"
+          value={coapplicantDate}
+          onChange={(event) => {
+            setCoapplicantDate(event.target.value);
+          }}
+        />
+      </Table.Column>
       <Table.Column>
         <Input
           size="sm"
