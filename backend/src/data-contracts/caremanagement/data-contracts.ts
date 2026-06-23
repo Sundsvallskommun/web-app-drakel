@@ -710,6 +710,15 @@ export interface CreateMessage {
   inReplyToId?: string;
 }
 
+/** The messages the caller has read, to be marked as read for the calling side */
+export interface MarkMessagesRead {
+  /**
+   * Ids of the read messages. Must reference messages on the same errand.
+   * @minItems 1
+   */
+  messageIds: string[];
+}
+
 export interface CreateJournalEntry {
   /**
    * Journal entry type (Lifecare 'Typ'/Journaltyp)
@@ -1805,6 +1814,15 @@ export interface MessageAttachment {
    * @format date-time
    */
   created?: string;
+}
+
+/** The number of unread messages in the errand's conversation for the calling side */
+export interface UnreadCount {
+  /**
+   * Number of messages addressed to the caller that the caller has not yet marked as read
+   * @format int64
+   */
+  unreadCount?: number;
 }
 
 export interface ErrandEvent {
