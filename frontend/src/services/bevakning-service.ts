@@ -4,6 +4,10 @@ import { ApiResponse, apiService, toServiceError } from '@services/api-service';
 /** A bevakning (date-bound watch/reminder) on an errand. Defined locally mirroring the backend response. */
 export interface Bevakning {
   id?: string;
+  /** Provenance: CASEWORKER (authored in Draken) or LIFECARE (read out of Lifecare by RPA). */
+  source?: 'CASEWORKER' | 'LIFECARE';
+  /** The monitoring's id in Lifecare; null until a caseworker row has been mirrored. */
+  lifecareId?: string;
   title?: string;
   description?: string;
   /** Bevakningsdatum — when the watch becomes relevant (yyyy-MM-dd). */

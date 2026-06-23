@@ -7,6 +7,14 @@ export class Bevakning {
   @IsString()
   @IsOptional()
   id?: string;
+  /** Provenance: CASEWORKER (authored in Draken) or LIFECARE (read out of Lifecare by RPA). */
+  @IsString()
+  @IsOptional()
+  source?: string;
+  /** The monitoring's id in Lifecare; null until a caseworker row has been mirrored. */
+  @IsString()
+  @IsOptional()
+  lifecareId?: string;
   @IsString()
   @IsOptional()
   title?: string;
