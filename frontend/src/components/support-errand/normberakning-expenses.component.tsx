@@ -232,11 +232,18 @@ const AddExpenseRow: FC<{
       onError('Välj en typ');
       return;
     }
+    // The applied (ansökt) amount can only be set on create — caremanagement ignores it on later edits —
+    // so it's required up front to avoid an unfixable empty value.
+    const appliedAmount = parseAmount(applied);
+    if (appliedAmount === undefined) {
+      onError('Ange ansökt belopp');
+      return;
+    }
     setAdding(true);
     const result = await addNormRow(errandId, 'expenses', {
       bucket,
       costType,
-      appliedAmount: parseAmount(applied),
+      appliedAmount,
       caseworkerAmount: parseAmount(amount),
       note: note.trim() || undefined,
     });
@@ -276,7 +283,7 @@ const AddExpenseRow: FC<{
           size="sm"
           inputMode="decimal"
           className="max-w-[9rem]"
-          placeholder="Ansökt"
+          placeholder="Ansökt *"
           value={applied}
           onChange={(event) => {
             setApplied(event.target.value);
