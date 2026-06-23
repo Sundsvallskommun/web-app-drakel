@@ -58,6 +58,10 @@ export interface Violation {
 
 /** Request to create or replace an EB monitoring on an errand. */
 export interface MonitoringRequest {
+  /** Provenance, defaults to CASEWORKER when omitted. RPA POSTs LIFECARE (with lifecareId) to surface a monitoring read out of Lifecare onto the errand. */
+  source?: MonitoringRequestSourceEnum;
+  /** The monitoring's id in Lifecare. Set by RPA when surfacing a LIFECARE-sourced monitoring (the idempotency key) or when stamping back the id of a mirrored caseworker monitoring. */
+  lifecareId?: string;
   /**
    * Short headline for the monitoring
    * @minLength 1
@@ -83,6 +87,10 @@ export interface MonitoringRequest {
 export interface Monitoring {
   /** The monitoring id */
   id?: string;
+  /** Provenance: CASEWORKER for one authored in Draken (RPA mirrors it onto the person in Lifecare), LIFECARE for one read out of Lifecare by RPA and surfaced here on the errand. */
+  source?: MonitoringSourceEnum;
+  /** The monitoring's id in Lifecare once it exists there — null until RPA has mirrored a caseworker-authored monitoring; always set for a LIFECARE-sourced one. */
+  lifecareId?: string;
   /** Short headline for the monitoring */
   title?: string;
   /** Free-text details of what to watch for */
@@ -2028,6 +2036,18 @@ export interface RoleDefinition {
   /** @format int32 */
   maxOccurrences?: number;
   required?: boolean;
+}
+
+/** Provenance, defaults to CASEWORKER when omitted. RPA POSTs LIFECARE (with lifecareId) to surface a monitoring read out of Lifecare onto the errand. */
+export enum MonitoringRequestSourceEnum {
+  CASEWORKER = "CASEWORKER",
+  LIFECARE = "LIFECARE",
+}
+
+/** Provenance: CASEWORKER for one authored in Draken (RPA mirrors it onto the person in Lifecare), LIFECARE for one read out of Lifecare by RPA and surfaced here on the errand. */
+export enum MonitoringSourceEnum {
+  CASEWORKER = "CASEWORKER",
+  LIFECARE = "LIFECARE",
 }
 
 /** The category of asset */
