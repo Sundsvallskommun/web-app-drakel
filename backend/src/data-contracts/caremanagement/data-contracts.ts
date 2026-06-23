@@ -519,6 +519,17 @@ export interface Stakeholder {
   contactChannels?: ContactChannel[];
 }
 
+/** Request to enqueue a UiPath RPA task on an errand. */
+export interface RpaTaskRequest {
+  /**
+   * The RPA action — selects the Lifecare flow the robot runs
+   * @minLength 1
+   */
+  action: RpaTaskRequestActionEnum;
+  /** Optional extra hints for the robot, merged into the queue item SpecificContent */
+  parameters?: Record<string, string>;
+}
+
 /** A referral/consultation on an errand, with the receiving authority, due date and status. */
 export interface Referral {
   /** Unique id */
@@ -2216,6 +2227,20 @@ export enum PlanningSfiCourseEnum {
   B = "B",
   C = "C",
   D = "D",
+}
+
+/**
+ * The RPA action — selects the Lifecare flow the robot runs
+ * @minLength 1
+ */
+export enum RpaTaskRequestActionEnum {
+  FETCH_SUPPLEMENTS = "FETCH_SUPPLEMENTS",
+  WRITE_NORMBERAKNING = "WRITE_NORMBERAKNING",
+  WRITE_DECISION = "WRITE_DECISION",
+  WRITE_JOURNAL = "WRITE_JOURNAL",
+  WRITE_DOCUMENT = "WRITE_DOCUMENT",
+  WRITE_MONITORING = "WRITE_MONITORING",
+  REGISTER_PAYMENT = "REGISTER_PAYMENT",
 }
 
 /** Status */
