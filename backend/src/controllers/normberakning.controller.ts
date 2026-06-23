@@ -4,7 +4,7 @@ import CaremanagementNormberakningService, { NormSection } from '@services/carem
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
-import { TypeOption } from '@/data-contracts/caremanagement/data-contracts';
+import { TypeOption, TypeOptionGroupEnum } from '@/data-contracts/caremanagement/data-contracts';
 import { NormHeaderInputDto, NormRowInputDto } from '@/dtos/normberakning.dto';
 import { HttpException } from '@/exceptions/HttpException';
 import { NormberakningDraftApiResponse } from '@/responses/normberakning.response';
@@ -14,7 +14,7 @@ const NORM_SECTIONS: readonly string[] = ['persons', 'incomes', 'expenses'];
 // caremanagement returns one costTypes list grouped by Mina-sidor section (group = enum code). The
 // HOUSING section is Lifecare's boendekostnader (the Utgifter / EXPENSE bucket); the other sections
 // (WORK_AND_STUDIES / HEALTH / OTHER) are levnadskostnader i övrigt (the SPECIAL_EXPENSE bucket).
-const HOUSING_GROUP = 'HOUSING';
+const HOUSING_GROUP = TypeOptionGroupEnum.HOUSING;
 
 /** Maps an API type to the frontend dropdown shape, using the Lifecare handläggare label. */
 const toDropdownOption = (type: TypeOption): { code?: string; displayName?: string } => ({
