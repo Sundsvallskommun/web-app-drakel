@@ -4,16 +4,9 @@ import { Stakeholder } from '@data-contracts/backend/data-contracts';
 import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
 import { Avatar, Spinner } from '@sk-web-gui/react';
 import { getInitials } from '@utils/get-initials';
+import { stakeholderDisplayName } from '@utils/stakeholder-name';
 import { compareByRole, stakeholderRoleLabel } from '@utils/stakeholder-role';
 import { FC } from 'react';
-
-const stakeholderName = (stakeholder: Stakeholder): string => {
-  if (stakeholder.organizationName) {
-    return stakeholder.organizationName;
-  }
-  const personName = [stakeholder.firstName, stakeholder.lastName].filter(Boolean).join(' ');
-  return personName.length > 0 ? personName : 'Okänd intressent';
-};
 
 const stakeholderContact = (stakeholder: Stakeholder): string => {
   const channels = stakeholder.contactChannels
@@ -59,9 +52,9 @@ export const ErrandStakeholders: FC<{ errandId: string }> = ({ errandId }) => {
             {stakeholderRoleLabel(stakeholder.role) || 'Intressent'}
           </div>
           <div className="p-16 flex items-center gap-16">
-            <Avatar initials={getInitials(stakeholderName(stakeholder))} rounded color="vattjom" />
+            <Avatar initials={getInitials(stakeholderDisplayName(stakeholder))} rounded color="vattjom" />
             <div className="flex flex-col">
-              <span className="font-bold">{stakeholderName(stakeholder)}</span>
+              <span className="font-bold">{stakeholderDisplayName(stakeholder)}</span>
               {stakeholder.personalNumber ?
                 <span className="text-small text-dark-secondary">Personnummer: {stakeholder.personalNumber}</span>
               : null}

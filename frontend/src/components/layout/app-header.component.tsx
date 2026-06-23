@@ -4,6 +4,7 @@ import { ErrandStatusLabel } from '@components/support-errands/errand-status-lab
 import { useUserStore } from '@services/user-service/user-service';
 import { Button, Divider, Logo, UserMenu } from '@sk-web-gui/react';
 import { getInitials } from '@utils/get-initials';
+import { stakeholderRoleLabel } from '@utils/stakeholder-role';
 import { ExternalLink } from 'lucide-react';
 import NextLink from 'next/link';
 import { useParams } from 'next/navigation';
@@ -38,6 +39,24 @@ export const AppHeader = () => {
               <span className="text-small text-secondary truncate">{errand.errandNumber}</span>
             : null}
           </span>
+          {errand.parties?.length ?
+            <>
+              <Divider orientation="vertical" className="h-32" />
+              <div className="flex items-center gap-16 min-w-0">
+                {errand.parties.map((party, index) => (
+                  <span key={party.personalNumber ?? index} className="flex min-w-0 flex-col leading-tight">
+                    <span className="text-small truncate">
+                      <span className="text-secondary">{stakeholderRoleLabel(party.role) || 'Part'}: </span>
+                      {party.name}
+                    </span>
+                    {party.personalNumber ?
+                      <span className="text-small text-secondary">{party.personalNumber}</span>
+                    : null}
+                  </span>
+                ))}
+              </div>
+            </>
+          : null}
         </div>
       : <NextLink href={`/${locale}/oversikt`} className="no-underline" aria-label="Till översikten">
           <Logo variant="service" title="Drakel" subtitle={appName} />

@@ -1,18 +1,21 @@
 'use client';
 
 import { PdfPreviewFrame } from '@components/common/pdf-preview.component';
-import { useErrandHeader } from '@components/layout/errand-header-context';
+import { HeaderParty, useErrandHeader } from '@components/layout/errand-header-context';
 import { useErrand } from '@hooks/use-errand';
 import { useErrandAttachments } from '@hooks/use-errand-attachments';
 import { useErrandBevakningar } from '@hooks/use-errand-bevakningar';
 import { useErrandForm } from '@hooks/use-errand-form';
 import { useErrandNotes } from '@hooks/use-errand-notes';
 import { useErrandSectionApprovals } from '@hooks/use-errand-section-approvals';
+import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
 import { useErrandWarnings } from '@hooks/use-errand-warnings';
 import { Spinner, Tabs } from '@sk-web-gui/react';
 import { CLIENT_FILES_PDF } from '@utils/attachment-names';
+import { stakeholderDisplayName } from '@utils/stakeholder-name';
+import { compareByRole } from '@utils/stakeholder-role';
 import { AlertTriangle, Bell, NotebookPen, UserCog } from 'lucide-react';
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 
 import { ErrandApplicationData } from './errand-application-data.component';
 import { ErrandAttachments } from './errand-attachments.component';
@@ -68,6 +71,20 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     error: bevakningarError,
     refresh: refreshBevakningar,
   } = useErrandBevakningar(resolvedErrandId);
+  // Sökande + medsökande surfaced at the top of the errand (next to the errand number).
+  const { stakeholders } = useErrandStakeholders(resolvedErrandId);
+  const headerParties = useMemo<HeaderParty[]>(
+    () =>
+      stakeholders
+        .filter((stakeholder) => stakeholder.role === 'APPLICANT' || stakeholder.role === 'CO_APPLICANT')
+        .sort(compareByRole)
+        .map((stakeholder) => ({
+          role: stakeholder.role,
+          name: stakeholderDisplayName(stakeholder),
+          personalNumber: stakeholder.personalNumber,
+        })),
+    [stakeholders]
+  );
 
   // Only OPEN warnings are actionable — acknowledged/closed ones disappear from the sidebar.
   const openWarnings = warnings.filter((warning) => warning.status === 'OPEN');
@@ -92,12 +109,18 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   // Surface the errand's status/title into the slim app header, and clear it on leave.
   useEffect(() => {
     if (errand) {
-      setHeaderErrand({ id: errand.id, errandNumber: errand.errandNumber, title: errand.title, status: errand.status });
+      setHeaderErrand({
+        id: errand.id,
+        errandNumber: errand.errandNumber,
+        title: errand.title,
+        status: errand.status,
+        parties: headerParties,
+      });
     }
     return () => {
       setHeaderErrand(undefined);
     };
-  }, [errand?.id, errand?.errandNumber, errand?.title, errand?.status, setHeaderErrand]);
+  }, [errand?.id, errand?.errandNumber, errand?.title, errand?.status, headerParties, setHeaderErrand]);
 
   if (isLoading) {
     return (

@@ -2,11 +2,20 @@
 
 import { createContext, useContext } from 'react';
 
+/** A party (sökande/medsökande) surfaced in the slim header next to the errand number. */
+export interface HeaderParty {
+  role?: string;
+  name: string;
+  personalNumber?: string;
+}
+
 export interface HeaderErrand {
   id?: string;
   errandNumber?: string;
   title?: string;
   status?: string;
+  /** Sökande and medsökande shown at the top of the errand, next to the errand number. */
+  parties?: HeaderParty[];
 }
 
 interface ErrandHeaderContextValue {
