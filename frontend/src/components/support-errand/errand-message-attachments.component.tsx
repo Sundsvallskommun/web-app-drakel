@@ -15,6 +15,8 @@ interface ErrandMessageAttachmentsProps {
   summaryAttachment?: Attachment;
   isLoading: boolean;
   loadError: boolean;
+  /** Hide the internal "Bilagor från meddelanden" heading (e.g. when shown inside a titled disclosure). */
+  hideHeading?: boolean;
 }
 
 /**
@@ -29,6 +31,7 @@ export const ErrandMessageAttachments: FC<ErrandMessageAttachmentsProps> = ({
   summaryAttachment,
   isLoading,
   loadError,
+  hideHeading = false,
 }) => {
   return (
     <div className="flex flex-col gap-16">
@@ -36,7 +39,7 @@ export const ErrandMessageAttachments: FC<ErrandMessageAttachmentsProps> = ({
         <PdfPreview errandId={errandId} attachmentId={summaryAttachment.id} title="Klientbilagor (PDF)" />
       : null}
 
-      <span className="font-bold">Bilagor från meddelanden</span>
+      {hideHeading ? null : <span className="font-bold">Bilagor från meddelanden</span>}
 
       {isLoading ?
         <Spinner size={3} />

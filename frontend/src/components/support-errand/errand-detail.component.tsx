@@ -10,12 +10,12 @@ import { useErrandNotes } from '@hooks/use-errand-notes';
 import { useErrandSectionApprovals } from '@hooks/use-errand-section-approvals';
 import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
 import { useErrandWarnings } from '@hooks/use-errand-warnings';
-import { Spinner, Tabs } from '@sk-web-gui/react';
+import { Disclosure, Spinner, Tabs } from '@sk-web-gui/react';
 import { CLIENT_FILES_PDF } from '@utils/attachment-names';
 import { stakeholderDisplayName } from '@utils/stakeholder-name';
 import { compareByRole } from '@utils/stakeholder-role';
-import { AlertTriangle, Bell, NotebookPen, UserCog } from 'lucide-react';
-import { FC, useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, Bell, NotebookPen, Paperclip, UserCog } from 'lucide-react';
+import { FC, Fragment, ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { ErrandApplicationData } from './errand-application-data.component';
 import { ErrandAttachments } from './errand-attachments.component';
@@ -38,6 +38,17 @@ import { SectionApprovalCheckbox } from './section-approval-checkbox.component';
 
 // Drafts are created with this sentinel title until the handläggare fills the errand in.
 const EMPTY_ERRAND_TITLE = 'Empty errand';
+
+/** One tab inside a group; groups with a single tab render their content without a sub-tab row. */
+interface ErrandSubTab {
+  label: string;
+  content: ReactNode;
+}
+/** A top-level tab group (Ansökan, Dokumentation, …) holding one or more sub-tabs. */
+interface ErrandTabGroup {
+  label: string;
+  tabs: ErrandSubTab[];
+}
 
 export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   const { errand, isLoading, error, refresh } = useErrand(errandId);
@@ -203,6 +214,149 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     },
   ];
 
+  // Tabs are grouped into top-level sections; a group with several tabs gets a secondary sub-tab row, a
+  // single-tab group renders its content directly. "Ärende" holds the whole application/decision flow;
+  // Dokumentation and Händelselogg stay separate (the latter is an audit log).
+  const tabGroups: ErrandTabGroup[] = [
+    {
+      label: 'Ärende',
+      tabs: [
+        {
+          label: 'Ansökan',
+          content: (
+            <div className="pt-24 pb-40 px-24 md:px-40">
+              {/* Tills vidare visas den genererade CASE_DATA-PDF:en i stället för det strukturerade
+                  formuläret; ErrandApplicationData renderas bara som fallback när ingen PDF finns. */}
+              {caseDataAttachment?.id ?
+                <PdfPreviewFrame errandId={apiErrandId} attachmentId={caseDataAttachment.id} title="Ansökan" />
+              : <ErrandApplicationData errand={errand} />}
+            </div>
+          ),
+        },
+        {
+          label: 'Bilagor till ansökan',
+          content: (
+            <div className="pt-24 pb-40 px-24 md:px-40">
+              <ErrandAttachments
+                errandId={apiErrandId}
+                attachments={errandAttachments}
+                isLoading={attachmentsLoading}
+                loadError={!!attachmentsError}
+                refresh={refreshAttachments}
+              />
+            </div>
+          ),
+        },
+        {
+          label: 'Meddelanden och bilagor',
+          content: (
+            <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-16">
+              <ErrandMessages errandId={apiErrandId} />
+              {/* Bilagorna som delats i meddelandetråden, hopfällbara under själva meddelandena. */}
+              <Disclosure variant="alt" initalOpen={conversationAttachments.length > 0}>
+                <Disclosure.Header>
+                  <Disclosure.Icon icon={<Paperclip size={18} />} />
+                  <Disclosure.Title>Bilagor i meddelanden ({conversationAttachments.length})</Disclosure.Title>
+                  <Disclosure.Button />
+                </Disclosure.Header>
+                <Disclosure.Content>
+                  <ErrandMessageAttachments
+                    errandId={apiErrandId}
+                    attachments={conversationAttachments}
+                    summaryAttachment={conversationSummaryAttachment}
+                    isLoading={attachmentsLoading}
+                    loadError={!!attachmentsError}
+                    hideHeading
+                  />
+                </Disclosure.Content>
+              </Disclosure>
+            </div>
+          ),
+        },
+        {
+          label: 'Normberäkning',
+          content: (
+            <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
+              <LockableSection locked={!!approvals.calculation?.approved}>
+                <ErrandNormberakning errandId={apiErrandId} warnings={openWarnings} onWarningsChanged={refreshWarnings} />
+              </LockableSection>
+              <SectionApprovalCheckbox
+                label="Godkänn normberäkning"
+                approval={approvals.calculation}
+                disabled={pendingSection === 'CALCULATION'}
+                onChange={(approved) => void setApproval('CALCULATION', approved)}
+              />
+            </div>
+          ),
+        },
+        {
+          label: 'Beslut',
+          content: (
+            <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
+              <LockableSection locked={!!approvals.decision?.approved}>
+                <ErrandBeslut errandId={apiErrandId} />
+              </LockableSection>
+              <SectionApprovalCheckbox
+                label="Godkänn beslut"
+                approval={approvals.decision}
+                disabled={pendingSection === 'DECISION'}
+                onChange={(approved) => void setApproval('DECISION', approved)}
+              />
+            </div>
+          ),
+        },
+        {
+          label: 'Utbetalning',
+          content: (
+            <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
+              <ErrandUtbetalning errandId={apiErrandId} />
+              <SectionApprovalCheckbox
+                label="Godkänn utbetalning"
+                approval={approvals.payment}
+                disabled={pendingSection === 'PAYMENT'}
+                onChange={(approved) => void setApproval('PAYMENT', approved)}
+              />
+            </div>
+          ),
+        },
+      ],
+    },
+    {
+      label: 'Dokumentation',
+      tabs: [
+        {
+          label: 'Journal',
+          content: (
+            <div className="pt-24 pb-40 px-24 md:px-40">
+              <ErrandJournal errandId={apiErrandId} />
+            </div>
+          ),
+        },
+        {
+          label: 'Dokument',
+          content: (
+            <div className="pt-24 pb-40 px-24 md:px-40">
+              <ErrandDocuments errandId={apiErrandId} />
+            </div>
+          ),
+        },
+      ],
+    },
+    {
+      label: 'Händelselogg',
+      tabs: [
+        {
+          label: 'Händelselogg',
+          content: (
+            <div className="pt-24 pb-40 px-24 md:px-40">
+              <ErrandEvents errandId={apiErrandId} />
+            </div>
+          ),
+        },
+      ],
+    },
+  ];
+
   return (
     // The AppShell provides the bg-background-100 page background and full height; the sidebar sits
     // flush against the right edge while the main content is padded.
@@ -211,135 +365,28 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
         <div className="w-full max-w-errand flex flex-col gap-16">
           <h1 className="m-0 break-words">{heading}</h1>
 
-          <Tabs
-            className="border-1 border-divider rounded-12 bg-background-content pt-22 pl-5"
-            panelsClassName="border-t-1 border-divider"
-            size="sm"
-            current={activeTab}
-            onTabChange={setActiveTab}
-          >
-            <Tabs.Item>
-              <Tabs.Button className="text-base ml-10">Ärendeuppgifter</Tabs.Button>
-              <Tabs.Content>
-                <div className="pt-24 pb-40 px-24 md:px-40">
-                  {/* Tills vidare visas den genererade CASE_DATA-PDF:en i stället för det strukturerade
-                      formuläret; ErrandApplicationData renderas bara som fallback när ingen PDF finns. */}
-                  {caseDataAttachment?.id ?
-                    <PdfPreviewFrame errandId={apiErrandId} attachmentId={caseDataAttachment.id} title="Ärendeuppgifter" />
-                  : <ErrandApplicationData errand={errand} />}
-                </div>
-              </Tabs.Content>
-            </Tabs.Item>
-            <Tabs.Item>
-              <Tabs.Button className="text-base">Normberäkning</Tabs.Button>
-              <Tabs.Content>
-                <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
-                  <LockableSection locked={!!approvals.calculation?.approved}>
-                    <ErrandNormberakning
-                      errandId={apiErrandId}
-                      warnings={openWarnings}
-                      onWarningsChanged={refreshWarnings}
-                    />
-                  </LockableSection>
-                  <SectionApprovalCheckbox
-                    label="Godkänn normberäkning"
-                    approval={approvals.calculation}
-                    disabled={pendingSection === 'CALCULATION'}
-                    onChange={(approved) => void setApproval('CALCULATION', approved)}
-                  />
-                </div>
-              </Tabs.Content>
-            </Tabs.Item>
-            <Tabs.Item>
-              <Tabs.Button className="text-base">Beslut</Tabs.Button>
-              <Tabs.Content>
-                <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
-                  <LockableSection locked={!!approvals.decision?.approved}>
-                    <ErrandBeslut errandId={apiErrandId} />
-                  </LockableSection>
-                  <SectionApprovalCheckbox
-                    label="Godkänn beslut"
-                    approval={approvals.decision}
-                    disabled={pendingSection === 'DECISION'}
-                    onChange={(approved) => void setApproval('DECISION', approved)}
-                  />
-                </div>
-              </Tabs.Content>
-            </Tabs.Item>
-            <Tabs.Item>
-              <Tabs.Button className="text-base">Utbetalning</Tabs.Button>
-              <Tabs.Content>
-                <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
-                  <ErrandUtbetalning errandId={apiErrandId} />
-                  <SectionApprovalCheckbox
-                    label="Godkänn utbetalning"
-                    approval={approvals.payment}
-                    disabled={pendingSection === 'PAYMENT'}
-                    onChange={(approved) => void setApproval('PAYMENT', approved)}
-                  />
-                </div>
-              </Tabs.Content>
-            </Tabs.Item>
-            <Tabs.Item>
-              <Tabs.Button className="text-base">Bilagor ({errandAttachments.length})</Tabs.Button>
-              <Tabs.Content>
-                <div className="pt-24 pb-40 px-24 md:px-40">
-                  <ErrandAttachments
-                    errandId={apiErrandId}
-                    attachments={errandAttachments}
-                    isLoading={attachmentsLoading}
-                    loadError={!!attachmentsError}
-                    refresh={refreshAttachments}
-                  />
-                </div>
-              </Tabs.Content>
-            </Tabs.Item>
-            <Tabs.Item>
-              <Tabs.Button className="text-base">Meddelanden</Tabs.Button>
-              <Tabs.Content>
-                <div className="pt-24 pb-40 px-24 md:px-40">
-                  <ErrandMessages errandId={apiErrandId} />
-                </div>
-              </Tabs.Content>
-            </Tabs.Item>
-            <Tabs.Item>
-              <Tabs.Button className="text-base">Journal</Tabs.Button>
-              <Tabs.Content>
-                <div className="pt-24 pb-40 px-24 md:px-40">
-                  <ErrandJournal errandId={apiErrandId} />
-                </div>
-              </Tabs.Content>
-            </Tabs.Item>
-            <Tabs.Item>
-              <Tabs.Button className="text-base">Dokument</Tabs.Button>
-              <Tabs.Content>
-                <div className="pt-24 pb-40 px-24 md:px-40">
-                  <ErrandDocuments errandId={apiErrandId} />
-                </div>
-              </Tabs.Content>
-            </Tabs.Item>
-            <Tabs.Item>
-              <Tabs.Button className="text-base">Bilagor från meddelanden ({conversationAttachments.length})</Tabs.Button>
-              <Tabs.Content>
-                <div className="pt-24 pb-40 px-24 md:px-40">
-                  <ErrandMessageAttachments
-                    errandId={apiErrandId}
-                    attachments={conversationAttachments}
-                    summaryAttachment={conversationSummaryAttachment}
-                    isLoading={attachmentsLoading}
-                    loadError={!!attachmentsError}
-                  />
-                </div>
-              </Tabs.Content>
-            </Tabs.Item>
-            <Tabs.Item>
-              <Tabs.Button className="text-base">Händelselogg</Tabs.Button>
-              <Tabs.Content>
-                <div className="pt-24 pb-40 px-24 md:px-40">
-                  <ErrandEvents errandId={apiErrandId} />
-                </div>
-              </Tabs.Content>
-            </Tabs.Item>
+          {/* Huvudtabsen (grupperna) ligger direkt på main-bakgrunden; själva innehållskortet (vit
+              bakgrund + ram) flyttas in i varje panel, med ev. sub-tabs högst upp i kortet. */}
+          <Tabs className="px-2" size="sm" current={activeTab} onTabChange={setActiveTab}>
+            {tabGroups.map((group) => (
+              <Tabs.Item key={group.label}>
+                <Tabs.Button className="text-base">{group.label}</Tabs.Button>
+                <Tabs.Content>
+                  <div className="border-1 border-divider rounded-12 bg-background-content">
+                    {group.tabs.length > 1 ?
+                      <Tabs size="sm" tabslistClassName="px-24 md:px-40 pt-16" panelsClassName="border-t-1 border-divider">
+                        {group.tabs.map((subTab) => (
+                          <Tabs.Item key={subTab.label}>
+                            <Tabs.Button className="text-base">{subTab.label}</Tabs.Button>
+                            <Tabs.Content>{subTab.content}</Tabs.Content>
+                          </Tabs.Item>
+                        ))}
+                      </Tabs>
+                    : group.tabs.map((subTab) => <Fragment key={subTab.label}>{subTab.content}</Fragment>)}
+                  </div>
+                </Tabs.Content>
+              </Tabs.Item>
+            ))}
           </Tabs>
         </div>
       </main>
