@@ -22,6 +22,7 @@ import {
   SWAGGER_ENABLED,
 } from '@config';
 import errorMiddleware from '@middlewares/error.middleware';
+import requestContextMiddleware from '@middlewares/request-context.middleware';
 import { Profile as SamlProfile, Strategy, VerifiedCallback } from '@node-saml/passport-saml';
 import { logger, stream } from '@utils/logger';
 import bodyParser from 'body-parser';
@@ -203,6 +204,10 @@ class App {
     this.app.use(passport.initialize());
     this.app.use(passport.session());
     passport.use('saml', samlStrategy);
+
+    // After passport so req.user is populated: stash the user in request-scoped storage for the
+    // caremanagement transport's X-Sent-By header (feeds caremanagement's per-errand event log).
+    this.app.use(requestContextMiddleware);
 
     this.app.use(
       cors({
