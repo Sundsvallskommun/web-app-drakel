@@ -1,5 +1,6 @@
 'use client';
 
+import { PdfPreviewFrame } from '@components/common/pdf-preview.component';
 import { useErrandHeader } from '@components/layout/errand-header-context';
 import { useErrand } from '@hooks/use-errand';
 import { useErrandAttachments } from '@hooks/use-errand-attachments';
@@ -18,6 +19,7 @@ import { ErrandAttachments } from './errand-attachments.component';
 import { ErrandAvsluta } from './errand-avsluta.component';
 import { ErrandBeslut } from './errand-beslut.component';
 import { ErrandBevakningar } from './errand-bevakningar.component';
+import { ErrandDocuments } from './errand-documents.component';
 import { ErrandInfoPanel } from './errand-info-panel.component';
 import { ErrandJournal } from './errand-journal.component';
 import { ErrandMessageAttachments } from './errand-message-attachments.component';
@@ -80,7 +82,12 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   const conversationAttachments = attachments.filter(
     (attachment) => attachment.origin === 'CONVERSATION' && attachment.id !== conversationSummaryAttachment?.id
   );
-  const errandAttachments = attachments.filter((attachment) => attachment.origin !== 'CONVERSATION');
+  // The generated "ärendeuppgifter" PDF (origin CASE_DATA) is previewed on the Ärendeuppgifter tab, so
+  // it's excluded from the Bilagor list below to avoid showing it twice.
+  const caseDataAttachment = attachments.find((attachment) => attachment.origin === 'CASE_DATA');
+  const errandAttachments = attachments.filter(
+    (attachment) => attachment.origin !== 'CONVERSATION' && attachment.origin !== 'CASE_DATA'
+  );
 
   // Surface the errand's status/title into the slim app header, and clear it on leave.
   useEffect(() => {
@@ -190,7 +197,13 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
             <Tabs.Item>
               <Tabs.Button className="text-base ml-10">Ärendeuppgifter</Tabs.Button>
               <Tabs.Content>
-                <ErrandApplicationData errand={errand} />
+                <div className="pt-24 pb-40 px-24 md:px-40">
+                  {/* Tills vidare visas den genererade CASE_DATA-PDF:en i stället för det strukturerade
+                      formuläret; ErrandApplicationData renderas bara som fallback när ingen PDF finns. */}
+                  {caseDataAttachment?.id ?
+                    <PdfPreviewFrame errandId={apiErrandId} attachmentId={caseDataAttachment.id} title="Ärendeuppgifter" />
+                  : <ErrandApplicationData errand={errand} />}
+                </div>
               </Tabs.Content>
             </Tabs.Item>
             <Tabs.Item>
@@ -270,6 +283,14 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               <Tabs.Content>
                 <div className="pt-24 pb-40 px-24 md:px-40">
                   <ErrandJournal errandId={apiErrandId} />
+                </div>
+              </Tabs.Content>
+            </Tabs.Item>
+            <Tabs.Item>
+              <Tabs.Button className="text-base">Dokument</Tabs.Button>
+              <Tabs.Content>
+                <div className="pt-24 pb-40 px-24 md:px-40">
+                  <ErrandDocuments errandId={apiErrandId} />
                 </div>
               </Tabs.Content>
             </Tabs.Item>

@@ -5,6 +5,7 @@ import App from '@/app';
 
 import { BevakningController } from './controllers/bevakning.controller';
 import { DecisionController } from './controllers/decision.controller';
+import { DocumentController } from './controllers/document.controller';
 import { ErrandController } from './controllers/errand.controller';
 import { HealthController } from './controllers/health.controller';
 import { JournalController } from './controllers/journal.controller';
@@ -34,6 +35,7 @@ const app = new App([
   SectionApprovalController,
   BevakningController,
   JournalController,
+  DocumentController,
 ]);
 
 app.listen();
