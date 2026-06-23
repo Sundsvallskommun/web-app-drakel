@@ -2,6 +2,7 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementError } from '@utils/caremanagement-error';
 import { caremanagementUrl } from '@utils/caremanagement-url';
+import { sentByHeaders } from '@utils/request-context';
 import axios from 'axios';
 import FormData from 'form-data';
 
@@ -41,7 +42,7 @@ class CaremanagementAttachmentService {
   async streamAttachmentFile(errandId: string, attachmentId: string): Promise<AttachmentFile> {
     const url = caremanagementUrl('errands', errandId, 'attachments', attachmentId, 'file');
     try {
-      const res = await axios.get<ArrayBuffer>(url, { responseType: 'arraybuffer' });
+      const res = await axios.get<ArrayBuffer>(url, { responseType: 'arraybuffer', headers: sentByHeaders() });
       const headers = res.headers as Record<string, string | undefined>;
       return {
         data: Buffer.from(res.data),
@@ -59,7 +60,7 @@ class CaremanagementAttachmentService {
     form.append('file', file.buffer, { filename: file.originalname, contentType: file.mimetype });
     const url = caremanagementUrl('errands', errandId, 'attachments');
     try {
-      await axios.post(url, form, { headers: form.getHeaders() });
+      await axios.post(url, form, { headers: { ...form.getHeaders(), ...sentByHeaders() } });
       return { data: null, message: 'success' };
     } catch (error) {
       throw caremanagementError(error);

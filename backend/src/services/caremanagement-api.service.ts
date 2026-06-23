@@ -1,6 +1,6 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
 import { caremanagementError } from '@utils/caremanagement-error';
-import { getRequestUsername } from '@utils/request-context';
+import { sentByHeaders } from '@utils/request-context';
 import axios, { AxiosRequestConfig } from 'axios';
 
 /**
@@ -22,13 +22,11 @@ class CaremanagementApiService {
   private async request<T>(config: AxiosRequestConfig): Promise<CaremanagementResponse<T>> {
     // Stamp the acting handläggare so caremanagement attributes its per-errand event log to a real
     // user (adAccount). Absent when the request has no authenticated user (actor is then logged null).
-    const username = getRequestUsername();
-    const sentByHeader: Record<string, string> = username ? { 'X-Sent-By': `${username}; type=adAccount` } : {};
     const preparedConfig: AxiosRequestConfig = {
       ...config,
       headers: {
         'Content-Type': 'application/json',
-        ...sentByHeader,
+        ...sentByHeaders(),
         ...(config.headers as Record<string, string> | undefined),
       },
     };
