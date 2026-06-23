@@ -1788,6 +1788,25 @@ export interface MessageAttachment {
   created?: string;
 }
 
+export interface ErrandEvent {
+  id?: string;
+  errandId?: string;
+  municipalityId?: string;
+  namespace?: string;
+  action?: string;
+  target?: string;
+  description?: string;
+  httpMethod?: string;
+  requestPath?: string;
+  actor?: string;
+  actorType?: string;
+  requestId?: string;
+  /** @format int32 */
+  statusCode?: number;
+  /** @format date-time */
+  created?: string;
+}
+
 /** Attachment model */
 export interface Attachment {
   /** Unique identifier */
@@ -1801,7 +1820,7 @@ export interface Attachment {
    * @format int32
    */
   fileSize?: number;
-  /** Where the file came from: APPLICATION (citizen's application files), CONVERSATION (sent in a message thread), GENERATED (a consolidated PDF produced by the platform), ERRAND (uploaded directly to the errand) or CASE_DATA (ärendeuppgifter — a case-data document for the errand) */
+  /** Where the file came from: APPLICATION (citizen's application files), CONVERSATION (sent in a message thread), GENERATED (a consolidated PDF produced by the platform), ERRAND (uploaded directly to the errand), CASE_DATA (ärendeuppgifter — a case-data document for the errand) or MESSAGE_HISTORY (meddelandehistorik — the archived conversation PDF for a closed errand) */
   origin?: AttachmentOriginEnum;
   /** Who the file came from: CLIENT (applicant) or CASEWORKER (caseworker). May be null for files predating the distinction or with no clear sender. */
   senderRole?: AttachmentSenderRoleEnum;
@@ -2355,13 +2374,14 @@ export enum MessageAttachmentSenderRoleEnum {
   CASEWORKER = "CASEWORKER",
 }
 
-/** Where the file came from: APPLICATION (citizen's application files), CONVERSATION (sent in a message thread), GENERATED (a consolidated PDF produced by the platform), ERRAND (uploaded directly to the errand) or CASE_DATA (ärendeuppgifter — a case-data document for the errand) */
+/** Where the file came from: APPLICATION (citizen's application files), CONVERSATION (sent in a message thread), GENERATED (a consolidated PDF produced by the platform), ERRAND (uploaded directly to the errand), CASE_DATA (ärendeuppgifter — a case-data document for the errand) or MESSAGE_HISTORY (meddelandehistorik — the archived conversation PDF for a closed errand) */
 export enum AttachmentOriginEnum {
   APPLICATION = "APPLICATION",
   CONVERSATION = "CONVERSATION",
   GENERATED = "GENERATED",
   ERRAND = "ERRAND",
   CASE_DATA = "CASE_DATA",
+  MESSAGE_HISTORY = "MESSAGE_HISTORY",
 }
 
 /** Who the file came from: CLIENT (applicant) or CASEWORKER (caseworker). May be null for files predating the distinction or with no clear sender. */
