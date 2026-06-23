@@ -1,5 +1,6 @@
 'use client';
 
+import { HoverTooltip } from '@components/common/hover-tooltip.component';
 import { Badge, Button, cx } from '@sk-web-gui/react';
 import { ChevronsLeft, ChevronsRight, type LucideIcon } from 'lucide-react';
 import { FC, ReactNode, useState } from 'react';
@@ -40,31 +41,32 @@ export const ErrandSidebar: FC<{ sections: SidebarSection[] }> = ({ sections }) 
           {sections.map((section) => {
             const Icon = section.icon;
             return (
-              <Button
-                key={section.key}
-                role="menuitem"
-                aria-label={section.label}
-                onClick={() => {
-                  setSelected(section.key);
-                  setOpen(true);
-                }}
-                color="primary"
-                inverted={selected !== section.key}
-                iconButton
-                className="relative"
-                leftIcon={<Icon />}
-              >
-                {section.badge ?
-                  <Badge
-                    className="absolute -top-10 -right-10"
-                    rounded
-                    inverted
-                    color="vattjom"
-                    size="sm"
-                    counter={section.badge > 99 ? '99+' : section.badge}
-                  />
-                : null}
-              </Button>
+              <HoverTooltip key={section.key} label={section.label} position="left">
+                <Button
+                  role="menuitem"
+                  aria-label={section.label}
+                  onClick={() => {
+                    setSelected(section.key);
+                    setOpen(true);
+                  }}
+                  color="primary"
+                  inverted={selected !== section.key}
+                  iconButton
+                  className="relative"
+                  leftIcon={<Icon />}
+                >
+                  {section.badge ?
+                    <Badge
+                      className="absolute -top-10 -right-10"
+                      rounded
+                      inverted
+                      color="vattjom"
+                      size="sm"
+                      counter={section.badge > 99 ? '99+' : section.badge}
+                    />
+                  : null}
+                </Button>
+              </HoverTooltip>
             );
           })}
         </div>
