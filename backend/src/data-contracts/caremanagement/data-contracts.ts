@@ -1771,6 +1771,15 @@ export interface StatusHistoryEntry {
   changedAt?: string;
 }
 
+/** The number of notes on the errand */
+export interface NoteCount {
+  /**
+   * Number of notes attached to the errand
+   * @format int64
+   */
+  count?: number;
+}
+
 /** A message in the errand's conversation */
 export interface Message {
   /** Unique identifier */
@@ -1843,6 +1852,15 @@ export interface ErrandEvent {
   statusCode?: number;
   /** @format date-time */
   created?: string;
+}
+
+/** The number of activity events on the errand matching the given filters */
+export interface ErrandEventCount {
+  /**
+   * Number of matching events
+   * @format int64
+   */
+  count?: number;
 }
 
 /** Attachment model */
@@ -1951,6 +1969,24 @@ export interface SectionApprovals {
   payment?: SectionApproval;
   /** Approval of the decision (decision) section */
   decision?: SectionApproval;
+}
+
+/** The number of active (OPEN/ACKNOWLEDGED) income warnings on the errand */
+export interface WarningCount {
+  /**
+   * Number of active warnings — closed ones are not counted
+   * @format int64
+   */
+  count?: number;
+}
+
+/** The number of monitorings on the errand */
+export interface MonitoringCount {
+  /**
+   * Number of monitorings on the errand
+   * @format int64
+   */
+  count?: number;
 }
 
 /** A child pre-filled from Lifecare for a financial assistance renewal. Carries only what Lifecare provides — personnummer and name; the citizen completes residence, school etc. on the form. */
