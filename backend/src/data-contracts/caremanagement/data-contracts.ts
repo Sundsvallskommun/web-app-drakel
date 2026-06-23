@@ -1793,6 +1793,7 @@ export interface ErrandEvent {
   errandId?: string;
   municipalityId?: string;
   namespace?: string;
+  source?: string;
   action?: string;
   target?: string;
   description?: string;
