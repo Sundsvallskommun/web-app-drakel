@@ -10,6 +10,10 @@ export class ErrandEvent {
   @IsString()
   @IsOptional()
   errandId?: string;
+  /** HTTP (access log) or EVENT (domain-event change log). */
+  @IsString()
+  @IsOptional()
+  source?: string;
   /** READ / CREATE / UPDATE / DELETE. */
   @IsString()
   @IsOptional()

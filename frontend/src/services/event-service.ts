@@ -5,6 +5,8 @@ import { ApiResponse, apiService, toServiceError } from '@services/api-service';
 export interface ErrandEvent {
   id?: string;
   errandId?: string;
+  /** HTTP (access log) or EVENT (domain-event change log). */
+  source?: string;
   /** READ / CREATE / UPDATE / DELETE. */
   action?: string;
   /** What the event concerns (e.g. errand, decisions, financial-assistance/calculation/draft/incomes). */
@@ -22,16 +24,25 @@ export interface ErrandEvent {
 /** Optional server-side filters for the event log. */
 export interface ErrandEventFilters {
   action?: string;
+  /** HTTP (access log) or EVENT (change log). */
+  source?: string;
 }
 
-/** Fetches the activity log (event log) for an errand, optionally filtered by action. */
+/** Fetches the activity log (event log) for an errand, optionally filtered by action and/or source. */
 export const getErrandEvents = (
   errandId: string,
   filters: ErrandEventFilters = {}
 ): Promise<ServiceResponse<ErrandEvent[]>> => {
-  const query = filters.action ? `?action=${encodeURIComponent(filters.action)}` : '';
+  const params = new URLSearchParams();
+  if (filters.action) {
+    params.set('action', filters.action);
+  }
+  if (filters.source) {
+    params.set('source', filters.source);
+  }
+  const query = params.toString();
   return apiService
-    .get<ApiResponse<ErrandEvent[]>>(`errands/${errandId}/events${query}`)
+    .get<ApiResponse<ErrandEvent[]>>(`errands/${errandId}/events${query ? `?${query}` : ''}`)
     .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);
 };

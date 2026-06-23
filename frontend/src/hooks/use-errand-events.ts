@@ -10,8 +10,8 @@ interface UseErrandEventsResult {
   refresh: () => void;
 }
 
-/** Loads an errand's activity log, refetching from the server whenever the action filter changes. */
-export const useErrandEvents = (errandId: string, action?: string): UseErrandEventsResult => {
+/** Loads an errand's activity log, refetching from the server whenever the action/source filter changes. */
+export const useErrandEvents = (errandId: string, action?: string, source?: string): UseErrandEventsResult => {
   const [events, setEvents] = useState<ErrandEvent[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<number | string | boolean>();
@@ -21,7 +21,7 @@ export const useErrandEvents = (errandId: string, action?: string): UseErrandEve
       return;
     }
     setIsLoading(true);
-    void getErrandEvents(errandId, { action }).then((res) => {
+    void getErrandEvents(errandId, { action, source }).then((res) => {
       if (res.error) {
         setError(res.error);
         setEvents([]);
@@ -31,7 +31,7 @@ export const useErrandEvents = (errandId: string, action?: string): UseErrandEve
       }
       setIsLoading(false);
     });
-  }, [errandId, action]);
+  }, [errandId, action, source]);
 
   useEffect(() => {
     load();

@@ -18,8 +18,9 @@ export class EventController {
     @Param('errandId') errandId: string,
     @QueryParam('action') action?: string,
     @QueryParam('actor') actor?: string,
+    @QueryParam('source') source?: string,
   ) {
-    const res = await this.eventService.readEvents(errandId, { action, actor });
+    const res = await this.eventService.readEvents(errandId, { action, actor, source });
     return { data: res.data, message: 'success' };
   }
 }

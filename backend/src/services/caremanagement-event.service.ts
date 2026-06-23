@@ -8,6 +8,8 @@ import { ErrandEvent } from '@/data-contracts/caremanagement/data-contracts';
 export interface ErrandEventFilters {
   action?: string;
   actor?: string;
+  /** HTTP (access log: who read/touched) or EVENT (domain-event change log: what changed, incl. system/process). */
+  source?: string;
 }
 
 /** Reads the who/what/when activity log (event log) of an errand. */
@@ -18,7 +20,7 @@ class CaremanagementEventService {
     return this.apiService.get<ErrandEvent[]>({
       url: caremanagementUrl('errands', errandId, 'events'),
       // Undefined params are dropped by axios, so an empty filter reads the full log.
-      params: { action: filters.action, actor: filters.actor },
+      params: { action: filters.action, actor: filters.actor, source: filters.source },
     });
   }
 }
