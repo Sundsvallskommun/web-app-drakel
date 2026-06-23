@@ -13,9 +13,9 @@ interface PdfPreviewProps {
 
 /**
  * Förhandsgranskar en PDF-bilaga inline i en iframe (samma mönster som beslutsförhandsgranskningen
- * i draken-public). Hämtar bilagan som blob och visar den via en object-URL.
+ * i draken-public). Hämtar bilagan som blob och visar den via en object-URL. Utan disclosure-omslag.
  */
-export const PdfPreview: FC<PdfPreviewProps> = ({ errandId, attachmentId, title }) => {
+export const PdfPreviewFrame: FC<PdfPreviewProps> = ({ errandId, attachmentId, title }) => {
   const [url, setUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
@@ -45,24 +45,27 @@ export const PdfPreview: FC<PdfPreviewProps> = ({ errandId, attachmentId, title 
     };
   }, [errandId, attachmentId]);
 
-  return (
-    <Disclosure variant="alt" initalOpen className="mb-16">
-      <Disclosure.Header>
-        <Disclosure.Icon icon={<FileText size={18} />} />
-        <Disclosure.Title>{title}</Disclosure.Title>
-        <Disclosure.Button />
-      </Disclosure.Header>
-      <Disclosure.Content>
-        {isLoading ?
-          <div className="flex justify-center items-center h-[60rem] text-dark-secondary">
-            Laddar förhandsgranskning...
-          </div>
-        : error ?
-          <div className="flex justify-center items-center h-[20rem] text-error">
-            Kunde inte visa förhandsgranskningen
-          </div>
-        : <iframe src={`${url}#pagemode=none`} className="w-full h-[80rem] border-0" title={title} />}
-      </Disclosure.Content>
-    </Disclosure>
-  );
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-[60rem] text-dark-secondary">Laddar förhandsgranskning...</div>
+    );
+  }
+  if (error) {
+    return <div className="flex justify-center items-center h-[20rem] text-error">Kunde inte visa förhandsgranskningen</div>;
+  }
+  return <iframe src={`${url}#pagemode=none`} className="w-full h-[95rem] border-0" title={title} />;
 };
+
+/** PDF-förhandsgranskning i ett hopfällbart disclosure-omslag (för bilagelistor). */
+export const PdfPreview: FC<PdfPreviewProps> = ({ errandId, attachmentId, title }) => (
+  <Disclosure variant="alt" initalOpen className="mb-16">
+    <Disclosure.Header>
+      <Disclosure.Icon icon={<FileText size={18} />} />
+      <Disclosure.Title>{title}</Disclosure.Title>
+      <Disclosure.Button />
+    </Disclosure.Header>
+    <Disclosure.Content>
+      <PdfPreviewFrame errandId={errandId} attachmentId={attachmentId} title={title} />
+    </Disclosure.Content>
+  </Disclosure>
+);
