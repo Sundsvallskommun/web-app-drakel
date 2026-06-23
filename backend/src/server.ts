@@ -7,6 +7,7 @@ import { BevakningController } from './controllers/bevakning.controller';
 import { DecisionController } from './controllers/decision.controller';
 import { DocumentController } from './controllers/document.controller';
 import { ErrandController } from './controllers/errand.controller';
+import { EventController } from './controllers/event.controller';
 import { HealthController } from './controllers/health.controller';
 import { JournalController } from './controllers/journal.controller';
 import { MessageController } from './controllers/message.controller';
@@ -36,6 +37,7 @@ const app = new App([
   BevakningController,
   JournalController,
   DocumentController,
+  EventController,
 ]);
 
 app.listen();

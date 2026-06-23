@@ -23,6 +23,7 @@ import { ErrandAvsluta } from './errand-avsluta.component';
 import { ErrandBeslut } from './errand-beslut.component';
 import { ErrandBevakningar } from './errand-bevakningar.component';
 import { ErrandDocuments } from './errand-documents.component';
+import { ErrandEvents } from './errand-events.component';
 import { ErrandInfoPanel } from './errand-info-panel.component';
 import { ErrandJournal } from './errand-journal.component';
 import { ErrandMessageAttachments } from './errand-message-attachments.component';
@@ -328,6 +329,14 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                     isLoading={attachmentsLoading}
                     loadError={!!attachmentsError}
                   />
+                </div>
+              </Tabs.Content>
+            </Tabs.Item>
+            <Tabs.Item>
+              <Tabs.Button className="text-base">Händelselogg</Tabs.Button>
+              <Tabs.Content>
+                <div className="pt-24 pb-40 px-24 md:px-40">
+                  <ErrandEvents errandId={apiErrandId} />
                 </div>
               </Tabs.Content>
             </Tabs.Item>
