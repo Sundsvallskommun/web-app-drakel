@@ -1,7 +1,7 @@
 'use client';
 
 import { updateErrand } from '@services/errand-service/errand-service';
-import { SectionApprovals, SectionKey } from '@services/section-approval-service';
+import { getSectionApprovals, SectionKey } from '@services/section-approval-service';
 import { Button, Modal } from '@sk-web-gui/react';
 import { FC, useState } from 'react';
 
@@ -15,27 +15,16 @@ const SECTION_LABELS: Record<SectionKey, string> = {
 };
 
 /**
- * "Avsluta ärende" button for the sidebar. When not every section is approved, asks the handläggare to
- * confirm before closing; otherwise closes directly. Closing sets the errand status to CLOSED.
+ * "Avsluta ärende" button for the sidebar. The approval state is fetched on click (not on errand open),
+ * so opening the errand doesn't read the approvals; when not every section is approved the handläggare is
+ * asked to confirm before closing. Closing sets the errand status to CLOSED.
  */
-export const ErrandAvsluta: FC<{ errandId: string; approvals: SectionApprovals; onClosed: () => void }> = ({
-  errandId,
-  approvals,
-  onClosed,
-}) => {
+export const ErrandAvsluta: FC<{ errandId: string; onClosed: () => void }> = ({ errandId, onClosed }) => {
   const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
+  const [unapproved, setUnapproved] = useState<string[]>([]);
+  const [checking, setChecking] = useState<boolean>(false);
   const [closing, setClosing] = useState<boolean>(false);
   const [error, setError] = useState<string>();
-
-  const unapproved = (
-    [
-      ['CALCULATION', approvals.calculation],
-      ['PAYMENT', approvals.payment],
-      ['DECISION', approvals.decision],
-    ] as const
-  )
-    .filter(([, approval]) => !approval?.approved)
-    .map(([key]) => SECTION_LABELS[key]);
 
   const close = async (): Promise<void> => {
     setClosing(true);
@@ -50,8 +39,23 @@ export const ErrandAvsluta: FC<{ errandId: string; approvals: SectionApprovals; 
     onClosed();
   };
 
-  const onAvsluta = (): void => {
-    if (unapproved.length > 0) {
+  const onAvsluta = async (): Promise<void> => {
+    setChecking(true);
+    setError(undefined);
+    const res = await getSectionApprovals(errandId);
+    setChecking(false);
+    const approvals = res.data ?? {};
+    const pending = (
+      [
+        ['CALCULATION', approvals.calculation],
+        ['PAYMENT', approvals.payment],
+        ['DECISION', approvals.decision],
+      ] as const
+    )
+      .filter(([, approval]) => !approval?.approved)
+      .map(([key]) => SECTION_LABELS[key]);
+    if (pending.length > 0) {
+      setUnapproved(pending);
       setConfirmOpen(true);
       return;
     }
@@ -65,9 +69,9 @@ export const ErrandAvsluta: FC<{ errandId: string; approvals: SectionApprovals; 
         color="vattjom"
         variant="primary"
         className="w-full"
-        loading={closing}
+        loading={checking || closing}
         loadingText="Avslutar…"
-        onClick={onAvsluta}
+        onClick={() => void onAvsluta()}
       >
         Avsluta ärende
       </Button>
@@ -86,9 +90,12 @@ export const ErrandAvsluta: FC<{ errandId: string; approvals: SectionApprovals; 
           </p>
         </Modal.Content>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => {
+          <Button
+            variant="secondary"
+            onClick={() => {
               setConfirmOpen(false);
-            }}>
+            }}
+          >
             Avbryt
           </Button>
           <Button color="vattjom" variant="primary" loading={closing} loadingText="Avslutar…" onClick={() => void close()}>

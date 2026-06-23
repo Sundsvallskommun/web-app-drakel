@@ -53,21 +53,36 @@ interface ErrandTabGroup {
 export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   const { errand, isLoading, error, refresh } = useErrand(errandId);
   const [activeTab, setActiveTab] = useState<number>(0);
+  const [activeSubTab, setActiveSubTab] = useState<number>(0);
+  const [activeSidebar, setActiveSidebar] = useState<string>('info');
   const { setErrand: setHeaderErrand } = useErrandHeader();
   const { form, setField, isDirty, saving, error: saveError, save } = useErrandForm(errand, refresh);
-  // The route param can be an errand NUMBER (not a UUID); caremanagement sub-resources (notes,
-  // warnings, attachments) require the errand's UUID. Gate those fetches on the resolved errand.id so
-  // we never call them with a non-UUID identifier (which caremanagement rejects with a 400).
+  // The route param can be an errand NUMBER (not a UUID); caremanagement sub-resources require the
+  // errand's UUID. Gate those fetches on the resolved errand.id so we never call them with a non-UUID.
   const resolvedErrandId = errand?.id ?? '';
-  const { notes, isLoading: notesLoading, error: notesError, refresh: refreshNotes } =
-    useErrandNotes(resolvedErrandId);
+
+  // Lazy-load gating: a section's data is only fetched when its tab/sidebar is actually open, so opening
+  // an errand doesn't log a read of everything. Ärende sub-tab order: 0 Ansökan · 1 Bilagor · 2
+  // Meddelanden · 3 Normberäkning · 4 Beslut · 5 Utbetalning (the last three carry the approval state).
+  const onArendeGroup = activeTab === 0;
+  const onNormberakningSubTab = onArendeGroup && activeSubTab === 3;
+  const approvalsEnabled = onArendeGroup && activeSubTab >= 3;
+  const warningsEnabled = onNormberakningSubTab || activeSidebar === 'warnings';
+  const notesEnabled = activeSidebar === 'notes';
+  const bevakningarEnabled = activeSidebar === 'bevakningar';
+
+  const { notes, isLoading: notesLoading, error: notesError, refresh: refreshNotes } = useErrandNotes(
+    resolvedErrandId,
+    notesEnabled
+  );
   const {
     warnings,
     isLoading: warningsLoading,
     error: warningsError,
     refresh: refreshWarnings,
-  } = useErrandWarnings(resolvedErrandId);
-  // Fetched once here so the tab counters and both attachment tabs share a single source.
+  } = useErrandWarnings(resolvedErrandId, warningsEnabled);
+  // Attachments back the default Ansökan view (the CASE_DATA PDF) and the tab counters, so they load
+  // eagerly with the errand.
   const {
     attachments,
     isLoading: attachmentsLoading,
@@ -75,14 +90,14 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     refresh: refreshAttachments,
   } = useErrandAttachments(resolvedErrandId);
 
-  // Section approvals are shared between the per-section checkboxes and the sidebar "Avsluta" button.
-  const { approvals, pendingSection, setApproval } = useErrandSectionApprovals(resolvedErrandId);
+  // Section approvals back the per-section checkboxes; the sidebar Avsluta button fetches them on click.
+  const { approvals, pendingSection, setApproval } = useErrandSectionApprovals(resolvedErrandId, approvalsEnabled);
   const {
     bevakningar,
     isLoading: bevakningarLoading,
     error: bevakningarError,
     refresh: refreshBevakningar,
-  } = useErrandBevakningar(resolvedErrandId);
+  } = useErrandBevakningar(resolvedErrandId, bevakningarEnabled);
   // Sökande + medsökande surfaced at the top of the errand (next to the errand number).
   const { stakeholders } = useErrandStakeholders(resolvedErrandId);
   const headerParties = useMemo<HeaderParty[]>(
@@ -163,7 +178,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           saving={saving}
           error={saveError}
           onSave={() => void save()}
-          avslutaSlot={<ErrandAvsluta errandId={apiErrandId} approvals={approvals} onClosed={refresh} />}
+          avslutaSlot={<ErrandAvsluta errandId={apiErrandId} onClosed={refresh} />}
         />
       ),
     },
@@ -360,18 +375,36 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
 
           {/* Huvudtabsen (grupperna) ligger direkt på main-bakgrunden; själva innehållskortet (vit
               bakgrund + ram) flyttas in i varje panel, med ev. sub-tabs högst upp i kortet. */}
-          <Tabs className="px-2" size="sm" current={activeTab} onTabChange={setActiveTab}>
-            {tabGroups.map((group) => (
+          <Tabs
+            className="px-2"
+            size="sm"
+            current={activeTab}
+            onTabChange={(index) => {
+              setActiveTab(index);
+              setActiveSubTab(0);
+            }}
+          >
+            {tabGroups.map((group, groupIndex) => (
               <Tabs.Item key={group.label}>
                 <Tabs.Button className="text-base">{group.label}</Tabs.Button>
                 <Tabs.Content>
                   <div className="border-1 border-divider rounded-12 bg-background-content">
-                    {group.tabs.length > 1 ?
-                      <Tabs size="sm" tabslistClassName="pt-20 px-12" panelsClassName="border-t-1 border-divider">
-                        {group.tabs.map((subTab) => (
+                    {/* Only the active group + sub-tab mounts its content, so inactive tabs never fetch
+                        (and thus never log a read) until the handläggare opens them. */}
+                    {groupIndex !== activeTab ?
+                      null
+                    : group.tabs.length > 1 ?
+                      <Tabs
+                        size="sm"
+                        current={activeSubTab}
+                        onTabChange={setActiveSubTab}
+                        tabslistClassName="pt-20 px-12"
+                        panelsClassName="border-t-1 border-divider"
+                      >
+                        {group.tabs.map((subTab, subIndex) => (
                           <Tabs.Item key={subTab.label}>
                             <Tabs.Button className="text-base">{subTab.label}</Tabs.Button>
-                            <Tabs.Content>{subTab.content}</Tabs.Content>
+                            <Tabs.Content>{subIndex === activeSubTab ? subTab.content : null}</Tabs.Content>
                           </Tabs.Item>
                         ))}
                       </Tabs>
@@ -384,7 +417,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
         </div>
       </main>
 
-      <ErrandSidebar sections={sections} />
+      <ErrandSidebar sections={sections} selected={activeSidebar} onSelect={setActiveSidebar} />
     </div>
   );
 };

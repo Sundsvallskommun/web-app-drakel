@@ -19,9 +19,13 @@ export interface SidebarSection {
  * section, whose panel is shown alongside. Built from @sk-web-gui/react, with no global-store
  * coupling — sections are passed in.
  */
-export const ErrandSidebar: FC<{ sections: SidebarSection[] }> = ({ sections }) => {
+export const ErrandSidebar: FC<{
+  sections: SidebarSection[];
+  /** The active section key (controlled by the parent so it can lazy-load that section's data). */
+  selected: string;
+  onSelect: (key: string) => void;
+}> = ({ sections, selected, onSelect }) => {
   const [open, setOpen] = useState<boolean>(true);
-  const [selected, setSelected] = useState<string | undefined>(sections[0]?.key);
   const active = sections.find((section) => section.key === selected) ?? sections[0];
 
   return (
@@ -46,7 +50,7 @@ export const ErrandSidebar: FC<{ sections: SidebarSection[] }> = ({ sections }) 
                   role="menuitem"
                   aria-label={section.label}
                   onClick={() => {
-                    setSelected(section.key);
+                    onSelect(section.key);
                     setOpen(true);
                   }}
                   color="primary"

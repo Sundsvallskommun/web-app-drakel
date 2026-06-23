@@ -12,14 +12,18 @@ interface UseErrandWarningsResult {
 
 const timestamp = (warning: Warning): number => new Date(warning.created ?? warning.updated ?? 0).getTime();
 
-/** Loads an errand's EB income warnings. Shared by the sidebar panel and its count badge. */
-export const useErrandWarnings = (errandId: string): UseErrandWarningsResult => {
+/**
+ * Loads an errand's EB income warnings. `enabled` gates the fetch so warnings are only read when the
+ * Varningar sidebar section or the Normberäkning tab is opened (not on every errand open).
+ */
+export const useErrandWarnings = (errandId: string, enabled = true): UseErrandWarningsResult => {
   const [warnings, setWarnings] = useState<Warning[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<number | string | boolean>();
 
   const load = useCallback(() => {
-    if (!errandId) {
+    if (!errandId || !enabled) {
+      setIsLoading(false);
       return;
     }
     setIsLoading(true);
@@ -34,7 +38,7 @@ export const useErrandWarnings = (errandId: string): UseErrandWarningsResult => 
       }
       setIsLoading(false);
     });
-  }, [errandId]);
+  }, [errandId, enabled]);
 
   useEffect(() => {
     load();

@@ -21,13 +21,14 @@ interface UseErrandSectionApprovalsResult {
  * Loads and mutates the approval state of an errand's three EB sections. Instantiated once at the
  * errand-detail level so the per-section checkboxes and the sidebar Avsluta button share one source.
  */
-export const useErrandSectionApprovals = (errandId: string): UseErrandSectionApprovalsResult => {
+export const useErrandSectionApprovals = (errandId: string, enabled = true): UseErrandSectionApprovalsResult => {
   const [approvals, setApprovals] = useState<SectionApprovals>({});
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [pendingSection, setPendingSection] = useState<SectionKey>();
 
   const load = useCallback(() => {
-    if (!errandId) {
+    if (!errandId || !enabled) {
+      setIsLoading(false);
       return;
     }
     setIsLoading(true);
@@ -35,7 +36,7 @@ export const useErrandSectionApprovals = (errandId: string): UseErrandSectionApp
       setApprovals(res.data ?? {});
       setIsLoading(false);
     });
-  }, [errandId]);
+  }, [errandId, enabled]);
 
   useEffect(() => {
     load();

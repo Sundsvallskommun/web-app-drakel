@@ -10,14 +10,18 @@ interface UseErrandBevakningarResult {
   refresh: () => void;
 }
 
-/** Loads the bevakningar (date-bound watches/reminders) for an errand. */
-export const useErrandBevakningar = (errandId: string): UseErrandBevakningarResult => {
+/**
+ * Loads the bevakningar (date-bound watches/reminders) for an errand. `enabled` gates the fetch so the
+ * list is only read when the Bevakningar sidebar section is opened (not on every errand open).
+ */
+export const useErrandBevakningar = (errandId: string, enabled = true): UseErrandBevakningarResult => {
   const [bevakningar, setBevakningar] = useState<Bevakning[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<number | string | boolean>();
 
   const load = useCallback(() => {
-    if (!errandId) {
+    if (!errandId || !enabled) {
+      setIsLoading(false);
       return;
     }
     setIsLoading(true);
@@ -31,7 +35,7 @@ export const useErrandBevakningar = (errandId: string): UseErrandBevakningarResu
       }
       setIsLoading(false);
     });
-  }, [errandId]);
+  }, [errandId, enabled]);
 
   useEffect(() => {
     load();
