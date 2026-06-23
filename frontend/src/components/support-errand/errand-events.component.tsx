@@ -2,7 +2,7 @@
 
 import { useErrandEvents } from '@hooks/use-errand-events';
 import { ErrandEvent } from '@services/event-service';
-import { Button, Select, Spinner, Table } from '@sk-web-gui/react';
+import { Button, Select, Spinner } from '@sk-web-gui/react';
 import dayjs from 'dayjs';
 import { FC, useState } from 'react';
 
@@ -18,14 +18,6 @@ const ACTION_LABELS: Record<string, string> = {
 
 const actionLabel = (action?: string): string => (action ? (ACTION_LABELS[action] ?? action) : '—');
 
-// HTTP = the access log (who read/touched), EVENT = the domain-event change log (what changed, incl. process/system).
-const SOURCE_LABELS: Record<string, string> = {
-  HTTP: 'Åtkomst',
-  EVENT: 'Ändring',
-};
-
-const sourceLabel = (source?: string): string => (source ? (SOURCE_LABELS[source] ?? source) : '—');
-
 const actionChipClass = (action?: string): string => {
   switch (action) {
     case 'CREATE':
@@ -39,11 +31,22 @@ const actionChipClass = (action?: string): string => {
   }
 };
 
+// HTTP = the access log (who read/touched), EVENT = the domain-event change log (what changed, incl. process/system).
+const SOURCE_LABELS: Record<string, string> = {
+  HTTP: 'Åtkomst',
+  EVENT: 'Ändring',
+};
+
+const sourceLabel = (source?: string): string => (source ? (SOURCE_LABELS[source] ?? source) : '');
+
 // actor is null when no X-Sent-By header was sent on the originating request.
 const actorLabel = (event: ErrandEvent): string => (event.actor?.trim() ? event.actor : 'System');
 const formatWhen = (created?: string): string => (created ? dayjs(created).format('YYYY-MM-DD HH:mm') : '—');
 
-/** "Händelselogg" tab — the errand's who/what/when activity log (reads + writes), newest first. */
+/**
+ * "Händelselogg" — the errand's who/what/when activity log (reads + writes), newest first. Rendered as a
+ * compact card list (with stacked filters) so it fits the right sidebar.
+ */
 export const ErrandEvents: FC<{ errandId: string }> = ({ errandId }) => {
   const [action, setAction] = useState<string>('');
   const [source, setSource] = useState<string>('');
@@ -54,41 +57,40 @@ export const ErrandEvents: FC<{ errandId: string }> = ({ errandId }) => {
   const hasMore = visibleCount < events.length;
 
   return (
-    <div className="flex flex-col gap-16 max-w-[64rem]">
-      <div className="flex items-center justify-between gap-12 flex-wrap">
-        <h2 className="text-h3-sm md:text-h3-md m-0">Händelselogg</h2>
-        <div className="flex items-center gap-8 flex-wrap">
-          <Select
-            size="sm"
-            className="max-w-[16rem]"
-            aria-label="Filtrera på källa"
-            value={source}
-            onChange={(changeEvent) => {
-              setSource(changeEvent.target.value);
-              setVisibleCount(PAGE_SIZE);
-            }}
-          >
-            <Select.Option value="">Alla källor</Select.Option>
-            <Select.Option value="HTTP">Åtkomst (vem läste/rörde)</Select.Option>
-            <Select.Option value="EVENT">Ändringar (vad ändrades)</Select.Option>
-          </Select>
-          <Select
-            size="sm"
-            className="max-w-[14rem]"
-            aria-label="Filtrera på händelse"
-            value={action}
-            onChange={(changeEvent) => {
-              setAction(changeEvent.target.value);
-              setVisibleCount(PAGE_SIZE);
-            }}
-          >
-            <Select.Option value="">Alla händelser</Select.Option>
-            <Select.Option value="READ">Läst</Select.Option>
-            <Select.Option value="CREATE">Skapad</Select.Option>
-            <Select.Option value="UPDATE">Ändrad</Select.Option>
-            <Select.Option value="DELETE">Borttagen</Select.Option>
-          </Select>
-        </div>
+    <div className="flex flex-col gap-12">
+      <h2 className="text-h4-sm md:text-h4-md m-0">Händelselogg</h2>
+
+      <div className="flex flex-col gap-8">
+        <Select
+          size="sm"
+          className="w-full"
+          aria-label="Filtrera på källa"
+          value={source}
+          onChange={(changeEvent) => {
+            setSource(changeEvent.target.value);
+            setVisibleCount(PAGE_SIZE);
+          }}
+        >
+          <Select.Option value="">Alla källor</Select.Option>
+          <Select.Option value="HTTP">Åtkomst (vem läste/rörde)</Select.Option>
+          <Select.Option value="EVENT">Ändringar (vad ändrades)</Select.Option>
+        </Select>
+        <Select
+          size="sm"
+          className="w-full"
+          aria-label="Filtrera på händelse"
+          value={action}
+          onChange={(changeEvent) => {
+            setAction(changeEvent.target.value);
+            setVisibleCount(PAGE_SIZE);
+          }}
+        >
+          <Select.Option value="">Alla händelser</Select.Option>
+          <Select.Option value="READ">Läst</Select.Option>
+          <Select.Option value="CREATE">Skapad</Select.Option>
+          <Select.Option value="UPDATE">Ändrad</Select.Option>
+          <Select.Option value="DELETE">Borttagen</Select.Option>
+        </Select>
       </div>
 
       {error && (
@@ -96,53 +98,39 @@ export const ErrandEvents: FC<{ errandId: string }> = ({ errandId }) => {
       )}
 
       {isLoading ?
-        <Spinner size={4} />
+        <Spinner size={3} />
       : events.length === 0 ?
         <p className="m-0 text-dark-secondary">Inga händelser.</p>
       : <>
-          <Table dense background>
-            <Table.Header>
-              <Table.HeaderColumn>Tidpunkt</Table.HeaderColumn>
-              <Table.HeaderColumn>Källa</Table.HeaderColumn>
-              <Table.HeaderColumn>Händelse</Table.HeaderColumn>
-              <Table.HeaderColumn>Vad</Table.HeaderColumn>
-              <Table.HeaderColumn>Vem</Table.HeaderColumn>
-            </Table.Header>
-            <Table.Body>
-              {visible.map((event, index) => (
-                <Table.Row key={event.id ?? index}>
-                  <Table.Column className="whitespace-nowrap tabular-nums text-dark-secondary">
-                    {formatWhen(event.created)}
-                  </Table.Column>
-                  <Table.Column className="whitespace-nowrap text-dark-secondary">{sourceLabel(event.source)}</Table.Column>
-                  <Table.Column>
-                    <span className={`inline-block text-small rounded-8 px-8 py-2 ${actionChipClass(event.action)}`}>
-                      {actionLabel(event.action)}
-                    </span>
-                  </Table.Column>
-                  <Table.Column className="break-words">{event.target ?? '—'}</Table.Column>
-                  <Table.Column>
-                    {actorLabel(event)}
-                    {event.actor?.trim() && event.actorType ?
-                      <span className="text-small text-dark-secondary"> ({event.actorType})</span>
-                    : null}
-                  </Table.Column>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table>
+          <ul className="flex flex-col gap-8 m-0 p-0 list-none">
+            {visible.map((event, index) => (
+              <li key={event.id ?? index} className="rounded-12 border-1 border-divider p-12 flex flex-col gap-4">
+                <div className="flex items-center justify-between gap-8">
+                  <span className={`inline-block text-small rounded-8 px-8 py-2 ${actionChipClass(event.action)}`}>
+                    {actionLabel(event.action)}
+                  </span>
+                  {sourceLabel(event.source) ?
+                    <span className="text-small text-dark-secondary shrink-0">{sourceLabel(event.source)}</span>
+                  : null}
+                </div>
+                {event.target ? <span className="text-small break-words">{event.target}</span> : null}
+                <span className="text-small text-dark-secondary break-words">
+                  {actorLabel(event)} · {formatWhen(event.created)}
+                </span>
+              </li>
+            ))}
+          </ul>
           {hasMore ?
-            <div className="flex justify-center">
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => {
-                  setVisibleCount((prev) => prev + PAGE_SIZE);
-                }}
-              >
-                Visa fler
-              </Button>
-            </div>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="self-center"
+              onClick={() => {
+                setVisibleCount((prev) => prev + PAGE_SIZE);
+              }}
+            >
+              Visa fler
+            </Button>
           : null}
         </>
       }

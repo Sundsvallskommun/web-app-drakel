@@ -14,7 +14,7 @@ import { Disclosure, Spinner, Tabs } from '@sk-web-gui/react';
 import { CLIENT_FILES_PDF } from '@utils/attachment-names';
 import { stakeholderDisplayName } from '@utils/stakeholder-name';
 import { compareByRole } from '@utils/stakeholder-role';
-import { AlertTriangle, Bell, NotebookPen, Paperclip, UserCog } from 'lucide-react';
+import { AlertTriangle, Bell, History, NotebookPen, Paperclip, UserCog } from 'lucide-react';
 import { FC, Fragment, ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { ErrandApplicationData } from './errand-application-data.component';
@@ -212,6 +212,12 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
         />
       ),
     },
+    {
+      key: 'events',
+      label: 'Händelselogg',
+      icon: History,
+      component: <ErrandEvents errandId={errand.id ?? ''} />,
+    },
   ];
 
   // Tabs are grouped into top-level sections; a group with several tabs gets a secondary sub-tab row, a
@@ -234,7 +240,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           ),
         },
         {
-          label: 'Bilagor till ansökan',
+          label: `Bilagor till ansökan (${errandAttachments.length})`,
           content: (
             <div className="pt-24 pb-40 px-24 md:px-40">
               <ErrandAttachments
@@ -248,7 +254,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           ),
         },
         {
-          label: 'Meddelanden och bilagor',
+          label: `Meddelanden och bilagor (${conversationAttachments.length})`,
           content: (
             <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-16">
               <ErrandMessages errandId={apiErrandId} />
@@ -342,19 +348,6 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
         },
       ],
     },
-    {
-      label: 'Händelselogg',
-      tabs: [
-        {
-          label: 'Händelselogg',
-          content: (
-            <div className="pt-24 pb-40 px-24 md:px-40">
-              <ErrandEvents errandId={apiErrandId} />
-            </div>
-          ),
-        },
-      ],
-    },
   ];
 
   return (
@@ -374,7 +367,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                 <Tabs.Content>
                   <div className="border-1 border-divider rounded-12 bg-background-content">
                     {group.tabs.length > 1 ?
-                      <Tabs size="sm" tabslistClassName="px-24 md:px-40 pt-16" panelsClassName="border-t-1 border-divider">
+                      <Tabs size="sm" tabslistClassName="pt-20 px-12" panelsClassName="border-t-1 border-divider">
                         {group.tabs.map((subTab) => (
                           <Tabs.Item key={subTab.label}>
                             <Tabs.Button className="text-base">{subTab.label}</Tabs.Button>
