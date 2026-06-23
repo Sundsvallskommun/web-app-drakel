@@ -4,6 +4,7 @@ import validateEnv from '@utils/validateEnv';
 import App from '@/app';
 
 import { BevakningController } from './controllers/bevakning.controller';
+import { CountsController } from './controllers/counts.controller';
 import { DecisionController } from './controllers/decision.controller';
 import { DocumentController } from './controllers/document.controller';
 import { ErrandController } from './controllers/errand.controller';
@@ -38,6 +39,7 @@ const app = new App([
   JournalController,
   DocumentController,
   EventController,
+  CountsController,
 ]);
 
 app.listen();

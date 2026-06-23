@@ -2,7 +2,7 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 
-import { Monitoring, MonitoringRequest } from '@/data-contracts/caremanagement/data-contracts';
+import { Monitoring, MonitoringCount, MonitoringRequest } from '@/data-contracts/caremanagement/data-contracts';
 
 /** Extracts the monitoring id (last path segment) from a caremanagement Location header. */
 const monitoringIdFromLocation = (location?: string): string | undefined => location?.split('/').filter(Boolean).pop();
@@ -18,6 +18,13 @@ class CaremanagementBevakningService {
   async readBevakningar(errandId: string): Promise<ApiResponse<Monitoring[]>> {
     return this.apiService.get<Monitoring[]>({
       url: caremanagementUrl('errands', 'financial-assistance', errandId, 'monitorings'),
+    });
+  }
+
+  /** The bevakning (monitoring) count for the errand (unlogged — safe to poll for a badge). */
+  async readCount(errandId: string): Promise<ApiResponse<MonitoringCount>> {
+    return this.apiService.get<MonitoringCount>({
+      url: caremanagementUrl('errands', 'financial-assistance', errandId, 'monitorings', 'count'),
     });
   }
 

@@ -5,6 +5,7 @@ import { HeaderParty, useErrandHeader } from '@components/layout/errand-header-c
 import { useErrand } from '@hooks/use-errand';
 import { useErrandAttachments } from '@hooks/use-errand-attachments';
 import { useErrandBevakningar } from '@hooks/use-errand-bevakningar';
+import { useErrandCounts } from '@hooks/use-errand-counts';
 import { useErrandForm } from '@hooks/use-errand-form';
 import { useErrandNotes } from '@hooks/use-errand-notes';
 import { useErrandSectionApprovals } from '@hooks/use-errand-section-approvals';
@@ -100,6 +101,9 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   } = useErrandBevakningar(resolvedErrandId, bevakningarEnabled);
   // Sökande + medsökande surfaced at the top of the errand (next to the errand number).
   const { stakeholders } = useErrandStakeholders(resolvedErrandId);
+  // Sidebar badge counts — backed by unlogged count endpoints, so they load with the errand (the lists
+  // stay lazy) and are refreshed after a section mutates.
+  const { counts, refresh: refreshCounts } = useErrandCounts(resolvedErrandId);
   const headerParties = useMemo<HeaderParty[]>(
     () =>
       stakeholders
@@ -186,14 +190,17 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
       key: 'warnings',
       label: 'Varningar',
       icon: AlertTriangle,
-      badge: openWarnings.length,
+      badge: counts.warnings,
       component: (
         <ErrandWarnings
           errandId={errand.id ?? ''}
           warnings={warnings}
           isLoading={warningsLoading}
           loadError={!!warningsError}
-          refresh={refreshWarnings}
+          refresh={() => {
+            refreshWarnings();
+            refreshCounts();
+          }}
         />
       ),
     },
@@ -201,14 +208,17 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
       key: 'notes',
       label: 'Anteckningar',
       icon: NotebookPen,
-      badge: notes.length,
+      badge: counts.notes,
       component: (
         <ErrandNotes
           errandId={errand.id ?? ''}
           notes={notes}
           isLoading={notesLoading}
           loadError={!!notesError}
-          refresh={refreshNotes}
+          refresh={() => {
+            refreshNotes();
+            refreshCounts();
+          }}
         />
       ),
     },
@@ -216,14 +226,17 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
       key: 'bevakningar',
       label: 'Bevakningar',
       icon: Bell,
-      badge: bevakningar.length,
+      badge: counts.bevakningar,
       component: (
         <ErrandBevakningar
           errandId={errand.id ?? ''}
           bevakningar={bevakningar}
           isLoading={bevakningarLoading}
           loadError={!!bevakningarError}
-          refresh={refreshBevakningar}
+          refresh={() => {
+            refreshBevakningar();
+            refreshCounts();
+          }}
         />
       ),
     },

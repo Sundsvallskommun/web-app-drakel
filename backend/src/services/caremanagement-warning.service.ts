@@ -2,7 +2,7 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 
-import { Warning } from '@/data-contracts/caremanagement/data-contracts';
+import { Warning, WarningCount } from '@/data-contracts/caremanagement/data-contracts';
 
 /** The statuses a handläggare can set a warning to: re-open it, acknowledge it or close it. */
 type WarningStatusUpdate = 'OPEN' | 'ACKNOWLEDGED' | 'CLOSED';
@@ -14,6 +14,13 @@ class CaremanagementWarningService {
   async readWarnings(errandId: string): Promise<ApiResponse<Warning[]>> {
     return this.apiService.get<Warning[]>({
       url: caremanagementUrl('errands', 'financial-assistance', errandId, 'warnings'),
+    });
+  }
+
+  /** The active-warning count (OPEN/ACKNOWLEDGED only) for the errand (unlogged — safe to poll for a badge). */
+  async readCount(errandId: string): Promise<ApiResponse<WarningCount>> {
+    return this.apiService.get<WarningCount>({
+      url: caremanagementUrl('errands', 'financial-assistance', errandId, 'warnings', 'count'),
     });
   }
 
