@@ -12,11 +12,12 @@ import {
   Textarea,
   UploadFile,
 } from '@sk-web-gui/react';
-import { Paperclip, Reply, SendHorizontal, X } from 'lucide-react';
+import { Eye, Paperclip, Reply, SendHorizontal, X } from 'lucide-react';
 import { FC, useEffect, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { useShallow } from 'zustand/react/shallow';
 
+import { isPreviewableMimeType, LocalFilePreviewModal } from './attachment-preview-modal.component';
 import { messagePreview, senderLabel } from './errand-message.component';
 
 // Matches the backend MESSAGE_BODY_MAX_LENGTH / caremanagement CreateMessage.body limit.
@@ -66,6 +67,7 @@ export const ErrandNewMessage: FC<{
 }> = ({ errandId, onSent, replyTo, onCancelReply }) => {
   const formMethods = useForm<NewMessageForm>({ defaultValues: { files: [], message: '' }, mode: 'onChange' });
   const [showFileTypes, setShowFileTypes] = useState<boolean>(false);
+  const [previewFile, setPreviewFile] = useState<File>();
   const username = useUserStore(useShallow((state) => state.user.username));
 
   // useWatch (not formMethods.watch()) so the strict React-Compiler lint rule stays happy.
@@ -215,6 +217,21 @@ export const ErrandNewMessage: FC<{
                     <span className="min-w-0 flex-1 truncate text-small" title={uploadFileName(file)}>
                       {uploadFileName(file)}
                     </span>
+                    {isPreviewableMimeType(file.file.type) ?
+                      <Button
+                        type="button"
+                        variant="tertiary"
+                        size="sm"
+                        iconButton
+                        className="shrink-0"
+                        aria-label={`Förhandsgranska ${uploadFileName(file)}`}
+                        onClick={() => {
+                          setPreviewFile(file.file);
+                        }}
+                      >
+                        <Eye size={16} />
+                      </Button>
+                    : null}
                     <Button
                       type="button"
                       variant="tertiary"
@@ -252,6 +269,13 @@ export const ErrandNewMessage: FC<{
           </div>
         </form>
       </FormProvider>
+
+      <LocalFilePreviewModal
+        file={previewFile}
+        onClose={() => {
+          setPreviewFile(undefined);
+        }}
+      />
 
       <Modal
         show={showFileTypes}
