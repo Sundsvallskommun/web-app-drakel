@@ -15,11 +15,16 @@ const SECTION_LABELS: Record<SectionKey, string> = {
 };
 
 /**
- * "Avsluta ärende" button for the sidebar. The approval state is fetched on click (not on errand open),
- * so opening the errand doesn't read the approvals; when not every section is approved the handläggare is
- * asked to confirm before closing. Closing sets the errand status to CLOSED.
+ * "Avsluta ärende" button for the sidebar. Closing sets the errand status to CLOSED. When `checkApprovals`
+ * is set (renewal errands), the approval state is fetched on click and the handläggare is asked to confirm
+ * if not every section is approved; otherwise (new/supplementary errands, which have no approval sections)
+ * a plain confirm is shown.
  */
-export const ErrandAvsluta: FC<{ errandId: string; onClosed: () => void }> = ({ errandId, onClosed }) => {
+export const ErrandAvsluta: FC<{ errandId: string; onClosed: () => void; checkApprovals?: boolean }> = ({
+  errandId,
+  onClosed,
+  checkApprovals = true,
+}) => {
   const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
   const [unapproved, setUnapproved] = useState<string[]>([]);
   const [checking, setChecking] = useState<boolean>(false);
@@ -40,6 +45,12 @@ export const ErrandAvsluta: FC<{ errandId: string; onClosed: () => void }> = ({ 
   };
 
   const onAvsluta = async (): Promise<void> => {
+    // No approval sections on this errand type — just confirm and close.
+    if (!checkApprovals) {
+      setUnapproved([]);
+      setConfirmOpen(true);
+      return;
+    }
     setChecking(true);
     setError(undefined);
     const res = await getSectionApprovals(errandId);
@@ -84,10 +95,12 @@ export const ErrandAvsluta: FC<{ errandId: string; onClosed: () => void }> = ({ 
         label="Avsluta ärende"
       >
         <Modal.Content>
-          <p className="m-0">
-            Du har inte godkänt {unapproved.length === 1 ? 'sektionen' : 'sektionerna'}{' '}
-            <strong>{unapproved.join(', ')}</strong>. Vill du avsluta ändå?
-          </p>
+          {unapproved.length > 0 ?
+            <p className="m-0">
+              Du har inte godkänt {unapproved.length === 1 ? 'sektionen' : 'sektionerna'}{' '}
+              <strong>{unapproved.join(', ')}</strong>. Vill du avsluta ändå?
+            </p>
+          : <p className="m-0">Vill du avsluta ärendet?</p>}
         </Modal.Content>
         <Modal.Footer>
           <Button
@@ -99,7 +112,7 @@ export const ErrandAvsluta: FC<{ errandId: string; onClosed: () => void }> = ({ 
             Avbryt
           </Button>
           <Button color="vattjom" variant="primary" loading={closing} loadingText="Avslutar…" onClick={() => void close()}>
-            Avsluta ändå
+            {unapproved.length > 0 ? 'Avsluta ändå' : 'Avsluta'}
           </Button>
         </Modal.Footer>
       </Modal>

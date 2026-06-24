@@ -61,12 +61,21 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   // errand's UUID. Gate those fetches on the resolved errand.id so we never call them with a non-UUID.
   const resolvedErrandId = errand?.id ?? '';
 
+  // The tab layout depends on the application type. A new application has no calculation/decision/payment
+  // flow; both new and supplementary applications omit the Dokumentation group. Renewal — and any unknown
+  // or generic type — gets the full set.
+  const typeSlug = errand?.typeSlug ?? '';
+  const isNewApplication = typeSlug === 'financial-assistance-new';
+  const isSupplementaryApplication = typeSlug === 'financial-assistance-supplementary';
+  const showCalculationSections = !isNewApplication && !isSupplementaryApplication;
+  const showDocumentation = !isNewApplication;
+
   // Lazy-load gating: a section's data is only fetched when its tab/sidebar is actually open, so opening
-  // an errand doesn't log a read of everything. Ärende sub-tab order: 0 Ansökan · 1 Bilagor · 2
-  // Normberäkning · 3 Beslut · 4 Utbetalning (the last three carry the approval state).
+  // an errand doesn't log a read of everything. When shown, the Ärende sub-tab order is 0 Ansökan · 1
+  // Bilagor · 2 Normberäkning · 3 Beslut · 4 Utbetalning (the last three carry the approval state).
   const onArendeGroup = activeTab === 0;
-  const onNormberakningSubTab = onArendeGroup && activeSubTab === 2;
-  const approvalsEnabled = onArendeGroup && activeSubTab >= 2;
+  const onNormberakningSubTab = showCalculationSections && onArendeGroup && activeSubTab === 2;
+  const approvalsEnabled = showCalculationSections && onArendeGroup && activeSubTab >= 2;
   const warningsEnabled = onNormberakningSubTab || activeSidebar === 'warnings';
   const notesEnabled = activeSidebar === 'notes';
   const bevakningarEnabled = activeSidebar === 'bevakningar';
@@ -181,7 +190,9 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           saving={saving}
           error={saveError}
           onSave={() => void save()}
-          avslutaSlot={<ErrandAvsluta errandId={apiErrandId} onClosed={refresh} />}
+          avslutaSlot={
+            <ErrandAvsluta errandId={apiErrandId} onClosed={refresh} checkApprovals={showCalculationSections} />
+          }
         />
       ),
     },
@@ -291,53 +302,58 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
             </div>
           ),
         },
-        {
-          label: 'Normberäkning',
-          content: (
-            <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
-              <ErrandNormberakning
-                errandId={apiErrandId}
-                warnings={openWarnings}
-                onWarningsChanged={refreshWarnings}
-                locked={!!approvals.calculation?.approved}
-              />
-              <SectionApprovalCheckbox
-                label="Godkänn normberäkning"
-                approval={approvals.calculation}
-                disabled={pendingSection === 'CALCULATION'}
-                onChange={(approved) => void setApproval('CALCULATION', approved)}
-              />
-            </div>
-          ),
-        },
-        {
-          label: 'Beslut',
-          content: (
-            <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
-              <ErrandBeslut errandId={apiErrandId} locked={!!approvals.decision?.approved} />
-              <SectionApprovalCheckbox
-                label="Godkänn beslut"
-                approval={approvals.decision}
-                disabled={pendingSection === 'DECISION'}
-                onChange={(approved) => void setApproval('DECISION', approved)}
-              />
-            </div>
-          ),
-        },
-        {
-          label: 'Utbetalning',
-          content: (
-            <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
-              <ErrandUtbetalning errandId={apiErrandId} />
-              <SectionApprovalCheckbox
-                label="Godkänn utbetalning"
-                approval={approvals.payment}
-                disabled={pendingSection === 'PAYMENT'}
-                onChange={(approved) => void setApproval('PAYMENT', approved)}
-              />
-            </div>
-          ),
-        },
+        // Calculation / decision / payment only apply to a renewal (and any unknown/generic type).
+        ...(showCalculationSections ?
+          [
+            {
+              label: 'Normberäkning',
+              content: (
+                <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
+                  <ErrandNormberakning
+                    errandId={apiErrandId}
+                    warnings={openWarnings}
+                    onWarningsChanged={refreshWarnings}
+                    locked={!!approvals.calculation?.approved}
+                  />
+                  <SectionApprovalCheckbox
+                    label="Godkänn normberäkning"
+                    approval={approvals.calculation}
+                    disabled={pendingSection === 'CALCULATION'}
+                    onChange={(approved) => void setApproval('CALCULATION', approved)}
+                  />
+                </div>
+              ),
+            },
+            {
+              label: 'Beslut',
+              content: (
+                <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
+                  <ErrandBeslut errandId={apiErrandId} locked={!!approvals.decision?.approved} />
+                  <SectionApprovalCheckbox
+                    label="Godkänn beslut"
+                    approval={approvals.decision}
+                    disabled={pendingSection === 'DECISION'}
+                    onChange={(approved) => void setApproval('DECISION', approved)}
+                  />
+                </div>
+              ),
+            },
+            {
+              label: 'Utbetalning',
+              content: (
+                <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
+                  <ErrandUtbetalning errandId={apiErrandId} />
+                  <SectionApprovalCheckbox
+                    label="Godkänn utbetalning"
+                    approval={approvals.payment}
+                    disabled={pendingSection === 'PAYMENT'}
+                    onChange={(approved) => void setApproval('PAYMENT', approved)}
+                  />
+                </div>
+              ),
+            },
+          ]
+        : []),
       ],
     },
     {
@@ -367,27 +383,32 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
         },
       ],
     },
-    {
-      label: 'Dokumentation',
-      tabs: [
+    // Dokumentation is omitted for a new application.
+    ...(showDocumentation ?
+      [
         {
-          label: 'Journal',
-          content: (
-            <div className="pt-24 pb-40 px-24 md:px-40">
-              <ErrandJournal errandId={apiErrandId} />
-            </div>
-          ),
+          label: 'Dokumentation',
+          tabs: [
+            {
+              label: 'Journal',
+              content: (
+                <div className="pt-24 pb-40 px-24 md:px-40">
+                  <ErrandJournal errandId={apiErrandId} />
+                </div>
+              ),
+            },
+            {
+              label: 'Dokument',
+              content: (
+                <div className="pt-24 pb-40 px-24 md:px-40">
+                  <ErrandDocuments errandId={apiErrandId} />
+                </div>
+              ),
+            },
+          ],
         },
-        {
-          label: 'Dokument',
-          content: (
-            <div className="pt-24 pb-40 px-24 md:px-40">
-              <ErrandDocuments errandId={apiErrandId} />
-            </div>
-          ),
-        },
-      ],
-    },
+      ]
+    : []),
   ];
 
   return (
