@@ -18,8 +18,10 @@ class CitizenService {
   async getPersonnumber(partyId: string): Promise<string | null> {
     const url = `${getApiBase('citizen')}/${MUNICIPALITY_ID}/${partyId}/personnumber`;
     try {
-      const res = await this.apiService.get<string>({ url });
-      const personnumber = res.data?.trim() || '';
+      // Citizen returns the personnummer as a JSON number, so coerce to string before trimming. (A
+      // 12-digit personnummer always starts with the century, so there's no leading zero to lose.)
+      const res = await this.apiService.get<string | number>({ url });
+      const personnumber = res.data?.toString().trim() || '';
       return personnumber.length > 0 ? personnumber : null;
     } catch {
       console.error('Failed to resolve personnummer for partyId', partyId);
