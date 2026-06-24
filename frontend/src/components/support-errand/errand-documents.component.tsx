@@ -3,6 +3,7 @@
 import { useErrandDocuments } from '@hooks/use-errand-documents';
 import { deleteDocument, Document, lockDocument } from '@services/document-service';
 import { Button, Modal, Spinner } from '@sk-web-gui/react';
+import { looksLikeHtml, sanitizeHtml } from '@utils/sanitize-html';
 import { Lock, Pencil, Plus, Trash } from 'lucide-react';
 import { FC, useState } from 'react';
 
@@ -96,7 +97,14 @@ export const ErrandDocuments: FC<{ errandId: string }> = ({ errandId }) => {
                   </span>
                 </div>
                 <span className="text-small text-dark-secondary">{metaLine(document)}</span>
-                {document.text ? <p className="m-0 break-words whitespace-pre-wrap">{document.text}</p> : null}
+                {document.text ?
+                  looksLikeHtml(document.text) ?
+                    <div
+                      className="m-0 break-words [&_p]:m-0"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(document.text) }}
+                    />
+                  : <p className="m-0 break-words whitespace-pre-wrap">{document.text}</p>
+                : null}
                 {working ?
                   <div className="flex gap-8 pt-4">
                     <Button
