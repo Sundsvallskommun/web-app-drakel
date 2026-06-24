@@ -1,6 +1,6 @@
 'use client';
 
-import { PdfPreview, PdfPreviewFrame } from '@components/common/pdf-preview.component';
+import { PdfPreview } from '@components/common/pdf-preview.component';
 import { HeaderParty, useErrandHeader } from '@components/layout/errand-header-context';
 import { useErrand } from '@hooks/use-errand';
 import { useErrandAttachments } from '@hooks/use-errand-attachments';
@@ -18,7 +18,7 @@ import { compareByRole } from '@utils/stakeholder-role';
 import { AlertTriangle, Bell, History, NotebookPen, UserCog } from 'lucide-react';
 import { FC, Fragment, ReactNode, useEffect, useMemo, useState } from 'react';
 
-import { ErrandApplicationData } from './errand-application-data.component';
+import { ErrandApplicationSummary } from './errand-application-summary.component';
 import { ErrandAttachments } from './errand-attachments.component';
 import { ErrandAvsluta } from './errand-avsluta.component';
 import { ErrandBeslut } from './errand-beslut.component';
@@ -258,12 +258,13 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
         {
           label: 'Ansökan',
           content: (
-            <div className="pt-24 pb-40 px-24 md:px-40">
-              {/* Tills vidare visas den genererade CASE_DATA-PDF:en i stället för det strukturerade
-                  formuläret; ErrandApplicationData renderas bara som fallback när ingen PDF finns. */}
+            <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
+              {/* Den strukturerade sammanställningen (form-snapshot "som det var", annars live-data) och den
+                  genererade CASE_DATA-sammanställnings-PDF:en visas tillsammans. */}
+              <ErrandApplicationSummary errandId={apiErrandId} errand={errand} />
               {caseDataAttachment?.id ?
-                <PdfPreviewFrame errandId={apiErrandId} attachmentId={caseDataAttachment.id} title="Ansökan" />
-              : <ErrandApplicationData errand={errand} />}
+                <PdfPreview errandId={apiErrandId} attachmentId={caseDataAttachment.id} title="Sammanställning (PDF)" />
+              : null}
             </div>
           ),
         },

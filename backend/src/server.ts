@@ -9,6 +9,7 @@ import { DecisionController } from './controllers/decision.controller';
 import { DocumentController } from './controllers/document.controller';
 import { ErrandController } from './controllers/errand.controller';
 import { EventController } from './controllers/event.controller';
+import { FormSnapshotController } from './controllers/form-snapshot.controller';
 import { HealthController } from './controllers/health.controller';
 import { JournalController } from './controllers/journal.controller';
 import { MessageController } from './controllers/message.controller';
@@ -42,6 +43,7 @@ const app = new App([
   EventController,
   CountsController,
   NotificationController,
+  FormSnapshotController,
 ]);
 
 app.listen();
