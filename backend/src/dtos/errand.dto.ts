@@ -1,5 +1,5 @@
-import { Type } from 'class-transformer';
-import { IsArray, IsInt, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsArray, IsBoolean, IsInt, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
 
 import { ExternalTag } from '@/responses/errand.response';
 
@@ -72,4 +72,9 @@ export class FindErrandsQueryDto {
   @IsString({ each: true })
   @IsOptional()
   sort?: string[];
+  /** When true, only errands that have at least one unacknowledged notification (all owners). */
+  @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  @IsOptional()
+  hasUnacknowledgedNotifications?: boolean;
 }

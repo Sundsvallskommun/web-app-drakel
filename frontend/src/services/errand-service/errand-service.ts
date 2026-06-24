@@ -38,7 +38,10 @@ export interface Message {
   attachments?: MessageAttachment[];
 }
 
-const buildParams = (query: FindErrandsQueryDto): Record<string, unknown> => {
+/** The generated FindErrandsQueryDto plus the notification filter (not yet in the regenerated contract). */
+export type ErrandsQuery = FindErrandsQueryDto & { hasUnacknowledgedNotifications?: boolean };
+
+const buildParams = (query: ErrandsQuery): Record<string, unknown> => {
   const params: Record<string, unknown> = {};
   if (query.filter) {
     params.filter = query.filter;
@@ -52,11 +55,14 @@ const buildParams = (query: FindErrandsQueryDto): Record<string, unknown> => {
   if (query.sort?.length) {
     params.sort = query.sort;
   }
+  if (query.hasUnacknowledgedNotifications) {
+    params.hasUnacknowledgedNotifications = true;
+  }
   return params;
 };
 
 /** Fetches a paged list of caremanagement errands from the backend proxy. */
-export const getErrands = (query: FindErrandsQueryDto = {}): Promise<ServiceResponse<FindErrandsResult>> => {
+export const getErrands = (query: ErrandsQuery = {}): Promise<ServiceResponse<FindErrandsResult>> => {
   return apiService
     .get<ApiResponse<FindErrandsResult>>('errands', { params: buildParams(query) })
     .then((res) => ({ data: res.data.data }))

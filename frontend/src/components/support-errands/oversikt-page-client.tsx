@@ -4,6 +4,7 @@ import { MainSidebar } from '@components/layout/main-sidebar.component';
 import SidebarLayout from '@components/layout/sidebar-layout.component';
 import { useErrands } from '@hooks/use-errands';
 import { useStatuses } from '@hooks/use-statuses';
+import { Checkbox } from '@sk-web-gui/react';
 import { useMemo, useState } from 'react';
 
 import { emptyFilters, ErrandFilters, ErrandsFilter } from './errands-filter.component';
@@ -15,7 +16,12 @@ const PAGE_SIZE = 12;
 const FETCH_SIZE = 100;
 
 export const OversiktPageClient = () => {
-  const { errands, isLoading, error } = useErrands({ page: 0, size: FETCH_SIZE });
+  const [onlyUnread, setOnlyUnread] = useState<boolean>(false);
+  const { errands, isLoading, error } = useErrands({
+    page: 0,
+    size: FETCH_SIZE,
+    hasUnacknowledgedNotifications: onlyUnread || undefined,
+  });
   const { statuses } = useStatuses();
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [query, setQuery] = useState<string>('');
@@ -89,8 +95,17 @@ export const OversiktPageClient = () => {
     >
       <div className="w-full">
         <div className="box-border py-10 px-40 max-sm:px-24 w-full flex justify-center shadow-lg min-h-[8rem]">
-          <div className="w-full container px-0">
+          <div className="w-full container px-0 flex flex-col gap-12">
             <ErrandsFilter query={query} onQueryChange={changeQuery} filters={filters} onFilterChange={changeFilter} />
+            <Checkbox
+              checked={onlyUnread}
+              onChange={(event) => {
+                setOnlyUnread(event.target.checked);
+                setPage(0);
+              }}
+            >
+              Visa endast ärenden med olästa meddelanden
+            </Checkbox>
           </div>
         </div>
 
