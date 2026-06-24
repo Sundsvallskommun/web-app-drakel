@@ -64,10 +64,10 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
 
   // Lazy-load gating: a section's data is only fetched when its tab/sidebar is actually open, so opening
   // an errand doesn't log a read of everything. Ärende sub-tab order: 0 Ansökan · 1 Bilagor · 2
-  // Meddelanden · 3 Normberäkning · 4 Beslut · 5 Utbetalning (the last three carry the approval state).
+  // Normberäkning · 3 Beslut · 4 Utbetalning (the last three carry the approval state).
   const onArendeGroup = activeTab === 0;
-  const onNormberakningSubTab = onArendeGroup && activeSubTab === 3;
-  const approvalsEnabled = onArendeGroup && activeSubTab >= 3;
+  const onNormberakningSubTab = onArendeGroup && activeSubTab === 2;
+  const approvalsEnabled = onArendeGroup && activeSubTab >= 2;
   const warningsEnabled = onNormberakningSubTab || activeSidebar === 'warnings';
   const notesEnabled = activeSidebar === 'notes';
   const bevakningarEnabled = activeSidebar === 'bevakningar';
@@ -282,32 +282,6 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           ),
         },
         {
-          label: `Meddelanden och bilagor (${conversationAttachments.length})`,
-          content: (
-            <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-16">
-              <ErrandMessages errandId={apiErrandId} />
-              {/* Bilagorna som delats i meddelandetråden, hopfällbara under själva meddelandena. */}
-              <Disclosure variant="alt" initalOpen={conversationAttachments.length > 0}>
-                <Disclosure.Header>
-                  <Disclosure.Icon icon={<Paperclip size={18} />} />
-                  <Disclosure.Title>Bilagor i meddelanden ({conversationAttachments.length})</Disclosure.Title>
-                  <Disclosure.Button />
-                </Disclosure.Header>
-                <Disclosure.Content>
-                  <ErrandMessageAttachments
-                    errandId={apiErrandId}
-                    attachments={conversationAttachments}
-                    summaryAttachment={conversationSummaryAttachment}
-                    isLoading={attachmentsLoading}
-                    loadError={!!attachmentsError}
-                    hideHeading
-                  />
-                </Disclosure.Content>
-              </Disclosure>
-            </div>
-          ),
-        },
-        {
           label: 'Normberäkning',
           content: (
             <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
@@ -350,6 +324,37 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                 disabled={pendingSection === 'PAYMENT'}
                 onChange={(approved) => void setApproval('PAYMENT', approved)}
               />
+            </div>
+          ),
+        },
+      ],
+    },
+    {
+      label: `Meddelanden och bilagor (${conversationAttachments.length})`,
+      tabs: [
+        {
+          label: 'Meddelanden och bilagor',
+          content: (
+            <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-16">
+              <ErrandMessages errandId={apiErrandId} />
+              {/* Bilagorna som delats i meddelandetråden, hopfällbara under själva meddelandena. */}
+              <Disclosure variant="alt" initalOpen={conversationAttachments.length > 0}>
+                <Disclosure.Header>
+                  <Disclosure.Icon icon={<Paperclip size={18} />} />
+                  <Disclosure.Title>Bilagor i meddelanden ({conversationAttachments.length})</Disclosure.Title>
+                  <Disclosure.Button />
+                </Disclosure.Header>
+                <Disclosure.Content>
+                  <ErrandMessageAttachments
+                    errandId={apiErrandId}
+                    attachments={conversationAttachments}
+                    summaryAttachment={conversationSummaryAttachment}
+                    isLoading={attachmentsLoading}
+                    loadError={!!attachmentsError}
+                    hideHeading
+                  />
+                </Disclosure.Content>
+              </Disclosure>
             </div>
           ),
         },
