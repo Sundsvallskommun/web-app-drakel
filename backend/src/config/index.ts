@@ -31,6 +31,8 @@ export const BASE_URL_PREFIX = env.BASE_URL_PREFIX ?? '';
 export const MUNICIPALITY_ID = env.MUNICIPALITY_ID ?? '';
 export const CAREMANAGEMENT_BASE_URL = env.CAREMANAGEMENT_BASE_URL ?? '';
 export const CAREMANAGEMENT_NAMESPACE = env.CAREMANAGEMENT_NAMESPACE ?? '';
+// The Sundsvall Templating service (document/phrase templates). Reached directly, no auth.
+export const TEMPLATING_BASE_URL = env.TEMPLATING_BASE_URL ?? '';
 // Optional — the errand controller falls back to a default type slug when this is unset.
 export const CAREMANAGEMENT_TYPE_SLUG = env.CAREMANAGEMENT_TYPE_SLUG;
 export const AUTHORIZED_GROUPS = env.AUTHORIZED_GROUPS ?? '';

@@ -7,6 +7,7 @@ import { BevakningController } from './controllers/bevakning.controller';
 import { CountsController } from './controllers/counts.controller';
 import { DecisionController } from './controllers/decision.controller';
 import { DocumentController } from './controllers/document.controller';
+import { DocumentTemplateController } from './controllers/document-template.controller';
 import { ErrandController } from './controllers/errand.controller';
 import { EventController } from './controllers/event.controller';
 import { FormSnapshotController } from './controllers/form-snapshot.controller';
@@ -40,6 +41,7 @@ const app = new App([
   BevakningController,
   JournalController,
   DocumentController,
+  DocumentTemplateController,
   EventController,
   CountsController,
   NotificationController,

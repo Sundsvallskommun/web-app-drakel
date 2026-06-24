@@ -13,6 +13,7 @@ const validateEnv = () => {
     MUNICIPALITY_ID: str(),
     CAREMANAGEMENT_BASE_URL: url(),
     CAREMANAGEMENT_NAMESPACE: str(),
+    TEMPLATING_BASE_URL: url(),
     AUTHORIZED_GROUPS: str(),
     ADMIN_GROUP: str(),
     SAML_CALLBACK_URL: url(),

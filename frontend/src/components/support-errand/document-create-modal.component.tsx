@@ -1,30 +1,97 @@
 'use client';
 
 import { createDocument, DocumentInput, DocumentType } from '@services/document-service';
-import { Button, FormControl, FormLabel, Modal, Select } from '@sk-web-gui/react';
-import { FC, useState } from 'react';
+import {
+  DocumentTemplates,
+  getDocumentTemplateContent,
+  getDocumentTemplates,
+} from '@services/document-template-service';
+import { Button, Combobox, DatePicker, FormControl, FormLabel, Input, Modal, Select } from '@sk-web-gui/react';
+import { TextEditorValue } from '@sk-web-gui/text-editor';
+import dynamic from 'next/dynamic';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
-import { DocumentFields, DocumentFieldValues } from './document-fields.component';
 import { todayDate } from './journal-entry-fields.component';
 
-/** Modal for adding a new dokument (type dropdown + shared fields). */
+const DocumentEditor = dynamic(() => import('./document-editor.component'), {
+  ssr: false,
+  loading: () => <div className="h-[24rem] w-full animate-pulse rounded-12 bg-background-200" />,
+});
+
+const EMPTY_TEMPLATES: DocumentTemplates = { documents: [], phrases: [] };
+const EMPTY_CONTENT: TextEditorValue = { markup: '', plainText: '' };
+
+// A single-select combobox reports its value as a string; guard against the array shape just in case.
+const comboboxValue = (value: unknown): string =>
+  typeof value === 'string' ? value
+  : Array.isArray(value) && typeof value[0] === 'string' ? value[0]
+  : '';
+
+/**
+ * Modal for adding a new dokument. Picking a type loads the templates tagged with that type code from the
+ * Templating service: a "Dokumentmall" combobox (selecting one fills the rubrik and replaces the editor
+ * body) and a "Frastext" combobox (selecting one inserts the phrase at the cursor). The composed HTML is
+ * saved to caremanagement as the dokument text.
+ */
 export const DocumentCreateModal: FC<{
   errandId: string;
   types: DocumentType[];
   onClose: () => void;
   onCreated: () => void;
 }> = ({ errandId, types, onClose, onCreated }) => {
-  const [type, setType] = useState<string>('');
-  const [fields, setFields] = useState<DocumentFieldValues>({
-    heading: '',
-    documentDate: todayDate(),
-    documentTime: '',
-    text: '',
-  });
+  const [typeCode, setTypeCode] = useState<string>('');
+  const [heading, setHeading] = useState<string>('');
+  const [documentDate, setDocumentDate] = useState<string>(todayDate());
+  const [documentTime, setDocumentTime] = useState<string>('');
+  const [content, setContent] = useState<TextEditorValue>(EMPTY_CONTENT);
+  const [templates, setTemplates] = useState<DocumentTemplates>(EMPTY_TEMPLATES);
+  // Bumped after every phrase insert so the Frastext combobox remounts and clears (letting the same phrase
+  // be inserted again).
+  const [phraseNonce, setPhraseNonce] = useState<number>(0);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string>();
 
-  const canCreate = type !== '' && fields.heading.trim() !== '' && fields.documentDate !== '' && !saving;
+  // next/dynamic doesn't forward refs, so the editor hands us its "insert at cursor" function here.
+  const insertAtCursor = useRef<((html: string) => void) | null>(null);
+  const registerInsert = useCallback((insert: (html: string) => void) => {
+    insertAtCursor.current = insert;
+  }, []);
+
+  // Load the templates tagged with the selected type's code.
+  useEffect(() => {
+    if (!typeCode) {
+      setTemplates(EMPTY_TEMPLATES);
+      return;
+    }
+    void getDocumentTemplates(typeCode).then((res) => {
+      setTemplates(res.error ? EMPTY_TEMPLATES : (res.data ?? EMPTY_TEMPLATES));
+    });
+  }, [typeCode]);
+
+  const selectedType = types.find((type) => type.code === typeCode);
+
+  const applyDocumentTemplate = (identifier: string): void => {
+    const option = templates.documents.find((template) => template.identifier === identifier);
+    if (option?.name) {
+      setHeading(option.name);
+    }
+    void getDocumentTemplateContent(identifier).then((res) => {
+      if (!res.error && res.data !== undefined) {
+        setContent({ markup: res.data });
+      }
+    });
+  };
+
+  const insertPhrase = (identifier: string): void => {
+    void getDocumentTemplateContent(identifier).then((res) => {
+      if (!res.error && res.data) {
+        insertAtCursor.current?.(res.data);
+      }
+    });
+    setPhraseNonce((nonce) => nonce + 1);
+  };
+
+  const canCreate = typeCode !== '' && heading.trim() !== '' && documentDate !== '' && !saving;
 
   const create = async (): Promise<void> => {
     if (!canCreate) {
@@ -32,12 +99,13 @@ export const DocumentCreateModal: FC<{
     }
     setSaving(true);
     setError(undefined);
+    const trimmedMarkup = content.markup?.trim() ?? '';
     const input: DocumentInput = {
-      type,
-      heading: fields.heading.trim(),
-      text: fields.text.trim() || undefined,
-      documentDate: fields.documentDate,
-      documentTime: fields.documentTime || undefined,
+      type: selectedType?.displayName ?? '',
+      heading: heading.trim(),
+      text: trimmedMarkup.length > 0 ? trimmedMarkup : undefined,
+      documentDate,
+      documentTime: documentTime || undefined,
     };
     const res = await createDocument(errandId, input);
     setSaving(false);
@@ -49,32 +117,116 @@ export const DocumentCreateModal: FC<{
   };
 
   return (
-    <Modal show onClose={onClose} label="Nytt dokument" className="w-[43rem]">
+    <Modal show onClose={onClose} label="Nytt dokument" className="w-[64rem]">
       <Modal.Content className="flex flex-col gap-12">
-        <FormControl id="document-new-type" className="w-full">
-          <FormLabel>Typ *</FormLabel>
-          <Select
-            className="w-full"
-            value={type}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+          <FormControl id="document-new-type" className="w-full">
+            <FormLabel>Typ *</FormLabel>
+            <Select
+              className="w-full"
+              value={typeCode}
+              onChange={(event) => {
+                setTypeCode(event.target.value);
+              }}
+            >
+              <Select.Option value="">Välj typ</Select.Option>
+              {types.map((documentType) => (
+                <Select.Option key={documentType.code} value={documentType.code ?? ''}>
+                  {documentType.displayName ?? documentType.code}
+                </Select.Option>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl id="document-new-template" className="w-full">
+            <FormLabel>Dokumentmall</FormLabel>
+            <Combobox
+              key={`doc-${typeCode}`}
+              disabled={!typeCode}
+              placeholder="Välj mall (ersätter texten)"
+              searchPlaceholder="Sök mall…"
+              onSelect={(event) => {
+                const identifier = comboboxValue(event.target.value);
+                if (identifier) {
+                  applyDocumentTemplate(identifier);
+                }
+              }}
+            >
+              <Combobox.Input className="w-full" />
+              <Combobox.List>
+                {templates.documents.map((template) => (
+                  <Combobox.Option key={template.identifier} value={template.identifier ?? ''}>
+                    {template.name ?? template.identifier ?? ''}
+                  </Combobox.Option>
+                ))}
+              </Combobox.List>
+            </Combobox>
+          </FormControl>
+
+          <FormControl id="document-new-phrase" className="w-full">
+            <FormLabel>Frastext</FormLabel>
+            <Combobox
+              key={`phrase-${typeCode}-${phraseNonce}`}
+              disabled={!typeCode}
+              placeholder="Infoga fras vid markören"
+              searchPlaceholder="Sök fras…"
+              onSelect={(event) => {
+                const identifier = comboboxValue(event.target.value);
+                if (identifier) {
+                  insertPhrase(identifier);
+                }
+              }}
+            >
+              <Combobox.Input className="w-full" />
+              <Combobox.List>
+                {templates.phrases.map((template) => (
+                  <Combobox.Option key={template.identifier} value={template.identifier ?? ''}>
+                    {template.name ?? template.identifier ?? ''}
+                  </Combobox.Option>
+                ))}
+              </Combobox.List>
+            </Combobox>
+          </FormControl>
+        </div>
+
+        <FormControl id="document-new-heading" className="w-full">
+          <FormLabel>Rubrik *</FormLabel>
+          <Input
+            value={heading}
             onChange={(event) => {
-              setType(event.target.value);
+              setHeading(event.target.value);
             }}
-          >
-            <Select.Option value="">Välj typ</Select.Option>
-            {types.map((documentType) => (
-              <Select.Option key={documentType.code} value={documentType.displayName ?? ''}>
-                {documentType.displayName ?? documentType.code}
-              </Select.Option>
-            ))}
-          </Select>
+          />
         </FormControl>
-        <DocumentFields
-          value={fields}
-          idPrefix="document-new"
-          onChange={(patch) => {
-            setFields((prev) => ({ ...prev, ...patch }));
-          }}
-        />
+
+        <div className="grid grid-cols-2 gap-12">
+          <FormControl id="document-new-date" className="w-full">
+            <FormLabel>Datum *</FormLabel>
+            <DatePicker
+              type="date"
+              value={documentDate}
+              onChange={(event) => {
+                setDocumentDate(event.target.value);
+              }}
+            />
+          </FormControl>
+          <FormControl id="document-new-time" className="w-full">
+            <FormLabel>Tid</FormLabel>
+            <DatePicker
+              type="time"
+              value={documentTime}
+              onChange={(event) => {
+                setDocumentTime(event.target.value);
+              }}
+            />
+          </FormControl>
+        </div>
+
+        <FormControl id="document-new-text" className="w-full">
+          <FormLabel>Text</FormLabel>
+          <DocumentEditor value={content} onChange={setContent} registerInsert={registerInsert} />
+        </FormControl>
+
         {error && <p className="text-error-surface-primary m-0">{error}</p>}
       </Modal.Content>
       <Modal.Footer>
