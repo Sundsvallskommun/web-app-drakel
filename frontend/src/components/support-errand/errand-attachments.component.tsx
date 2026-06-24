@@ -34,7 +34,11 @@ export const ErrandAttachments: FC<ErrandAttachmentsProps> = ({
   return (
     <div className="flex flex-col gap-16">
       {summaryAttachment?.id ?
-        <PdfPreview errandId={errandId} attachmentId={summaryAttachment.id} title="Sammanställning (PDF)" />
+        <PdfPreview
+          errandId={errandId}
+          attachmentId={summaryAttachment.id}
+          title="Sammanställning bilagor från ansökan"
+        />
       : null}
 
       <div className="flex flex-col gap-16">

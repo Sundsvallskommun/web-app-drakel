@@ -36,7 +36,11 @@ export const ErrandMessageAttachments: FC<ErrandMessageAttachmentsProps> = ({
   return (
     <div className="flex flex-col gap-16">
       {summaryAttachment?.id ?
-        <PdfPreview errandId={errandId} attachmentId={summaryAttachment.id} title="Klientbilagor (PDF)" />
+        <PdfPreview
+          errandId={errandId}
+          attachmentId={summaryAttachment.id}
+          title="Sammanställning bilagor från meddelanden"
+        />
       : null}
 
       {hideHeading ? null : <span className="font-bold">Bilagor från meddelanden</span>}

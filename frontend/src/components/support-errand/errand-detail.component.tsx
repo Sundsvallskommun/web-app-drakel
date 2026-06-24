@@ -1,6 +1,6 @@
 'use client';
 
-import { PdfPreviewFrame } from '@components/common/pdf-preview.component';
+import { PdfPreview, PdfPreviewFrame } from '@components/common/pdf-preview.component';
 import { HeaderParty, useErrandHeader } from '@components/layout/errand-header-context';
 import { useErrand } from '@hooks/use-errand';
 import { useErrandAttachments } from '@hooks/use-errand-attachments';
@@ -270,15 +270,24 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
         {
           label: `Bilagor (${errandAttachments.length})`,
           content: (
-            <div className="pt-24 pb-40 px-24 md:px-40">
+            <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
               <ErrandAttachments
                 errandId={apiErrandId}
                 attachments={errandAttachments}
                 isLoading={attachmentsLoading}
                 loadError={!!attachmentsError}
                 refresh={refreshAttachments}
-                heading="Bilagor till ansökan"
+                heading="Bilagor från ansökan"
               />
+              {/* The message-attachments summary PDF is mirrored here so it's also reachable under the
+                  regular Bilagor tab (the full conversation list stays under Meddelanden → Bilagor). */}
+              {conversationSummaryAttachment?.id ?
+                <PdfPreview
+                  errandId={apiErrandId}
+                  attachmentId={conversationSummaryAttachment.id}
+                  title="Sammanställning bilagor från meddelanden"
+                />
+              : null}
             </div>
           ),
         },
