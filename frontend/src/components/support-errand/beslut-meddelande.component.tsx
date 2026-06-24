@@ -8,12 +8,20 @@ import { stakeholderDisplayName } from '@utils/stakeholder-name';
 import { FC, useMemo, useState } from 'react';
 
 import {
+  ALL_CATEGORY_ID,
+  ALL_PHRASES,
   AMOUNT_PLACEHOLDER,
   BESLUT_PHRASE_GROUPS,
   BeslutPhrase,
   NAME_PLACEHOLDER,
   PERIOD_PLACEHOLDER,
 } from './beslut-phrases';
+
+// "Alla" first, then the real categories.
+const CATEGORY_OPTIONS = [
+  { id: ALL_CATEGORY_ID, name: 'Alla' },
+  ...BESLUT_PHRASE_GROUPS.map((group) => ({ id: group.id, name: group.name })),
+];
 
 const EMPTY_VALUE: TextEditorValue = { markup: '', plainText: '' };
 
@@ -38,13 +46,13 @@ export const BeslutMeddelande: FC<{ errandId: string }> = ({ errandId }) => {
   const applicant = stakeholders.find((stakeholder) => stakeholder.role === 'APPLICANT');
   const applicantName = applicant ? stakeholderDisplayName(applicant) : '';
 
-  const [categoryId, setCategoryId] = useState<string>(BESLUT_PHRASE_GROUPS[0]?.id ?? '');
+  const [categoryId, setCategoryId] = useState<string>(ALL_CATEGORY_ID);
   // The rubrik combobox keeps its own selection; each newly-selected rubrik is appended to the editor.
   const [selectedHeadingIds, setSelectedHeadingIds] = useState<string[]>([]);
   const [value, setValue] = useState<TextEditorValue>(EMPTY_VALUE);
 
-  const activeGroup = BESLUT_PHRASE_GROUPS.find((group) => group.id === categoryId);
-  const headings = activeGroup?.phrases ?? [];
+  const headings =
+    categoryId === ALL_CATEGORY_ID ? ALL_PHRASES : (BESLUT_PHRASE_GROUPS.find((group) => group.id === categoryId)?.phrases ?? []);
   // The kategori combobox is single-select; a stable array keeps the controlled value from churning.
   const categoryValue = useMemo(() => (categoryId ? [categoryId] : []), [categoryId]);
 
@@ -83,9 +91,9 @@ export const BeslutMeddelande: FC<{ errandId: string }> = ({ errandId }) => {
           >
             <Combobox.Input className="w-full" />
             <Combobox.List>
-              {BESLUT_PHRASE_GROUPS.map((group) => (
-                <Combobox.Option key={group.id} value={group.id}>
-                  {group.name}
+              {CATEGORY_OPTIONS.map((option) => (
+                <Combobox.Option key={option.id} value={option.id}>
+                  {option.name}
                 </Combobox.Option>
               ))}
             </Combobox.List>
