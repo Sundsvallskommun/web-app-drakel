@@ -1,11 +1,11 @@
 'use client';
 
 import { addNormRow, deleteNormRow, NormIncomeRow, restoreNormRow, TypeOption, updateNormRow } from '@services/normberakning-service';
-import { Button, DatePicker, Input, Select, Table } from '@sk-web-gui/react';
+import { Button, DatePicker, FormControl, FormLabel, Input, Select, Spinner, Table } from '@sk-web-gui/react';
 import { formatAmount } from '@utils/format-amount';
 import dayjs from 'dayjs';
-import { Plus, RotateCcw, Trash2 } from 'lucide-react';
-import { FC, useState } from 'react';
+import { RotateCcw, Trash2 } from 'lucide-react';
+import { FC, FocusEvent, useState } from 'react';
 
 import { NormberakningSummaBox } from './normberakning-summa-box.component';
 
@@ -43,19 +43,30 @@ export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({
   incomeTypes,
   onChanged,
 }) => {
-  const [savingId, setSavingId] = useState<string>();
   const [error, setError] = useState<string>();
+  // Draft rows: picking a type below the table adds a not-yet-persisted row to the list. It's created
+  // once the handläggare fills it in and focus leaves the row (see DraftIncomeRow).
+  const [drafts, setDrafts] = useState<{ key: number; typeName: string }[]>([]);
+  const [draftSeq, setDraftSeq] = useState<number>(0);
 
-  const runRowAction = async (rowId: string, action: () => Promise<{ error?: unknown }>) => {
-    setSavingId(rowId);
+  const runRowAction = async (action: () => Promise<{ error?: unknown }>) => {
     setError(undefined);
     const result = await action();
-    setSavingId(undefined);
     if (result.error) {
       setError('Det gick inte att spara ändringen');
       return;
     }
     onChanged();
+  };
+
+  const addDraft = (typeName: string) => {
+    setError(undefined);
+    setDrafts((current) => [...current, { key: draftSeq, typeName }]);
+    setDraftSeq((next) => next + 1);
+  };
+
+  const removeDraft = (key: number) => {
+    setDrafts((current) => current.filter((draft) => draft.key !== key));
   };
 
   return (
@@ -86,14 +97,49 @@ export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({
                 key={row.id ?? index}
                 errandId={errandId}
                 row={row}
-                saving={savingId === row.id}
-                onAction={(rowId, action) => void runRowAction(rowId, action)}
+                onAction={(action) => void runRowAction(action)}
               />
             ))
           }
-          <AddIncomeRow errandId={errandId} incomeTypes={incomeTypes} onAdded={onChanged} onError={setError} />
+          {drafts.map((draft) => (
+            <DraftIncomeRow
+              key={`draft-${draft.key}`}
+              errandId={errandId}
+              typeName={draft.typeName}
+              onCommitted={() => {
+                removeDraft(draft.key);
+                onChanged();
+              }}
+              onRemove={() => {
+                removeDraft(draft.key);
+              }}
+              onError={setError}
+            />
+          ))}
         </Table.Body>
       </Table>
+
+      <div className="flex items-end gap-12">
+        <FormControl className="w-[20rem]">
+          <FormLabel className="text-small">Lägg till rad</FormLabel>
+          <Select
+            size="sm"
+            value=""
+            onChange={(event) => {
+              if (event.target.value) {
+                addDraft(event.target.value);
+              }
+            }}
+          >
+            <Select.Option value="">Välj inkomsttyp</Select.Option>
+            {incomeTypes.map((type) => (
+              <Select.Option key={type.code} value={type.displayName ?? ''}>
+                {type.displayName ?? type.code}
+              </Select.Option>
+            ))}
+          </Select>
+        </FormControl>
+      </div>
     </div>
   );
 };
@@ -102,9 +148,8 @@ export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({
 const IncomeRow: FC<{
   errandId: string;
   row: NormIncomeRow;
-  saving: boolean;
-  onAction: (rowId: string, action: () => Promise<{ error?: unknown }>) => void;
-}> = ({ errandId, row, saving, onAction }) => {
+  onAction: (action: () => Promise<{ error?: unknown }>) => void;
+}> = ({ errandId, row, onAction }) => {
   const [applicantAmount, setApplicantAmount] = useState<string>(row.applicantCaseworkerAmount?.toString() ?? '');
   const [applicantDate, setApplicantDate] = useState<string>(toDateInput(row.applicantAmountDate));
   const [coapplicantAmount, setCoapplicantAmount] = useState<string>(row.coapplicantCaseworkerAmount?.toString() ?? '');
@@ -134,7 +179,7 @@ const IncomeRow: FC<{
             aria-label="Återställ rad"
             leftIcon={<RotateCcw />}
             onClick={() => {
-              onAction(rowId, () => restoreNormRow(errandId, 'incomes', rowId));
+              onAction(() => restoreNormRow(errandId, 'incomes', rowId));
             }}
           />
         </Table.Column>
@@ -149,8 +194,12 @@ const IncomeRow: FC<{
     coapplicantDate !== toDateInput(row.coapplicantAmountDate) ||
     note !== (row.note ?? '');
 
-  const save = () => {
-    onAction(rowId, () =>
+  // Persist the row when a field loses focus, but only if something actually changed.
+  const handleBlur = () => {
+    if (!dirty) {
+      return;
+    }
+    onAction(() =>
       updateNormRow(errandId, 'incomes', rowId, {
         applicantCaseworkerAmount: parseAmount(applicantAmount),
         applicantAmountDate: applicantDate.trim() || undefined,
@@ -176,6 +225,7 @@ const IncomeRow: FC<{
           onChange={(event) => {
             setApplicantAmount(event.target.value);
           }}
+          onBlur={handleBlur}
         />
       </Table.Column>
       <Table.Column>
@@ -186,6 +236,7 @@ const IncomeRow: FC<{
           onChange={(event) => {
             setApplicantDate(event.target.value);
           }}
+          onBlur={handleBlur}
         />
       </Table.Column>
       <Table.Column>
@@ -198,6 +249,7 @@ const IncomeRow: FC<{
           onChange={(event) => {
             setCoapplicantAmount(event.target.value);
           }}
+          onBlur={handleBlur}
         />
       </Table.Column>
       <Table.Column>
@@ -208,6 +260,7 @@ const IncomeRow: FC<{
           onChange={(event) => {
             setCoapplicantDate(event.target.value);
           }}
+          onBlur={handleBlur}
         />
       </Table.Column>
       <Table.Column>
@@ -217,90 +270,82 @@ const IncomeRow: FC<{
           onChange={(event) => {
             setNote(event.target.value);
           }}
+          onBlur={handleBlur}
         />
       </Table.Column>
       <Table.Column>
-        <div className="flex gap-4">
-          <Button size="sm" variant="primary" color="vattjom" disabled={!dirty} loading={saving} onClick={save}>
-            Spara
-          </Button>
-          <Button
-            size="sm"
-            variant="tertiary"
-            iconButton
-            aria-label="Ta bort rad"
-            leftIcon={<Trash2 />}
-            onClick={() => {
-              onAction(rowId, () => deleteNormRow(errandId, 'incomes', rowId));
-            }}
-          />
-        </div>
+        <Button
+          size="sm"
+          variant="tertiary"
+          iconButton
+          aria-label="Ta bort rad"
+          leftIcon={<Trash2 />}
+          onClick={() => {
+            onAction(() => deleteNormRow(errandId, 'incomes', rowId));
+          }}
+        />
       </Table.Column>
     </Table.Row>
   );
 };
 
-/** The last table row for adding a handläggare income row. */
-const AddIncomeRow: FC<{
+/**
+ * A not-yet-persisted income row. The handläggare fills in the S/M amounts, dates and note, and it's
+ * created (POST) once focus leaves the row. An untouched draft is left in place until filled in or removed.
+ */
+const DraftIncomeRow: FC<{
   errandId: string;
-  incomeTypes: TypeOption[];
-  onAdded: () => void;
+  typeName: string;
+  onCommitted: () => void;
+  onRemove: () => void;
   onError: (message: string) => void;
-}> = ({ errandId, incomeTypes, onAdded, onError }) => {
-  const [typeName, setTypeName] = useState<string>('');
+}> = ({ errandId, typeName, onCommitted, onRemove, onError }) => {
   const [applicantAmount, setApplicantAmount] = useState<string>('');
   const [applicantDate, setApplicantDate] = useState<string>('');
   const [coapplicantAmount, setCoapplicantAmount] = useState<string>('');
   const [coapplicantDate, setCoapplicantDate] = useState<string>('');
   const [note, setNote] = useState<string>('');
-  const [adding, setAdding] = useState<boolean>(false);
+  const [saving, setSaving] = useState<boolean>(false);
 
-  const add = async () => {
-    if (!typeName.trim()) {
-      onError('Ange en inkomsttyp');
-      return;
-    }
-    setAdding(true);
+  const hasInput =
+    applicantAmount.trim() !== '' ||
+    applicantDate.trim() !== '' ||
+    coapplicantAmount.trim() !== '' ||
+    coapplicantDate.trim() !== '' ||
+    note.trim() !== '';
+
+  const commit = async () => {
+    setSaving(true);
+    onError('');
     const result = await addNormRow(errandId, 'incomes', {
-      typeName: typeName.trim(),
+      typeName,
       applicantCaseworkerAmount: parseAmount(applicantAmount),
-      applicantAmountDate: applicantDate || undefined,
+      applicantAmountDate: applicantDate.trim() || undefined,
       coapplicantCaseworkerAmount: parseAmount(coapplicantAmount),
-      coapplicantAmountDate: coapplicantDate || undefined,
+      coapplicantAmountDate: coapplicantDate.trim() || undefined,
       note: note.trim() || undefined,
     });
-    setAdding(false);
+    setSaving(false);
     if (result.error) {
       onError('Det gick inte att lägga till raden');
       return;
     }
-    setTypeName('');
-    setApplicantAmount('');
-    setApplicantDate('');
-    setCoapplicantAmount('');
-    setCoapplicantDate('');
-    setNote('');
-    onAdded();
+    onCommitted();
+  };
+
+  // Create the row only when focus leaves the row entirely (not when moving between its own fields) and
+  // the handläggare has entered something.
+  const handleRowBlur = (event: FocusEvent<HTMLTableRowElement>) => {
+    if (event.currentTarget.contains(event.relatedTarget) || saving || !hasInput) {
+      return;
+    }
+    void commit();
   };
 
   return (
-    <Table.Row>
+    <Table.Row onBlur={handleRowBlur}>
       <Table.Column>
-        <Select
-          size="sm"
-          className="max-w-[16rem]"
-          value={typeName}
-          onChange={(event) => {
-            setTypeName(event.target.value);
-          }}
-        >
-          <Select.Option value="">Välj inkomsttyp</Select.Option>
-          {incomeTypes.map((type) => (
-            <Select.Option key={type.code} value={type.displayName ?? ''}>
-              {type.displayName ?? type.code}
-            </Select.Option>
-          ))}
-        </Select>
+        <span className="font-bold">{typeName}</span>
       </Table.Column>
       <Table.Column>
         <Input
@@ -357,9 +402,17 @@ const AddIncomeRow: FC<{
         />
       </Table.Column>
       <Table.Column>
-        <Button size="sm" variant="secondary" leftIcon={<Plus />} loading={adding} onClick={() => void add()}>
-          Lägg till
-        </Button>
+        {saving ?
+          <Spinner size={2} />
+        : <Button
+            size="sm"
+            variant="tertiary"
+            iconButton
+            aria-label="Ta bort rad"
+            leftIcon={<Trash2 />}
+            onClick={onRemove}
+          />
+        }
       </Table.Column>
     </Table.Row>
   );
