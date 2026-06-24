@@ -9,6 +9,8 @@ import { formatAmount } from '@utils/format-amount';
 import dayjs from 'dayjs';
 import { FC, useEffect, useMemo, useState } from 'react';
 
+import { BeslutMeddelande } from './beslut-meddelande.component';
+
 const todayDate = (): string => dayjs().format('YYYY-MM-DD');
 
 /**
@@ -195,7 +197,7 @@ export const ErrandBeslut: FC<{ errandId: string }> = ({ errandId }) => {
         <Tabs.Item>
           <Tabs.Button>Beslutsmeddelande</Tabs.Button>
           <Tabs.Content>
-            <p className="pt-24 my-0 text-dark-secondary">Beslutsmeddelande tillkommer senare.</p>
+            <BeslutMeddelande errandId={errandId} />
           </Tabs.Content>
         </Tabs.Item>
       </Tabs>

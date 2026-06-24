@@ -33,6 +33,7 @@
   "dependencies": {
     "@sk-web-gui/core": "4.3.3",
     "@sk-web-gui/react": "3.0.9",
+    "@sk-web-gui/text-editor": "2.1.0",
     "axios": "^1.13.5",
     "dayjs": "^1.11.19",
     "docx-preview": "^0.3.7",
