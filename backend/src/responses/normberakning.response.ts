@@ -10,6 +10,8 @@ import { IsArray, IsBoolean, IsInt, IsNumber, IsOptional, IsString, ValidateNest
  */
 export class NormPersonRow {
   @IsString() @IsOptional() id?: string;
+  /** Stable 0-based position within the section; rows keep this order across refreshes. */
+  @IsInt() @IsOptional() position?: number;
   @IsString() @IsOptional() origin?: string;
   @IsString() @IsOptional() partyId?: string;
   @IsString() @IsOptional() role?: string;
@@ -28,6 +30,8 @@ export class NormPersonRow {
 
 export class NormIncomeRow {
   @IsString() @IsOptional() id?: string;
+  /** Stable 0-based position within the section; rows keep this order across refreshes. */
+  @IsInt() @IsOptional() position?: number;
   @IsString() @IsOptional() origin?: string;
   @IsInt() @IsOptional() typeId?: number;
   @IsString() @IsOptional() typeName?: string;
@@ -45,6 +49,8 @@ export class NormIncomeRow {
 
 export class NormExpenseRow {
   @IsString() @IsOptional() id?: string;
+  /** Stable 0-based position within the section; rows keep this order across refreshes. */
+  @IsInt() @IsOptional() position?: number;
   @IsString() @IsOptional() origin?: string;
   /** EXPENSE or SPECIAL_EXPENSE (set by the DMN). */
   @IsString() @IsOptional() bucket?: string;

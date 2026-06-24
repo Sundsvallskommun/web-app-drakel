@@ -11,6 +11,8 @@ export type NormSection = 'persons' | 'incomes' | 'expenses';
  */
 export interface NormPersonRow {
   id?: string;
+  /** Stable 0-based position within the section; rows are kept in this order across refreshes. */
+  position?: number;
   origin?: string;
   partyId?: string;
   role?: 'APPLICANT' | 'CO_APPLICANT' | 'CHILD' | 'VISITATION_CHILD';
@@ -30,6 +32,8 @@ export interface NormPersonRow {
 /** One income row per type, with an applicant (S) and co-applicant (M) side. */
 export interface NormIncomeRow {
   id?: string;
+  /** Stable 0-based position within the section; rows are kept in this order across refreshes. */
+  position?: number;
   origin?: string;
   typeId?: number;
   typeName?: string;
@@ -48,6 +52,8 @@ export interface NormIncomeRow {
 /** An expense row; `bucket` separates ordinary expenses (EXPENSE) from special expenses (SPECIAL_EXPENSE). */
 export interface NormExpenseRow {
   id?: string;
+  /** Stable 0-based position within the section; rows are kept in this order across refreshes. */
+  position?: number;
   origin?: string;
   bucket?: 'EXPENSE' | 'SPECIAL_EXPENSE';
   costType?: string;
@@ -151,11 +157,29 @@ export const getNormberakningTypes = (): Promise<ServiceResponse<NormberakningTy
     }))
     .catch(toServiceError);
 
+const byPosition = (first: { position?: number }, second: { position?: number }): number =>
+  (first.position ?? 0) - (second.position ?? 0);
+
+/**
+ * Orders each editable section by the server-assigned, stable `position` so rows keep their place across
+ * refreshes (caremanagement already returns them sorted; we sort defensively to make the order explicit).
+ */
+const sortDraftRows = (draft?: NormberakningDraft): NormberakningDraft | undefined =>
+  !draft ? draft : (
+    {
+      ...draft,
+      persons: draft.persons ? [...draft.persons].sort(byPosition) : draft.persons,
+      incomes: draft.incomes ? [...draft.incomes].sort(byPosition) : draft.incomes,
+      expenses: draft.expenses ? [...draft.expenses].sort(byPosition) : draft.expenses,
+      specialExpenses: draft.specialExpenses ? [...draft.specialExpenses].sort(byPosition) : draft.specialExpenses,
+    }
+  );
+
 /** Fetches the Lifecare-aligned draft normberäkning for an errand. */
 export const getNormberakningDraft = (errandId: string): Promise<ServiceResponse<NormberakningDraft>> =>
   apiService
     .get<ApiResponse<NormberakningDraft>>(`errands/${errandId}/normberakning/draft`)
-    .then((res) => ({ data: res.data.data }))
+    .then((res) => ({ data: sortDraftRows(res.data.data) }))
     .catch(toServiceError);
 
 /** Adds a handläggare row to a section. */

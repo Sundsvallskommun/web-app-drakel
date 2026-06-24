@@ -1080,6 +1080,11 @@ export interface NormPersonRow {
   id?: string;
   /** Who created the row: the process or a caseworker */
   origin?: NormPersonRowOriginEnum;
+  /**
+   * Stable 0-based position of the row within its section; assigned on creation and kept across refreshes so the row stays in place
+   * @format int32
+   */
+  position?: number;
   /** The party id of the household member */
   partyId?: string;
   /** The role of the household member */
@@ -1167,6 +1172,11 @@ export interface NormIncomeRow {
   /** Who created the row: the process or a caseworker */
   origin?: NormIncomeRowOriginEnum;
   /**
+   * Stable 0-based position of the row within its section; assigned on creation and kept across refreshes so the row stays in place
+   * @format int32
+   */
+  position?: number;
+  /**
    * The FC income-type id
    * @format int32
    */
@@ -1221,7 +1231,7 @@ export interface NormExpenseInput {
   otherSubType?: string;
   /** The cost specification */
   specification?: string;
-  /** The amount applied for (ansökt). Honoured only when creating a new row; ignored on a patch. */
+  /** The amount applied for (ansökt). Honoured on both create and patch. */
   appliedAmount?: number;
   /** The amount the caseworker decided */
   caseworkerAmount?: number;
@@ -1235,6 +1245,11 @@ export interface NormExpenseRow {
   id?: string;
   /** Who created the row: the process or a caseworker */
   origin?: NormExpenseRowOriginEnum;
+  /**
+   * Stable 0-based position of the row within its section; assigned on creation and kept across refreshes so the row stays in place
+   * @format int32
+   */
+  position?: number;
   /** Which Lifecare bucket the expense posts to */
   bucket?: NormExpenseRowBucketEnum;
   /** The cost type */
@@ -1243,7 +1258,7 @@ export interface NormExpenseRow {
   otherSubType?: string;
   /** The cost specification */
   specification?: string;
-  /** The amount the citizen applied for */
+  /** The amount the citizen applied for (ansökt); editable by a caseworker */
   appliedAmount?: number;
   /** The amount the rules allowed (the process amount) */
   processAmount?: number;
