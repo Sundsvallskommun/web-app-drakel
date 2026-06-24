@@ -161,13 +161,14 @@ export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
   );
 };
 
-/** A single editable expense row: the Godkänt amount (writes caseworkerAmount) + note are editable; applied/process are read-only. */
+/** A single editable expense row: Ansökt (appliedAmount), Godkänt (caseworkerAmount) and the note are editable; the process amount is read-only. */
 const ExpenseRow: FC<{
   errandId: string;
   row: NormExpenseRow;
   typeLabels: Record<string, string>;
   onAction: (action: () => Promise<{ error?: unknown }>) => void;
 }> = ({ errandId, row, typeLabels, onAction }) => {
+  const [applied, setApplied] = useState<string>(row.appliedAmount?.toString() ?? '');
   const [amount, setAmount] = useState<string>(row.caseworkerAmount?.toString() ?? '');
   const [note, setNote] = useState<string>(row.note ?? '');
   const rowId = row.id ?? '';
@@ -200,7 +201,10 @@ const ExpenseRow: FC<{
     );
   }
 
-  const dirty = amount !== (row.caseworkerAmount?.toString() ?? '') || note !== (row.note ?? '');
+  const dirty =
+    applied !== (row.appliedAmount?.toString() ?? '') ||
+    amount !== (row.caseworkerAmount?.toString() ?? '') ||
+    note !== (row.note ?? '');
 
   // Persist the row when a field loses focus, but only if something actually changed.
   const handleBlur = () => {
@@ -209,6 +213,7 @@ const ExpenseRow: FC<{
     }
     onAction(() =>
       updateNormRow(errandId, 'expenses', rowId, {
+        appliedAmount: parseAmount(applied),
         caseworkerAmount: parseAmount(amount),
         note: note.trim() || undefined,
       })
@@ -220,7 +225,19 @@ const ExpenseRow: FC<{
       <Table.Column>
         <span className="font-bold">{expenseLabel(row, typeLabels)}</span>
       </Table.Column>
-      <Table.Column className="tabular-nums text-dark-secondary">{displayAmount(row.appliedAmount)}</Table.Column>
+      <Table.Column>
+        <Input
+          size="sm"
+          inputMode="decimal"
+          className="max-w-[9rem]"
+          placeholder="Ansökt"
+          value={applied}
+          onChange={(event) => {
+            setApplied(event.target.value);
+          }}
+          onBlur={handleBlur}
+        />
+      </Table.Column>
       <Table.Column className="tabular-nums text-dark-secondary">{displayAmount(row.processAmount)}</Table.Column>
       <Table.Column>
         <Input
