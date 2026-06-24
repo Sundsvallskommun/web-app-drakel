@@ -13,13 +13,14 @@ import { FC, useEffect, useRef } from 'react';
 export const DocumentEditor: FC<{
   value: TextEditorValue;
   onChange: (value: TextEditorValue) => void;
-  registerInsert: (insert: (html: string) => void) => void;
+  /** Optional — given a "paste this HTML at the cursor" function (used to insert phrases). */
+  registerInsert?: (insert: (html: string) => void) => void;
 }> = ({ value, onChange, registerInsert }) => {
   const quillRef = useRef<Quill | null>(null);
 
   useEffect(() => {
     // Read quillRef lazily inside the closure — the instance is set by the time a phrase is inserted.
-    registerInsert((html) => {
+    registerInsert?.((html) => {
       const quill = quillRef.current;
       if (!quill) {
         return;
