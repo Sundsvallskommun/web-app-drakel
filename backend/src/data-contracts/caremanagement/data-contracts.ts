@@ -2323,6 +2323,7 @@ export enum NotificationSubTypeEnum {
   ATTACHMENT = "ATTACHMENT",
   STAKEHOLDER = "STAKEHOLDER",
   PARAMETER = "PARAMETER",
+  MESSAGE = "MESSAGE",
   SYSTEM = "SYSTEM",
 }
 
