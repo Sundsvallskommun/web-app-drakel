@@ -1,10 +1,13 @@
 'use client';
 
+import { NotificationsPanel } from '@components/support-errands/notifications-panel.component';
 import { Lookup } from '@data-contracts/backend/data-contracts';
+import { useErrandNotifications } from '@hooks/use-errand-notifications';
 import { useUserStore } from '@services/user-service/user-service';
 import { Badge, Button, cx, Divider, Logo, UserMenu } from '@sk-web-gui/react';
 import { getInitials } from '@utils/get-initials';
 import {
+  Bell,
   ChevronsLeft,
   ChevronsRight,
   CircleCheckBig,
@@ -16,7 +19,7 @@ import {
   LayoutList,
   type LucideIcon,
 } from 'lucide-react';
-import { FC } from 'react';
+import { FC, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import { userMenuGroups } from './user-menu-groups';
@@ -75,6 +78,8 @@ export const MainSidebar: FC<MainSidebarProps> = ({
 }) => {
   const user = useUserStore(useShallow((state) => state.user));
   const appName = process.env.NEXT_PUBLIC_APP_NAME ?? 'Drakel';
+  const notifications = useErrandNotifications();
+  const [showNotifications, setShowNotifications] = useState<boolean>(false);
 
   const items: StatusNavItem[] = [
     { key: null, label: 'Alla ärenden', count: totalCount },
@@ -86,6 +91,7 @@ export const MainSidebar: FC<MainSidebarProps> = ({
   ];
 
   return (
+    <>
     <aside
       data-cy="overview-aside"
       className={cx(
@@ -103,22 +109,45 @@ export const MainSidebar: FC<MainSidebarProps> = ({
           />
         </div>
 
-        {open && (
-          <div className="flex gap-12 items-center mb-24">
-            <UserMenu
-              data-cy="avatar-aside"
-              initials={getInitials(user.name)}
-              menuTitle={`${user.name} (${user.username})`}
-              menuGroups={userMenuGroups}
-              buttonSize="md"
-              buttonRounded={false}
-              color="vattjom"
-            />
-            <span className="leading-tight font-bold" data-cy="userinfo">
-              {user.name}
-            </span>
-          </div>
-        )}
+        <div className={cx('mb-24 items-center', open ? 'flex gap-12 justify-between' : 'flex flex-col gap-16')}>
+          {open && (
+            <div className="flex gap-12 items-center min-w-0">
+              <UserMenu
+                data-cy="avatar-aside"
+                initials={getInitials(user.name)}
+                menuTitle={`${user.name} (${user.username})`}
+                menuGroups={userMenuGroups}
+                buttonSize="md"
+                buttonRounded={false}
+                color="vattjom"
+              />
+              <span className="leading-tight font-bold truncate" data-cy="userinfo">
+                {user.name}
+              </span>
+            </div>
+          )}
+          {/* Notis-knapp bredvid inloggad användare (samma placering som draken-public). */}
+          <Button
+            aria-label="Notiser"
+            variant="tertiary"
+            iconButton
+            className="relative shrink-0"
+            leftIcon={<Bell />}
+            onClick={() => {
+              setOpen(true);
+              setShowNotifications(true);
+            }}
+          >
+            {notifications.unacknowledgedCount > 0 ?
+              <Badge
+                className="absolute -top-10 -right-10"
+                rounded
+                color="vattjom"
+                counter={notifications.unacknowledgedCount > 99 ? '99+' : notifications.unacknowledgedCount}
+              />
+            : null}
+          </Button>
+        </div>
 
         <Divider className={cx(!open && 'w-[4rem] mx-auto')} />
 
@@ -170,6 +199,36 @@ export const MainSidebar: FC<MainSidebarProps> = ({
           />
         </div>
       </div>
+
     </aside>
+
+      {/* Notisvyn är en egen utfällbar sidebar bredvid huvudmenyn (som draken-public). */}
+      {showNotifications ?
+        <>
+          <div
+            className="fixed inset-0 z-20 sm:left-[32rem]"
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}
+            aria-hidden
+            onClick={() => {
+              setShowNotifications(false);
+            }}
+          />
+          <aside
+            aria-label="Notiser"
+            className="fixed inset-y-0 left-0 z-30 flex w-full flex-col border-l-1 border-divider bg-background-content p-24 shadow-lg sm:left-[32rem] sm:w-[40rem] sm:max-w-[calc(100vw-32rem)]"
+          >
+            <NotificationsPanel
+              notifications={notifications.notifications}
+              isLoading={notifications.isLoading}
+              loadError={!!notifications.error}
+              onAcknowledge={(notification) => void notifications.acknowledge(notification)}
+              onClose={() => {
+                setShowNotifications(false);
+              }}
+            />
+          </aside>
+        </>
+      : null}
+    </>
   );
 };
