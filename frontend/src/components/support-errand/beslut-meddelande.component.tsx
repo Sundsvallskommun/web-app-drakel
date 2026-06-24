@@ -5,7 +5,7 @@ import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
 import { Combobox, FormControl, FormLabel } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { stakeholderDisplayName } from '@utils/stakeholder-name';
-import { FC, useMemo, useState } from 'react';
+import { FC, useState } from 'react';
 
 import {
   ALL_CATEGORY_ID,
@@ -25,6 +25,12 @@ const CATEGORY_OPTIONS = [
 
 const EMPTY_VALUE: TextEditorValue = { markup: '', plainText: '' };
 
+// A single-select combobox reports its value as a string; guard against the array shape just in case.
+const eventValue = (value: unknown): string =>
+  typeof value === 'string' ? value
+  : Array.isArray(value) && typeof value[0] === 'string' ? value[0]
+  : '';
+
 const escapeHtml = (text: string): string =>
   text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -36,10 +42,10 @@ const toMarkup = (text: string): string =>
     .join('');
 
 /**
- * Decision-message editor: a WYSIWYG TextEditor plus a two-level phrase picker — a kategori dropdown and a
- * searchable rubrik combobox. Selecting a rubrik appends its text to the bottom of the editor, separated
- * from the previous content by two empty rows, with the `¤` placeholder replaced by the sökande's name.
- * `§` (belopp) and `※` (period) are left in place — they will be mapped from the beräkning later.
+ * Decision-message editor: a WYSIWYG TextEditor plus a two-level phrase picker — a kategori combobox and a
+ * searchable rubrik combobox (both single-select). Selecting a rubrik appends its text to the bottom of
+ * the editor, separated from the previous content by two empty rows, with the `¤` placeholder replaced by
+ * the sökande's name. `§`→`¥` (belopp) and `※` (period) are left in place — mapped from the beräkning later.
  */
 export const BeslutMeddelande: FC<{ errandId: string }> = ({ errandId }) => {
   const { stakeholders } = useErrandStakeholders(errandId);
@@ -47,26 +53,29 @@ export const BeslutMeddelande: FC<{ errandId: string }> = ({ errandId }) => {
   const applicantName = applicant ? stakeholderDisplayName(applicant) : '';
 
   const [categoryId, setCategoryId] = useState<string>(ALL_CATEGORY_ID);
-  // The rubrik combobox keeps its own selection; each newly-selected rubrik is appended to the editor.
-  const [selectedHeadingIds, setSelectedHeadingIds] = useState<string[]>([]);
+  // Bumped after every insert so the rubrik combobox remounts and clears — letting the same rubrik be
+  // added again (a single-select combobox would otherwise stay on its current pick).
+  const [insertNonce, setInsertNonce] = useState<number>(0);
   const [value, setValue] = useState<TextEditorValue>(EMPTY_VALUE);
 
   const headings =
     categoryId === ALL_CATEGORY_ID ? ALL_PHRASES : (BESLUT_PHRASE_GROUPS.find((group) => group.id === categoryId)?.phrases ?? []);
-  // The kategori combobox is single-select; a stable array keeps the controlled value from churning.
-  const categoryValue = useMemo(() => (categoryId ? [categoryId] : []), [categoryId]);
 
   const addPhrase = (phrase: BeslutPhrase): void => {
     // Only the name is substituted now; the belopp/period markers are filled from the beräkning later.
     const filledText = applicantName ? phrase.text.split(NAME_PLACEHOLDER).join(applicantName) : phrase.text;
-    const hasContent = (value.plainText ?? '').trim().length > 0;
-    // Two empty rows between the previous content and the inserted phrase.
-    const separatorMarkup = hasContent ? '<p><br></p><p><br></p>' : '';
-    const separatorText = hasContent ? '\n\n\n' : '';
-    setValue({
-      markup: (value.markup ?? '') + separatorMarkup + toMarkup(filledText),
-      plainText: (value.plainText ?? '') + separatorText + filledText,
-    });
+    const phraseMarkup = toMarkup(filledText);
+    // An "empty" editor still has markup like <p></p> once it's been touched — replace it (rather than
+    // append) so the phrase doesn't end up after an empty first line. Otherwise add one empty line.
+    if ((value.plainText ?? '').trim().length === 0) {
+      setValue({ markup: phraseMarkup, plainText: filledText });
+    } else {
+      setValue({
+        markup: (value.markup ?? '') + '<p><br></p>' + phraseMarkup,
+        plainText: (value.plainText ?? '') + '\n\n' + filledText,
+      });
+    }
+    setInsertNonce((nonce) => nonce + 1);
   };
 
   return (
@@ -75,17 +84,13 @@ export const BeslutMeddelande: FC<{ errandId: string }> = ({ errandId }) => {
         <FormControl id="beslut-fraskategori" className="w-full">
           <FormLabel>Frastext – kategori</FormLabel>
           <Combobox
-            multiple
-            value={categoryValue}
+            value={categoryId}
             placeholder="Välj kategori"
             searchPlaceholder="Sök kategori…"
             onSelect={(event) => {
-              const selected = (event.target.value as unknown as string[]) ?? [];
-              // Single-select: keep the newest pick (ignore deselecting the current one).
-              const next = selected.find((id) => id !== categoryId) ?? selected[selected.length - 1] ?? categoryId;
-              if (next !== categoryId) {
+              const next = eventValue(event.target.value);
+              if (next && next !== categoryId) {
                 setCategoryId(next);
-                setSelectedHeadingIds([]);
               }
             }}
           >
@@ -103,20 +108,14 @@ export const BeslutMeddelande: FC<{ errandId: string }> = ({ errandId }) => {
         <FormControl id="beslut-frasrubrik" className="w-full">
           <FormLabel>Frastext – rubrik</FormLabel>
           <Combobox
-            multiple
-            value={selectedHeadingIds}
+            key={`${categoryId}-${insertNonce}`}
             placeholder="Välj och lägg till frastext"
             searchPlaceholder="Sök rubrik…"
             onSelect={(event) => {
-              const selected = (event.target.value as unknown as string[]) ?? [];
-              const added = selected.filter((id) => !selectedHeadingIds.includes(id));
-              added.forEach((id) => {
-                const phrase = headings.find((candidate) => candidate.id === id);
-                if (phrase) {
-                  addPhrase(phrase);
-                }
-              });
-              setSelectedHeadingIds(selected);
+              const phrase = headings.find((candidate) => candidate.id === eventValue(event.target.value));
+              if (phrase) {
+                addPhrase(phrase);
+              }
             }}
           >
             <Combobox.Input className="w-full" />
