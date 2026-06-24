@@ -23,6 +23,11 @@ const displayAmount = (value?: number): string => (value == null ? '—' : forma
 // caremanagement stores the income amount dates as date-time; the field only needs the day (yyyy-MM-dd).
 const toDateInput = (value?: string): string => (value ? dayjs(value).format('YYYY-MM-DD') : '');
 
+// ...but caremanagement rejects a bare yyyy-MM-dd on write (the field is a date-time) — send the picked
+// day as a local date-time (midnight) so it validates and round-trips back to the same calendar day.
+const toAmountDateTime = (value: string): string | undefined =>
+  value.trim() ? dayjs(value).format('YYYY-MM-DD[T]HH:mm:ssZ') : undefined;
+
 interface NormberakningIncomesProps {
   errandId: string;
   rows: NormIncomeRow[];
@@ -202,9 +207,9 @@ const IncomeRow: FC<{
     onAction(() =>
       updateNormRow(errandId, 'incomes', rowId, {
         applicantCaseworkerAmount: parseAmount(applicantAmount),
-        applicantAmountDate: applicantDate.trim() || undefined,
+        applicantAmountDate: toAmountDateTime(applicantDate),
         coapplicantCaseworkerAmount: parseAmount(coapplicantAmount),
-        coapplicantAmountDate: coapplicantDate.trim() || undefined,
+        coapplicantAmountDate: toAmountDateTime(coapplicantDate),
         note: note.trim() || undefined,
       })
     );
@@ -320,9 +325,9 @@ const DraftIncomeRow: FC<{
     const result = await addNormRow(errandId, 'incomes', {
       typeName,
       applicantCaseworkerAmount: parseAmount(applicantAmount),
-      applicantAmountDate: applicantDate.trim() || undefined,
+      applicantAmountDate: toAmountDateTime(applicantDate),
       coapplicantCaseworkerAmount: parseAmount(coapplicantAmount),
-      coapplicantAmountDate: coapplicantDate.trim() || undefined,
+      coapplicantAmountDate: toAmountDateTime(coapplicantDate),
       note: note.trim() || undefined,
     });
     setSaving(false);
