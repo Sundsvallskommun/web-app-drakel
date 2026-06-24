@@ -125,8 +125,8 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   const conversationSummaryAttachment = attachments.find(
     (attachment) => (attachment.fileName ?? '').toLowerCase() === CLIENT_FILES_PDF
   );
-  // CONVERSATION files belong to the "Bilagor från meddelanden" tab; everything else (application /
-  // generated / errand files) to the "Bilagor" tab.
+  // CONVERSATION files belong to the Meddelanden → Bilagor sub-tab; everything else (application /
+  // generated / errand files) to the Ärende → Bilagor tab.
   const conversationAttachments = attachments.filter(
     (attachment) => attachment.origin === 'CONVERSATION' && attachment.id !== conversationSummaryAttachment?.id
   );
@@ -268,9 +268,9 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           ),
         },
         {
-          label: `Bilagor (${errandAttachments.length + conversationAttachments.length})`,
+          label: `Bilagor (${errandAttachments.length})`,
           content: (
-            <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
+            <div className="pt-24 pb-40 px-24 md:px-40">
               <ErrandAttachments
                 errandId={apiErrandId}
                 attachments={errandAttachments}
@@ -278,13 +278,6 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                 loadError={!!attachmentsError}
                 refresh={refreshAttachments}
                 heading="Bilagor till ansökan"
-              />
-              <ErrandMessageAttachments
-                errandId={apiErrandId}
-                attachments={conversationAttachments}
-                summaryAttachment={conversationSummaryAttachment}
-                isLoading={attachmentsLoading}
-                loadError={!!attachmentsError}
               />
             </div>
           ),
@@ -345,6 +338,20 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           content: (
             <div className="pt-24 pb-40 px-24 md:px-40">
               <ErrandMessages errandId={apiErrandId} />
+            </div>
+          ),
+        },
+        {
+          label: `Bilagor (${conversationAttachments.length})`,
+          content: (
+            <div className="pt-24 pb-40 px-24 md:px-40">
+              <ErrandMessageAttachments
+                errandId={apiErrandId}
+                attachments={conversationAttachments}
+                summaryAttachment={conversationSummaryAttachment}
+                isLoading={attachmentsLoading}
+                loadError={!!attachmentsError}
+              />
             </div>
           ),
         },
