@@ -11,11 +11,11 @@ import { useErrandNotes } from '@hooks/use-errand-notes';
 import { useErrandSectionApprovals } from '@hooks/use-errand-section-approvals';
 import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
 import { useErrandWarnings } from '@hooks/use-errand-warnings';
-import { Disclosure, Spinner, Tabs } from '@sk-web-gui/react';
+import { Spinner, Tabs } from '@sk-web-gui/react';
 import { CLIENT_FILES_PDF } from '@utils/attachment-names';
 import { stakeholderDisplayName } from '@utils/stakeholder-name';
 import { compareByRole } from '@utils/stakeholder-role';
-import { AlertTriangle, Bell, History, NotebookPen, Paperclip, UserCog } from 'lucide-react';
+import { AlertTriangle, Bell, History, NotebookPen, UserCog } from 'lucide-react';
 import { FC, Fragment, ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { ErrandApplicationData } from './errand-application-data.component';
@@ -268,15 +268,23 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           ),
         },
         {
-          label: `Bilagor till ansökan (${errandAttachments.length})`,
+          label: `Bilagor (${errandAttachments.length + conversationAttachments.length})`,
           content: (
-            <div className="pt-24 pb-40 px-24 md:px-40">
+            <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
               <ErrandAttachments
                 errandId={apiErrandId}
                 attachments={errandAttachments}
                 isLoading={attachmentsLoading}
                 loadError={!!attachmentsError}
                 refresh={refreshAttachments}
+                heading="Bilagor till ansökan"
+              />
+              <ErrandMessageAttachments
+                errandId={apiErrandId}
+                attachments={conversationAttachments}
+                summaryAttachment={conversationSummaryAttachment}
+                isLoading={attachmentsLoading}
+                loadError={!!attachmentsError}
               />
             </div>
           ),
@@ -330,31 +338,13 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
       ],
     },
     {
-      label: `Meddelanden och bilagor (${conversationAttachments.length})`,
+      label: `Meddelanden (${counts.unreadMessages})`,
       tabs: [
         {
-          label: 'Meddelanden och bilagor',
+          label: 'Meddelanden',
           content: (
-            <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-16">
+            <div className="pt-24 pb-40 px-24 md:px-40">
               <ErrandMessages errandId={apiErrandId} />
-              {/* Bilagorna som delats i meddelandetråden, hopfällbara under själva meddelandena. */}
-              <Disclosure variant="alt" initalOpen={conversationAttachments.length > 0}>
-                <Disclosure.Header>
-                  <Disclosure.Icon icon={<Paperclip size={18} />} />
-                  <Disclosure.Title>Bilagor i meddelanden ({conversationAttachments.length})</Disclosure.Title>
-                  <Disclosure.Button />
-                </Disclosure.Header>
-                <Disclosure.Content>
-                  <ErrandMessageAttachments
-                    errandId={apiErrandId}
-                    attachments={conversationAttachments}
-                    summaryAttachment={conversationSummaryAttachment}
-                    isLoading={attachmentsLoading}
-                    loadError={!!attachmentsError}
-                    hideHeading
-                  />
-                </Disclosure.Content>
-              </Disclosure>
             </div>
           ),
         },

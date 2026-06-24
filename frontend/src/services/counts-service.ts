@@ -6,6 +6,8 @@ export interface ErrandCounts {
   notes: number;
   warnings: number;
   bevakningar: number;
+  /** Messages addressed to the handläggare that haven't been marked read. */
+  unreadMessages: number;
 }
 
 /** Fetches the badge counts for an errand (notes, active warnings, bevakningar). */

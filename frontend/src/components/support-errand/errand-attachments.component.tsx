@@ -17,6 +17,8 @@ interface ErrandAttachmentsProps {
   isLoading: boolean;
   loadError: boolean;
   refresh: () => void;
+  /** Heading shown above the list (and upload control). */
+  heading?: string;
 }
 
 export const ErrandAttachments: FC<ErrandAttachmentsProps> = ({
@@ -25,6 +27,7 @@ export const ErrandAttachments: FC<ErrandAttachmentsProps> = ({
   isLoading,
   loadError,
   refresh,
+  heading = 'Bilagor',
 }) => {
   const formMethods = useForm();
   const [uploading, setUploading] = useState<boolean>(false);
@@ -59,7 +62,7 @@ export const ErrandAttachments: FC<ErrandAttachmentsProps> = ({
       <FileUpload.Area onChange={(event) => void handleUpload(event)}>
         <div className="flex flex-col gap-16">
           <div className="flex items-center justify-between gap-12">
-            <span className="font-bold">Bilagor</span>
+            <span className="font-bold">{heading}</span>
             <div className="flex items-center gap-12">
               {uploading && <Spinner size={2} />}
               <FileUpload.Button onChange={(event) => void handleUpload(event)} />

@@ -7,6 +7,7 @@ import { sentByHeaders } from '@utils/request-context';
 import axios from 'axios';
 import FormData from 'form-data';
 
+import { UnreadCount } from '@/data-contracts/caremanagement/data-contracts';
 import { Message } from '@/responses/message.response';
 
 /**
@@ -27,6 +28,11 @@ class CaremanagementMessageService {
   /** Lists an errand's conversation messages (caremanagement returns them chronologically). */
   async listMessages(errandId: string): Promise<ApiResponse<Message[]>> {
     return this.apiService.get<Message[]>({ url: caremanagementUrl('errands', errandId, 'messages') });
+  }
+
+  /** The number of messages addressed to the caller that haven't been marked read (the unread count). */
+  async readUnreadCount(errandId: string): Promise<ApiResponse<UnreadCount>> {
+    return this.apiService.get<UnreadCount>({ url: caremanagementUrl('errands', errandId, 'messages', 'unread-count') });
   }
 
   /**

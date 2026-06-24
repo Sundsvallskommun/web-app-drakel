@@ -3,7 +3,7 @@
 import { ErrandCounts, getErrandCounts } from '@services/counts-service';
 import { useCallback, useEffect, useState } from 'react';
 
-const EMPTY_COUNTS: ErrandCounts = { notes: 0, warnings: 0, bevakningar: 0 };
+const EMPTY_COUNTS: ErrandCounts = { notes: 0, warnings: 0, bevakningar: 0, unreadMessages: 0 };
 
 /**
  * Loads an errand's sidebar badge counts. The underlying endpoints are unlogged, so these load eagerly
