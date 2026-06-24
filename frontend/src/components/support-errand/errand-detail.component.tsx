@@ -34,7 +34,6 @@ import { ErrandNotes } from './errand-notes.component';
 import { ErrandSidebar, SidebarSection } from './errand-sidebar.component';
 import { ErrandUtbetalning } from './errand-utbetalning.component';
 import { ErrandWarnings } from './errand-warnings.component';
-import { LockableSection } from './lockable-section.component';
 import { SectionApprovalCheckbox } from './section-approval-checkbox.component';
 
 // Drafts are created with this sentinel title until the handläggare fills the errand in.
@@ -296,9 +295,12 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           label: 'Normberäkning',
           content: (
             <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
-              <LockableSection locked={!!approvals.calculation?.approved}>
-                <ErrandNormberakning errandId={apiErrandId} warnings={openWarnings} onWarningsChanged={refreshWarnings} />
-              </LockableSection>
+              <ErrandNormberakning
+                errandId={apiErrandId}
+                warnings={openWarnings}
+                onWarningsChanged={refreshWarnings}
+                locked={!!approvals.calculation?.approved}
+              />
               <SectionApprovalCheckbox
                 label="Godkänn normberäkning"
                 approval={approvals.calculation}
@@ -312,9 +314,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           label: 'Beslut',
           content: (
             <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
-              <LockableSection locked={!!approvals.decision?.approved}>
-                <ErrandBeslut errandId={apiErrandId} />
-              </LockableSection>
+              <ErrandBeslut errandId={apiErrandId} locked={!!approvals.decision?.approved} />
               <SectionApprovalCheckbox
                 label="Godkänn beslut"
                 approval={approvals.decision}

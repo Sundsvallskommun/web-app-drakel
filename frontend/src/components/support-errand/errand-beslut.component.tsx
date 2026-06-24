@@ -10,6 +10,7 @@ import dayjs from 'dayjs';
 import { FC, useEffect, useMemo, useState } from 'react';
 
 import { BeslutMeddelande } from './beslut-meddelande.component';
+import { LockedBanner, LockFieldset } from './lockable-section.component';
 
 const todayDate = (): string => dayjs().format('YYYY-MM-DD');
 
@@ -19,7 +20,7 @@ const todayDate = (): string => dayjs().format('YYYY-MM-DD');
  * normberäkning month); Belopp is 0 for an avslag, otherwise the recommended amount. Beslutsfattare and
  * Tjänst are intentionally omitted.
  */
-export const ErrandBeslut: FC<{ errandId: string }> = ({ errandId }) => {
+export const ErrandBeslut: FC<{ errandId: string; locked?: boolean }> = ({ errandId, locked = false }) => {
   const { draft, isLoading: draftLoading } = useErrandNormberakning(errandId);
   const { options, recommendation, isLoading: beslutLoading, refresh } = useErrandBeslut(errandId);
 
@@ -93,10 +94,13 @@ export const ErrandBeslut: FC<{ errandId: string }> = ({ errandId }) => {
     <div className="flex flex-col gap-24">
       <h2 className="text-h3-sm md:text-h3-md m-0">Nytt beslut</h2>
 
+      {locked ? <LockedBanner /> : null}
+
       <Tabs size="sm">
         <Tabs.Item>
           <Tabs.Button>Beslut</Tabs.Button>
           <Tabs.Content>
+            <LockFieldset locked={locked}>
             <div className="pt-24 flex flex-col gap-24 max-w-[48rem]">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
                 <FormControl id="beslut-datum" className="w-full">
@@ -191,13 +195,16 @@ export const ErrandBeslut: FC<{ errandId: string }> = ({ errandId }) => {
                 </Button>
               </div>
             </div>
+            </LockFieldset>
           </Tabs.Content>
         </Tabs.Item>
 
         <Tabs.Item>
           <Tabs.Button>Beslutsmeddelande</Tabs.Button>
           <Tabs.Content>
-            <BeslutMeddelande errandId={errandId} />
+            <LockFieldset locked={locked}>
+              <BeslutMeddelande errandId={errandId} />
+            </LockFieldset>
           </Tabs.Content>
         </Tabs.Item>
       </Tabs>

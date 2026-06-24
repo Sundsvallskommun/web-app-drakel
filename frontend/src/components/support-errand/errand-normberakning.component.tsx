@@ -6,6 +6,7 @@ import { Warning } from '@services/warning-service';
 import { FormControl, FormLabel, Input, Spinner, Tabs } from '@sk-web-gui/react';
 import { FC, ReactNode, useState } from 'react';
 
+import { LockedBanner, LockFieldset } from './lockable-section.component';
 import { NormberakningExpenses } from './normberakning-expenses.component';
 import { NormberakningFamilj } from './normberakning-familj.component';
 import { NormberakningGemensamma } from './normberakning-gemensamma.component';
@@ -41,7 +42,9 @@ export const ErrandNormberakning: FC<{
   errandId: string;
   warnings: Warning[];
   onWarningsChanged: () => void;
-}> = ({ errandId, warnings, onWarningsChanged }) => {
+  /** When the calculation section is approved, its content is locked for editing (but still readable). */
+  locked?: boolean;
+}> = ({ errandId, warnings, onWarningsChanged, locked = false }) => {
   const { draft, isLoading, error, refresh } = useErrandNormberakning(errandId);
   const types = useNormberakningTypes();
   const [activeTab, setActiveTab] = useState<number>(0);
@@ -77,6 +80,8 @@ export const ErrandNormberakning: FC<{
     <div className="flex flex-col gap-24">
       <h2 className="text-h3-sm md:text-h3-md m-0">Beräkning</h2>
 
+      {locked ? <LockedBanner /> : null}
+
       <div className="flex flex-wrap items-start justify-between gap-24">
         <div className="flex flex-wrap items-end gap-12">
           <FilterField label="Från" required>
@@ -107,71 +112,81 @@ export const ErrandNormberakning: FC<{
         <Tabs.Item>
           <Tabs.Button>Familj</Tabs.Button>
           <Tabs.Content>
-            {personWarnings.length > 0 ?
-              <div className="pt-24">
-                <NormberakningWarnings errandId={errandId} warnings={personWarnings} onAcknowledged={onWarningsChanged} />
-              </div>
-            : null}
-            <NormberakningFamilj persons={draft.persons ?? []} />
+            <LockFieldset locked={locked}>
+              {personWarnings.length > 0 ?
+                <div className="pt-24">
+                  <NormberakningWarnings errandId={errandId} warnings={personWarnings} onAcknowledged={onWarningsChanged} />
+                </div>
+              : null}
+              <NormberakningFamilj persons={draft.persons ?? []} />
+            </LockFieldset>
           </Tabs.Content>
         </Tabs.Item>
         <Tabs.Item>
           <Tabs.Button>Inkomster</Tabs.Button>
           <Tabs.Content>
-            {incomeWarnings.length > 0 ?
-              <div className="pt-24">
-                <NormberakningWarnings errandId={errandId} warnings={incomeWarnings} onAcknowledged={onWarningsChanged} />
-              </div>
-            : null}
-            <NormberakningIncomes
-              errandId={errandId}
-              rows={draft.incomes ?? []}
-              incomeSum={draft.incomeSum}
-              incomeTypes={types.incomeTypes}
-              onChanged={refresh}
-            />
+            <LockFieldset locked={locked}>
+              {incomeWarnings.length > 0 ?
+                <div className="pt-24">
+                  <NormberakningWarnings errandId={errandId} warnings={incomeWarnings} onAcknowledged={onWarningsChanged} />
+                </div>
+              : null}
+              <NormberakningIncomes
+                errandId={errandId}
+                rows={draft.incomes ?? []}
+                incomeSum={draft.incomeSum}
+                incomeTypes={types.incomeTypes}
+                onChanged={refresh}
+              />
+            </LockFieldset>
           </Tabs.Content>
         </Tabs.Item>
         <Tabs.Item>
           <Tabs.Button>Utgifter</Tabs.Button>
           <Tabs.Content>
-            {expenseWarnings.length > 0 ?
-              <div className="pt-24">
-                <NormberakningWarnings errandId={errandId} warnings={expenseWarnings} onAcknowledged={onWarningsChanged} />
-              </div>
-            : null}
-            <NormberakningExpenses
-              errandId={errandId}
-              rows={draft.expenses ?? []}
-              sum={draft.expenseSum}
-              summaLabel="Summa utgifter"
-              bucket="EXPENSE"
-              types={types.costTypes}
-              onChanged={refresh}
-            />
+            <LockFieldset locked={locked}>
+              {expenseWarnings.length > 0 ?
+                <div className="pt-24">
+                  <NormberakningWarnings errandId={errandId} warnings={expenseWarnings} onAcknowledged={onWarningsChanged} />
+                </div>
+              : null}
+              <NormberakningExpenses
+                errandId={errandId}
+                rows={draft.expenses ?? []}
+                sum={draft.expenseSum}
+                summaLabel="Summa utgifter"
+                bucket="EXPENSE"
+                types={types.costTypes}
+                onChanged={refresh}
+              />
+            </LockFieldset>
           </Tabs.Content>
         </Tabs.Item>
         <Tabs.Item>
           <Tabs.Button>Levnadskostnader i övrigt</Tabs.Button>
           <Tabs.Content>
-            <NormberakningExpenses
-              errandId={errandId}
-              rows={draft.specialExpenses ?? []}
-              sum={draft.specialExpenseSum}
-              summaLabel="Summa särskilda kostnader"
-              bucket="SPECIAL_EXPENSE"
-              types={types.livingCostTypes}
-              onChanged={refresh}
-            />
+            <LockFieldset locked={locked}>
+              <NormberakningExpenses
+                errandId={errandId}
+                rows={draft.specialExpenses ?? []}
+                sum={draft.specialExpenseSum}
+                summaLabel="Summa särskilda kostnader"
+                bucket="SPECIAL_EXPENSE"
+                types={types.livingCostTypes}
+                onChanged={refresh}
+              />
+            </LockFieldset>
           </Tabs.Content>
         </Tabs.Item>
         <Tabs.Item>
           <Tabs.Button>Gemensamma kostnader</Tabs.Button>
           <Tabs.Content>
-            <NormberakningGemensamma
-              hasCustomHouseholdSize={draft.hasCustomHouseholdSize}
-              householdSize={draft.householdSize}
-            />
+            <LockFieldset locked={locked}>
+              <NormberakningGemensamma
+                hasCustomHouseholdSize={draft.hasCustomHouseholdSize}
+                householdSize={draft.householdSize}
+              />
+            </LockFieldset>
           </Tabs.Content>
         </Tabs.Item>
       </Tabs>
