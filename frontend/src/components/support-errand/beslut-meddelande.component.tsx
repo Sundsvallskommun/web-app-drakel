@@ -82,7 +82,7 @@ export const BeslutMeddelande: FC<{ errandId: string }> = ({ errandId }) => {
     <div className="pt-24 flex flex-col gap-16 max-w-[64rem]">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
         <FormControl id="beslut-fraskategori" className="w-full">
-          <FormLabel>Frastext – kategori</FormLabel>
+          <FormLabel>Beslutsformulering – kategori</FormLabel>
           <Combobox
             value={categoryId}
             placeholder="Välj kategori"
@@ -106,7 +106,7 @@ export const BeslutMeddelande: FC<{ errandId: string }> = ({ errandId }) => {
         </FormControl>
 
         <FormControl id="beslut-frasrubrik" className="w-full">
-          <FormLabel>Frastext – rubrik</FormLabel>
+          <FormLabel>Beslutsformulering – rubrik</FormLabel>
           <Combobox
             key={`${categoryId}-${insertNonce}`}
             placeholder="Välj och lägg till frastext"
