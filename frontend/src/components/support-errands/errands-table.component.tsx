@@ -43,9 +43,10 @@ const formatDate = (value?: string): string => (value ? dayjs(value).format('YYY
 const errandRouteSegment = (errand: Errand): string | undefined => errand.errandNumber ?? errand.id;
 
 const columns: Column[] = [
-  { label: 'Status', render: (errand) => <ErrandStatusLabel status={errand.status} /> },
+  { label: 'Status', sortKey: 'status', render: (errand) => <ErrandStatusLabel status={errand.status} /> },
   {
     label: 'Senaste aktivitet',
+    sortKey: 'touched',
     render: (errand) => {
       const touched = errand.touched ?? errand.modified;
       return (
@@ -58,6 +59,7 @@ const columns: Column[] = [
   },
   {
     label: 'Ärende',
+    sortKey: 'errandNumber',
     render: (errand) => (
       <div className="max-w-[280px]">
         <div className="font-bold truncate">{errand.title ?? '(utan titel)'}</div>
@@ -67,6 +69,7 @@ const columns: Column[] = [
   },
   {
     label: 'Inskickat',
+    sortKey: 'created',
     render: (errand) => (
       <div className="whitespace-nowrap">
         <time dateTime={errand.created}>{formatDate(errand.created)}</time>
@@ -79,7 +82,7 @@ const columns: Column[] = [
     sortKey: 'applicantName',
     render: (errand) => <div className="max-w-[220px] truncate">{errand.applicantName ?? '—'}</div>,
   },
-  { label: 'Prioritet', render: (errand) => <PriorityLabel priority={errand.priority} /> },
+  { label: 'Prioritet', sortKey: 'priority', render: (errand) => <PriorityLabel priority={errand.priority} /> },
 ];
 
 /** Sort affordance shown in a sortable column header: inactive (both arrows) or the active direction. */

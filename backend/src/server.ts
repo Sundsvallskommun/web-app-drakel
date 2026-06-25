@@ -4,6 +4,7 @@ import validateEnv from '@utils/validateEnv';
 import App from '@/app';
 
 import { ActualisationController } from './controllers/actualisation.controller';
+import { AdministratorController } from './controllers/administrator.controller';
 import { BevakningController } from './controllers/bevakning.controller';
 import { CountsController } from './controllers/counts.controller';
 import { DecisionController } from './controllers/decision.controller';
@@ -50,6 +51,7 @@ const app = new App([
   FormSnapshotController,
   ActualisationController,
   DecisionNotificationController,
+  AdministratorController,
 ]);
 
 app.listen();

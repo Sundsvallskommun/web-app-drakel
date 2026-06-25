@@ -33,6 +33,10 @@ export const CAREMANAGEMENT_BASE_URL = env.CAREMANAGEMENT_BASE_URL ?? '';
 export const CAREMANAGEMENT_NAMESPACE = env.CAREMANAGEMENT_NAMESPACE ?? '';
 // The Sundsvall Templating service (document/phrase templates). Reached directly, no auth.
 export const TEMPLATING_BASE_URL = env.TEMPLATING_BASE_URL ?? '';
+// The Active Directory service (handläggare roster). Reached directly, no auth. Optional — the
+// administrator list degrades to empty when unset, so it never blocks BFF startup.
+export const ACTIVE_DIRECTORY_BASE_URL = env.ACTIVE_DIRECTORY_BASE_URL ?? '';
+export const ACTIVE_DIRECTORY_DOMAIN = env.ACTIVE_DIRECTORY_DOMAIN ?? 'personal';
 // Messaging sender config for the beslut notification (Mina sidor / digital brevlåda / brev). Optional —
 // the send fails gracefully if unset, so a missing value never blocks BFF startup.
 export const MESSAGING_ORGANIZATION_NUMBER = env.MESSAGING_ORGANIZATION_NUMBER ?? '';

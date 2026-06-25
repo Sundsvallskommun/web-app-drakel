@@ -23,7 +23,10 @@ export const useErrands = (query: ErrandsQuery): UseErrandsResult => {
   const [error, setError] = useState<number | string | boolean>();
 
   const { filter, page, size, hasUnacknowledgedNotifications } = query;
-  const sortKey = query.sort?.join(',') ?? '';
+  // Stable string for the dependency list. Joined with a newline — NOT a comma — because each sort entry
+  // is itself "field,direction"; a comma delimiter would split the direction off into its own (invalid)
+  // sort field, so the backend would always sort ascending.
+  const sortKey = query.sort?.join('\n') ?? '';
 
   const load = useCallback(() => {
     setIsLoading(true);
@@ -31,7 +34,7 @@ export const useErrands = (query: ErrandsQuery): UseErrandsResult => {
       filter,
       page,
       size,
-      sort: sortKey ? sortKey.split(',') : undefined,
+      sort: sortKey ? sortKey.split('\n') : undefined,
       hasUnacknowledgedNotifications,
     }).then((res) => {
       if (res.error) {

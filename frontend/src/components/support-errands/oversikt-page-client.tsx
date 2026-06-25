@@ -3,16 +3,16 @@
 import { MainSidebar } from '@components/layout/main-sidebar.component';
 import SidebarLayout from '@components/layout/sidebar-layout.component';
 import { Lookup } from '@data-contracts/backend/data-contracts';
+import { useAdministrators } from '@hooks/use-administrators';
 import { useErrands } from '@hooks/use-errands';
 import { useStatuses } from '@hooks/use-statuses';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { CLOSED_ERRAND_STATUS, ERRAND_VIEWS, ErrandView, NEW_ERRAND_STATUS } from './errand-views';
 import { emptyFilters, ErrandFilters, ErrandsFilter } from './errands-filter.component';
 import { ErrandsTable, SortDirection } from './errands-table.component';
 
 const DEFAULT_PAGE_SIZE = 12;
-const SEARCH_DEBOUNCE_MS = 300;
 
 // Spring-filter (RSQL) value escaping — mirrors the BFF (backslash + single quote); values are single-quoted.
 const escapeFilterValue = (value: string): string => value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
@@ -44,16 +44,22 @@ const orGroup = (field: string, values: string[]): string =>
 
 /**
  * Builds the caremanagement filter from the overview controls. The sidebar view's status clause, the
- * status/priority filter groups and the free-text search (a case-insensitive "contains" over errand number
- * and applicant name) are all ANDed together.
+ * status/priority/handläggare filter groups and the free-text search (a case-insensitive "contains" over
+ * errand number and applicant name) are all ANDed together.
  */
 const buildErrandFilter = (
   viewStatusClause: string,
   statusFilter: string[],
   priorityFilter: string[],
+  assigneeFilter: string[],
   search: string
 ): string => {
-  const clauses: string[] = [viewStatusClause, orGroup('status', statusFilter), orGroup('priority', priorityFilter)];
+  const clauses: string[] = [
+    viewStatusClause,
+    orGroup('status', statusFilter),
+    orGroup('priority', priorityFilter),
+    orGroup('assignedUserId', assigneeFilter),
+  ];
   const term = search.trim();
   if (term) {
     const escaped = escapeFilterValue(term);
@@ -67,29 +73,20 @@ export const OversiktPageClient = () => {
   // Server-side sort (?sort=<column>,<dir>); undefined = default order.
   const [sort, setSort] = useState<{ column: string; direction: SortDirection } | undefined>(undefined);
   const [selectedView, setSelectedView] = useState<ErrandView>('all');
+  // The committed search term (the search field commits on Sök/Enter, so no debounce is needed here).
   const [query, setQuery] = useState<string>('');
-  const [debouncedQuery, setDebouncedQuery] = useState<string>('');
   const [filters, setFilters] = useState<ErrandFilters>(emptyFilters);
   const [page, setPage] = useState<number>(0);
   const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
 
-  // Debounce the free-text search so each keystroke doesn't fire a request; reset to the first page on change.
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedQuery(query);
-      setPage(0);
-    }, SEARCH_DEBOUNCE_MS);
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [query]);
-
   const { statuses } = useStatuses();
+  const { administrators } = useAdministrators();
   const filter = buildErrandFilter(
     buildStatusClause(selectedView, statuses),
     filters.status,
     filters.priority,
-    debouncedQuery
+    filters.assignee,
+    query
   );
 
   // Filtering, sorting and paging are all done server-side (caremanagement); the response's _meta drives
@@ -110,6 +107,11 @@ export const OversiktPageClient = () => {
     if (view !== 'all') {
       setFilters((current) => ({ ...current, status: [] }));
     }
+    setPage(0);
+  };
+
+  const changeQuery = (value: string) => {
+    setQuery(value);
     setPage(0);
   };
 
@@ -156,11 +158,12 @@ export const OversiktPageClient = () => {
           <div className="w-full container px-0 flex flex-col gap-12">
             <ErrandsFilter
               query={query}
-              onQueryChange={setQuery}
+              onQueryChange={changeQuery}
               filters={filters}
               onFilterChange={changeFilter}
               onClearFilters={clearFilters}
               statuses={statuses}
+              administrators={administrators}
               showStatusFilter={selectedView === 'all'}
               onlyUnread={onlyUnread}
               onOnlyUnreadChange={changeOnlyUnread}

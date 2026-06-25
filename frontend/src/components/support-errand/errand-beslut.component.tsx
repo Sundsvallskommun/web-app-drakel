@@ -13,6 +13,7 @@ import dayjs from 'dayjs';
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
 
 import { BeslutMeddelande } from './beslut-meddelande.component';
+import { BeslutPdfPreviewButton } from './beslut-pdf-preview-button.component';
 import { LockedBanner, LockFieldset } from './lockable-section.component';
 
 const todayDate = (): string => dayjs().format('YYYY-MM-DD');
@@ -272,6 +273,9 @@ export const ErrandBeslut: FC<{
                     setMessageTouched(true);
                   }}
                 />
+                <div>
+                  <BeslutPdfPreviewButton errandId={errandId} buildMessage={buildDecisionMessage} />
+                </div>
               </div>
             </LockFieldset>
           </Tabs.Content>

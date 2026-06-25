@@ -1,10 +1,11 @@
 'use client';
 
 import { Errand } from '@data-contracts/backend/data-contracts';
+import { useAdministrators } from '@hooks/use-administrators';
 import { ErrandForm } from '@hooks/use-errand-form';
 import { useStatuses } from '@hooks/use-statuses';
 import { useUserStore } from '@services/user-service/user-service';
-import { Button, Divider, FormControl, FormLabel, Input, Select } from '@sk-web-gui/react';
+import { Button, Divider, FormControl, FormLabel, Select } from '@sk-web-gui/react';
 import dayjs from 'dayjs';
 import { FC, ReactNode, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
@@ -63,6 +64,17 @@ export const ErrandInfoPanel: FC<ErrandInfoPanelProps> = ({
     return options;
   }, [statuses, form.status]);
 
+  // Handläggare come from Active Directory. Always include the errand's current assignee (even if it's not
+  // in the roster, e.g. "Ta ärende" set it to the logged-in user) so it stays selected.
+  const { administrators } = useAdministrators();
+  const assigneeOptions = useMemo(() => {
+    const options = administrators.map((admin) => ({ value: admin.username, label: admin.displayName }));
+    if (form.assignedUserId && !options.some((option) => option.value === form.assignedUserId)) {
+      options.unshift({ value: form.assignedUserId, label: form.assignedUserId });
+    }
+    return options;
+  }, [administrators, form.assignedUserId]);
+
   return (
     <div className="flex flex-col gap-16">
       <h2 className="text-h4-sm md:text-h4-md m-0">Handläggning</h2>
@@ -82,13 +94,20 @@ export const ErrandInfoPanel: FC<ErrandInfoPanelProps> = ({
             </Button>
           )}
         </div>
-        <Input
+        <Select
+          className="w-full"
           size="sm"
           value={form.assignedUserId}
           onChange={(event) => {
             setField('assignedUserId', event.target.value);
           }}
-        />
+        >
+          {assigneeOptions.map((option) => (
+            <Select.Option key={option.value} value={option.value}>
+              {option.label}
+            </Select.Option>
+          ))}
+        </Select>
       </FormControl>
 
       <FormControl id="status" className="w-full">

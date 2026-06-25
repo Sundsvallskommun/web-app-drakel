@@ -11,7 +11,7 @@ import TemplatingService from '@services/templating.service';
 import { Body, Controller, Get, Param, Post, Req, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
-import { DecisionNotificationDto } from '@/dtos/decision-notification.dto';
+import { DecisionNotificationDto, DecisionPreviewDto } from '@/dtos/decision-notification.dto';
 import { HttpException } from '@/exceptions/HttpException';
 import { DigitalMailboxApiResponse } from '@/responses/digital-mailbox.response';
 
@@ -56,6 +56,17 @@ export class DecisionNotificationController {
       // A failing mailbox lookup must not block the flow — just don't offer the digital-brevlåda channel.
       return { data: { available: false }, message: 'mailbox lookup failed' };
     }
+  }
+
+  @Post('/errands/:errandId/decision-notification/preview')
+  @OpenAPI({ summary: 'Render a beslutsmeddelande to a PDF for preview (not saved or sent)' })
+  @UseBefore(authMiddleware, validationMiddleware(DecisionPreviewDto, 'body'))
+  async preview(@Body() input: DecisionPreviewDto) {
+    const pdfBase64 = await this.templatingService.renderHtmlToPdf(input.message);
+    if (!pdfBase64) {
+      throw new HttpException(502, 'Failed to render the decision PDF');
+    }
+    return { data: { pdfBase64 }, message: 'success' };
   }
 
   @Post('/errands/:errandId/decision-notification')

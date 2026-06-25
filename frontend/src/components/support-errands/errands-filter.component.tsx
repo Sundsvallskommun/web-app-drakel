@@ -1,29 +1,27 @@
 'use client';
 
 import { Lookup } from '@data-contracts/backend/data-contracts';
-import { Button, Checkbox, Chip, Combobox, FormControl, FormLabel, Input } from '@sk-web-gui/react';
+import { Administrator } from '@services/administrator-service';
+import { Button, Checkbox, Chip, SearchField } from '@sk-web-gui/react';
 import { ListFilter } from 'lucide-react';
 import { FC, useState } from 'react';
 
-/** Active overview filters; both are multi-select (an OR within each group, AND between groups). */
+import { ErrandFilterDropdown, FilterOption } from './errand-filter-dropdown.component';
+
+/** Active overview filters; each is multi-select (an OR within each group, AND between groups). */
 export interface ErrandFilters {
   status: string[];
   priority: string[];
+  assignee: string[];
 }
 
-export const emptyFilters: ErrandFilters = { status: [], priority: [] };
+export const emptyFilters: ErrandFilters = { status: [], priority: [], assignee: [] };
 
-const PRIORITIES = [
+const PRIORITY_OPTIONS: FilterOption[] = [
   { value: 'LOW', label: 'Låg' },
   { value: 'MEDIUM', label: 'Medel' },
   { value: 'HIGH', label: 'Hög' },
 ];
-
-// A multi-select combobox reports its value as a string[]; guard against the single-string shape.
-const asStringArray = (value: unknown): string[] =>
-  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string')
-  : typeof value === 'string' && value ? [value]
-  : [];
 
 interface ErrandsFilterProps {
   query: string;
@@ -32,13 +30,18 @@ interface ErrandsFilterProps {
   onFilterChange: (key: keyof ErrandFilters, value: string[]) => void;
   onClearFilters: () => void;
   statuses: Lookup[];
+  administrators: Administrator[];
   /** The status filter is only offered on the "Alla ärenden" view (the other views already scope status). */
   showStatusFilter: boolean;
   onlyUnread: boolean;
   onOnlyUnreadChange: (checked: boolean) => void;
 }
 
-/** Overview filter row: search + status/priority comboboxes (open by default) and removable filter chips. */
+/**
+ * Overview filter row (draken-style): a search field with a Sök button, a "Dölj filter" toggle, and — when
+ * open — a bar of dropdown filters (status/priority) plus the "olästa meddelanden" checkbox and removable
+ * filter chips.
+ */
 export const ErrandsFilter: FC<ErrandsFilterProps> = ({
   query,
   onQueryChange,
@@ -46,16 +49,31 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
   onFilterChange,
   onClearFilters,
   statuses,
+  administrators,
   showStatusFilter,
   onlyUnread,
   onOnlyUnreadChange,
 }) => {
   const [show, setShow] = useState<boolean>(true);
+  // The search field commits on Sök/Enter (not on every keystroke), so it holds its own editing value.
+  const [searchInput, setSearchInput] = useState<string>(query);
 
-  const statusLabel = (value: string): string => statuses.find((status) => status.name === value)?.displayName ?? value;
-  const priorityLabel = (value: string): string => PRIORITIES.find((priority) => priority.value === value)?.label ?? value;
+  const statusOptions: FilterOption[] = statuses.map((status) => ({
+    value: status.name ?? '',
+    label: status.displayName ?? status.name ?? '',
+  }));
+  const assigneeOptions: FilterOption[] = administrators.map((admin) => ({
+    value: admin.username,
+    label: admin.displayName,
+  }));
 
-  const activeCount = filters.status.length + filters.priority.length;
+  const statusLabel = (value: string): string => statusOptions.find((option) => option.value === value)?.label ?? value;
+  const priorityLabel = (value: string): string =>
+    PRIORITY_OPTIONS.find((option) => option.value === value)?.label ?? value;
+  const assigneeLabel = (value: string): string =>
+    assigneeOptions.find((option) => option.value === value)?.label ?? value;
+
+  const activeCount = filters.status.length + filters.priority.length + filters.assignee.length;
 
   const removeValue = (key: keyof ErrandFilters, value: string) => {
     onFilterChange(
@@ -66,93 +84,76 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
 
   return (
     <div className="w-full flex flex-col gap-16 py-19">
-      <div className="w-full flex flex-wrap items-end justify-between gap-16">
-        <div className="flex flex-col gap-8 max-w-[40rem] w-full">
-          <label htmlFor="errand-search" className="text-small font-bold">
-            Sök ärenden
-          </label>
-          <Input
-            id="errand-search"
-            value={query}
-            onChange={(event) => {
-              onQueryChange(event.target.value);
-            }}
-            placeholder="Sök på ärendenummer eller sökande…"
-          />
-        </div>
-        <div className="flex gap-16">
-          <Button
-            onClick={() => {
-              setShow(!show);
-            }}
-            variant={show ? 'tertiary' : 'primary'}
-            inverted={!show}
-            color="vattjom"
-            leftIcon={<ListFilter />}
-          >
-            {show ? 'Dölj filter' : `Visa filter${activeCount ? ` (${activeCount})` : ''}`}
-          </Button>
-        </div>
+      <div className="w-full flex flex-wrap items-center justify-between gap-16">
+        <SearchField
+          className="flex-grow max-w-[48rem]"
+          value={searchInput}
+          showSearchButton
+          placeholder="Sök på ärendenummer eller sökande…"
+          onChange={(event) => {
+            setSearchInput(event.target.value);
+          }}
+          onSearch={() => {
+            onQueryChange(searchInput);
+          }}
+          onReset={() => {
+            setSearchInput('');
+            onQueryChange('');
+          }}
+        />
+        <Button
+          onClick={() => {
+            setShow(!show);
+          }}
+          variant={show ? 'tertiary' : 'primary'}
+          inverted={!show}
+          color="vattjom"
+          leftIcon={<ListFilter />}
+        >
+          {show ? 'Dölj filter' : `Visa filter${activeCount ? ` (${activeCount})` : ''}`}
+        </Button>
       </div>
 
       {show && (
-        <div className="flex flex-wrap gap-16 p-16 bg-background-200 rounded-12">
-          {showStatusFilter && (
-            <FormControl id="filter-status" className="min-w-[24rem]">
-              <FormLabel>Status</FormLabel>
-              <Combobox
-                multiple
-                value={filters.status}
-                placeholder="Alla statusar"
-                searchPlaceholder="Sök status…"
-                onChange={(event) => {
-                  onFilterChange('status', asStringArray(event.target.value));
+        <div className="flex flex-wrap gap-16 items-center">
+          <div className="flex flex-wrap items-center gap-4 p-10 bg-background-200 rounded-12">
+            {showStatusFilter && (
+              <ErrandFilterDropdown
+                label="Status"
+                options={statusOptions}
+                selected={filters.status}
+                searchable
+                onChange={(values) => {
+                  onFilterChange('status', values);
                 }}
-              >
-                <Combobox.Input className="w-full" />
-                <Combobox.List>
-                  {statuses.map((status) => (
-                    <Combobox.Option key={status.name} value={status.name ?? ''}>
-                      {status.displayName ?? status.name ?? ''}
-                    </Combobox.Option>
-                  ))}
-                </Combobox.List>
-              </Combobox>
-            </FormControl>
-          )}
-
-          <FormControl id="filter-priority" className="min-w-[24rem]">
-            <FormLabel>Prioritet</FormLabel>
-            <Combobox
-              multiple
-              value={filters.priority}
-              placeholder="Alla prioriteter"
-              searchPlaceholder="Sök prioritet…"
-              onChange={(event) => {
-                onFilterChange('priority', asStringArray(event.target.value));
+              />
+            )}
+            <ErrandFilterDropdown
+              label="Prioritet"
+              options={PRIORITY_OPTIONS}
+              selected={filters.priority}
+              onChange={(values) => {
+                onFilterChange('priority', values);
               }}
-            >
-              <Combobox.Input className="w-full" />
-              <Combobox.List>
-                {PRIORITIES.map((priority) => (
-                  <Combobox.Option key={priority.value} value={priority.value}>
-                    {priority.label}
-                  </Combobox.Option>
-                ))}
-              </Combobox.List>
-            </Combobox>
-          </FormControl>
-
-          <div className="basis-full">
-            <Checkbox
-              checked={onlyUnread}
-              onChange={(event) => {
-                onOnlyUnreadChange(event.target.checked);
+            />
+            <ErrandFilterDropdown
+              label="Handläggare"
+              options={assigneeOptions}
+              selected={filters.assignee}
+              searchable
+              onChange={(values) => {
+                onFilterChange('assignee', values);
               }}
-            >
-              Visa endast ärenden med olästa meddelanden
-            </Checkbox>
+            />
           </div>
+          <Checkbox
+            checked={onlyUnread}
+            onChange={(event) => {
+              onOnlyUnreadChange(event.target.checked);
+            }}
+          >
+            Visa endast ärenden med olästa meddelanden
+          </Checkbox>
         </div>
       )}
 
@@ -178,6 +179,17 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
               }}
             >
               {priorityLabel(value)} prioritet
+            </Chip>
+          ))}
+          {filters.assignee.map((value) => (
+            <Chip
+              key={`assignee-${value}`}
+              aria-label={`Rensa handläggare ${assigneeLabel(value)}`}
+              onClick={() => {
+                removeValue('assignee', value);
+              }}
+            >
+              {assigneeLabel(value)}
             </Chip>
           ))}
           <Chip aria-label="Rensa alla filter" onClick={onClearFilters}>
