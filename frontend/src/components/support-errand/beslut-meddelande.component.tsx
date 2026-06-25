@@ -89,7 +89,7 @@ export const BeslutMeddelande: FC<{
 
   return (
     <>
-      <div className="pt-24 flex flex-col gap-16 max-w-[64rem]">
+      <div className="pt-24 flex flex-col gap-16">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
           <FormControl id="beslut-fraskategori" className="w-full">
             <FormLabel>Beslutsformulering – kategori</FormLabel>

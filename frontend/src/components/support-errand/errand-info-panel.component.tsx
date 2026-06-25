@@ -1,12 +1,10 @@
 'use client';
 
-import { Errand } from '@data-contracts/backend/data-contracts';
 import { useAdministrators } from '@hooks/use-administrators';
 import { ErrandForm } from '@hooks/use-errand-form';
 import { useStatuses } from '@hooks/use-statuses';
 import { useUserStore } from '@services/user-service/user-service';
 import { Button, Divider, FormControl, FormLabel, Select } from '@sk-web-gui/react';
-import dayjs from 'dayjs';
 import { FC, ReactNode, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -16,10 +14,7 @@ const PRIORITIES = [
   { value: 'HIGH', label: 'Hög' },
 ];
 
-const formatDate = (value?: string): string => (value ? dayjs(value).format('YYYY-MM-DD HH:mm') : '—');
-
 interface ErrandInfoPanelProps {
-  errand: Errand;
   form: ErrandForm;
   setField: (key: keyof ErrandForm, value: string) => void;
   isDirty: boolean;
@@ -37,7 +32,6 @@ interface ErrandInfoPanelProps {
  * button that saves every edited field across the errand view (basics + handläggning).
  */
 export const ErrandInfoPanel: FC<ErrandInfoPanelProps> = ({
-  errand,
   form,
   setField,
   isDirty,
@@ -174,24 +168,6 @@ export const ErrandInfoPanel: FC<ErrandInfoPanelProps> = ({
       {actualiseringSlot}
 
       {avslutaSlot}
-
-      <div className="flex flex-col gap-8 text-small">
-        <span>
-          <span className="font-bold">Rapportör:</span> {errand.reporterUserId ?? '—'}
-        </span>
-        <span>
-          <span className="font-bold">Registrerad:</span> {formatDate(errand.created)}
-        </span>
-        <span>
-          <span className="font-bold">Senast ändrad:</span> {formatDate(errand.modified)}
-        </span>
-        <span className="break-words">
-          <span className="font-bold">Ärendenummer:</span> {errand.errandNumber ?? '—'}
-        </span>
-        <span>
-          <span className="font-bold">Ärendetyp:</span> {errand.typeSlug ?? '—'}
-        </span>
-      </div>
     </div>
   );
 };

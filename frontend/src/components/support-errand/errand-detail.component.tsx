@@ -101,10 +101,12 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   const notesEnabled = activeSidebar === 'notes';
   const bevakningarEnabled = activeSidebar === 'bevakningar';
 
-  const { notes, isLoading: notesLoading, error: notesError, refresh: refreshNotes } = useErrandNotes(
-    resolvedErrandId,
-    notesEnabled
-  );
+  const {
+    notes,
+    isLoading: notesLoading,
+    error: notesError,
+    refresh: refreshNotes,
+  } = useErrandNotes(resolvedErrandId, notesEnabled);
   const {
     warnings,
     isLoading: warningsLoading,
@@ -167,9 +169,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   // The beslut PDF (DECISION) is shown under the Beslut tab, so it's kept out of the Bilagor list too.
   const errandAttachments = attachments.filter(
     (attachment) =>
-      attachment.origin !== 'CONVERSATION' &&
-      attachment.origin !== 'CASE_DATA' &&
-      attachment.origin !== 'DECISION'
+      attachment.origin !== 'CONVERSATION' && attachment.origin !== 'CASE_DATA' && attachment.origin !== 'DECISION'
   );
 
   // Surface the errand's status/title into the slim app header, and clear it on leave.
@@ -210,7 +210,6 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
       icon: UserCog,
       component: (
         <ErrandInfoPanel
-          errand={errand}
           form={form}
           setField={setField}
           isDirty={isDirty || canSaveBeslut}
@@ -231,9 +230,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
             : undefined
           }
           actualiseringSlot={
-            isSupplementaryApplication ?
-              <ErrandAktualisering errandId={apiErrandId} onArchived={refresh} />
-            : undefined
+            isSupplementaryApplication ? <ErrandAktualisering errandId={apiErrandId} onArchived={refresh} /> : undefined
           }
         />
       ),
@@ -491,7 +488,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                         size="sm"
                         current={activeSubTab}
                         onTabChange={setActiveSubTab}
-                        tabslistClassName="pt-20 px-12"
+                        tabslistClassName="pt-24 pl-24"
                         panelsClassName="border-t-1 border-divider"
                       >
                         {group.tabs.map((subTab, subIndex) => (

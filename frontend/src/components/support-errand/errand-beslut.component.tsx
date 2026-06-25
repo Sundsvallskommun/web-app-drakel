@@ -181,13 +181,12 @@ export const ErrandBeslut: FC<{
             <LockFieldset locked={locked}>
               <div className="pt-24 flex flex-col gap-24">
                 <h2 className="text-h3-sm md:text-h3-md m-0">Beslut</h2>
-                <div className="flex flex-col gap-16 max-w-[48rem]">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+                <div className="flex flex-col gap-16">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-16">
                     <FormControl id="beslut-datum" className="w-full">
                       <FormLabel>Datum *</FormLabel>
                       <Input
                         type="date"
-                        size="sm"
                         value={date}
                         onChange={(event) => {
                           setDate(event.target.value);
@@ -199,7 +198,6 @@ export const ErrandBeslut: FC<{
                       <FormLabel>Beslut *</FormLabel>
                       <Select
                         className="w-full"
-                        size="sm"
                         value={beslutCode}
                         onChange={(event) => {
                           setBeslutCode(event.target.value);
@@ -217,25 +215,10 @@ export const ErrandBeslut: FC<{
                       </span>
                     </FormControl>
 
-                    <FormControl id="beslut-orsak" className="w-full">
-                      <FormLabel>Orsak</FormLabel>
-                      {/* TODO(api): orsak left empty until the reason catalog is wired. */}
-                      <Select className="w-full" size="sm" value="" disabled>
-                        <Select.Option value="">—</Select.Option>
-                      </Select>
-                    </FormControl>
-
-                    <FormControl id="beslut-belopp" className="w-full">
-                      <FormLabel>Belopp</FormLabel>
-                      {/* Avslag ⇒ 0; annars beloppet från normberäkningen (rekommendationen). */}
-                      <Input readOnly size="sm" value={formatAmount(amount ?? 0)} />
-                    </FormControl>
-
                     <FormControl id="beslut-fran" className="w-full">
                       <FormLabel>Från</FormLabel>
                       <Input
                         type="date"
-                        size="sm"
                         value={fromDate}
                         onChange={(event) => {
                           setFromDate(event.target.value);
@@ -247,7 +230,6 @@ export const ErrandBeslut: FC<{
                       <FormLabel>Till</FormLabel>
                       <Input
                         type="date"
-                        size="sm"
                         value={toDate}
                         onChange={(event) => {
                           setToDate(event.target.value);
@@ -256,13 +238,27 @@ export const ErrandBeslut: FC<{
                     </FormControl>
                   </div>
 
+                  {/* Belopp is derived (0 for an avslag, otherwise the recommended amount), so it's shown
+                      as a read-only summary rather than an input field. */}
+                  <div className="flex items-center justify-between gap-16 rounded-12 border-1 border-divider bg-background-200 px-16 py-12 max-w-[32rem]">
+                    <span className="text-small font-bold text-dark-secondary">Belopp att bevilja</span>
+                    <span className="text-h4-sm md:text-h4-md font-bold">{formatAmount(amount ?? 0)}</span>
+                  </div>
+
                   {saveError && <p className="text-error-surface-primary m-0">{saveError}</p>}
                   {saved && <p className="text-dark-secondary m-0">Beslutet sparades.</p>}
                 </div>
 
                 <Divider className="my-8" />
 
-                <h2 className="text-h3-sm md:text-h3-md m-0">Beslutsmeddelande</h2>
+                <div className="flex justify-between items-center gap-16">
+                  <h2 className="text-h3-sm md:text-h3-md m-0">Beslutsmeddelande</h2>
+                  {/* Wrap so the preview button is one flex item — its fragment (Button + Modal) would
+                      otherwise become two children and justify-between would push the button to the middle. */}
+                  <div>
+                    <BeslutPdfPreviewButton errandId={errandId} buildMessage={buildDecisionMessage} />
+                  </div>
+                </div>
                 <BeslutMeddelande
                   errandId={errandId}
                   value={messageValue}
@@ -273,9 +269,6 @@ export const ErrandBeslut: FC<{
                     setMessageTouched(true);
                   }}
                 />
-                <div>
-                  <BeslutPdfPreviewButton errandId={errandId} buildMessage={buildDecisionMessage} />
-                </div>
               </div>
             </LockFieldset>
           </Tabs.Content>
