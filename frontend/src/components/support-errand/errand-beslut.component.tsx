@@ -3,7 +3,9 @@
 import { useErrandBeslut } from '@hooks/use-errand-beslut';
 import { useErrandNormberakning } from '@hooks/use-errand-normberakning';
 import { createBeslut } from '@services/beslut-service';
+import { getDocumentTemplateContent } from '@services/document-template-service';
 import { Button, FormControl, FormLabel, Input, Select, Spinner, Tabs } from '@sk-web-gui/react';
+import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { resolveBeslutAmount, resolveBeslutPeriod } from '@utils/beslut';
 import { formatAmount } from '@utils/format-amount';
 import dayjs from 'dayjs';
@@ -13,6 +15,12 @@ import { BeslutMeddelande } from './beslut-meddelande.component';
 import { LockedBanner, LockFieldset } from './lockable-section.component';
 
 const todayDate = (): string => dayjs().format('YYYY-MM-DD');
+
+const EMPTY_MESSAGE: TextEditorValue = { markup: '', plainText: '' };
+
+// The fullföljdshänvisning (appeal instructions) lives in the Templating service; it's appended to the
+// beslutsmeddelande when the handläggare ticks the box.
+const FULLFOLJD_TEMPLATE_IDENTIFIER = 'drakel.fa.beslut.fullfoljdshanvisning';
 
 /**
  * "Beslut" tab — the Nytt beslut form (mirroring Lifecare's BESLUT / BESLUTSMEDDELANDE view). Datum,
@@ -33,6 +41,9 @@ export const ErrandBeslut: FC<{ errandId: string; locked?: boolean }> = ({ erran
   const [saving, setSaving] = useState<boolean>(false);
   const [saveError, setSaveError] = useState<string>();
   const [saved, setSaved] = useState<boolean>(false);
+  // The beslutsmeddelande (composed on the second sub-tab) is saved as the decision's decisionMessage.
+  const [messageValue, setMessageValue] = useState<TextEditorValue>(EMPTY_MESSAGE);
+  const [addFullfoljd, setAddFullfoljd] = useState<boolean>(true);
 
   // Prefill from the recommendation (and resolved period) once they load.
   useEffect(() => {
@@ -62,16 +73,31 @@ export const ErrandBeslut: FC<{ errandId: string; locked?: boolean }> = ({ erran
     setSaved(false);
   };
 
+  // The decision message is the composed beslutsmeddelande, with the fullföljdshänvisning (fetched from
+  // Templating) appended at the end when the handläggare ticked the box.
+  const buildDecisionMessage = async (): Promise<string | undefined> => {
+    let message = messageValue.markup?.trim() ?? '';
+    if (addFullfoljd) {
+      const res = await getDocumentTemplateContent(FULLFOLJD_TEMPLATE_IDENTIFIER);
+      if (!res.error && res.data) {
+        message = message ? `${message}<p><br></p>${res.data}` : res.data;
+      }
+    }
+    return message.length > 0 ? message : undefined;
+  };
+
   const save = async (): Promise<void> => {
     setSaving(true);
     setSaveError(undefined);
     setSaved(false);
+    const decisionMessage = await buildDecisionMessage();
     const result = await createBeslut(errandId, {
       value: beslutCode,
       amount: amount ?? 0,
       decisionDate: date,
       periodFrom: fromDate,
       periodTo: toDate,
+      decisionMessage,
     });
     setSaving(false);
     if (result.error) {
@@ -203,7 +229,13 @@ export const ErrandBeslut: FC<{ errandId: string; locked?: boolean }> = ({ erran
           <Tabs.Button>Beslutsmeddelande</Tabs.Button>
           <Tabs.Content>
             <LockFieldset locked={locked}>
-              <BeslutMeddelande errandId={errandId} />
+              <BeslutMeddelande
+                errandId={errandId}
+                value={messageValue}
+                onChange={setMessageValue}
+                addFullfoljd={addFullfoljd}
+                onAddFullfoljdChange={setAddFullfoljd}
+              />
             </LockFieldset>
           </Tabs.Content>
         </Tabs.Item>

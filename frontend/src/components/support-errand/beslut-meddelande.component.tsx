@@ -2,7 +2,7 @@
 
 import TextEditor from '@components/common/text-editor.component';
 import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
-import { Combobox, FormControl, FormLabel } from '@sk-web-gui/react';
+import { Checkbox, Combobox, FormControl, FormLabel } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { stakeholderDisplayName } from '@utils/stakeholder-name';
 import { FC, useState } from 'react';
@@ -22,8 +22,6 @@ const CATEGORY_OPTIONS = [
   { id: ALL_CATEGORY_ID, name: 'Alla' },
   ...BESLUT_PHRASE_GROUPS.map((group) => ({ id: group.id, name: group.name })),
 ];
-
-const EMPTY_VALUE: TextEditorValue = { markup: '', plainText: '' };
 
 // A single-select combobox reports its value as a string; guard against the array shape just in case.
 const eventValue = (value: unknown): string =>
@@ -47,7 +45,15 @@ const toMarkup = (text: string): string =>
  * the editor, separated from the previous content by two empty rows, with the `¤` placeholder replaced by
  * the sökande's name. `§`→`¥` (belopp) and `※` (period) are left in place — mapped from the beräkning later.
  */
-export const BeslutMeddelande: FC<{ errandId: string }> = ({ errandId }) => {
+export const BeslutMeddelande: FC<{
+  errandId: string;
+  /** The decision-message content, owned by the parent so the Beslut tab's Spara can read it. */
+  value: TextEditorValue;
+  onChange: (value: TextEditorValue) => void;
+  /** Whether the fullföljdshänvisning is appended to the message when the decision is saved. */
+  addFullfoljd: boolean;
+  onAddFullfoljdChange: (checked: boolean) => void;
+}> = ({ errandId, value, onChange, addFullfoljd, onAddFullfoljdChange }) => {
   const { stakeholders } = useErrandStakeholders(errandId);
   const applicant = stakeholders.find((stakeholder) => stakeholder.role === 'APPLICANT');
   const applicantName = applicant ? stakeholderDisplayName(applicant) : '';
@@ -56,7 +62,6 @@ export const BeslutMeddelande: FC<{ errandId: string }> = ({ errandId }) => {
   // Bumped after every insert so the rubrik combobox remounts and clears — letting the same rubrik be
   // added again (a single-select combobox would otherwise stay on its current pick).
   const [insertNonce, setInsertNonce] = useState<number>(0);
-  const [value, setValue] = useState<TextEditorValue>(EMPTY_VALUE);
 
   const headings =
     categoryId === ALL_CATEGORY_ID ? ALL_PHRASES : (BESLUT_PHRASE_GROUPS.find((group) => group.id === categoryId)?.phrases ?? []);
@@ -68,9 +73,9 @@ export const BeslutMeddelande: FC<{ errandId: string }> = ({ errandId }) => {
     // An "empty" editor still has markup like <p></p> once it's been touched — replace it (rather than
     // append) so the phrase doesn't end up after an empty first line. Otherwise add one empty line.
     if ((value.plainText ?? '').trim().length === 0) {
-      setValue({ markup: phraseMarkup, plainText: filledText });
+      onChange({ markup: phraseMarkup, plainText: filledText });
     } else {
-      setValue({
+      onChange({
         markup: (value.markup ?? '') + '<p><br></p>' + phraseMarkup,
         plainText: (value.plainText ?? '') + '\n\n' + filledText,
       });
@@ -137,12 +142,21 @@ export const BeslutMeddelande: FC<{ errandId: string }> = ({ errandId }) => {
         {applicantName ? '' : ' Sökandes namn kunde inte hämtas — namn-platshållaren lämnas oersatt.'}
       </p>
 
+      <Checkbox
+        checked={addFullfoljd}
+        onChange={(event) => {
+          onAddFullfoljdChange(event.target.checked);
+        }}
+      >
+        Lägg till fullföljdshänvisning
+      </Checkbox>
+
       <FormControl id="beslut-meddelande" className="w-full">
         <FormLabel>Beslutsmeddelande</FormLabel>
         <TextEditor
           value={value}
           onChange={(event) => {
-            setValue(event.target.value);
+            onChange(event.target.value);
           }}
         />
       </FormControl>
