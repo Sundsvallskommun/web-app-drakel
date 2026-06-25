@@ -34,6 +34,7 @@ export const DocumentEditor: FC<{
 
   return (
     <TextEditor
+      className="text-editor-with-toolbar w-full"
       ref={quillRef}
       value={value}
       onChange={(event) => {

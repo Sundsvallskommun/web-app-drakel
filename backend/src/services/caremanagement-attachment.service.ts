@@ -54,13 +54,19 @@ class CaremanagementAttachmentService {
     }
   }
 
-  /** Uploads a file as a new attachment via multipart/form-data. */
-  async createAttachment(errandId: string, file: UploadedFileLike): Promise<ApiResponse<null>> {
+  /**
+   * Uploads a file as a new attachment via multipart/form-data. `origin` (e.g. DECISION) is sent as the
+   * query param caremanagement uses to categorise the attachment; omitted, caremanagement applies its default.
+   */
+  async createAttachment(errandId: string, file: UploadedFileLike, origin?: string): Promise<ApiResponse<null>> {
     const form = new FormData();
     form.append('file', file.buffer, { filename: file.originalname, contentType: file.mimetype });
     const url = caremanagementUrl('errands', errandId, 'attachments');
     try {
-      await axios.post(url, form, { headers: { ...form.getHeaders(), ...sentByHeaders() } });
+      await axios.post(url, form, {
+        headers: { ...form.getHeaders(), ...sentByHeaders() },
+        params: origin ? { origin } : undefined,
+      });
       return { data: null, message: 'success' };
     } catch (error) {
       throw caremanagementError(error);

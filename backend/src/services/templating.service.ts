@@ -45,6 +45,19 @@ class TemplatingService {
       throw caremanagementError(error);
     }
   }
+
+  /** Renders provided HTML to a PDF (render/direct/pdf). Returns the PDF as a BASE64-encoded string. */
+  async renderHtmlToPdf(html: string): Promise<string> {
+    try {
+      const res = await axios.post<{ output?: string }>(templatingUrl('render', 'direct', 'pdf'), {
+        content: Buffer.from(html, 'utf-8').toString('base64'),
+        parameters: {},
+      });
+      return res.data.output ?? '';
+    } catch (error) {
+      throw caremanagementError(error);
+    }
+  }
 }
 
 export default TemplatingService;

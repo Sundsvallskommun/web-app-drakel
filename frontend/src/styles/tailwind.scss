@@ -8,3 +8,12 @@
 @use './app-utilities.scss';
 @use './app-components.scss';
 @use './layouts/default-layout.scss';
+
+.text-editor-with-toolbar .ql-editor {
+  height: 60rem;
+  min-height: 15rem;
+  resize: vertical;
+  overflow: hidden auto;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}

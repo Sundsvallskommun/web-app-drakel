@@ -9,6 +9,12 @@ export const APIS = [
     name: 'citizen',
     version: '3.0',
   },
+  {
+    // Messaging — sends the beslut to Mina sidor (webmessage), digital brevlåda (digital-mail) and brev
+    // (letter), and checks whether a person has a digital mailbox.
+    name: 'messaging',
+    version: '7.0',
+  },
 ] as const;
 
 // NOTE: caremanagement is intentionally NOT in APIS. Runtime calls are built by caremanagementUrl,

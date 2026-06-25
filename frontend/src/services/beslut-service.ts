@@ -57,6 +57,23 @@ export const getBeslutRecommendation = (errandId: string): Promise<ServiceRespon
     .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);
 
+/**
+ * The handläggare's latest saved beslut — the newest decision that actually carries a beslutsmeddelande —
+ * used to read the form (including the message) back when the Beslut tab is reopened. Null when none has
+ * been saved. Matching on the message (rather than just "newest") mirrors the send flow and skips any
+ * message-less decision the errand may gain later (e.g. when it is decided/closed), which would otherwise
+ * blank the editor.
+ */
+export const getLatestBeslut = (errandId: string): Promise<ServiceResponse<Decision | null>> =>
+  apiService
+    .get<ApiResponse<Decision[]>>(`errands/${errandId}/decisions`)
+    .then((res) => {
+      const decisions = res.data.data ?? [];
+      const latest = [...decisions].reverse().find((decision) => (decision.decisionMessage ?? '').trim().length > 0);
+      return { data: latest ?? null };
+    })
+    .catch(toServiceError);
+
 /** Records a beslut on an errand. */
 export const createBeslut = (errandId: string, input: CreateBeslutInput): Promise<ServiceResponse<Decision>> =>
   apiService

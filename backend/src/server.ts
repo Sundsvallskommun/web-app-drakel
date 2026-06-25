@@ -7,6 +7,7 @@ import { ActualisationController } from './controllers/actualisation.controller'
 import { BevakningController } from './controllers/bevakning.controller';
 import { CountsController } from './controllers/counts.controller';
 import { DecisionController } from './controllers/decision.controller';
+import { DecisionNotificationController } from './controllers/decision-notification.controller';
 import { DocumentController } from './controllers/document.controller';
 import { DocumentTemplateController } from './controllers/document-template.controller';
 import { ErrandController } from './controllers/errand.controller';
@@ -48,6 +49,7 @@ const app = new App([
   NotificationController,
   FormSnapshotController,
   ActualisationController,
+  DecisionNotificationController,
 ]);
 
 app.listen();

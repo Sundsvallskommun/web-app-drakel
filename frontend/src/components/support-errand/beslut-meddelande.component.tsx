@@ -29,8 +29,7 @@ const eventValue = (value: unknown): string =>
   : Array.isArray(value) && typeof value[0] === 'string' ? value[0]
   : '';
 
-const escapeHtml = (text: string): string =>
-  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const escapeHtml = (text: string): string => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /** Each line of the phrase becomes a Quill paragraph; an empty line renders as <p><br></p>. */
 const toMarkup = (text: string): string =>
@@ -53,7 +52,9 @@ export const BeslutMeddelande: FC<{
   /** Whether the fullföljdshänvisning is appended to the message when the decision is saved. */
   addFullfoljd: boolean;
   onAddFullfoljdChange: (checked: boolean) => void;
-}> = ({ errandId, value, onChange, addFullfoljd, onAddFullfoljdChange }) => {
+  /** Called when the user edits the message (typing or inserting a phrase) — not on programmatic load. */
+  onUserEdit?: () => void;
+}> = ({ errandId, value, onChange, addFullfoljd, onAddFullfoljdChange, onUserEdit }) => {
   const { stakeholders } = useErrandStakeholders(errandId);
   const applicant = stakeholders.find((stakeholder) => stakeholder.role === 'APPLICANT');
   const applicantName = applicant ? stakeholderDisplayName(applicant) : '';
@@ -64,7 +65,9 @@ export const BeslutMeddelande: FC<{
   const [insertNonce, setInsertNonce] = useState<number>(0);
 
   const headings =
-    categoryId === ALL_CATEGORY_ID ? ALL_PHRASES : (BESLUT_PHRASE_GROUPS.find((group) => group.id === categoryId)?.phrases ?? []);
+    categoryId === ALL_CATEGORY_ID ? ALL_PHRASES : (
+      (BESLUT_PHRASE_GROUPS.find((group) => group.id === categoryId)?.phrases ?? [])
+    );
 
   const addPhrase = (phrase: BeslutPhrase): void => {
     // Only the name is substituted now; the belopp/period markers are filled from the beräkning later.
@@ -80,86 +83,95 @@ export const BeslutMeddelande: FC<{
         plainText: (value.plainText ?? '') + '\n\n' + filledText,
       });
     }
+    onUserEdit?.();
     setInsertNonce((nonce) => nonce + 1);
   };
 
   return (
-    <div className="pt-24 flex flex-col gap-16 max-w-[64rem]">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
-        <FormControl id="beslut-fraskategori" className="w-full">
-          <FormLabel>Beslutsformulering – kategori</FormLabel>
-          <Combobox
-            value={categoryId}
-            placeholder="Välj kategori"
-            searchPlaceholder="Sök kategori…"
-            onSelect={(event) => {
-              const next = eventValue(event.target.value);
-              if (next && next !== categoryId) {
-                setCategoryId(next);
-              }
-            }}
-          >
-            <Combobox.Input className="w-full" />
-            <Combobox.List>
-              {CATEGORY_OPTIONS.map((option) => (
-                <Combobox.Option key={option.id} value={option.id}>
-                  {option.name}
-                </Combobox.Option>
-              ))}
-            </Combobox.List>
-          </Combobox>
-        </FormControl>
+    <>
+      <div className="pt-24 flex flex-col gap-16 max-w-[64rem]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+          <FormControl id="beslut-fraskategori" className="w-full">
+            <FormLabel>Beslutsformulering – kategori</FormLabel>
+            <Combobox
+              value={categoryId}
+              placeholder="Välj kategori"
+              searchPlaceholder="Sök kategori…"
+              onSelect={(event) => {
+                const next = eventValue(event.target.value);
+                if (next && next !== categoryId) {
+                  setCategoryId(next);
+                }
+              }}
+            >
+              <Combobox.Input className="w-full" />
+              <Combobox.List>
+                {CATEGORY_OPTIONS.map((option) => (
+                  <Combobox.Option key={option.id} value={option.id}>
+                    {option.name}
+                  </Combobox.Option>
+                ))}
+              </Combobox.List>
+            </Combobox>
+          </FormControl>
 
-        <FormControl id="beslut-frasrubrik" className="w-full">
-          <FormLabel>Beslutsformulering – rubrik</FormLabel>
-          <Combobox
-            key={`${categoryId}-${insertNonce}`}
-            placeholder="Välj och lägg till frastext"
-            searchPlaceholder="Sök rubrik…"
-            onSelect={(event) => {
-              const phrase = headings.find((candidate) => candidate.id === eventValue(event.target.value));
-              if (phrase) {
-                addPhrase(phrase);
-              }
-            }}
-          >
-            <Combobox.Input className="w-full" />
-            <Combobox.List>
-              {headings.map((phrase) => (
-                <Combobox.Option key={phrase.id} value={phrase.id}>
-                  {phrase.name}
-                </Combobox.Option>
-              ))}
-            </Combobox.List>
-          </Combobox>
-        </FormControl>
+          <FormControl id="beslut-frasrubrik" className="w-full">
+            <FormLabel>Beslutsformulering – rubrik</FormLabel>
+            <Combobox
+              key={`${categoryId}-${insertNonce}`}
+              placeholder="Välj och lägg till frastext"
+              searchPlaceholder="Sök rubrik…"
+              onSelect={(event) => {
+                const phrase = headings.find((candidate) => candidate.id === eventValue(event.target.value));
+                if (phrase) {
+                  addPhrase(phrase);
+                }
+              }}
+            >
+              <Combobox.Input className="w-full" />
+              <Combobox.List>
+                {headings.map((phrase) => (
+                  <Combobox.Option key={phrase.id} value={phrase.id}>
+                    {phrase.name}
+                  </Combobox.Option>
+                ))}
+              </Combobox.List>
+            </Combobox>
+          </FormControl>
+        </div>
+
+        <p className="m-0 text-small text-dark-secondary">
+          <span className="font-bold">{NAME_PLACEHOLDER}</span> ersätts med sökandes namn.{' '}
+          <span className="font-bold">{AMOUNT_PLACEHOLDER}</span> (belopp) och{' '}
+          <span className="font-bold">{PERIOD_PLACEHOLDER}</span> (period) fylls i från beräkningen senare.
+          {applicantName ? '' : ' Sökandes namn kunde inte hämtas — namn-platshållaren lämnas oersatt.'}
+        </p>
+
+        <Checkbox
+          checked={addFullfoljd}
+          onChange={(event) => {
+            onAddFullfoljdChange(event.target.checked);
+          }}
+        >
+          Lägg till fullföljdshänvisning
+        </Checkbox>
       </div>
-
-      <p className="m-0 text-small text-dark-secondary">
-        <span className="font-bold">{NAME_PLACEHOLDER}</span> ersätts med sökandes namn.{' '}
-        <span className="font-bold">{AMOUNT_PLACEHOLDER}</span> (belopp) och{' '}
-        <span className="font-bold">{PERIOD_PLACEHOLDER}</span> (period) fylls i från beräkningen senare.
-        {applicantName ? '' : ' Sökandes namn kunde inte hämtas — namn-platshållaren lämnas oersatt.'}
-      </p>
-
-      <Checkbox
-        checked={addFullfoljd}
-        onChange={(event) => {
-          onAddFullfoljdChange(event.target.checked);
-        }}
-      >
-        Lägg till fullföljdshänvisning
-      </Checkbox>
-
       <FormControl id="beslut-meddelande" className="w-full">
         <FormLabel>Beslutsmeddelande</FormLabel>
         <TextEditor
+          className="text-editor-with-toolbar w-full"
           value={value}
           onChange={(event) => {
             onChange(event.target.value);
           }}
+          onTextChange={(_delta, _oldDelta, source) => {
+            // Only a 'user' edit marks the message dirty; programmatic loads/inserts use the 'api' source.
+            if (source === 'user') {
+              onUserEdit?.();
+            }
+          }}
         />
       </FormControl>
-    </div>
+    </>
   );
 };

@@ -16,7 +16,7 @@ import { CLIENT_FILES_PDF } from '@utils/attachment-names';
 import { stakeholderDisplayName } from '@utils/stakeholder-name';
 import { compareByRole } from '@utils/stakeholder-role';
 import { AlertTriangle, Bell, History, NotebookPen, UserCog } from 'lucide-react';
-import { FC, Fragment, ReactNode, useEffect, useMemo, useState } from 'react';
+import { FC, Fragment, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { ErrandAktualisering } from './errand-aktualisering.component';
 import { ErrandApplicationSummary } from './errand-application-summary.component';
@@ -58,6 +58,25 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   const [activeSidebar, setActiveSidebar] = useState<string>('info');
   const { setErrand: setHeaderErrand } = useErrandHeader();
   const { form, setField, isDirty, saving, error: saveError, save } = useErrandForm(errand, refresh);
+
+  // The central "Spara ärende" button also saves the Beslut tab: ErrandBeslut registers its save here
+  // (only while that tab is mounted), and the button runs both. canSaveBeslut keeps the button enabled
+  // while a beslut can be saved even when the handläggning fields aren't dirty.
+  const beslutSaveRef = useRef<(() => Promise<boolean>) | null>(null);
+  const [canSaveBeslut, setCanSaveBeslut] = useState<boolean>(false);
+  const [savingAll, setSavingAll] = useState<boolean>(false);
+  const registerBeslutSave = useCallback((beslutSave: (() => Promise<boolean>) | null) => {
+    beslutSaveRef.current = beslutSave;
+    setCanSaveBeslut(beslutSave !== null);
+  }, []);
+  const saveAll = useCallback(async () => {
+    setSavingAll(true);
+    await save();
+    if (beslutSaveRef.current) {
+      await beslutSaveRef.current();
+    }
+    setSavingAll(false);
+  }, [save]);
   // The route param can be an errand NUMBER (not a UUID); caremanagement sub-resources require the
   // errand's UUID. Gate those fetches on the resolved errand.id so we never call them with a non-UUID.
   const resolvedErrandId = errand?.id ?? '';
@@ -142,8 +161,14 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   // The generated "ärendeuppgifter" PDF (origin CASE_DATA) is previewed on the Ärendeuppgifter tab, so
   // it's excluded from the Bilagor list below to avoid showing it twice.
   const caseDataAttachment = attachments.find((attachment) => attachment.origin === 'CASE_DATA');
+  // The generated beslut PDF (origin DECISION), previewed under the Beslut tab once "Besluta och utbetala" runs.
+  const decisionAttachment = attachments.find((attachment) => attachment.origin === 'DECISION');
+  // The beslut PDF (DECISION) is shown under the Beslut tab, so it's kept out of the Bilagor list too.
   const errandAttachments = attachments.filter(
-    (attachment) => attachment.origin !== 'CONVERSATION' && attachment.origin !== 'CASE_DATA'
+    (attachment) =>
+      attachment.origin !== 'CONVERSATION' &&
+      attachment.origin !== 'CASE_DATA' &&
+      attachment.origin !== 'DECISION'
   );
 
   // Surface the errand's status/title into the slim app header, and clear it on leave.
@@ -187,12 +212,19 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           errand={errand}
           form={form}
           setField={setField}
-          isDirty={isDirty}
-          saving={saving}
+          isDirty={isDirty || canSaveBeslut}
+          saving={saving || savingAll}
           error={saveError}
-          onSave={() => void save()}
+          onSave={() => void saveAll()}
           avslutaSlot={
-            <ErrandAvsluta errandId={apiErrandId} onClosed={refresh} checkApprovals={showCalculationSections} />
+            <ErrandAvsluta
+              errandId={apiErrandId}
+              onClosed={() => {
+                refresh();
+                refreshAttachments();
+              }}
+              checkApprovals={showCalculationSections}
+            />
           }
           actualiseringSlot={
             isSupplementaryApplication ?
@@ -334,7 +366,12 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               label: 'Beslut',
               content: (
                 <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
-                  <ErrandBeslut errandId={apiErrandId} locked={!!approvals.decision?.approved} />
+                  <ErrandBeslut
+                    errandId={apiErrandId}
+                    locked={!!approvals.decision?.approved}
+                    decisionAttachmentId={decisionAttachment?.id}
+                    onRegisterSave={registerBeslutSave}
+                  />
                   <SectionApprovalCheckbox
                     label="Godkänn beslut"
                     approval={approvals.decision}

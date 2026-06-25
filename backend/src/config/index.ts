@@ -33,6 +33,14 @@ export const CAREMANAGEMENT_BASE_URL = env.CAREMANAGEMENT_BASE_URL ?? '';
 export const CAREMANAGEMENT_NAMESPACE = env.CAREMANAGEMENT_NAMESPACE ?? '';
 // The Sundsvall Templating service (document/phrase templates). Reached directly, no auth.
 export const TEMPLATING_BASE_URL = env.TEMPLATING_BASE_URL ?? '';
+// Messaging sender config for the beslut notification (Mina sidor / digital brevlåda / brev). Optional —
+// the send fails gracefully if unset, so a missing value never blocks BFF startup.
+export const MESSAGING_ORGANIZATION_NUMBER = env.MESSAGING_ORGANIZATION_NUMBER ?? '';
+export const MESSAGING_DEPARTMENT = env.MESSAGING_DEPARTMENT ?? '';
+export const MESSAGING_SUPPORT_TEXT = env.MESSAGING_SUPPORT_TEXT ?? '';
+export const MESSAGING_SUPPORT_EMAIL = env.MESSAGING_SUPPORT_EMAIL ?? '';
+export const MESSAGING_SUPPORT_PHONE = env.MESSAGING_SUPPORT_PHONE ?? '';
+export const MESSAGING_SUPPORT_URL = env.MESSAGING_SUPPORT_URL ?? '';
 // Optional — the errand controller falls back to a default type slug when this is unset.
 export const CAREMANAGEMENT_TYPE_SLUG = env.CAREMANAGEMENT_TYPE_SLUG;
 export const AUTHORIZED_GROUPS = env.AUTHORIZED_GROUPS ?? '';
