@@ -27,6 +27,8 @@ interface ErrandInfoPanelProps {
   onSave: () => void;
   /** Rendered under the "Spara ärende" divider (the sidebar's "Avsluta ärende" action). */
   avslutaSlot?: ReactNode;
+  /** Rendered above the Avsluta action (e.g. the supplementary-application "Arkivera till aktualisering"). */
+  actualiseringSlot?: ReactNode;
 }
 
 /**
@@ -42,6 +44,7 @@ export const ErrandInfoPanel: FC<ErrandInfoPanelProps> = ({
   error,
   onSave,
   avslutaSlot,
+  actualiseringSlot,
 }) => {
   const { statuses } = useStatuses();
   const username = useUserStore(useShallow((state) => state.user.username));
@@ -148,6 +151,8 @@ export const ErrandInfoPanel: FC<ErrandInfoPanelProps> = ({
       </Button>
 
       <Divider />
+
+      {actualiseringSlot}
 
       {avslutaSlot}
 

@@ -18,6 +18,7 @@ import { compareByRole } from '@utils/stakeholder-role';
 import { AlertTriangle, Bell, History, NotebookPen, UserCog } from 'lucide-react';
 import { FC, Fragment, ReactNode, useEffect, useMemo, useState } from 'react';
 
+import { ErrandAktualisering } from './errand-aktualisering.component';
 import { ErrandApplicationSummary } from './errand-application-summary.component';
 import { ErrandAttachments } from './errand-attachments.component';
 import { ErrandAvsluta } from './errand-avsluta.component';
@@ -192,6 +193,11 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           onSave={() => void save()}
           avslutaSlot={
             <ErrandAvsluta errandId={apiErrandId} onClosed={refresh} checkApprovals={showCalculationSections} />
+          }
+          actualiseringSlot={
+            isSupplementaryApplication ?
+              <ErrandAktualisering errandId={apiErrandId} onArchived={refresh} />
+            : undefined
           }
         />
       ),

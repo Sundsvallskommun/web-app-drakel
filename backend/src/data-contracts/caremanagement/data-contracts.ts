@@ -1372,6 +1372,13 @@ export interface EligibilityResponse {
   lifecareChecked?: boolean;
   /** True when the request included a co-applicant (co-applicant) */
   hasCoApplicant?: boolean;
+  /** When reasonCode is RECENTLY_CLOSED: the id of the recently closed errand a caseworker can reopen (in Lifecare) and release. Null otherwise. */
+  reopenableErrandId?: string;
+  /**
+   * When reasonCode is RECENTLY_CLOSED: when the reopenable errand was closed. Null otherwise.
+   * @format date-time
+   */
+  closedAt?: string;
 }
 
 /** Request to build and post the SSBTEK-driven calculation for an application month. */
@@ -1410,6 +1417,20 @@ export interface CalculationResponse {
   informationComplete?: boolean;
   /** Previous-month income types not yet present this month (the SSBTEK data still being awaited) */
   missingIncomeTypes?: string[];
+}
+
+/** Optional metadata for archiving a document to a Lifecare actualisation. */
+export interface ArchiveActualisationRequest {
+  /** The id of the caremanagement errand the archive concerns. When present, the target actualisation id is recorded on the errand as a Decision(ACTUALISATION) — setting the errand's Lifecare actualisation to the one archived to. */
+  errandId?: string;
+  /** The document title shown in Lifecare. Defaults to the uploaded file name when omitted. */
+  title?: string;
+  /** The Lifecare InsertDocumentType code for the document. Server default when omitted. */
+  documentType?: string;
+  /** The Lifecare InsertDocumentSenderType code for the document. Server default when omitted. */
+  documentSenderType?: string;
+  /** The sender name shown in Lifecare. Server default when omitted. */
+  senderName?: string;
 }
 
 /** Request to create the Lifecare actualisation (case intake) for an application month. */
@@ -1891,7 +1912,7 @@ export interface Attachment {
    * @format int32
    */
   fileSize?: number;
-  /** Where the file came from: APPLICATION (citizen's application files), CONVERSATION (sent in a message thread), GENERATED (a consolidated PDF produced by the platform), ERRAND (uploaded directly to the errand), CASE_DATA (ärendeuppgifter — a case-data document for the errand) or MESSAGE_HISTORY (meddelandehistorik — the archived conversation PDF for a closed errand) */
+  /** Where the file came from: APPLICATION (citizen's application files), CONVERSATION (sent in a message thread), GENERATED (a consolidated PDF produced by the platform), ERRAND (uploaded directly to the errand), CASE_DATA (ärendeuppgifter — a case-data document for the errand), DECISION (beslut — a decision document for the errand) or MESSAGE_HISTORY (meddelandehistorik — the archived conversation PDF for a closed errand) */
   origin?: AttachmentOriginEnum;
   /** Who the file came from: CLIENT (applicant) or CASEWORKER (caseworker). May be null for files predating the distinction or with no clear sender. */
   senderRole?: AttachmentSenderRoleEnum;
@@ -2154,6 +2175,48 @@ export interface TypeOption {
   citizenReportable?: boolean;
 }
 
+/** A Lifecare actualisation (case intake) registered on a person. */
+export interface Actualisation {
+  /**
+   * The Lifecare actualisation id
+   * @format int32
+   */
+  id?: number;
+  /** The actualisation type */
+  type?: string;
+  /** The actualisation name */
+  name?: string;
+  /** The actualisation date as Lifecare reports it */
+  date?: string;
+  /** The reason for the actualisation */
+  reason?: string;
+  /** What the actualisation regards */
+  regards?: string;
+  /** Who the actualisation came from */
+  fromWho?: string;
+  /** The caseworker the actualisation is registered on */
+  caseworker?: string;
+  /** The organization the actualisation belongs to */
+  organization?: string;
+  /** The actualisation status */
+  status?: string;
+  /**
+   * The linked investigation id, when any
+   * @format int32
+   */
+  investigationId?: number;
+  /**
+   * The linked service id, when any
+   * @format int32
+   */
+  serviceId?: number;
+  /**
+   * The linked decision id, when any
+   * @format int32
+   */
+  decisionId?: number;
+}
+
 /** Document metadata — the catalogue of selectable document types. */
 export interface DocumentMetadata {
   /** Selectable document types */
@@ -2192,8 +2255,8 @@ export interface ErrandTypeSchema {
   applicationType?: string;
   /** Human-readable display name of the type */
   displayName?: string;
-  /** Allowed status codes for the type, sorted */
-  statuses?: string[];
+  /** Allowed statuses for the type — code plus human-readable display name, in lifecycle order */
+  statuses?: StatusDefinition[];
   /** Stakeholder roles valid for the type */
   roles?: RoleDefinition[];
   /** The fields the type's data payload should carry, as form guidance */
@@ -2228,6 +2291,14 @@ export interface RoleDefinition {
   /** @format int32 */
   maxOccurrences?: number;
   required?: boolean;
+}
+
+/** An allowed status for an errand type — the stored code plus its human-readable label. */
+export interface StatusDefinition {
+  /** The status code stored on the errand */
+  code?: string;
+  /** Human-readable label for the status */
+  displayName?: string;
 }
 
 /** Provenance, defaults to CASEWORKER when omitted. RPA POSTs LIFECARE (with lifecareId) to surface a monitoring read out of Lifecare onto the errand. */
@@ -2573,6 +2644,7 @@ export enum ApplicationSuggestionApplicationTypeEnum {
 export enum EligibilityResponseReasonCodeEnum {
   NO_EXISTING_CASE = "NO_EXISTING_CASE",
   MARITAL_STATUS_CHANGED = "MARITAL_STATUS_CHANGED",
+  RECENTLY_CLOSED = "RECENTLY_CLOSED",
   EXISTING_CASE = "EXISTING_CASE",
   ALL_TYPES_TEST = "ALL_TYPES_TEST",
 }
@@ -2602,13 +2674,14 @@ export enum MessageAttachmentSenderRoleEnum {
   CASEWORKER = "CASEWORKER",
 }
 
-/** Where the file came from: APPLICATION (citizen's application files), CONVERSATION (sent in a message thread), GENERATED (a consolidated PDF produced by the platform), ERRAND (uploaded directly to the errand), CASE_DATA (ärendeuppgifter — a case-data document for the errand) or MESSAGE_HISTORY (meddelandehistorik — the archived conversation PDF for a closed errand) */
+/** Where the file came from: APPLICATION (citizen's application files), CONVERSATION (sent in a message thread), GENERATED (a consolidated PDF produced by the platform), ERRAND (uploaded directly to the errand), CASE_DATA (ärendeuppgifter — a case-data document for the errand), DECISION (beslut — a decision document for the errand) or MESSAGE_HISTORY (meddelandehistorik — the archived conversation PDF for a closed errand) */
 export enum AttachmentOriginEnum {
   APPLICATION = "APPLICATION",
   CONVERSATION = "CONVERSATION",
   GENERATED = "GENERATED",
   ERRAND = "ERRAND",
   CASE_DATA = "CASE_DATA",
+  DECISION = "DECISION",
   MESSAGE_HISTORY = "MESSAGE_HISTORY",
 }
 
@@ -2687,6 +2760,7 @@ export enum ReadAttachmentsParamsOriginEnum {
   GENERATED = "GENERATED",
   ERRAND = "ERRAND",
   CASE_DATA = "CASE_DATA",
+  DECISION = "DECISION",
 }
 
 /** Only return attachments from this sender */
@@ -2695,10 +2769,11 @@ export enum ReadAttachmentsParamsSenderRoleEnum {
   CASEWORKER = "CASEWORKER",
 }
 
-/** What the uploaded file is: ERRAND (a plain manual upload, the default) or CASE_DATA (ärendeuppgifter — a case-data document). Defaults to ERRAND when omitted. */
+/** What the uploaded file is: ERRAND (a plain manual upload, the default), CASE_DATA (ärendeuppgifter — a case-data document) or DECISION (beslut — a decision document). Defaults to ERRAND when omitted. */
 export enum CreateAttachmentParamsOriginEnum {
   ERRAND = "ERRAND",
   CASE_DATA = "CASE_DATA",
+  DECISION = "DECISION",
 }
 
 /** Lookup kind */
