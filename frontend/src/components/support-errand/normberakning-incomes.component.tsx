@@ -271,6 +271,7 @@ const IncomeRow: FC<{
       <Table.Column>
         <Input
           size="sm"
+          maxLength={80}
           value={note}
           onChange={(event) => {
             setNote(event.target.value);
@@ -399,6 +400,7 @@ const DraftIncomeRow: FC<{
       <Table.Column>
         <Input
           size="sm"
+          maxLength={80}
           placeholder="Anmärkning"
           value={note}
           onChange={(event) => {

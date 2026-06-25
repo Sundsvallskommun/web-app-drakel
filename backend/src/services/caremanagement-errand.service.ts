@@ -15,7 +15,13 @@ class CaremanagementErrandService {
   private apiService = new CaremanagementApiService();
 
   async findErrands(query: FindErrandsQueryDto): Promise<ApiResponse<FindErrandsResponse>> {
-    return this.apiService.get<FindErrandsResponse>({ url: caremanagementUrl('errands'), params: query });
+    // `indexes: null` serializes array params as repeated keys (sort=a&sort=b) rather than axios's default
+    // bracket form (sort[]=a), which is the form caremanagement (Spring) expects for ?sort.
+    return this.apiService.get<FindErrandsResponse>({
+      url: caremanagementUrl('errands'),
+      params: query,
+      paramsSerializer: { indexes: null },
+    });
   }
 
   async getErrand(errandId: string): Promise<ApiResponse<Errand>> {

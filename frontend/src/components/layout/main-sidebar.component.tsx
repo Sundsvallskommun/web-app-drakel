@@ -1,7 +1,7 @@
 'use client';
 
+import { ERRAND_VIEWS, ErrandView } from '@components/support-errands/errand-views';
 import { NotificationsPanel } from '@components/support-errands/notifications-panel.component';
-import { Lookup } from '@data-contracts/backend/data-contracts';
 import { useErrandNotifications } from '@hooks/use-errand-notifications';
 import { useUserStore } from '@services/user-service/user-service';
 import { Badge, Button, cx, Divider, Logo, UserMenu } from '@sk-web-gui/react';
@@ -11,10 +11,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   CircleCheckBig,
-  CircleDot,
-  CirclePause,
   ClipboardPen,
-  FilePlus,
   Inbox,
   LayoutList,
   type LucideIcon,
@@ -24,71 +21,26 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { userMenuGroups } from './user-menu-groups';
 
-/** Picks an icon for a status nav item. Statuses are namespace-defined, so we map common intents
- *  and fall back to a neutral dot. The "all" item (null key) gets a list icon. */
-const statusIcon = (key: string | null): LucideIcon => {
-  if (key === null) {
-    return LayoutList;
-  }
-  switch (key.toUpperCase()) {
-    case 'NEW':
-    case 'NYA':
-      return Inbox;
-    case 'ONGOING':
-    case 'UNDER_ARBETE':
-      return ClipboardPen;
-    case 'PENDING':
-    case 'SUSPENDED':
-    case 'AWAITING':
-      return CirclePause;
-    case 'ASSIGNED':
-      return FilePlus;
-    case 'SOLVED':
-    case 'CLOSED':
-      return CircleCheckBig;
-    default:
-      return CircleDot;
-  }
+/** Icon per overview view (Alla / Nya / Öppna / Avslutade). */
+const VIEW_ICON: Record<ErrandView, LucideIcon> = {
+  all: LayoutList,
+  new: Inbox,
+  open: ClipboardPen,
+  closed: CircleCheckBig,
 };
 
-interface StatusNavItem {
-  key: string | null;
-  label: string;
-  count: number;
-}
-
 interface MainSidebarProps {
-  statuses: Lookup[];
-  counts: Record<string, number>;
-  totalCount: number;
-  selectedStatus: string | null;
-  onSelectStatus: (status: string | null) => void;
+  selectedView: ErrandView;
+  onSelectView: (view: ErrandView) => void;
   open: boolean;
   setOpen: (open: boolean) => void;
 }
 
-export const MainSidebar: FC<MainSidebarProps> = ({
-  statuses,
-  counts,
-  totalCount,
-  selectedStatus,
-  onSelectStatus,
-  open,
-  setOpen,
-}) => {
+export const MainSidebar: FC<MainSidebarProps> = ({ selectedView, onSelectView, open, setOpen }) => {
   const user = useUserStore(useShallow((state) => state.user));
   const appName = process.env.NEXT_PUBLIC_APP_NAME ?? 'Drakel';
   const notifications = useErrandNotifications();
   const [showNotifications, setShowNotifications] = useState<boolean>(false);
-
-  const items: StatusNavItem[] = [
-    { key: null, label: 'Alla ärenden', count: totalCount },
-    ...statuses.map((status) => ({
-      key: status.name ?? '',
-      label: status.displayName ?? status.name ?? '',
-      count: counts[status.name ?? ''] ?? 0,
-    })),
-  ];
 
   return (
     <>
@@ -152,32 +104,22 @@ export const MainSidebar: FC<MainSidebarProps> = ({
         <Divider className={cx(!open && 'w-[4rem] mx-auto')} />
 
         <nav className={cx('flex flex-col gap-8 py-24', !open && 'items-center')} aria-label="Statusfilter">
-          {items.map((item) => {
-            const isActive = selectedStatus === item.key;
-            const Icon = statusIcon(item.key);
+          {ERRAND_VIEWS.map((item) => {
+            const isActive = selectedView === item.key;
+            const Icon = VIEW_ICON[item.key];
             return (
               <Button
-                key={item.key ?? 'all'}
+                key={item.key}
                 onClick={() => {
-                  onSelectStatus(item.key);
+                  onSelectView(item.key);
                 }}
                 variant={isActive ? 'primary' : 'ghost'}
                 className={cx('w-full', open && 'justify-start', !isActive && 'hover:bg-dark-ghost')}
-                aria-label={`status-button-${item.key ?? 'all'}`}
+                aria-label={`status-button-${item.key}`}
                 leftIcon={<Icon />}
                 iconButton={!open}
               >
-                {open && (
-                  <span className="w-full flex justify-between items-center gap-8">
-                    <span className="truncate">{item.label}</span>
-                    <Badge
-                      className="min-w-fit px-4"
-                      inverted={!isActive}
-                      color={isActive ? 'tertiary' : 'vattjom'}
-                      counter={item.count > 999 ? '999+' : item.count}
-                    />
-                  </span>
-                )}
+                {open && <span className="truncate">{item.label}</span>}
               </Button>
             );
           })}

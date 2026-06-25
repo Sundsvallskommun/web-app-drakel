@@ -87,6 +87,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   const typeSlug = errand?.typeSlug ?? '';
   const isNewApplication = typeSlug === 'financial-assistance-new';
   const isSupplementaryApplication = typeSlug === 'financial-assistance-supplementary';
+  const isRenewalApplication = typeSlug === 'financial-assistance-renewal';
   const showCalculationSections = !isNewApplication && !isSupplementaryApplication;
   const showDocumentation = !isNewApplication;
 
@@ -217,14 +218,17 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           error={saveError}
           onSave={() => void saveAll()}
           avslutaSlot={
-            <ErrandAvsluta
-              errandId={apiErrandId}
-              onClosed={() => {
-                refresh();
-                refreshAttachments();
-              }}
-              checkApprovals={showCalculationSections}
-            />
+            // Beslut/utbetalning gäller bara återansökan, och bara medan ärendet inte är avslutat.
+            isRenewalApplication && errand.status !== 'CLOSED' ?
+              <ErrandAvsluta
+                errandId={apiErrandId}
+                onClosed={() => {
+                  refresh();
+                  refreshAttachments();
+                }}
+                checkApprovals={showCalculationSections}
+              />
+            : undefined
           }
           actualiseringSlot={
             isSupplementaryApplication ?

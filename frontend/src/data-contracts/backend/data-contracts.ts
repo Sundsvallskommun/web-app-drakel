@@ -221,6 +221,11 @@ export interface Errand {
   created?: string;
   modified?: string;
   touched?: string;
+  /**
+   * Denormalized applicant name ("Förnamn Efternamn", org name for organizations) from the APPLICANT
+   * stakeholder; null when the errand has no applicant. Sortable/filterable via ?sort/?filter=applicantName.
+   */
+  applicantName?: string;
 }
 
 export interface PagingAndSortingMetaData {

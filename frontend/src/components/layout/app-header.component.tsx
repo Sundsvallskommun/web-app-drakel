@@ -2,10 +2,9 @@
 
 import { ErrandStatusLabel } from '@components/support-errands/errand-status-label.component';
 import { useUserStore } from '@services/user-service/user-service';
-import { Button, Divider, Logo, UserMenu } from '@sk-web-gui/react';
+import { Divider, Logo, UserMenu } from '@sk-web-gui/react';
 import { getInitials } from '@utils/get-initials';
 import { stakeholderRoleLabel } from '@utils/stakeholder-role';
-import { ExternalLink } from 'lucide-react';
 import NextLink from 'next/link';
 import { useParams } from 'next/navigation';
 import { useShallow } from 'zustand/react/shallow';
@@ -72,12 +71,6 @@ export const AppHeader = () => {
           buttonRounded={false}
           buttonSize="sm"
         />
-        <Divider orientation="vertical" className="h-32" />
-        <NextLink href={`/${locale}/registrera`} data-cy="register-new-errand-button">
-          <Button color="vattjom" variant="tertiary" rightIcon={<ExternalLink />}>
-            Nytt ärende
-          </Button>
-        </NextLink>
       </div>
     </nav>
   );

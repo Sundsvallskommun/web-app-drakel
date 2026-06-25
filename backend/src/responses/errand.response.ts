@@ -174,6 +174,13 @@ export class Errand {
   @IsString()
   @IsOptional()
   touched?: string;
+  /**
+   * Denormalized applicant name ("Förnamn Efternamn", org name for organizations) kept in sync from the
+   * errand's APPLICANT stakeholder; null when the errand has no applicant. Sortable/filterable upstream.
+   */
+  @IsString()
+  @IsOptional()
+  applicantName?: string;
 }
 
 export class PagingAndSortingMetaData {

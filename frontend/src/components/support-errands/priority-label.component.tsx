@@ -8,7 +8,7 @@ const priorityConfig = (priority?: string): { dot: string; label: string } => {
     case 'MEDIUM':
       return { dot: 'bg-warning-surface-primary', label: 'Medel' };
     case 'LOW':
-      return { dot: 'bg-gronsta-surface-primary', label: 'Låg' };
+      return { dot: 'bg-vattjom-surface-primary', label: 'Låg' };
     default:
       return { dot: 'bg-gray-300', label: priority ?? '—' };
   }

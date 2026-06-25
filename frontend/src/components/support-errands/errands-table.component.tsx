@@ -1,10 +1,16 @@
 'use client';
 
 import { Errand } from '@data-contracts/backend/data-contracts';
-import { Pagination, Spinner, Table } from '@sk-web-gui/react';
+import { Pagination, Select, Spinner, Table } from '@sk-web-gui/react';
 import dayjs from 'dayjs';
+import { ChevronDown, ChevronsUpDown, ChevronUp } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { FC } from 'react';
+
+export type SortDirection = 'asc' | 'desc';
+
+/** Selectable page sizes for the "rader per sida" control (the first is the default). */
+export const PAGE_SIZE_OPTIONS = [12, 25, 50, 100];
 
 import { ErrandStatusLabel } from './errand-status-label.component';
 import { PriorityLabel } from './priority-label.component';
@@ -16,11 +22,21 @@ interface ErrandsTableProps {
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  /** Rows per page (server `size`) and its setter — drives the "rader per sida" control. */
+  pageSize: number;
+  onPageSizeChange: (size: number) => void;
+  /** The currently active server-side sort column (a column's `sortKey`), or undefined for the default order. */
+  sortColumn?: string;
+  sortDirection?: SortDirection;
+  /** Toggle the server-side sort for a sortable column. */
+  onSort?: (sortKey: string) => void;
 }
 
 interface Column {
   label: string;
   render: (errand: Errand) => React.ReactNode;
+  /** When set, the header is a button that toggles server-side sorting on this field. */
+  sortKey?: string;
 }
 
 const formatDate = (value?: string): string => (value ? dayjs(value).format('YYYY-MM-DD, HH:mm') : '');
@@ -50,7 +66,7 @@ const columns: Column[] = [
     ),
   },
   {
-    label: 'Registrerad',
+    label: 'Inskickat',
     render: (errand) => (
       <div className="whitespace-nowrap">
         <time dateTime={errand.created}>{formatDate(errand.created)}</time>
@@ -58,10 +74,35 @@ const columns: Column[] = [
       </div>
     ),
   },
+  {
+    label: 'Sökande',
+    sortKey: 'applicantName',
+    render: (errand) => <div className="max-w-[220px] truncate">{errand.applicantName ?? '—'}</div>,
+  },
   { label: 'Prioritet', render: (errand) => <PriorityLabel priority={errand.priority} /> },
 ];
 
-export const ErrandsTable: FC<ErrandsTableProps> = ({ errands, isLoading, error, page, totalPages, onPageChange }) => {
+/** Sort affordance shown in a sortable column header: inactive (both arrows) or the active direction. */
+const SortIndicator: FC<{ active: boolean; direction?: SortDirection }> = ({ active, direction }) => {
+  if (!active) {
+    return <ChevronsUpDown size={14} className="opacity-40" aria-hidden />;
+  }
+  return direction === 'asc' ? <ChevronUp size={14} aria-hidden /> : <ChevronDown size={14} aria-hidden />;
+};
+
+export const ErrandsTable: FC<ErrandsTableProps> = ({
+  errands,
+  isLoading,
+  error,
+  page,
+  totalPages,
+  onPageChange,
+  pageSize,
+  onPageSizeChange,
+  sortColumn,
+  sortDirection,
+  onSort,
+}) => {
   const router = useRouter();
   const { locale } = useParams<{ locale: string }>();
 
@@ -96,9 +137,26 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({ errands, isLoading, error,
         {errands.length > 0 && (
           <>
             <Table.Header>
-              {columns.map((column, index) => (
-                <Table.HeaderColumn key={`header-${index}`}>{column.label}</Table.HeaderColumn>
-              ))}
+              {columns.map((column, index) => {
+                const sortKey = column.sortKey;
+                return (
+                  <Table.HeaderColumn key={`header-${index}`}>
+                    {sortKey && onSort ?
+                      <button
+                        type="button"
+                        className="flex items-center gap-4 font-bold"
+                        aria-label={`Sortera på ${column.label}`}
+                        onClick={() => {
+                          onSort(sortKey);
+                        }}
+                      >
+                        {column.label}
+                        <SortIndicator active={sortColumn === sortKey} direction={sortDirection} />
+                      </button>
+                    : column.label}
+                  </Table.HeaderColumn>
+                );
+              })}
             </Table.Header>
             <Table.Body>
               {errands.map((errand) => (
@@ -126,21 +184,44 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({ errands, isLoading, error,
           </>
         )}
 
-        {totalPages > 1 && (
+        {errands.length > 0 && (
           <Table.Footer>
-            <div className="sk-table-paginationwrapper">
-              <Pagination
-                showFirst
-                showLast
-                pagesBefore={1}
-                pagesAfter={1}
-                fitContainer
-                pages={totalPages}
-                activePage={page + 1}
-                changePage={(nextPage) => {
-                  onPageChange(nextPage - 1);
-                }}
-              />
+            <div className="flex flex-wrap items-center justify-between gap-16 w-full">
+              <div className="flex items-center gap-8">
+                <label htmlFor="errand-page-size" className="text-small whitespace-nowrap">
+                  Rader per sida:
+                </label>
+                <Select
+                  id="errand-page-size"
+                  size="sm"
+                  value={String(pageSize)}
+                  onChange={(event) => {
+                    onPageSizeChange(Number(event.target.value));
+                  }}
+                >
+                  {PAGE_SIZE_OPTIONS.map((option) => (
+                    <Select.Option key={option} value={String(option)}>
+                      {option}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
+              {totalPages > 1 && (
+                <div className="sk-table-paginationwrapper">
+                  <Pagination
+                    showFirst
+                    showLast
+                    pagesBefore={1}
+                    pagesAfter={1}
+                    fitContainer
+                    pages={totalPages}
+                    activePage={page + 1}
+                    changePage={(nextPage) => {
+                      onPageChange(nextPage - 1);
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </Table.Footer>
         )}
