@@ -2,6 +2,7 @@
 
 import { Errand } from '@data-contracts/backend/data-contracts';
 import { Pagination, Select, Spinner, Table } from '@sk-web-gui/react';
+import { prettyTime } from '@utils/pretty-time';
 import dayjs from 'dayjs';
 import { ChevronDown, ChevronsUpDown, ChevronUp } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
@@ -51,7 +52,7 @@ const columns: Column[] = [
       const touched = errand.touched ?? errand.modified;
       return (
         <div className="whitespace-nowrap">
-          <time dateTime={touched}>{formatDate(touched)}</time>
+          <time dateTime={touched}>{prettyTime(touched)}</time>
           <div className="italic text-small">Ärendet uppdaterades</div>
         </div>
       );
@@ -73,7 +74,6 @@ const columns: Column[] = [
     render: (errand) => (
       <div className="whitespace-nowrap">
         <time dateTime={errand.created}>{formatDate(errand.created)}</time>
-        <div className="italic text-small">{errand.reporterUserId ?? ''}</div>
       </div>
     ),
   },
