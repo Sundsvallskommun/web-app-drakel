@@ -98,7 +98,14 @@ export const ErrandAktualisering: FC<{ errandId: string; onArchived: () => void 
                       {actualisation.name ?? actualisation.type ?? `Aktualisering ${actualisation.id}`}
                     </span>
                     <span className="text-small text-dark-secondary block">
-                      {[actualisation.date, actualisation.type, actualisation.status].filter(Boolean).join(' · ')}
+                      {[
+                        actualisation.id ? `ID ${actualisation.id}` : null,
+                        actualisation.date,
+                        actualisation.type,
+                        actualisation.status,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
                     </span>
                     {actualisation.regards ?
                       <span className="text-small block break-words">{actualisation.regards}</span>
