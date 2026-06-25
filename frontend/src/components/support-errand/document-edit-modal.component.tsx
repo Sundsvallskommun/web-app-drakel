@@ -3,29 +3,15 @@
 import { Document, DocumentInput, updateDocument } from '@services/document-service';
 import { Button, DatePicker, FormControl, FormLabel, Input, Modal } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
-import { looksLikeHtml } from '@utils/sanitize-html';
+import { toEditorMarkup } from '@utils/sanitize-html';
+import { todayDate } from '@utils/today-date';
 import dynamic from 'next/dynamic';
 import { FC, useState } from 'react';
-
-import { todayDate } from './journal-entry-fields.component';
 
 const DocumentEditor = dynamic(() => import('./document-editor.component'), {
   ssr: false,
   loading: () => <div className="h-[24rem] w-full animate-pulse rounded-12 bg-background-200" />,
 });
-
-const escapeHtml = (text: string): string =>
-  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-// Load the stored text into the editor: HTML as-is, older plain text turned into paragraphs so its line
-// breaks survive.
-const toEditorMarkup = (text: string): string =>
-  !text ? ''
-  : looksLikeHtml(text) ? text
-  : text
-      .split('\n')
-      .map((line) => `<p>${line ? escapeHtml(line) : '<br>'}</p>`)
-      .join('');
 
 /** Edit modal for a WORKING dokument (the type stays fixed). The text is edited in the WYSIWYG editor. */
 export const DocumentEditModal: FC<{

@@ -3,6 +3,7 @@
 import { useErrandJournal } from '@hooks/use-errand-journal';
 import { deleteJournalEntry, JournalEntry, lockJournalEntry } from '@services/journal-service';
 import { Button, Modal, Spinner } from '@sk-web-gui/react';
+import { looksLikeHtml, sanitizeHtml } from '@utils/sanitize-html';
 import { Lock, Pencil, Plus, Trash } from 'lucide-react';
 import { FC, useState } from 'react';
 
@@ -94,7 +95,14 @@ export const ErrandJournal: FC<{ errandId: string }> = ({ errandId }) => {
                   </span>
                 </div>
                 <span className="text-small text-dark-secondary">{metaLine(entry)}</span>
-                {entry.text ? <p className="m-0 break-words whitespace-pre-wrap">{entry.text}</p> : null}
+                {entry.text ?
+                  looksLikeHtml(entry.text) ?
+                    <div
+                      className="m-0 break-words [&_p]:m-0"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.text) }}
+                    />
+                  : <p className="m-0 break-words whitespace-pre-wrap">{entry.text}</p>
+                : null}
                 {working ?
                   <div className="flex gap-8 pt-4">
                     <Button

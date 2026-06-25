@@ -8,10 +8,9 @@ import {
 } from '@services/document-template-service';
 import { Button, Combobox, DatePicker, FormControl, FormLabel, Input, Modal, Select } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
+import { todayDate } from '@utils/today-date';
 import dynamic from 'next/dynamic';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
-
-import { todayDate } from './journal-entry-fields.component';
 
 const DocumentEditor = dynamic(() => import('./document-editor.component'), {
   ssr: false,
