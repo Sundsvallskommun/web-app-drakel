@@ -8,13 +8,6 @@ export interface DecisionChannels {
   brev: boolean;
 }
 
-/** Renders a beslutsmeddelande (HTML) to a PDF for preview and returns it as base64. Nothing is saved. */
-export const previewDecisionPdf = (errandId: string, message: string): Promise<ServiceResponse<string>> =>
-  apiService
-    .post<ApiResponse<{ pdfBase64: string }>>(`errands/${errandId}/decision-notification/preview`, { message })
-    .then((res) => ({ data: res.data.data.pdfBase64 }))
-    .catch(toServiceError);
-
 /** Whether the applicant has a reachable digital mailbox (so the "Digital brevlåda" channel is offered). */
 export const getDigitalMailbox = (errandId: string): Promise<ServiceResponse<boolean>> =>
   apiService

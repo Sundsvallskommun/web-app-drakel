@@ -117,7 +117,7 @@ export const JournalEntryCreateModal: FC<{
   };
 
   return (
-    <Modal show onClose={onClose} label="Ny journalanteckning" className="w-[64rem]">
+    <Modal show onClose={onClose} label="Ny journalanteckning" className="w-[88rem] max-w-[90vw]">
       <Modal.Content className="flex flex-col gap-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
           <FormControl id="journal-new-type" className="w-full">

@@ -1,7 +1,8 @@
 'use client';
 
 import { useErrandPayment } from '@hooks/use-errand-payment';
-import { Button, cx, Spinner } from '@sk-web-gui/react';
+import { Button, cx, FormLabel, Spinner } from '@sk-web-gui/react';
+import { formatApplicationMonth } from '@utils/application-month';
 import { CheckCircle2, Clock, HelpCircle, RotateCcw } from 'lucide-react';
 import { FC, ReactNode } from 'react';
 
@@ -41,7 +42,7 @@ const StatusBox: FC<{ tone: 'success' | 'pending' | 'unknown'; icon: ReactNode; 
  * been effectuated (caremanagement payment-status). Read-only; the actual utbetalning happens in
  * Lifecare.
  */
-export const ErrandUtbetalning: FC<{ errandId: string }> = ({ errandId }) => {
+export const ErrandUtbetalning: FC<{ errandId: string; headerSlot?: ReactNode }> = ({ errandId, headerSlot }) => {
   const { status, isLoading, error, refresh } = useErrandPayment(errandId);
 
   if (isLoading) {
@@ -64,10 +65,11 @@ export const ErrandUtbetalning: FC<{ errandId: string }> = ({ errandId }) => {
           Uppdatera
         </Button>
       </div>
+      {headerSlot}
 
       <div className="flex flex-col gap-2">
-        <span className="text-small text-dark-secondary">Ansökningsmånad</span>
-        <span className="font-bold">{status.applicationMonth ?? '—'}</span>
+        <FormLabel className="text-small">Avser ansökan</FormLabel>
+        <span className="font-bold">{formatApplicationMonth(status.applicationMonth)}</span>
       </div>
 
       {status.unavailable ?

@@ -57,7 +57,7 @@ export const ErrandDocuments: FC<{ errandId: string }> = ({ errandId }) => {
   };
 
   return (
-    <div className="flex flex-col gap-24 max-w-[56rem]">
+    <div className="flex flex-col gap-24">
       <div className="flex items-center justify-between gap-12 flex-wrap">
         <h2 className="text-h3-sm md:text-h3-md m-0">Dokument</h2>
         <Button
@@ -79,7 +79,7 @@ export const ErrandDocuments: FC<{ errandId: string }> = ({ errandId }) => {
         <Spinner size={4} />
       : documents.length === 0 ?
         <p className="m-0 text-dark-secondary">Inga dokument.</p>
-      : <ul className="flex flex-col gap-12 m-0 p-0 list-none">
+      : <ul className="flex flex-col gap-12 m-0 p-0 list-none max-w-[56rem]">
           {[...documents].sort(byDateDesc).map((document, index) => {
             const working = document.status !== 'LOCKED';
             return (

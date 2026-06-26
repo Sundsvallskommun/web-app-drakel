@@ -22,6 +22,7 @@ import { NormberakningController } from './controllers/normberakning.controller'
 import { NoteController } from './controllers/note.controller';
 import { NotificationController } from './controllers/notification.controller';
 import { PaymentController } from './controllers/payment.controller';
+import { PdfController } from './controllers/pdf.controller';
 import { SectionApprovalController } from './controllers/section-approval.controller';
 import { UserController } from './controllers/user.controller';
 import { WarningController } from './controllers/warning.controller';
@@ -52,6 +53,7 @@ const app = new App([
   ActualisationController,
   DecisionNotificationController,
   AdministratorController,
+  PdfController,
 ]);
 
 app.listen();

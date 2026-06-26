@@ -5,8 +5,8 @@ import { Checkbox } from '@sk-web-gui/react';
 import { FC } from 'react';
 
 /**
- * A "godkänn sektion" checkbox shown beneath an EB view (Normberäkning / Utbetalning / Beslut). Bound
- * to the section's approval state; shows who approved it and when once ticked.
+ * A "markera som klart" checkbox shown under an EB view's heading (Normberäkning / Utbetalning /
+ * Beslut). Bound to the section's approval state; shows who approved it and when once ticked.
  */
 export const SectionApprovalCheckbox: FC<{
   label: string;
@@ -14,7 +14,7 @@ export const SectionApprovalCheckbox: FC<{
   disabled?: boolean;
   onChange: (approved: boolean) => void;
 }> = ({ label, approval, disabled, onChange }) => (
-  <div className="flex flex-col gap-2 rounded-12 border-1 border-divider bg-background-200 p-16">
+  <div className="flex flex-col gap-2 w-fit rounded-12 border-1 border-divider bg-background-200 p-16">
     <Checkbox
       checked={approval?.approved ?? false}
       disabled={disabled}

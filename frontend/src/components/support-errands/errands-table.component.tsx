@@ -189,7 +189,8 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({
 
         {errands.length > 0 && (
           <Table.Footer>
-            <div className="flex flex-wrap items-center justify-between gap-16 w-full">
+            {/* 3-kolumns grid så pagineringen (mittkolumnen) centreras oavsett "Rader per sida"-bredden. */}
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-16 w-full">
               <div className="flex items-center gap-8">
                 <label htmlFor="errand-page-size" className="text-small whitespace-nowrap">
                   Rader per sida:
@@ -209,14 +210,13 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({
                   ))}
                 </Select>
               </div>
-              {totalPages > 1 && (
-                <div className="sk-table-paginationwrapper">
+              {totalPages > 1 ?
+                <div className="sk-table-paginationwrapper justify-self-center">
                   <Pagination
                     showFirst
                     showLast
                     pagesBefore={1}
                     pagesAfter={1}
-                    fitContainer
                     pages={totalPages}
                     activePage={page + 1}
                     changePage={(nextPage) => {
@@ -224,7 +224,8 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({
                     }}
                   />
                 </div>
-              )}
+              : <div />}
+              <div />
             </div>
           </Table.Footer>
         )}

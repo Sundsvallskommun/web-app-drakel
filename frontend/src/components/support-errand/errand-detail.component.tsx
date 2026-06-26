@@ -1,5 +1,6 @@
 'use client';
 
+import { AttachmentPdfButton } from '@components/common/attachment-pdf-button.component';
 import { PdfPreview } from '@components/common/pdf-preview.component';
 import { HeaderParty, useErrandHeader } from '@components/layout/errand-header-context';
 import { useErrand } from '@hooks/use-errand';
@@ -164,9 +165,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   // The generated "ärendeuppgifter" PDF (origin CASE_DATA) is previewed on the Ärendeuppgifter tab, so
   // it's excluded from the Bilagor list below to avoid showing it twice.
   const caseDataAttachment = attachments.find((attachment) => attachment.origin === 'CASE_DATA');
-  // The generated beslut PDF (origin DECISION), previewed under the Beslut tab once "Besluta och utbetala" runs.
-  const decisionAttachment = attachments.find((attachment) => attachment.origin === 'DECISION');
-  // The beslut PDF (DECISION) is shown under the Beslut tab, so it's kept out of the Bilagor list too.
+  // The generated beslut PDF (origin DECISION) is sent/saved by "Besluta och utbetala" but not listed here.
   const errandAttachments = attachments.filter(
     (attachment) =>
       attachment.origin !== 'CONVERSATION' && attachment.origin !== 'CASE_DATA' && attachment.origin !== 'DECISION'
@@ -308,11 +307,18 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           label: 'Ansökan',
           content: (
             <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
-              {/* Den strukturerade sammanställningen (form-snapshot "som det var", annars live-data) och den
-                  genererade CASE_DATA-sammanställnings-PDF:en visas tillsammans. */}
+              {/* Den strukturerade sammanställningen (form-snapshot "som det var", annars live-data). Den
+                  genererade CASE_DATA-sammanställnings-PDF:en visas via "Visa pdf"-knappen i en modal. */}
               <ErrandApplicationSummary errandId={apiErrandId} errand={errand} />
               {caseDataAttachment?.id ?
-                <PdfPreview errandId={apiErrandId} attachmentId={caseDataAttachment.id} title="Sammanställning (PDF)" />
+                <div>
+                  <AttachmentPdfButton
+                    errandId={apiErrandId}
+                    attachmentId={caseDataAttachment.id}
+                    label="Visa pdf"
+                    modalLabel="Sammanställning (PDF)"
+                  />
+                </div>
               : null}
             </div>
           ),
@@ -353,12 +359,15 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                     warnings={openWarnings}
                     onWarningsChanged={refreshWarnings}
                     locked={!!approvals.calculation?.approved}
-                  />
-                  <SectionApprovalCheckbox
-                    label="Godkänn normberäkning"
-                    approval={approvals.calculation}
-                    disabled={pendingSection === 'CALCULATION'}
-                    onChange={(approved) => void setApproval('CALCULATION', approved)}
+                    handlaggare={errand.assignedUserId}
+                    headerSlot={
+                      <SectionApprovalCheckbox
+                        label="Markera som klart"
+                        approval={approvals.calculation}
+                        disabled={pendingSection === 'CALCULATION'}
+                        onChange={(approved) => void setApproval('CALCULATION', approved)}
+                      />
+                    }
                   />
                 </div>
               ),
@@ -370,14 +379,15 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                   <ErrandBeslut
                     errandId={apiErrandId}
                     locked={!!approvals.decision?.approved}
-                    decisionAttachmentId={decisionAttachment?.id}
+                    headerSlot={
+                      <SectionApprovalCheckbox
+                        label="Markera som klart"
+                        approval={approvals.decision}
+                        disabled={pendingSection === 'DECISION'}
+                        onChange={(approved) => void setApproval('DECISION', approved)}
+                      />
+                    }
                     onRegisterSave={registerBeslutSave}
-                  />
-                  <SectionApprovalCheckbox
-                    label="Godkänn beslut"
-                    approval={approvals.decision}
-                    disabled={pendingSection === 'DECISION'}
-                    onChange={(approved) => void setApproval('DECISION', approved)}
                   />
                 </div>
               ),
@@ -386,12 +396,16 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               label: 'Utbetalning',
               content: (
                 <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
-                  <ErrandUtbetalning errandId={apiErrandId} />
-                  <SectionApprovalCheckbox
-                    label="Godkänn utbetalning"
-                    approval={approvals.payment}
-                    disabled={pendingSection === 'PAYMENT'}
-                    onChange={(approved) => void setApproval('PAYMENT', approved)}
+                  <ErrandUtbetalning
+                    errandId={apiErrandId}
+                    headerSlot={
+                      <SectionApprovalCheckbox
+                        label="Markera som klart"
+                        approval={approvals.payment}
+                        disabled={pendingSection === 'PAYMENT'}
+                        onChange={(approved) => void setApproval('PAYMENT', approved)}
+                      />
+                    }
                   />
                 </div>
               ),
@@ -467,7 +481,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               bakgrund + ram) flyttas in i varje panel, med ev. sub-tabs högst upp i kortet. */}
           <Tabs
             className="px-2"
-            size="sm"
+            size="md"
             current={activeTab}
             onTabChange={(index) => {
               setActiveTab(index);

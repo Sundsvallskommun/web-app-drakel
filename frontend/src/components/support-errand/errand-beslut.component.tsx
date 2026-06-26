@@ -1,19 +1,18 @@
 'use client';
 
-import { PdfPreviewFrame } from '@components/common/pdf-preview.component';
+import { PdfPreviewButton } from '@components/common/pdf-preview-button.component';
 import { useErrandBeslut } from '@hooks/use-errand-beslut';
 import { useErrandNormberakning } from '@hooks/use-errand-normberakning';
 import { createBeslut } from '@services/beslut-service';
 import { getDocumentTemplateContent } from '@services/document-template-service';
-import { Divider, FormControl, FormLabel, Input, Select, Spinner, Tabs } from '@sk-web-gui/react';
+import { Divider, FormControl, FormLabel, Input, Select, Spinner } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { resolveBeslutAmount, resolveBeslutPeriod } from '@utils/beslut';
 import { formatAmount } from '@utils/format-amount';
 import dayjs from 'dayjs';
-import { FC, useEffect, useMemo, useRef, useState } from 'react';
+import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
 import { BeslutMeddelande } from './beslut-meddelande.component';
-import { BeslutPdfPreviewButton } from './beslut-pdf-preview-button.component';
 import { LockedBanner, LockFieldset } from './lockable-section.component';
 
 const todayDate = (): string => dayjs().format('YYYY-MM-DD');
@@ -33,10 +32,11 @@ const FULLFOLJD_TEMPLATE_IDENTIFIER = 'drakel.fa.beslut.fullfoljdshanvisning';
 export const ErrandBeslut: FC<{
   errandId: string;
   locked?: boolean;
-  decisionAttachmentId?: string;
+  /** Rendered directly under the section heading (the "Markera som klart" approval control). */
+  headerSlot?: ReactNode;
   /** Registers this tab's save with the parent so the central "Spara ärende" button runs it (null = nothing to save). */
   onRegisterSave?: (save: (() => Promise<boolean>) | null) => void;
-}> = ({ errandId, locked = false, decisionAttachmentId, onRegisterSave }) => {
+}> = ({ errandId, locked = false, headerSlot, onRegisterSave }) => {
   const { draft, isLoading: draftLoading } = useErrandNormberakning(errandId);
   const { options, recommendation, savedBeslut, isLoading: beslutLoading, refresh } = useErrandBeslut(errandId);
 
@@ -174,117 +174,103 @@ export const ErrandBeslut: FC<{
         <LockedBanner />
       : null}
 
-      <Tabs size="sm">
-        <Tabs.Item>
-          <Tabs.Button>Beslut</Tabs.Button>
-          <Tabs.Content>
-            <LockFieldset locked={locked}>
-              <div className="pt-24 flex flex-col gap-24">
-                <h2 className="text-h3-sm md:text-h3-md m-0">Beslut</h2>
-                <div className="flex flex-col gap-16">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-16">
-                    <FormControl id="beslut-datum" className="w-full">
-                      <FormLabel>Datum *</FormLabel>
-                      <Input
-                        type="date"
-                        value={date}
-                        onChange={(event) => {
-                          setDate(event.target.value);
-                        }}
-                      />
-                    </FormControl>
+      <h2 className="text-h3-sm md:text-h3-md m-0">Beslut</h2>
+      {headerSlot}
 
-                    <FormControl id="beslut-typ" className="w-full">
-                      <FormLabel>Beslut *</FormLabel>
-                      <Select
-                        className="w-full"
-                        value={beslutCode}
-                        onChange={(event) => {
-                          setBeslutCode(event.target.value);
-                        }}
-                      >
-                        <Select.Option value="">Välj beslut</Select.Option>
-                        {options.map((option) => (
-                          <Select.Option key={option.code} value={option.code ?? ''}>
-                            {option.displayName ?? option.code}
-                          </Select.Option>
-                        ))}
-                      </Select>
-                      <span className="text-small text-dark-secondary mt-4">
-                        Rekommenderat beslut: {recommendationLabel}
-                      </span>
-                    </FormControl>
-
-                    <FormControl id="beslut-fran" className="w-full">
-                      <FormLabel>Från</FormLabel>
-                      <Input
-                        type="date"
-                        value={fromDate}
-                        onChange={(event) => {
-                          setFromDate(event.target.value);
-                        }}
-                      />
-                    </FormControl>
-
-                    <FormControl id="beslut-till" className="w-full">
-                      <FormLabel>Till</FormLabel>
-                      <Input
-                        type="date"
-                        value={toDate}
-                        onChange={(event) => {
-                          setToDate(event.target.value);
-                        }}
-                      />
-                    </FormControl>
-                  </div>
-
-                  {/* Belopp is derived (0 for an avslag, otherwise the recommended amount), so it's shown
-                      as a read-only summary rather than an input field. */}
-                  <div className="flex items-center justify-between gap-16 rounded-12 border-1 border-divider bg-background-200 px-16 py-12 max-w-[32rem]">
-                    <span className="text-small font-bold text-dark-secondary">Belopp att bevilja</span>
-                    <span className="text-h4-sm md:text-h4-md font-bold">{formatAmount(amount ?? 0)}</span>
-                  </div>
-
-                  {saveError && <p className="text-error-surface-primary m-0">{saveError}</p>}
-                  {saved && <p className="text-dark-secondary m-0">Beslutet sparades.</p>}
-                </div>
-
-                <Divider className="my-8" />
-
-                <div className="flex justify-between items-center gap-16">
-                  <h2 className="text-h3-sm md:text-h3-md m-0">Beslutsmeddelande</h2>
-                  {/* Wrap so the preview button is one flex item — its fragment (Button + Modal) would
-                      otherwise become two children and justify-between would push the button to the middle. */}
-                  <div>
-                    <BeslutPdfPreviewButton errandId={errandId} buildMessage={buildDecisionMessage} />
-                  </div>
-                </div>
-                <BeslutMeddelande
-                  errandId={errandId}
-                  value={messageValue}
-                  onChange={setMessageValue}
-                  addFullfoljd={addFullfoljd}
-                  onAddFullfoljdChange={setAddFullfoljd}
-                  onUserEdit={() => {
-                    setMessageTouched(true);
+      <LockFieldset locked={locked}>
+        <div className="flex flex-col gap-24">
+          <div className="flex flex-col gap-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-16">
+              <FormControl id="beslut-datum" className="w-full">
+                <FormLabel>Datum *</FormLabel>
+                <Input
+                  type="date"
+                  value={date}
+                  onChange={(event) => {
+                    setDate(event.target.value);
                   }}
                 />
-              </div>
-            </LockFieldset>
-          </Tabs.Content>
-        </Tabs.Item>
+              </FormControl>
 
-        <Tabs.Item>
-          <Tabs.Button>Besluts PDF</Tabs.Button>
-          <Tabs.Content>
-            {decisionAttachmentId ?
-              <div className="pt-24">
-                <PdfPreviewFrame errandId={errandId} attachmentId={decisionAttachmentId} title="Besluts PDF" />
-              </div>
-            : <p className="pt-24 m-0 text-dark-secondary">Besluts-PDF skapas när du beslutar och utbetalar.</p>}
-          </Tabs.Content>
-        </Tabs.Item>
-      </Tabs>
+              <FormControl id="beslut-typ" className="w-full">
+                <FormLabel>Beslut *</FormLabel>
+                <Select
+                  className="w-full"
+                  value={beslutCode}
+                  onChange={(event) => {
+                    setBeslutCode(event.target.value);
+                  }}
+                >
+                  <Select.Option value="">Välj beslut</Select.Option>
+                  {options.map((option) => (
+                    <Select.Option key={option.code} value={option.code ?? ''}>
+                      {option.displayName ?? option.code}
+                    </Select.Option>
+                  ))}
+                </Select>
+                <span className="text-small text-dark-secondary mt-4">Rekommenderat beslut: {recommendationLabel}</span>
+              </FormControl>
+
+              <FormControl id="beslut-fran" className="w-full">
+                <FormLabel>Från</FormLabel>
+                <Input
+                  type="date"
+                  value={fromDate}
+                  onChange={(event) => {
+                    setFromDate(event.target.value);
+                  }}
+                />
+              </FormControl>
+
+              <FormControl id="beslut-till" className="w-full">
+                <FormLabel>Till</FormLabel>
+                <Input
+                  type="date"
+                  value={toDate}
+                  onChange={(event) => {
+                    setToDate(event.target.value);
+                  }}
+                />
+              </FormControl>
+            </div>
+
+            {/* Belopp is derived (0 for an avslag, otherwise the recommended amount), so it's shown
+                      as a read-only summary rather than an input field. */}
+            <div className="flex items-center justify-between gap-16 rounded-12 border-1 border-divider bg-background-200 px-16 py-12 max-w-[32rem]">
+              <span className="text-small font-bold text-dark-secondary">Belopp att bevilja</span>
+              <span className="text-h4-sm md:text-h4-md font-bold">{formatAmount(amount ?? 0)}</span>
+            </div>
+
+            {saveError && <p className="text-error-surface-primary m-0">{saveError}</p>}
+            {saved && <p className="text-dark-secondary m-0">Beslutet sparades.</p>}
+          </div>
+
+          <Divider className="my-8" />
+
+          <div className="flex justify-between items-center gap-16">
+            <h2 className="text-h3-sm md:text-h3-md m-0">Beslutsmeddelande</h2>
+            {/* Wrap so the preview button is one flex item — its fragment (Button + Modal) would
+                      otherwise become two children and justify-between would push the button to the middle. */}
+            <div>
+              <PdfPreviewButton
+                buildHtml={buildDecisionMessage}
+                modalLabel="Förhandsgranska beslut"
+                emptyMessage="Det finns inget beslutsmeddelande att förhandsgranska."
+              />
+            </div>
+          </div>
+          <BeslutMeddelande
+            errandId={errandId}
+            value={messageValue}
+            onChange={setMessageValue}
+            addFullfoljd={addFullfoljd}
+            onAddFullfoljdChange={setAddFullfoljd}
+            onUserEdit={() => {
+              setMessageTouched(true);
+            }}
+          />
+        </div>
+      </LockFieldset>
     </div>
   );
 };

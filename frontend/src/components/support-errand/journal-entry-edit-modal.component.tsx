@@ -53,7 +53,7 @@ export const JournalEntryEditModal: FC<{
   };
 
   return (
-    <Modal show onClose={onClose} label="Redigera journalanteckning" className="w-[64rem]">
+    <Modal show onClose={onClose} label="Redigera journalanteckning" className="w-[88rem] max-w-[90vw]">
       <Modal.Content className="flex flex-col gap-12">
         <FormControl id="journal-edit-heading" className="w-full">
           <FormLabel>Rubrik *</FormLabel>

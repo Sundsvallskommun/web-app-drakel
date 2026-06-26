@@ -1,14 +1,18 @@
 'use client';
 
-import { Lock } from 'lucide-react';
+import { Alert } from '@sk-web-gui/alert';
 import { FC, ReactNode } from 'react';
 
-/** The "section approved and locked" banner shown above a locked section. */
+/** The "section approved and locked" banner — a green success Alert shown above a locked section. */
 export const LockedBanner: FC = () => (
-  <div className="flex items-center gap-8 rounded-12 border-1 border-divider bg-background-200 px-16 py-12 text-small">
-    <Lock size={16} className="shrink-0" />
-    <span>Sektionen är godkänd och låst för redigering. Avmarkera godkännandet för att redigera igen.</span>
-  </div>
+  <Alert type="success">
+    <Alert.Icon />
+    <Alert.Content>
+      <Alert.Content.Title>
+        Sektionen är godkänd och låst för redigering. Avmarkera godkännandet för att redigera igen.
+      </Alert.Content.Title>
+    </Alert.Content>
+  </Alert>
 );
 
 /**
