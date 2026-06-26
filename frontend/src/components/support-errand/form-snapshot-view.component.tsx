@@ -155,17 +155,20 @@ const SnapshotSection: FC<{ section: FormSnapshotSection }> = ({ section }) => {
  * texts and option labels). Each section is a card and each field a label/value row. Only the
  * sections/fields that were visible to the applicant are shown.
  */
-export const FormSnapshotView: FC<{ snapshot: FormSnapshot }> = ({ snapshot }) => {
+export const FormSnapshotView: FC<{ snapshot: FormSnapshot; action?: ReactNode }> = ({ snapshot, action }) => {
   const sections = (snapshot.sections ?? []).filter((section) => wasVisible(section.visible));
   return (
     <div className="flex flex-col gap-16">
-      <div className="flex flex-col gap-2">
-        <span className="font-bold text-large">{snapshot.title ?? 'Sammanställning'}</span>
-        {snapshot.capturedAt ?
-          <span className="text-small text-dark-secondary">
-            Ifylld {dayjs(snapshot.capturedAt).format('YYYY-MM-DD HH:mm')}
-          </span>
-        : null}
+      <div className="flex items-start justify-between gap-16">
+        <div className="flex flex-col gap-2">
+          <span className="font-bold text-large">{snapshot.title ?? 'Sammanställning'}</span>
+          {snapshot.capturedAt ?
+            <span className="text-small text-dark-secondary">
+              Ifylld {dayjs(snapshot.capturedAt).format('YYYY-MM-DD HH:mm')}
+            </span>
+          : null}
+        </div>
+        {action}
       </div>
 
       {sections.map((section, index) => (

@@ -11,8 +11,10 @@ const escapeHtml = (value: string): string =>
 /** Formats an amount the way the Lifecare PDF does: comma decimal, no thousands separator (e.g. 5000,00). */
 const amount = (value?: number): string => (value == null ? '' : value.toFixed(2).replace('.', ','));
 
-const text = (value?: string): string => {
-  const trimmed = value?.trim();
+// Accepts whatever the API hands us (the contract types some fields as string, but e.g. normType comes
+// back as a number) and coerces it to display text — never assume the value already has string methods.
+const text = (value?: string | number | null): string => {
+  const trimmed = value == null ? '' : String(value).trim();
   return trimmed ? escapeHtml(trimmed) : '—';
 };
 

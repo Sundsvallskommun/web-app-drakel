@@ -313,18 +313,25 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           content: (
             <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
               {/* Den strukturerade sammanställningen (form-snapshot "som det var", annars live-data). Den
-                  genererade CASE_DATA-sammanställnings-PDF:en visas via "Visa pdf"-knappen i en modal. */}
-              <ErrandApplicationSummary errandId={apiErrandId} errand={errand} />
-              {caseDataAttachment?.id ?
-                <div>
-                  <AttachmentPdfButton
-                    errandId={apiErrandId}
-                    attachmentId={caseDataAttachment.id}
-                    label="Visa pdf"
-                    modalLabel="Sammanställning (PDF)"
-                  />
-                </div>
-              : null}
+                  genererade CASE_DATA-sammanställnings-PDF:en nås via "Visa pdf"-knappen till höger om titeln. */}
+              <ErrandApplicationSummary
+                errandId={apiErrandId}
+                errand={errand}
+                action={
+                  caseDataAttachment?.id ?
+                    // Wrap so the button is one flex item — its fragment (Button + Modal) would otherwise
+                    // be two children and justify-between would push the button to the middle.
+                    <div>
+                      <AttachmentPdfButton
+                        errandId={apiErrandId}
+                        attachmentId={caseDataAttachment.id}
+                        label="Visa pdf"
+                        modalLabel="Sammanställning (PDF)"
+                      />
+                    </div>
+                  : null
+                }
+              />
             </div>
           ),
         },

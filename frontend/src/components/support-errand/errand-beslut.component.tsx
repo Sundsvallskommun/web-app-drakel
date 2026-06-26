@@ -243,32 +243,37 @@ export const ErrandBeslut: FC<{
             {saveError && <p className="text-error-surface-primary m-0">{saveError}</p>}
             {saved && <p className="text-dark-secondary m-0">Beslutet sparades.</p>}
           </div>
+        </div>
+      </LockFieldset>
 
-          <Divider className="my-8" />
+      <Divider className="my-8" />
 
-          <div className="flex justify-between items-center gap-16">
-            <h2 className="text-h3-sm md:text-h3-md m-0">Beslutsmeddelande</h2>
-            {/* Wrap so the preview button is one flex item — its fragment (Button + Modal) would
-                      otherwise become two children and justify-between would push the button to the middle. */}
-            <div>
-              <PdfPreviewButton
-                buildHtml={buildDecisionMessage}
-                modalLabel="Förhandsgranska beslut"
-                emptyMessage="Det finns inget beslutsmeddelande att förhandsgranska."
-              />
-            </div>
-          </div>
-          <BeslutMeddelande
-            errandId={errandId}
-            value={messageValue}
-            onChange={setMessageValue}
-            addFullfoljd={addFullfoljd}
-            onAddFullfoljdChange={setAddFullfoljd}
-            onUserEdit={() => {
-              setMessageTouched(true);
-            }}
+      {/* The "Förhandsgranska PDF" button is read-only, so it stays OUTSIDE the LockFieldset and remains
+          clickable even when the section is approved/locked. Only the editor below is locked. */}
+      <div className="flex justify-between items-center gap-16">
+        <h2 className="text-h3-sm md:text-h3-md m-0">Beslutsmeddelande</h2>
+        {/* Wrap so the preview button is one flex item — its fragment (Button + Modal) would otherwise
+            become two children and justify-between would push the button to the middle. */}
+        <div>
+          <PdfPreviewButton
+            buildHtml={buildDecisionMessage}
+            modalLabel="Förhandsgranska beslut"
+            emptyMessage="Det finns inget beslutsmeddelande att förhandsgranska."
           />
         </div>
+      </div>
+
+      <LockFieldset locked={locked}>
+        <BeslutMeddelande
+          errandId={errandId}
+          value={messageValue}
+          onChange={setMessageValue}
+          addFullfoljd={addFullfoljd}
+          onAddFullfoljdChange={setAddFullfoljd}
+          onUserEdit={() => {
+            setMessageTouched(true);
+          }}
+        />
       </LockFieldset>
     </div>
   );
