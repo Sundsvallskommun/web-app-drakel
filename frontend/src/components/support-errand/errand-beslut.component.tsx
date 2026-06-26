@@ -170,12 +170,11 @@ export const ErrandBeslut: FC<{
 
   return (
     <div className="flex flex-col gap-24">
+      <h2 className="text-h3-sm md:text-h3-md m-0">Beslut</h2>
+      {headerSlot}
       {locked ?
         <LockedBanner />
       : null}
-
-      <h2 className="text-h3-sm md:text-h3-md m-0">Beslut</h2>
-      {headerSlot}
 
       <LockFieldset locked={locked}>
         <div className="flex flex-col gap-24">

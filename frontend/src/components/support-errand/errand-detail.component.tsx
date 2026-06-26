@@ -12,11 +12,11 @@ import { useErrandNotes } from '@hooks/use-errand-notes';
 import { useErrandSectionApprovals } from '@hooks/use-errand-section-approvals';
 import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
 import { useErrandWarnings } from '@hooks/use-errand-warnings';
-import { Spinner, Tabs } from '@sk-web-gui/react';
+import { Badge, Spinner, Tabs } from '@sk-web-gui/react';
 import { CLIENT_FILES_PDF } from '@utils/attachment-names';
 import { stakeholderDisplayName } from '@utils/stakeholder-name';
 import { compareByRole } from '@utils/stakeholder-role';
-import { AlertTriangle, Bell, History, NotebookPen, UserCog } from 'lucide-react';
+import { AlertTriangle, Bell, Check, History, NotebookPen, UserCog } from 'lucide-react';
 import { FC, Fragment, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { ErrandAktualisering } from './errand-aktualisering.component';
@@ -45,6 +45,8 @@ const EMPTY_ERRAND_TITLE = 'Empty errand';
 interface ErrandSubTab {
   label: string;
   content: ReactNode;
+  /** Shows a green check next to the sub-tab label once the section is approved. */
+  approved?: boolean;
 }
 /** A top-level tab group (Ansökan, Dokumentation, …) holding one or more sub-tabs. */
 interface ErrandTabGroup {
@@ -97,7 +99,9 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   // Bilagor · 2 Normberäkning · 3 Beslut · 4 Utbetalning (the last three carry the approval state).
   const onArendeGroup = activeTab === 0;
   const onNormberakningSubTab = showCalculationSections && onArendeGroup && activeSubTab === 2;
-  const approvalsEnabled = showCalculationSections && onArendeGroup && activeSubTab >= 2;
+  // Approvals load eagerly (not gated on the active sub-tab) so the per-section "godkänd" checks show on
+  // the Normberäkning/Beslut/Utbetalning tabs the moment the errand opens.
+  const approvalsEnabled = showCalculationSections;
   const warningsEnabled = onNormberakningSubTab || activeSidebar === 'warnings';
   const notesEnabled = activeSidebar === 'notes';
   const bevakningarEnabled = activeSidebar === 'bevakningar';
@@ -123,7 +127,8 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     refresh: refreshAttachments,
   } = useErrandAttachments(resolvedErrandId);
 
-  // Section approvals back the per-section checkboxes; the sidebar Avsluta button fetches them on click.
+  // Section approvals back the per-section checkboxes, the tab "godkänd" checks and the sidebar Avsluta
+  // button — so they load eagerly with the errand (see approvalsEnabled above).
   const { approvals, pendingSection, setApproval } = useErrandSectionApprovals(resolvedErrandId, approvalsEnabled);
   const {
     bevakningar,
@@ -352,6 +357,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           [
             {
               label: 'Normberäkning',
+              approved: !!approvals.calculation?.approved,
               content: (
                 <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
                   <ErrandNormberakning
@@ -362,7 +368,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                     handlaggare={errand.assignedUserId}
                     headerSlot={
                       <SectionApprovalCheckbox
-                        label="Markera som klart"
+                        label="Markera normberäkning som komplett"
                         approval={approvals.calculation}
                         disabled={pendingSection === 'CALCULATION'}
                         onChange={(approved) => void setApproval('CALCULATION', approved)}
@@ -374,6 +380,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
             },
             {
               label: 'Beslut',
+              approved: !!approvals.decision?.approved,
               content: (
                 <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
                   <ErrandBeslut
@@ -381,7 +388,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                     locked={!!approvals.decision?.approved}
                     headerSlot={
                       <SectionApprovalCheckbox
-                        label="Markera som klart"
+                        label="Markera beslut som komplett"
                         approval={approvals.decision}
                         disabled={pendingSection === 'DECISION'}
                         onChange={(approved) => void setApproval('DECISION', approved)}
@@ -394,13 +401,14 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
             },
             {
               label: 'Utbetalning',
+              approved: !!approvals.payment?.approved,
               content: (
                 <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
                   <ErrandUtbetalning
                     errandId={apiErrandId}
                     headerSlot={
                       <SectionApprovalCheckbox
-                        label="Markera som klart"
+                        label="Markera utbetalning som komplett"
                         approval={approvals.payment}
                         disabled={pendingSection === 'PAYMENT'}
                         onChange={(approved) => void setApproval('PAYMENT', approved)}
@@ -481,7 +489,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               bakgrund + ram) flyttas in i varje panel, med ev. sub-tabs högst upp i kortet. */}
           <Tabs
             className="px-2"
-            size="md"
+            size="lg"
             current={activeTab}
             onTabChange={(index) => {
               setActiveTab(index);
@@ -499,15 +507,33 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                       null
                     : group.tabs.length > 1 ?
                       <Tabs
-                        size="sm"
                         current={activeSubTab}
                         onTabChange={setActiveSubTab}
-                        tabslistClassName="pt-24 pl-24"
+                        tabslistClassName="mt-24 ml-24"
                         panelsClassName="border-t-1 border-divider"
                       >
                         {group.tabs.map((subTab, subIndex) => (
                           <Tabs.Item key={subTab.label}>
-                            <Tabs.Button className="text-base">{subTab.label}</Tabs.Button>
+                            <Tabs.Button className="text-base">
+                              <span className="inline-flex items-center gap-8">
+                                {subTab.label}
+                                {subTab.approved ?
+                                  // The same lucide Check that Alert renders for type="success". Badge types
+                                  // `counter` as string|number but renders any node, so the icon goes there.
+                                  // Badge's smallest preset is "sm" (fixed h-22); scale the whole badge down a
+                                  // touch so the green check reads as a small tab marker.
+                                  <Badge
+                                    inverted
+                                    color="gronsta"
+                                    rounded
+                                    size="sm"
+                                    className="scale-90"
+                                    counter={(<Check size={14} />) as unknown as string}
+                                    aria-label="Godkänd"
+                                  />
+                                : null}
+                              </span>
+                            </Tabs.Button>
                             <Tabs.Content>{subIndex === activeSubTab ? subTab.content : null}</Tabs.Content>
                           </Tabs.Item>
                         ))}

@@ -14,7 +14,7 @@ export const SectionApprovalCheckbox: FC<{
   disabled?: boolean;
   onChange: (approved: boolean) => void;
 }> = ({ label, approval, disabled, onChange }) => (
-  <div className="flex flex-col gap-2 w-fit rounded-12 border-1 border-divider bg-background-200 p-16">
+  <div className="flex flex-col gap-2 w-fit">
     <Checkbox
       checked={approval?.approved ?? false}
       disabled={disabled}
@@ -24,11 +24,5 @@ export const SectionApprovalCheckbox: FC<{
     >
       {label}
     </Checkbox>
-    {approval?.approved && approval.approvedBy ?
-      <span className="text-small text-dark-secondary ml-28">
-        Godkänd av {approval.approvedBy}
-        {approval.approvedAt ? ` · ${approval.approvedAt.slice(0, 10)}` : ''}
-      </span>
-    : null}
   </div>
 );

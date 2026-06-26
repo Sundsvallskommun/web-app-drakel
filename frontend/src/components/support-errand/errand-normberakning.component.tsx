@@ -5,7 +5,7 @@ import { useErrandNormberakning } from '@hooks/use-errand-normberakning';
 import { useNormberakningTypes } from '@hooks/use-normberakning-types';
 import { TypeOption } from '@services/normberakning-service';
 import { Warning } from '@services/warning-service';
-import { FormControl, FormLabel, Input, Spinner, Tabs } from '@sk-web-gui/react';
+import { DatePicker, FormControl, FormLabel, Input, Spinner, Tabs } from '@sk-web-gui/react';
 import { formatApplicationMonth } from '@utils/application-month';
 import { buildNormberakningHtml } from '@utils/build-normberakning-html';
 import { FC, ReactNode, useState } from 'react';
@@ -104,10 +104,6 @@ export const ErrandNormberakning: FC<{
 
   return (
     <div className="flex flex-col gap-24">
-      {locked ?
-        <LockedBanner />
-      : null}
-
       <div className="flex justify-between items-center gap-16">
         <h2 className="text-h3-sm md:text-h3-md m-0">Beräkning</h2>
         {/* Wrap so the preview button is one flex item — its fragment (Button + Modal) would otherwise
@@ -129,6 +125,9 @@ export const ErrandNormberakning: FC<{
         </div>
       </div>
       {headerSlot}
+      {locked ?
+        <LockedBanner />
+      : null}
 
       <div className="flex flex-wrap items-start justify-between gap-24">
         <div className="flex flex-wrap items-end gap-12">
@@ -138,8 +137,14 @@ export const ErrandNormberakning: FC<{
           <FilterField label="Norm" required>
             <Input readOnly size="sm" value={draft.normType ?? ''} placeholder="—" />
           </FilterField>
-          <FilterField label="Beräkningsdatum">
-            <Input readOnly size="sm" value={draft.calculationDate ?? ''} placeholder="—" />
+          <FilterField label="Beräkningsdatum" required>
+            <DatePicker type="date" readOnly size="sm" value={draft.calculationDate ?? ''} />
+          </FilterField>
+          <FilterField label="Från" required>
+            <DatePicker type="date" readOnly size="sm" value={draft.calculationFromDate ?? ''} />
+          </FilterField>
+          <FilterField label="Till" required>
+            <DatePicker type="date" readOnly size="sm" value={draft.calculationToDate ?? ''} />
           </FilterField>
         </div>
 

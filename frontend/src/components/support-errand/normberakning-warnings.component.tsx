@@ -1,8 +1,7 @@
 'use client';
 
 import { acknowledgeWarning, Warning, warningTypeLabel } from '@services/warning-service';
-import { Button } from '@sk-web-gui/react';
-import { AlertTriangle } from 'lucide-react';
+import { Alert } from '@sk-web-gui/alert';
 import { FC, useState } from 'react';
 
 interface NormberakningWarningsProps {
@@ -14,8 +13,9 @@ interface NormberakningWarningsProps {
 }
 
 /**
- * The OPEN warnings relevant to a normberäkning sub-tab (e.g. income warnings on the Inkomster tab),
- * each with a "Kvittera" action — the same acknowledge flow as the sidebar "Varningar" panel.
+ * The OPEN warnings relevant to a normberäkning sub-tab (e.g. income warnings on the Inkomster tab), each
+ * rendered as a warning Alert with a "Kvittera" action — the same acknowledge flow as the sidebar
+ * "Varningar" panel.
  */
 export const NormberakningWarnings: FC<NormberakningWarningsProps> = ({ errandId, warnings, onAcknowledged }) => {
   const [acknowledgingId, setAcknowledgingId] = useState<string>();
@@ -46,28 +46,26 @@ export const NormberakningWarnings: FC<NormberakningWarningsProps> = ({ errandId
 
       <ul className="flex flex-col gap-8 m-0 p-0 list-none">
         {warnings.map((warning, index) => (
-          <li
-            key={warning.id ?? index}
-            className="flex items-start justify-between gap-12 rounded-12 border-1 border-warning-surface-primary bg-warning-background-100 p-12"
-          >
-            <div className="flex items-start gap-12 min-w-0">
-              <AlertTriangle size={18} className="shrink-0 mt-2 text-warning-surface-primary" />
-              <div className="flex flex-col gap-2 min-w-0">
-                {warning.type ? <span className="font-bold text-small">{warningTypeLabel(warning.type)}</span> : null}
-                <span className="text-small break-words">{warning.message}</span>
-              </div>
-            </div>
-            <Button
-              size="sm"
-              variant="secondary"
-              color="vattjom"
-              className="shrink-0"
-              loading={acknowledgingId === warning.id}
-              loadingText="Kvitterar…"
-              onClick={() => void acknowledge(warning.id)}
-            >
-              Kvittera
-            </Button>
+          <li key={warning.id ?? index}>
+            <Alert type="warning">
+              <Alert.Icon />
+              <Alert.Content>
+                {warning.type ?
+                  <Alert.Content.Title className="font-bold">{warningTypeLabel(warning.type)}</Alert.Content.Title>
+                : null}
+                <Alert.Content.Description>{warning.message}</Alert.Content.Description>
+              </Alert.Content>
+              <Alert.Button
+                size="sm"
+                variant="secondary"
+                color="vattjom"
+                loading={acknowledgingId === warning.id}
+                loadingText="Kvitterar…"
+                onClick={() => void acknowledge(warning.id)}
+              >
+                Kvittera
+              </Alert.Button>
+            </Alert>
           </li>
         ))}
       </ul>

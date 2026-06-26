@@ -1,41 +1,11 @@
 'use client';
 
 import { useErrandPayment } from '@hooks/use-errand-payment';
-import { Button, cx, FormLabel, Spinner } from '@sk-web-gui/react';
+import { Alert } from '@sk-web-gui/alert';
+import { Button, FormLabel, Spinner } from '@sk-web-gui/react';
 import { formatApplicationMonth } from '@utils/application-month';
-import { CheckCircle2, Clock, HelpCircle, RotateCcw } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import { FC, ReactNode } from 'react';
-
-const StatusBox: FC<{ tone: 'success' | 'pending' | 'unknown'; icon: ReactNode; title: string; detail?: string }> = ({
-  tone,
-  icon,
-  title,
-  detail,
-}) => (
-  <div
-    className={cx(
-      'flex items-start gap-12 rounded-12 border-1 p-16',
-      tone === 'success' && 'border-success-surface-primary bg-success-background-100',
-      tone === 'pending' && 'border-warning-surface-primary bg-warning-background-100',
-      tone === 'unknown' && 'border-gray-300 bg-gray-100'
-    )}
-  >
-    <span
-      className={cx(
-        'shrink-0 mt-2',
-        tone === 'success' && 'text-success-surface-primary',
-        tone === 'pending' && 'text-warning-surface-primary',
-        tone === 'unknown' && 'text-gray-500'
-      )}
-    >
-      {icon}
-    </span>
-    <div className="flex flex-col gap-2">
-      <span className="font-bold">{title}</span>
-      {detail ? <span className="text-small text-dark-secondary">{detail}</span> : null}
-    </div>
-  </div>
-);
 
 /**
  * "Utbetalning" tab — reads whether the Lifecare utbetalning for the errand's application month has
@@ -73,25 +43,34 @@ export const ErrandUtbetalning: FC<{ errandId: string; headerSlot?: ReactNode }>
       </div>
 
       {status.unavailable ?
-        <StatusBox
-          tone="unknown"
-          icon={<HelpCircle size={20} />}
-          title="Utbetalningsstatus är inte tillgänglig"
-          detail="Status hämtas från Lifecare och kunde inte läsas just nu. Försök igen senare."
-        />
+        <Alert type="neutral">
+          <Alert.Icon />
+          <Alert.Content>
+            <Alert.Content.Title className="font-bold">Utbetalningsstatus är inte tillgänglig</Alert.Content.Title>
+            <Alert.Content.Description>
+              Status hämtas från Lifecare och kunde inte läsas just nu. Försök igen senare.
+            </Alert.Content.Description>
+          </Alert.Content>
+        </Alert>
       : status.effectuated ?
-        <StatusBox
-          tone="success"
-          icon={<CheckCircle2 size={20} />}
-          title="Utbetald"
-          detail={status.paymentDate ? `Utbetalningsdatum: ${status.paymentDate}` : undefined}
-        />
-      : <StatusBox
-          tone="pending"
-          icon={<Clock size={20} />}
-          title="Inte utbetald ännu"
-          detail="Ingen verkställd Lifecare-utbetalning för ansökningsmånaden."
-        />
+        <Alert type="success">
+          <Alert.Icon />
+          <Alert.Content>
+            <Alert.Content.Title className="font-bold">Utbetald</Alert.Content.Title>
+            {status.paymentDate ?
+              <Alert.Content.Description>Utbetalningsdatum: {status.paymentDate}</Alert.Content.Description>
+            : null}
+          </Alert.Content>
+        </Alert>
+      : <Alert type="warning">
+          <Alert.Icon />
+          <Alert.Content>
+            <Alert.Content.Title className="font-bold">Inte utbetald ännu</Alert.Content.Title>
+            <Alert.Content.Description>
+              Ingen verkställd Lifecare-utbetalning för ansökningsmånaden.
+            </Alert.Content.Description>
+          </Alert.Content>
+        </Alert>
       }
     </div>
   );
