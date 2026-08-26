@@ -3,6 +3,7 @@
 import { useErrandDocuments } from '@hooks/use-errand-documents';
 import { deleteDocument, Document, lockDocument } from '@services/document-service';
 import { Button, Modal, Spinner } from '@sk-web-gui/react';
+import { formatDateTime } from '@utils/date-time';
 import { looksLikeHtml, sanitizeHtml } from '@utils/sanitize-html';
 import { Lock, Pencil, Plus, Trash } from 'lucide-react';
 import { FC, useState } from 'react';
@@ -13,14 +14,12 @@ import { DocumentEditModal } from './document-edit-modal.component';
 /** WORKING = editable draft, LOCKED = upprättad (read-only) handling. */
 const statusLabel = (status?: string): string => (status === 'LOCKED' ? 'Upprättad' : 'Utkast');
 
-/** Sort newest first by documented date + time. */
+/** Sort newest first by the documented date and time. */
 const byDateDesc = (a: Document, b: Document): number =>
-  `${b.documentDate ?? ''} ${b.documentTime ?? ''}`.localeCompare(`${a.documentDate ?? ''} ${a.documentTime ?? ''}`);
+  (b.documentDateTime ?? '').localeCompare(a.documentDateTime ?? '');
 
 const metaLine = (document: Document): string =>
-  [document.type, [document.documentDate, document.documentTime].filter(Boolean).join(' '), document.createdBy]
-    .filter(Boolean)
-    .join(' · ');
+  [document.type, formatDateTime(document.documentDateTime), document.createdBy].filter(Boolean).join(' · ');
 
 /** "Dokument" tab — the errand's formal case documents (Lifecare handlingar): list + create/edit/lock/delete. */
 export const ErrandDocuments: FC<{ errandId: string }> = ({ errandId }) => {

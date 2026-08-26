@@ -3,6 +3,7 @@
 import { Document, DocumentInput, updateDocument } from '@services/document-service';
 import { Button, DatePicker, FormControl, FormLabel, Input, Modal } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
+import { combineDateAndTime, splitDateTime } from '@utils/date-time';
 import { toEditorMarkup } from '@utils/sanitize-html';
 import { todayDate } from '@utils/today-date';
 import dynamic from 'next/dynamic';
@@ -20,9 +21,10 @@ export const DocumentEditModal: FC<{
   onClose: () => void;
   onSaved: () => void;
 }> = ({ errandId, document, onClose, onSaved }) => {
+  const documented = splitDateTime(document.documentDateTime);
   const [heading, setHeading] = useState<string>(document.heading ?? '');
-  const [documentDate, setDocumentDate] = useState<string>(document.documentDate ?? todayDate());
-  const [documentTime, setDocumentTime] = useState<string>(document.documentTime ?? '');
+  const [documentDate, setDocumentDate] = useState<string>(documented.date || todayDate());
+  const [documentTime, setDocumentTime] = useState<string>(documented.time);
   const [content, setContent] = useState<TextEditorValue>({ markup: toEditorMarkup(document.text ?? '') });
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string>();
@@ -40,8 +42,7 @@ export const DocumentEditModal: FC<{
       type: document.type ?? '',
       heading: heading.trim(),
       text: trimmedMarkup.length > 0 ? trimmedMarkup : undefined,
-      documentDate,
-      documentTime: documentTime || undefined,
+      documentDateTime: combineDateAndTime(documentDate, documentTime),
     };
     const res = await updateDocument(errandId, document.id, input);
     setSaving(false);

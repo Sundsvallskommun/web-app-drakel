@@ -10,6 +10,38 @@
  * ---------------------------------------------------------------
  */
 
+export interface Actualisation {
+  id?: number;
+  type?: string;
+  name?: string;
+  date?: string;
+  reason?: string;
+  regards?: string;
+  fromWho?: string;
+  caseworker?: string;
+  organization?: string;
+  status?: string;
+  investigationId?: number;
+  serviceId?: number;
+  decisionId?: number;
+}
+
+export interface ActualisationsApiResponse {
+  data: Actualisation[];
+  message: string;
+}
+
+export interface Administrator {
+  username?: string;
+  displayName?: string;
+  description?: string;
+}
+
+export interface AdministratorsApiResponse {
+  data: Administrator[];
+  message: string;
+}
+
 export interface BevakningInputDto {
   title: string;
   description?: string;
@@ -103,20 +135,33 @@ export interface RecommendationApiResponse {
   message: string;
 }
 
+export interface DecisionNotificationDto {
+  minaSidor?: boolean;
+  digitalBrevlada?: boolean;
+  brev?: boolean;
+}
+
+export interface DigitalMailboxStatus {
+  available: boolean;
+}
+
+export interface DigitalMailboxApiResponse {
+  data: DigitalMailboxStatus;
+  message: string;
+}
+
 export interface CreateDocumentDto {
   type: string;
   heading: string;
   text?: string;
-  documentDate: string;
-  documentTime?: string;
+  documentDateTime: string;
 }
 
 export interface UpdateDocumentDto {
   type: string;
   heading: string;
   text?: string;
-  documentDate: string;
-  documentTime?: string;
+  documentDateTime: string;
 }
 
 export interface Document {
@@ -125,8 +170,7 @@ export interface Document {
   type?: string;
   heading?: string;
   text?: string;
-  documentDate?: string;
-  documentTime?: string;
+  documentDateTime?: string;
   status?: string;
   createdBy?: string;
   created?: string;
@@ -153,6 +197,30 @@ export interface DocumentApiResponse {
 
 export interface DocumentTypesApiResponse {
   data: DocumentType[];
+  message: string;
+}
+
+export interface DocumentTemplateOption {
+  identifier?: string;
+  name?: string;
+}
+
+export interface DocumentTemplates {
+  documents: DocumentTemplateOption[];
+  phrases: DocumentTemplateOption[];
+}
+
+export interface DocumentTemplateContent {
+  content: string;
+}
+
+export interface DocumentTemplatesApiResponse {
+  data: DocumentTemplates;
+  message: string;
+}
+
+export interface DocumentTemplateContentApiResponse {
+  data: DocumentTemplateContent;
   message: string;
 }
 
@@ -221,10 +289,6 @@ export interface Errand {
   created?: string;
   modified?: string;
   touched?: string;
-  /**
-   * Denormalized applicant name ("Förnamn Efternamn", org name for organizations) from the APPLICANT
-   * stakeholder; null when the errand has no applicant. Sortable/filterable via ?sort/?filter=applicantName.
-   */
   applicantName?: string;
 }
 
@@ -309,7 +373,7 @@ export interface Attachment {
   fileSize?: number;
   created?: string;
   modified?: string;
-  origin?: string;
+  documentType?: string;
   senderRole?: string;
   messageId?: string;
 }
@@ -370,10 +434,14 @@ export interface FormSnapshotField {
   notices?: FormSnapshotNotice[];
   options?: FormSnapshotOption[];
   answer?: FormSnapshotAnswer;
-  items?: FormSnapshotField[][];
+  items?: FormSnapshotGroup[];
   required?: boolean;
   visible?: boolean;
   condition?: string;
+}
+
+export interface FormSnapshotGroup {
+  fields?: FormSnapshotField[];
 }
 
 export interface FormSnapshotSection {
@@ -409,16 +477,14 @@ export interface CreateJournalEntryDto {
   type: string;
   heading: string;
   text?: string;
-  entryDate: string;
-  entryTime?: string;
+  entryDateTime: string;
 }
 
 export interface UpdateJournalEntryDto {
   type: string;
   heading: string;
   text?: string;
-  entryDate: string;
-  entryTime?: string;
+  entryDateTime: string;
 }
 
 export interface JournalEntry {
@@ -427,8 +493,7 @@ export interface JournalEntry {
   type?: string;
   heading?: string;
   text?: string;
-  entryDate?: string;
-  entryTime?: string;
+  entryDateTime?: string;
   status?: string;
   createdBy?: string;
   created?: string;
@@ -529,6 +594,7 @@ export interface NormHeaderInputDto {
 
 export interface NormPersonRow {
   id?: string;
+  position?: number;
   origin?: string;
   partyId?: string;
   role?: string;
@@ -547,6 +613,7 @@ export interface NormPersonRow {
 
 export interface NormIncomeRow {
   id?: string;
+  position?: number;
   origin?: string;
   typeId?: number;
   typeName?: string;
@@ -564,6 +631,7 @@ export interface NormIncomeRow {
 
 export interface NormExpenseRow {
   id?: string;
+  position?: number;
   origin?: string;
   bucket?: string;
   costType?: string;
@@ -657,6 +725,11 @@ export interface PaymentStatusView {
 export interface PaymentStatusApiResponse {
   data: PaymentStatusView;
   message: string;
+}
+
+export interface RenderPdfDto {
+  /** @minLength 1 */
+  html: string;
 }
 
 export interface SetSectionApprovalDto {

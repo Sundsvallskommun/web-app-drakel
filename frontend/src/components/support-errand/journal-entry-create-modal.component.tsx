@@ -8,6 +8,7 @@ import {
 import { createJournalEntry, JournalEntryInput, JournalEntryType } from '@services/journal-service';
 import { Button, Combobox, DatePicker, FormControl, FormLabel, Input, Modal, Select } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
+import { combineDateAndTime } from '@utils/date-time';
 import { todayDate } from '@utils/today-date';
 import dynamic from 'next/dynamic';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
@@ -104,8 +105,7 @@ export const JournalEntryCreateModal: FC<{
       type: selectedType?.displayName ?? '',
       heading: heading.trim(),
       text: trimmedMarkup.length > 0 ? trimmedMarkup : undefined,
-      entryDate,
-      entryTime: entryTime || undefined,
+      entryDateTime: combineDateAndTime(entryDate, entryTime),
     };
     const res = await createJournalEntry(errandId, input);
     setSaving(false);

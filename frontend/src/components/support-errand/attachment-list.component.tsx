@@ -37,7 +37,7 @@ interface AttachmentListProps {
 /**
  * Read-only list of errand attachments with image thumbnails and a per-file download button. Downloads
  * route conversation files through the message endpoint automatically (handled in the service via the
- * attachment's origin/messageId). Reused by the Bilagor tab and the "Bilagor från meddelanden" tab.
+ * attachment's documentType/messageId). Reused by the Bilagor tab and the "Bilagor från meddelanden" tab.
  */
 export const AttachmentList: FC<AttachmentListProps> = ({ errandId, attachments, placeholder = 'Inga bilagor' }) => {
   const imagePreviews = useAttachmentImagePreviews(errandId, attachments);

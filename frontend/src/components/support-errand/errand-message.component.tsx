@@ -95,12 +95,12 @@ export const ErrandMessage: FC<{
   const [previewAttachment, setPreviewAttachment] = useState<Attachment>();
 
   // Build the unified Attachment shape the preview/download service expects from a message attachment:
-  // it's a conversation file, so origin + the owning messageId route it through the message endpoint.
+  // it's a conversation file, so documentType + the owning messageId route it through the message endpoint.
   const toPreviewAttachment = (messageAttachment: NonNullable<Message['attachments']>[number]): Attachment => ({
     id: messageAttachment.id,
     fileName: messageAttachment.fileName,
     mimeType: messageAttachment.mimeType,
-    origin: 'CONVERSATION',
+    documentType: 'CONVERSATION',
     messageId: message.id,
   });
 

@@ -157,7 +157,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   // Only OPEN warnings are actionable — acknowledged/closed ones disappear from the sidebar.
   const openWarnings = warnings.filter((warning) => warning.status === 'OPEN');
 
-  // The consolidated client conversation files PDF (origin CONVERSATION) — previewed atop the
+  // The consolidated client conversation files PDF (documentType CONVERSATION) — previewed atop the
   // message-attachments tab, so it's excluded from that tab's file list below to avoid showing twice.
   const conversationSummaryAttachment = attachments.find(
     (attachment) => (attachment.fileName ?? '').toLowerCase() === CLIENT_FILES_PDF
@@ -165,15 +165,17 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   // CONVERSATION files belong to the Meddelanden → Bilagor sub-tab; everything else (application /
   // generated / errand files) to the Ärende → Bilagor tab.
   const conversationAttachments = attachments.filter(
-    (attachment) => attachment.origin === 'CONVERSATION' && attachment.id !== conversationSummaryAttachment?.id
+    (attachment) => attachment.documentType === 'CONVERSATION' && attachment.id !== conversationSummaryAttachment?.id
   );
-  // The generated "ärendeuppgifter" PDF (origin CASE_DATA) is previewed on the Ärendeuppgifter tab, so
-  // it's excluded from the Bilagor list below to avoid showing it twice.
-  const caseDataAttachment = attachments.find((attachment) => attachment.origin === 'CASE_DATA');
-  // The generated beslut PDF (origin DECISION) is sent/saved by "Besluta och utbetala" but not listed here.
+  // The generated "ärendeuppgifter" PDF (documentType CASE_DATA) is previewed on the Ärendeuppgifter tab,
+  // so it's excluded from the Bilagor list below to avoid showing it twice.
+  const caseDataAttachment = attachments.find((attachment) => attachment.documentType === 'CASE_DATA');
+  // The generated beslut PDF (documentType DECISION) is sent/saved by "Besluta och utbetala" but not listed here.
   const errandAttachments = attachments.filter(
     (attachment) =>
-      attachment.origin !== 'CONVERSATION' && attachment.origin !== 'CASE_DATA' && attachment.origin !== 'DECISION'
+      attachment.documentType !== 'CONVERSATION' &&
+      attachment.documentType !== 'CASE_DATA' &&
+      attachment.documentType !== 'DECISION'
   );
 
   // Surface the errand's status/title into the slim app header, and clear it on leave.

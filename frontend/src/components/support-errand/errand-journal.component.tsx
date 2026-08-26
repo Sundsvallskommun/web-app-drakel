@@ -3,6 +3,7 @@
 import { useErrandJournal } from '@hooks/use-errand-journal';
 import { deleteJournalEntry, JournalEntry, lockJournalEntry } from '@services/journal-service';
 import { Button, Modal, Spinner } from '@sk-web-gui/react';
+import { formatDateTime } from '@utils/date-time';
 import { looksLikeHtml, sanitizeHtml } from '@utils/sanitize-html';
 import { Lock, Pencil, Plus, Trash } from 'lucide-react';
 import { FC, useState } from 'react';
@@ -13,12 +14,12 @@ import { JournalEntryEditModal } from './journal-entry-edit-modal.component';
 /** WORKING = editable arbetsanteckning, LOCKED = upprättad (read-only) handling. */
 const statusLabel = (status?: string): string => (status === 'LOCKED' ? 'Upprättad' : 'Arbetsanteckning');
 
-/** Sort newest first by documented date + time. */
+/** Sort newest first by the documented date and time. */
 const byDateDesc = (a: JournalEntry, b: JournalEntry): number =>
-  `${b.entryDate ?? ''} ${b.entryTime ?? ''}`.localeCompare(`${a.entryDate ?? ''} ${a.entryTime ?? ''}`);
+  (b.entryDateTime ?? '').localeCompare(a.entryDateTime ?? '');
 
 const metaLine = (entry: JournalEntry): string =>
-  [entry.type, [entry.entryDate, entry.entryTime].filter(Boolean).join(' '), entry.createdBy].filter(Boolean).join(' · ');
+  [entry.type, formatDateTime(entry.entryDateTime), entry.createdBy].filter(Boolean).join(' · ');
 
 /** "Journal" tab — the errand's journalanteckningar (Lifecare case journal): list + create/edit/lock/delete. */
 export const ErrandJournal: FC<{ errandId: string }> = ({ errandId }) => {

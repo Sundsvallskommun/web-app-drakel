@@ -9,7 +9,7 @@ import { AttachmentList } from './attachment-list.component';
 
 interface ErrandMessageAttachmentsProps {
   errandId: string;
-  /** The conversation attachments (origin CONVERSATION) shared in the errand's messages. */
+  /** The conversation attachments (documentType CONVERSATION) shared in the errand's messages. */
   attachments: Attachment[];
   /** The consolidated client conversation files PDF (klientbilagor.pdf), previewed at the top when present. */
   summaryAttachment?: Attachment;
@@ -20,7 +20,7 @@ interface ErrandMessageAttachmentsProps {
 }
 
 /**
- * Lists every file shared in the errand's conversation (origin CONVERSATION) in one place — separate
+ * Lists every file shared in the errand's conversation (documentType CONVERSATION) in one place — separate
  * from the Bilagor tab, which shows application/generated/errand files. A consolidated PDF of all
  * client conversation files (klientbilagor.pdf) is previewed at the top, mirroring the Bilagor tab's
  * sammanstallning.pdf. Downloads route through the message endpoint automatically (AttachmentList).

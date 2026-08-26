@@ -8,6 +8,7 @@ import {
 } from '@services/document-template-service';
 import { Button, Combobox, DatePicker, FormControl, FormLabel, Input, Modal, Select } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
+import { combineDateAndTime } from '@utils/date-time';
 import { todayDate } from '@utils/today-date';
 import dynamic from 'next/dynamic';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
@@ -103,8 +104,7 @@ export const DocumentCreateModal: FC<{
       type: selectedType?.displayName ?? '',
       heading: heading.trim(),
       text: trimmedMarkup.length > 0 ? trimmedMarkup : undefined,
-      documentDate,
-      documentTime: documentTime || undefined,
+      documentDateTime: combineDateAndTime(documentDate, documentTime),
     };
     const res = await createDocument(errandId, input);
     setSaving(false);

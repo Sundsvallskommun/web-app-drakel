@@ -157,11 +157,11 @@ const getMessageAttachmentBlob = (errandId: string, messageId: string, attachmen
 
 /**
  * True for files that live on a conversation message. caremanagement returns every file in one unified
- * attachment list tagged with an `origin`; CONVERSATION files must be downloaded via the message
+ * attachment list tagged with a `documentType`; CONVERSATION files must be downloaded via the message
  * endpoint (using their `messageId`), everything else via the plain errand attachment endpoint.
  */
 const isConversationAttachment = (attachment: Attachment): boolean =>
-  attachment.origin === 'CONVERSATION' && !!attachment.messageId;
+  attachment.documentType === 'CONVERSATION' && !!attachment.messageId;
 
 /** Downloads any unified attachment, routing conversation files through the message endpoint. */
 export const downloadUnifiedAttachment = (errandId: string, attachment: Attachment): Promise<void> =>

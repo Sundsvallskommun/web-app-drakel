@@ -9,8 +9,8 @@ export interface Document {
   type?: string;
   heading?: string;
   text?: string;
-  documentDate?: string;
-  documentTime?: string;
+  /** Documented date and time (Lifecare 'Datum'/'Tid') as an ISO offset date-time. */
+  documentDateTime?: string;
   /** WORKING = editable draft, LOCKED = upprättad handling. */
   status?: 'WORKING' | 'LOCKED';
   createdBy?: string;
@@ -32,8 +32,8 @@ export interface DocumentInput {
   type: string;
   heading: string;
   text?: string;
-  documentDate: string;
-  documentTime?: string;
+  /** Documented date and time as an ISO offset date-time — the two pickers combined. */
+  documentDateTime: string;
 }
 
 /** Fetches the dokument on an errand. */

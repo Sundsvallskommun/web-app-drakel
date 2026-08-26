@@ -78,7 +78,7 @@ const FieldRow: FC<{ label?: string; help?: ReactNode; children: ReactNode }> = 
 const SnapshotFieldRow: FC<{ field: FormSnapshotField }> = ({ field }) => {
   if (field.inputType === 'REPEATING_GROUP') {
     const instances = (field.items ?? [])
-      .map((instance) => instance.filter((nested) => wasVisible(nested.visible)))
+      .map((group) => (group.fields ?? []).filter((nested) => wasVisible(nested.visible)))
       .filter((instance) => instance.length > 0);
     return (
       <div className="py-12 border-b-1 border-divider last:border-b-0">

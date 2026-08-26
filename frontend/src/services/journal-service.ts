@@ -9,8 +9,8 @@ export interface JournalEntry {
   type?: string;
   heading?: string;
   text?: string;
-  entryDate?: string;
-  entryTime?: string;
+  /** Documented date and time (Lifecare 'Datum'/'Tid') as an ISO offset date-time. */
+  entryDateTime?: string;
   /** WORKING = editable arbetsanteckning, LOCKED = upprättad handling. */
   status?: 'WORKING' | 'LOCKED';
   createdBy?: string;
@@ -29,8 +29,8 @@ export interface JournalEntryInput {
   type: string;
   heading: string;
   text?: string;
-  entryDate: string;
-  entryTime?: string;
+  /** Documented date and time as an ISO offset date-time — the two pickers combined. */
+  entryDateTime: string;
 }
 
 /** Fetches the journalanteckningar on an errand. */

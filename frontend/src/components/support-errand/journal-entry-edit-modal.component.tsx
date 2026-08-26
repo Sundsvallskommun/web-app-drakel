@@ -3,6 +3,7 @@
 import { JournalEntry, JournalEntryInput, updateJournalEntry } from '@services/journal-service';
 import { Button, DatePicker, FormControl, FormLabel, Input, Modal } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
+import { combineDateAndTime, splitDateTime } from '@utils/date-time';
 import { toEditorMarkup } from '@utils/sanitize-html';
 import { todayDate } from '@utils/today-date';
 import dynamic from 'next/dynamic';
@@ -20,9 +21,10 @@ export const JournalEntryEditModal: FC<{
   onClose: () => void;
   onSaved: () => void;
 }> = ({ errandId, entry, onClose, onSaved }) => {
+  const documented = splitDateTime(entry.entryDateTime);
   const [heading, setHeading] = useState<string>(entry.heading ?? '');
-  const [entryDate, setEntryDate] = useState<string>(entry.entryDate ?? todayDate());
-  const [entryTime, setEntryTime] = useState<string>(entry.entryTime ?? '');
+  const [entryDate, setEntryDate] = useState<string>(documented.date || todayDate());
+  const [entryTime, setEntryTime] = useState<string>(documented.time);
   const [content, setContent] = useState<TextEditorValue>({ markup: toEditorMarkup(entry.text ?? '') });
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string>();
@@ -40,8 +42,7 @@ export const JournalEntryEditModal: FC<{
       type: entry.type ?? '',
       heading: heading.trim(),
       text: trimmedMarkup.length > 0 ? trimmedMarkup : undefined,
-      entryDate,
-      entryTime: entryTime || undefined,
+      entryDateTime: combineDateAndTime(entryDate, entryTime),
     };
     const res = await updateJournalEntry(errandId, entry.id, input);
     setSaving(false);

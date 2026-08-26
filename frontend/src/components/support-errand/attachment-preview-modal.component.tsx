@@ -112,7 +112,7 @@ interface AttachmentPreviewModalProps {
 /**
  * Previews a single (already-uploaded) attachment inline in a modal by fetching its bytes. Conversation
  * files are routed through the message endpoint automatically (getUnifiedAttachmentBlob branches on
- * origin/messageId).
+ * documentType/messageId).
  */
 export const AttachmentPreviewModal: FC<AttachmentPreviewModalProps> = ({ errandId, attachment, onClose }) => {
   const [blob, setBlob] = useState<Blob>();
