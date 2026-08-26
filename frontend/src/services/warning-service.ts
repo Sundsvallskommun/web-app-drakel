@@ -27,6 +27,7 @@ const WARNING_TYPE_LABELS: Record<string, string> = {
   NEW_PERSON: 'Ny person',
   INCOME_DROPPED: 'Bortfallen inkomst',
   HOUSEHOLD_CHANGE: 'Ändrad hushållssammansättning',
+  HOUSING_COST_CHANGE: 'Ändrad boendekostnad',
   EXPENSE_REVIEW: 'Kräver skälighetsbedömning',
   EXPENSE_CAPPED: 'Utgift över tak',
 };
