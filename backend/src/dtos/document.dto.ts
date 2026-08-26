@@ -15,14 +15,9 @@ export class CreateDocumentDto {
   @IsOptional()
   text?: string;
 
-  /** Documented date (yyyy-MM-dd). */
+  /** Documented date and time (Lifecare 'Datum'/'Tid') as an ISO offset date-time, e.g. 2025-05-30T14:30:00+02:00. */
   @IsString()
-  documentDate!: string;
-
-  /** Documented time (HH:mm). */
-  @IsString()
-  @IsOptional()
-  documentTime?: string;
+  documentDateTime!: string;
 }
 
 /** The fields a handläggare sends when editing a (still WORKING) Dokument. */
@@ -38,9 +33,5 @@ export class UpdateDocumentDto {
   text?: string;
 
   @IsString()
-  documentDate!: string;
-
-  @IsString()
-  @IsOptional()
-  documentTime?: string;
+  documentDateTime!: string;
 }

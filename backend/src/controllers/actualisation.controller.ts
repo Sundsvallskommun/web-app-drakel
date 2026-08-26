@@ -5,7 +5,7 @@ import CaremanagementStakeholderService from '@services/caremanagement-stakehold
 import { Controller, Get, HttpCode, Param, Post, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
-import { AttachmentOriginEnum } from '@/data-contracts/caremanagement/data-contracts';
+import { AttachmentDocumentTypeEnum } from '@/data-contracts/caremanagement/data-contracts';
 import { HttpException } from '@/exceptions/HttpException';
 import { ActualisationsApiResponse } from '@/responses/actualisation.response';
 
@@ -42,7 +42,7 @@ export class ActualisationController {
   async archive(@Param('errandId') errandId: string, @Param('actualisationId') actualisationId: string) {
     const attachments = await this.attachmentService.readAttachments(errandId);
     const caseData = (attachments.data ?? []).find(
-      (attachment) => attachment.origin === AttachmentOriginEnum.CASE_DATA
+      (attachment) => attachment.documentType === AttachmentDocumentTypeEnum.CASE_DATA
     );
     if (!caseData?.id) {
       throw new HttpException(404, 'No application PDF (CASE_DATA) to archive');

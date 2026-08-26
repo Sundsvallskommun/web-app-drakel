@@ -1,7 +1,6 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { JSONSchema } from 'class-validator-jsonschema';
 
 /**
  * The immutable, re-renderable snapshot of a financial-assistance application form, captured by Mina
@@ -56,24 +55,20 @@ export class FormSnapshotField {
   @IsArray() @ValidateNested({ each: true }) @Type(() => FormSnapshotOption) @IsOptional() options?: FormSnapshotOption[];
   /** The answer given, when the field has a single answer. */
   @ValidateNested() @Type(() => FormSnapshotAnswer) @IsOptional() answer?: FormSnapshotAnswer;
-  /**
-   * For REPEATING_GROUP fields, one entry per repeated instance; each is the list of nested fields. The
-   * explicit JSON schema preserves the two-level array (FormSnapshotField[][]) that class-validator's
-   * single-level @ValidateNested cannot express — so the generated frontend type keeps both nestings.
-   */
-  @IsArray()
-  @IsOptional()
-  @JSONSchema({
-    type: 'array',
-    items: { type: 'array', items: { $ref: '#/components/schemas/FormSnapshotField' } },
-  })
-  items?: FormSnapshotField[][];
+  /** For REPEATING_GROUP fields, one entry per repeated instance. */
+  @IsArray() @ValidateNested({ each: true }) @Type(() => FormSnapshotGroup) @IsOptional() items?: FormSnapshotGroup[];
   /** Whether the field was required as rendered. */
   @IsBoolean() @IsOptional() required?: boolean;
   /** Whether the field was visible to the applicant. */
   @IsBoolean() @IsOptional() visible?: boolean;
   /** The visibility rule that was active, human-readable. */
   @IsString() @IsOptional() condition?: string;
+}
+
+/** One repeated instance of a REPEATING_GROUP field — its nested fields, in render order. */
+export class FormSnapshotGroup {
+  /** The nested fields for this repeated instance, in render order. */
+  @IsArray() @ValidateNested({ each: true }) @Type(() => FormSnapshotField) @IsOptional() fields?: FormSnapshotField[];
 }
 
 /** A section of the form as it was rendered. */

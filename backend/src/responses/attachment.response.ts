@@ -21,10 +21,10 @@ export class Attachment {
   @IsString()
   @IsOptional()
   modified?: string;
-  /** Where the file came from: APPLICATION / CONVERSATION / GENERATED / ERRAND. */
+  /** What kind of document this is: APPLICATION / CONVERSATION / GENERATED / ERRAND / CASE_DATA / DECISION / MESSAGE_HISTORY. */
   @IsString()
   @IsOptional()
-  origin?: string;
+  documentType?: string;
   /** Who sent the file: CLIENT (applicant) / CASEWORKER (caseworker). */
   @IsString()
   @IsOptional()

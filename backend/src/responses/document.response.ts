@@ -20,14 +20,10 @@ export class Document {
   @IsString()
   @IsOptional()
   text?: string;
-  /** Documented date (yyyy-MM-dd). */
+  /** Documented date and time (Lifecare 'Datum'/'Tid') as an ISO offset date-time. */
   @IsString()
   @IsOptional()
-  documentDate?: string;
-  /** Documented time (HH:mm). */
-  @IsString()
-  @IsOptional()
-  documentTime?: string;
+  documentDateTime?: string;
   /** WORKING = editable draft, LOCKED = upprättad handling. */
   @IsString()
   @IsOptional()

@@ -15,14 +15,9 @@ export class CreateJournalEntryDto {
   @IsOptional()
   text?: string;
 
-  /** Documented date (yyyy-MM-dd). */
+  /** Documented date and time (Lifecare 'Datum'/'Tid') as an ISO offset date-time, e.g. 2025-05-30T14:30:00+02:00. */
   @IsString()
-  entryDate!: string;
-
-  /** Documented time (HH:mm). */
-  @IsString()
-  @IsOptional()
-  entryTime?: string;
+  entryDateTime!: string;
 }
 
 /** The fields a handläggare sends when editing a (still WORKING) journalanteckning. */
@@ -38,9 +33,5 @@ export class UpdateJournalEntryDto {
   text?: string;
 
   @IsString()
-  entryDate!: string;
-
-  @IsString()
-  @IsOptional()
-  entryTime?: string;
+  entryDateTime!: string;
 }

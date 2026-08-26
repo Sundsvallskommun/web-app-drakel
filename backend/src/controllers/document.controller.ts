@@ -41,8 +41,7 @@ export class DocumentController {
       type: input.type,
       heading: input.heading,
       text: input.text,
-      documentDate: input.documentDate,
-      documentTime: input.documentTime,
+      documentDateTime: input.documentDateTime,
       createdBy: req.user.username,
     };
     const res = await this.documentService.createDocument(errandId, body);
@@ -63,8 +62,7 @@ export class DocumentController {
       type: input.type,
       heading: input.heading,
       text: input.text,
-      documentDate: input.documentDate,
-      documentTime: input.documentTime,
+      documentDateTime: input.documentDateTime,
       modifiedBy: req.user.username,
     };
     const res = await this.documentService.updateDocument(errandId, documentId, body);

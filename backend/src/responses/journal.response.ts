@@ -20,14 +20,10 @@ export class JournalEntry {
   @IsString()
   @IsOptional()
   text?: string;
-  /** Documented date (yyyy-MM-dd). */
+  /** Documented date and time (Lifecare 'Datum'/'Tid') as an ISO offset date-time. */
   @IsString()
   @IsOptional()
-  entryDate?: string;
-  /** Documented time (HH:mm). */
-  @IsString()
-  @IsOptional()
-  entryTime?: string;
+  entryDateTime?: string;
   /** WORKING = editable arbetsanteckning, LOCKED = upprättad handling. */
   @IsString()
   @IsOptional()

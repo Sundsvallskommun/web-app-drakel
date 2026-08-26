@@ -15,7 +15,7 @@ import { DecisionNotificationDto } from '@/dtos/decision-notification.dto';
 import { HttpException } from '@/exceptions/HttpException';
 import { DigitalMailboxApiResponse } from '@/responses/digital-mailbox.response';
 
-const DECISION_ORIGIN = 'DECISION';
+const DECISION_DOCUMENT_TYPE = 'DECISION';
 const DECISION_SUBJECT = 'Beslut om ekonomiskt bistånd';
 // Short cover text; the actual beslut is the attached PDF.
 const DECISION_BODY = 'Du har fått ett beslut om ekonomiskt bistånd. Beslutet finns i den bifogade filen.';
@@ -79,7 +79,7 @@ export class DecisionNotificationController {
     const errand = await this.errandService.getErrand(errandId);
     const filename = `beslut-${errand.data?.errandNumber ?? errandId}.pdf`;
     const pdfFile = { buffer: Buffer.from(pdfBase64, 'base64'), originalname: filename, mimetype: 'application/pdf' };
-    await this.attachmentService.createAttachment(errandId, pdfFile, DECISION_ORIGIN);
+    await this.attachmentService.createAttachment(errandId, pdfFile, DECISION_DOCUMENT_TYPE);
 
     // The applicant's partyId is only needed by the digital brevlåda / brev channels; Mina sidor goes
     // through the errand's e-service conversation, which doesn't need it.

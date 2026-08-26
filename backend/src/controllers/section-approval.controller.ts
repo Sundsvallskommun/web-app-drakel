@@ -1,8 +1,7 @@
-import { RequestWithUser } from '@interfaces/auth.interface';
 import authMiddleware from '@middlewares/auth.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import CaremanagementSectionApprovalService from '@services/caremanagement-section-approval.service';
-import { Body, Controller, Get, Param, Patch, Req, UseBefore } from 'routing-controllers';
+import { Body, Controller, Get, Param, Patch, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
 import { SectionApprovalRequest } from '@/data-contracts/caremanagement/data-contracts';
@@ -27,17 +26,9 @@ export class SectionApprovalController {
   @OpenAPI({ summary: 'Approve a section or withdraw its approval' })
   @ResponseSchema(SectionApprovalApiResponse)
   @UseBefore(authMiddleware, validationMiddleware(SetSectionApprovalDto, 'body'))
-  async setApproval(
-    @Req() req: RequestWithUser,
-    @Param('errandId') errandId: string,
-    @Param('section') section: string,
-    @Body() body: SetSectionApprovalDto,
-  ) {
-    // The approving handläggare is the authenticated user (ignored by caremanagement when withdrawing).
-    const request: SectionApprovalRequest = {
-      approved: body.approved,
-      approvedBy: body.approved ? req.user.username : undefined,
-    };
+  async setApproval(@Param('errandId') errandId: string, @Param('section') section: string, @Body() body: SetSectionApprovalDto) {
+    // caremanagement derives the approving handläggare from the X-Sent-By header the transport stamps.
+    const request: SectionApprovalRequest = { approved: body.approved };
     const res = await this.approvalService.setApproval(errandId, section, request);
     return { data: res.data, message: 'success' };
   }

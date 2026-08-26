@@ -45,8 +45,7 @@ export class JournalController {
       type: input.type,
       heading: input.heading,
       text: input.text,
-      entryDate: input.entryDate,
-      entryTime: input.entryTime,
+      entryDateTime: input.entryDateTime,
       createdBy: req.user.username,
     };
     const res = await this.journalService.createEntry(errandId, body);
@@ -67,8 +66,7 @@ export class JournalController {
       type: input.type,
       heading: input.heading,
       text: input.text,
-      entryDate: input.entryDate,
-      entryTime: input.entryTime,
+      entryDateTime: input.entryDateTime,
       modifiedBy: req.user.username,
     };
     const res = await this.journalService.updateEntry(errandId, entryId, body);
