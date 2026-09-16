@@ -5,7 +5,7 @@ import { caremanagementUrl } from '@utils/caremanagement-url';
 import { ErrandEventEntry } from '@/data-contracts/caremanagement/data-contracts';
 
 /** Optional server-side filters for the errand event log. */
-export interface ErrandEventFilters {
+interface ErrandEventFilters {
   action?: string;
   actor?: string;
   /** HTTP (access log: who read/touched) or EVENT (domain-event change log: what changed, incl. system/process). */

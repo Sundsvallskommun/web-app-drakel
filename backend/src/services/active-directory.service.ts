@@ -3,7 +3,7 @@ import axios from 'axios';
 import { ACTIVE_DIRECTORY_BASE_URL, ACTIVE_DIRECTORY_DOMAIN, MUNICIPALITY_ID } from '@/config';
 
 /** A user object returned by the AD object-search (OUChildren). */
-export interface AdUser {
+interface AdUser {
   /** AD username — this is what an errand stores as `assignedUserId` (e.g. "edw25mol"). */
   name?: string;
   /** Human-readable name ("Efternamn Förnamn"). */

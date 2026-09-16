@@ -3,6 +3,5 @@
   "entry": ["src/server.ts", "src/types/**/*.d.ts", "src/tests/**/*.{test,spec}.ts"],
   "project": ["src/**/*.ts"],
   "ignore": ["src/data-contracts/**"],
-  "ignoreDependencies": ["tsconfig-paths"],
-  "ignoreBinaries": ["pm2"]
+  "ignoreDependencies": ["tsconfig-paths"]
 }

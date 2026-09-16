@@ -15,7 +15,7 @@ export const runWithRequestContext = <T>(context: RequestContext, callback: () =
   storage.run(context, callback);
 
 /** The authenticated username for the current request, if any. */
-export const getRequestUsername = (): string | undefined => storage.getStore()?.username;
+const getRequestUsername = (): string | undefined => storage.getStore()?.username;
 
 /**
  * The X-Sent-By header that attributes a caremanagement request to the acting handläggare (adAccount),

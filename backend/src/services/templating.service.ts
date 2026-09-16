@@ -3,7 +3,7 @@ import { templatingUrl } from '@utils/templating-url';
 import axios from 'axios';
 
 /** A metadata tag on a template (e.g. { key: 'code', value: 'LETTER' }). */
-export interface TemplateMetadata {
+interface TemplateMetadata {
   key?: string;
   value?: string;
 }
@@ -17,7 +17,7 @@ export interface TemplateSummary {
 }
 
 /** A single template including its BASE64-encoded content. */
-export interface DetailedTemplate extends TemplateSummary {
+interface DetailedTemplate extends TemplateSummary {
   content?: string;
 }
 
