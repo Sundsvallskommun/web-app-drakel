@@ -5,7 +5,7 @@ import { useErrandBeslut } from '@hooks/use-errand-beslut';
 import { useErrandNormberakning } from '@hooks/use-errand-normberakning';
 import { createBeslut } from '@services/beslut-service';
 import { getDocumentTemplateContent } from '@services/document-template-service';
-import { Divider, FormControl, FormLabel, Input, Select, Spinner } from '@sk-web-gui/react';
+import { FormControl, FormLabel, Input, Select, Spinner } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { resolveBeslutAmount, resolveBeslutPeriod } from '@utils/beslut';
 import { formatAmount } from '@utils/format-amount';
@@ -13,6 +13,9 @@ import dayjs from 'dayjs';
 import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
 import { BeslutMeddelande } from './beslut-meddelande.component';
+import { ContentBox } from './content-box.component';
+import { ErrandSectionHeader } from './errand-section-header.component';
+import { LabeledValue } from './labeled-value.component';
 import { LockedBanner, LockFieldset } from './lockable-section.component';
 
 const todayDate = (): string => dayjs().format('YYYY-MM-DD');
@@ -32,7 +35,7 @@ const FULLFOLJD_TEMPLATE_IDENTIFIER = 'drakel.fa.beslut.fullfoljdshanvisning';
 export const ErrandBeslut: FC<{
   errandId: string;
   locked?: boolean;
-  /** Rendered directly under the section heading (the "Markera som klart" approval control). */
+  /** Rendered to the right of the section heading (the "Markera som komplett" approval control). */
   headerSlot?: ReactNode;
   /** Registers this tab's save with the parent so the central "Spara ärende" button runs it (null = nothing to save). */
   onRegisterSave?: (save: (() => Promise<boolean>) | null) => void;
@@ -160,26 +163,37 @@ export const ErrandBeslut: FC<{
     };
   }, [onRegisterSave, locked, beslutDirty]);
 
+  const header = (
+    <ErrandSectionHeader
+      title="Beslut"
+      description="Datum, beslut och period förifylls från normberäkningens rekommendation. Beloppet följer valt beslut."
+      action={headerSlot}
+    >
+      {locked ?
+        <LockedBanner />
+      : null}
+    </ErrandSectionHeader>
+  );
+
   if (draftLoading || beslutLoading) {
     return (
-      <div className="flex justify-center my-32">
-        <Spinner size={4} />
+      <div className="flex flex-col gap-24">
+        {header}
+        <div className="flex justify-center my-32">
+          <Spinner size={4} />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-24">
-      <h2 className="text-h3-sm md:text-h3-md m-0">Beslut</h2>
-      {headerSlot}
-      {locked ?
-        <LockedBanner />
-      : null}
+      {header}
 
-      <LockFieldset locked={locked}>
-        <div className="flex flex-col gap-24">
-          <div className="flex flex-col gap-16">
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-16">
+      <ContentBox title="Beslutsuppgifter">
+        <LockFieldset locked={locked}>
+          <div className="flex flex-col gap-24">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-24 gap-y-16">
               <FormControl id="beslut-datum" className="w-full">
                 <FormLabel>Datum *</FormLabel>
                 <Input
@@ -234,47 +248,47 @@ export const ErrandBeslut: FC<{
             </div>
 
             {/* Belopp is derived (0 for an avslag, otherwise the recommended amount), so it's shown
-                      as a read-only summary rather than an input field. */}
-            <div className="flex items-center justify-between gap-16 rounded-12 border-1 border-divider bg-background-200 px-16 py-12 max-w-[32rem]">
-              <span className="text-small font-bold text-dark-secondary">Belopp att bevilja</span>
-              <span className="text-h4-sm md:text-h4-md font-bold">{formatAmount(amount ?? 0)}</span>
-            </div>
+                as a read-only value rather than an input field. */}
+            <LabeledValue label="Belopp att bevilja">
+              <span className="font-bold">{formatAmount(amount ?? 0)}</span>
+            </LabeledValue>
 
             {saveError && <p className="text-error-surface-primary m-0">{saveError}</p>}
             {saved && <p className="text-dark-secondary m-0">Beslutet sparades.</p>}
           </div>
-        </div>
-      </LockFieldset>
+        </LockFieldset>
+      </ContentBox>
 
-      <Divider className="my-8" />
-
-      {/* The "Förhandsgranska PDF" button is read-only, so it stays OUTSIDE the LockFieldset and remains
-          clickable even when the section is approved/locked. Only the editor below is locked. */}
-      <div className="flex justify-between items-center gap-16">
-        <h2 className="text-h3-sm md:text-h3-md m-0">Beslutsmeddelande</h2>
-        {/* Wrap so the preview button is one flex item — its fragment (Button + Modal) would otherwise
-            become two children and justify-between would push the button to the middle. */}
-        <div>
-          <PdfPreviewButton
-            buildHtml={buildDecisionMessage}
-            modalLabel="Förhandsgranska beslut"
-            emptyMessage="Det finns inget beslutsmeddelande att förhandsgranska."
+      {/* The "Förhandsgranska" button is read-only, so it sits in the box header OUTSIDE the LockFieldset and
+          remains clickable even when the section is approved/locked. Only the editor below is locked. */}
+      <ContentBox
+        title="Beslutsmeddelande"
+        action={
+          // Wrap so the preview button is one flex item — its fragment (Button + Modal) would otherwise
+          // become two children and justify-between would push the button to the middle.
+          <div>
+            <PdfPreviewButton
+              buildHtml={buildDecisionMessage}
+              label="Förhandsgranska"
+              modalLabel="Förhandsgranska beslut"
+              emptyMessage="Det finns inget beslutsmeddelande att förhandsgranska."
+            />
+          </div>
+        }
+      >
+        <LockFieldset locked={locked}>
+          <BeslutMeddelande
+            errandId={errandId}
+            value={messageValue}
+            onChange={setMessageValue}
+            addFullfoljd={addFullfoljd}
+            onAddFullfoljdChange={setAddFullfoljd}
+            onUserEdit={() => {
+              setMessageTouched(true);
+            }}
           />
-        </div>
-      </div>
-
-      <LockFieldset locked={locked}>
-        <BeslutMeddelande
-          errandId={errandId}
-          value={messageValue}
-          onChange={setMessageValue}
-          addFullfoljd={addFullfoljd}
-          onAddFullfoljdChange={setAddFullfoljd}
-          onUserEdit={() => {
-            setMessageTouched(true);
-          }}
-        />
-      </LockFieldset>
+        </LockFieldset>
+      </ContentBox>
     </div>
   );
 };

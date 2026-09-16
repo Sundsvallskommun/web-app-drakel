@@ -7,6 +7,8 @@ import { Spinner } from '@sk-web-gui/react';
 import { formatDateRange } from '@utils/date-range';
 import { FC } from 'react';
 
+import { ContentBox } from './content-box.component';
+import { LabeledValue } from './labeled-value.component';
 import { LifecareSourceBadge } from './lifecare-source-badge.component';
 
 type JobStimulusRole = NonNullable<JobStimulusPeriod['role']>;
@@ -20,40 +22,38 @@ const byFromDate = (a: JobStimulusPeriod, b: JobStimulusPeriod): number =>
 /** One party's periods — rendered only when that party has any. */
 const PartyPeriods: FC<{ role: JobStimulusRole; periods: JobStimulusPeriod[] }> = ({ role, periods }) =>
   periods.length > 0 ?
-    <div className="flex flex-col gap-4">
-      <div className="text-small text-dark-secondary">{faLabel('person', role)}</div>
-      <ul className="m-0 p-0 list-none flex flex-col gap-2">
+    <LabeledValue label={faLabel('person', role)}>
+      <span className="flex flex-col gap-4">
         {[...periods].sort(byFromDate).map((period, index) => (
-          <li key={`${role}-${period.fromDate ?? ''}-${String(index)}`} className="font-bold">
+          <span key={`${role}-${period.fromDate ?? ''}-${String(index)}`}>
             {formatDateRange(period.fromDate, period.toDate)}
-          </li>
+          </span>
         ))}
-      </ul>
-    </div>
+      </span>
+    </LabeledValue>
   : null;
 
-/** The jobbstimulans periods imported from Lifecare, grouped per sökande and medsökande (read-only). */
+/**
+ * The jobbstimulans periods imported from Lifecare, grouped per sökande and medsökande (read-only), in a
+ * grey box marked "Från Lifecare".
+ */
 export const ErrandJobStimulus: FC<{ errandId: string }> = ({ errandId }) => {
   const { periods, isLoading, error } = useErrandJobStimulus(errandId);
 
   return (
-    <section className="flex flex-col gap-12">
-      <div className="flex items-center gap-8">
-        <h2 className="text-h2-sm md:text-h2-md m-0">Jobbstimulans</h2>
-        <LifecareSourceBadge source="LIFECARE" />
-      </div>
+    <ContentBox title="Jobbstimulansperioder" action={<LifecareSourceBadge source="LIFECARE" />}>
       {isLoading ?
         <Spinner size={3} />
       : error ?
         <p className="text-error-surface-primary m-0">Det gick inte att hämta jobbstimulansperioder</p>
       : periods.length === 0 ?
         <p className="m-0 text-dark-secondary">Inga jobbstimulansperioder.</p>
-      : <div className="grid grid-cols-1 md:grid-cols-2 gap-x-40 gap-y-12">
+      : <div className="grid grid-cols-1 md:grid-cols-2 gap-x-32 gap-y-24">
           {ROLES.map((role) => (
             <PartyPeriods key={role} role={role} periods={periods.filter((period) => period.role === role)} />
           ))}
         </div>
       }
-    </section>
+    </ContentBox>
   );
 };

@@ -6,6 +6,8 @@ import { stakeholderRoleLabel } from '@utils/stakeholder-role';
 import { Check, Plus } from 'lucide-react';
 import { FC } from 'react';
 
+import { NormberakningTableBox } from './normberakning-table-box.component';
+
 const days = (value?: number): string => (value == null ? '—' : String(value));
 
 /**
@@ -16,17 +18,8 @@ export const NormberakningFamilj: FC<{ persons: NormPersonRow[] }> = ({ persons 
   const visiblePersons = persons.filter((person) => !person.deleted);
 
   return (
-    <div className="flex flex-col gap-16 py-24">
-      <div className="flex flex-wrap gap-12">
-        <Button variant="secondary" leftIcon={<Plus />} disabled>
-          Lägg till ny person
-        </Button>
-        <Button variant="secondary" leftIcon={<Plus />} disabled>
-          Lägg till nytt umgängesbarn
-        </Button>
-      </div>
-
-      <Table dense background>
+    <NormberakningTableBox title="Personer som omfattas">
+      <Table dense>
         <Table.Header>
           <Table.HeaderColumn>Omfattas</Table.HeaderColumn>
           <Table.HeaderColumn>Namn</Table.HeaderColumn>
@@ -60,9 +53,18 @@ export const NormberakningFamilj: FC<{ persons: NormPersonRow[] }> = ({ persons 
         </Table.Body>
       </Table>
 
+      <div className="flex flex-wrap gap-12">
+        <Button size="sm" variant="secondary" leftIcon={<Plus />} disabled>
+          Lägg till ny person
+        </Button>
+        <Button size="sm" variant="secondary" leftIcon={<Plus />} disabled>
+          Lägg till nytt umgängesbarn
+        </Button>
+      </div>
+
       <p className="text-small text-dark-secondary m-0">
         Familjeraderna kommer från beräkningen. Redigering (omfattas/dagar/personer) kan kopplas på när det behövs.
       </p>
-    </div>
+    </NormberakningTableBox>
   );
 };

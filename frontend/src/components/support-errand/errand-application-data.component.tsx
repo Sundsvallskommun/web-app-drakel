@@ -4,19 +4,33 @@ import { Errand } from '@data-contracts/backend/data-contracts';
 import { faLabel, FinancialAssistanceData, SubmittedChild, swedishMonth } from '@interfaces/financial-assistance';
 import { getApplicationData } from '@services/errand-service/errand-service';
 import { Spinner } from '@sk-web-gui/react';
+import { applicationSectionIcon } from '@utils/application-section-icon';
 import { formatDateRange } from '@utils/date-range';
-import { FC, Fragment, ReactNode, useEffect, useState } from 'react';
+import { FC, ReactNode, useEffect, useState } from 'react';
 
+import { ContentBox } from './content-box.component';
 import { ErrandJobStimulus } from './errand-job-stimulus.component';
 import { ErrandStakeholders } from './errand-stakeholders.component';
+import { LabeledValue } from './labeled-value.component';
+import { PersonCard } from './person-card.component';
+import { ReadOnlyTable } from './read-only-table.component';
+import { SectionAccordion } from './section-accordion.component';
 
 type SubmittedPlanning = NonNullable<FinancialAssistanceData['plannings']>[number];
+type SubmittedAsset = NonNullable<FinancialAssistanceData['assets']>[number];
+
+interface AnswerItem {
+  label: string;
+  value?: ReactNode;
+}
 
 const kr = (value?: number): string | undefined => (value == null ? undefined : `${value} kr`);
 const yesNo = (value?: boolean): string | undefined =>
   value == null ? undefined
   : value ? 'Ja'
   : 'Nej';
+/** A table cell's text, with a dash for missing values. */
+const cellText = (value?: string | number): string => (value === undefined || value === '' ? '—' : String(value));
 /** "100 % · 2026-09-01 – 2026-09-30" — the sick-leave level and the medical certificate's period. */
 const sickLeaveSummary = (planning: SubmittedPlanning): string | undefined => {
   const level = planning.sickLeaveLevel ? `${planning.sickLeaveLevel} %` : undefined;
@@ -26,181 +40,236 @@ const sickLeaveSummary = (planning: SubmittedPlanning): string | undefined => {
 const childName = (child: SubmittedChild): string =>
   child.name?.trim() ?? [child.firstName, child.lastName].filter(Boolean).join(' ').trim();
 
-const Row: FC<{ label: string; value: ReactNode }> = ({ label, value }) => {
-  if (value === undefined || value === null || value === '') return null;
+const assetValue = (asset: SubmittedAsset): string | undefined => {
+  const fromValue = kr(asset.value);
+  if (fromValue) return fromValue;
+  const rest = [
+    asset.description,
+    faLabel('vehicleType', asset.vehicleType),
+    faLabel('propertyType', asset.propertyType),
+    asset.companyName,
+  ]
+    .filter(Boolean)
+    .join(', ');
+  return rest || undefined;
+};
+
+const hasAnswer = (item: AnswerItem): boolean => item.value !== undefined && item.value !== null && item.value !== '';
+
+/** The answered items as question/answer pairs in a grey box; nothing when no item has an answer. */
+const AnswerBox: FC<{ title?: string; items: AnswerItem[] }> = ({ title, items }) => {
+  const answeredItems = items.filter(hasAnswer);
+  if (answeredItems.length === 0) return null;
   return (
-    <div className="flex flex-col items-start gap-2">
-      <div className="text-small text-dark-secondary">{label}</div>
-      <div className="font-bold break-words">{value}</div>
-    </div>
+    <ContentBox title={title}>
+      <div className="flex flex-col gap-40">
+        {answeredItems.map((item) => (
+          <LabeledValue key={item.label} label={item.label} className="break-words">
+            {item.value}
+          </LabeledValue>
+        ))}
+      </div>
+    </ContentBox>
   );
 };
 
-const Section: FC<{ heading: string; children: ReactNode }> = ({ heading, children }) => (
-  <section className="flex flex-col gap-12">
-    <h3 className="text-h4-sm md:text-h4-md m-0">{heading}</h3>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-40 gap-y-12">{children}</div>
-  </section>
+/** A titled grey box holding a read-only table. */
+const TableBox: FC<{ title: string; columns: string[]; rows: ReactNode[][] }> = ({ title, columns, rows }) => (
+  <ContentBox title={title}>
+    <ReadOnlyTable ariaLabel={title} columns={columns} rows={rows} />
+  </ContentBox>
 );
 
-/** The submitted application data (FinancialAssistanceData), grouped into read-only sections. */
+/** One application data group as an open accordion whose grey boxes are stacked below each other. */
+const ApplicationAccordion: FC<{ title: string; children: ReactNode }> = ({ title, children }) => (
+  <SectionAccordion title={title} icon={applicationSectionIcon(title)} initialOpen>
+    <div className="flex flex-col gap-40">{children}</div>
+  </SectionAccordion>
+);
+
+/** The submitted application data (FinancialAssistanceData), grouped into read-only accordions. */
 const ApplicationSections: FC<{ data: FinancialAssistanceData }> = ({ data }) => {
   const period =
     data.periodMonth && data.periodYear ?
       `${swedishMonth(data.periodMonth)} ${data.periodYear}`
     : faLabel('periodChoice', data.periodChoice) || undefined;
 
-  const assetValue = (asset: NonNullable<FinancialAssistanceData['assets']>[number]): string | undefined => {
-    const fromValue = kr(asset.value);
-    if (fromValue) return fromValue;
-    const rest = [
-      asset.description,
-      faLabel('vehicleType', asset.vehicleType),
-      faLabel('propertyType', asset.propertyType),
-      asset.companyName,
-    ]
-      .filter(Boolean)
-      .join(', ');
-    return rest || undefined;
-  };
+  const applicationItems: AnswerItem[] = [
+    { label: 'Typ av ansökan', value: faLabel('applicationType', data.applicationType) },
+    { label: 'Civilstånd', value: faLabel('maritalStatus', data.maritalStatus) },
+    { label: 'Ansökningsperiod', value: period },
+    { label: 'Norm', value: faLabel('normType', data.normType) },
+    { label: 'Annat bistånd', value: data.otherBenefitDescription },
+  ];
+  const housingItems: AnswerItem[] = [
+    { label: 'Barn under 21 i hemmet', value: yesNo(data.hasChildrenUnder21) },
+    { label: 'Boendeform', value: faLabel('housingForm', data.housingForm) },
+    { label: 'Antal personer i hushållet', value: data.housingPersonCount },
+    { label: 'Antal rum + kök', value: data.housingRoomsPlusKitchen },
+    { label: 'Beskrivning av boende', value: data.housingDescription },
+  ];
+  const stayItems: AnswerItem[] = [
+    { label: 'Vistas i kommunen under ansökningsmånaden', value: yesNo(data.staysInMunicipality) },
+    { label: 'Beskrivning av vistelse', value: data.stayDescription },
+    { label: 'Försäkran lämnad', value: yesNo(data.attestation) },
+  ];
+
+  const children = data.children ?? [];
+  const costs = data.costs ?? [];
+  const incomes = data.incomes ?? [];
+  const pendingBenefits = data.pendingBenefits ?? [];
+  const assets = data.assets ?? [];
+  const plannings = data.plannings ?? [];
+  const jobApplications = data.jobApplications ?? [];
+  const plannedActivities = data.plannedActivities ?? [];
+  const persons = data.persons ?? [];
 
   return (
     <>
-      <div className="flex flex-col gap-8">
-        <h2 className="text-h2-sm md:text-h2-md m-0">Inskickade uppgifter</h2>
-        <span>Uppgifterna som sökanden lämnade i ansökan via Mina sidor.</span>
-      </div>
-
-      <Section heading="Ansökan">
-        <Row label="Typ av ansökan" value={faLabel('applicationType', data.applicationType)} />
-        <Row label="Civilstånd" value={faLabel('maritalStatus', data.maritalStatus)} />
-        <Row label="Ansökningsperiod" value={period} />
-        <Row label="Norm" value={faLabel('normType', data.normType)} />
-        <Row label="Annat bistånd" value={data.otherBenefitDescription} />
-      </Section>
-
-      <Section heading="Hushåll och boende">
-        <Row label="Barn under 21 i hemmet" value={yesNo(data.hasChildrenUnder21)} />
-        {(data.children ?? []).map((child, index) => (
-          <Row key={`child-${index}`} label={`Barn ${index + 1}`} value={childName(child)} />
-        ))}
-        <Row label="Boendeform" value={faLabel('housingForm', data.housingForm)} />
-        <Row label="Antal personer i hushållet" value={data.housingPersonCount} />
-        <Row label="Antal rum + kök" value={data.housingRoomsPlusKitchen} />
-        <Row label="Beskrivning av boende" value={data.housingDescription} />
-      </Section>
-
-      {(data.costs ?? []).length > 0 ?
-        <Section heading="Kostnader">
-          {(data.costs ?? []).map((cost, index) => (
-            <Row
-              key={`cost-${index}`}
-              label={
-                cost.costType === 'OTHER' && cost.otherSubType ?
-                  `${faLabel('costType', cost.costType)} – ${faLabel('costOtherSubType', cost.otherSubType)}`
-                : faLabel('costType', cost.costType) || `Kostnad ${index + 1}`
-              }
-              value={[kr(cost.appliedAmount), cost.specification].filter(Boolean).join(' · ')}
-            />
-          ))}
-        </Section>
+      {applicationItems.some(hasAnswer) ?
+        <ApplicationAccordion title="Ansökan">
+          <AnswerBox items={applicationItems} />
+        </ApplicationAccordion>
       : null}
 
-      {(data.incomes ?? []).length > 0 ?
-        <Section heading="Inkomster">
-          {(data.incomes ?? []).map((income, index) => (
-            <Row
-              key={`income-${index}`}
-              label={faLabel('incomeType', income.incomeType) || `Inkomst ${index + 1}`}
-              value={[kr(income.amount), faLabel('person', income.recipient)].filter(Boolean).join(' · ')}
-            />
-          ))}
-        </Section>
+      {housingItems.some(hasAnswer) || children.length > 0 ?
+        <ApplicationAccordion title="Hushåll och boende">
+          <AnswerBox items={housingItems} />
+          {children.length > 0 ?
+            <ContentBox title="Barn">
+              {children.map((child, index) => (
+                <PersonCard
+                  key={`child-${index}`}
+                  name={childName(child) || `Barn ${index + 1}`}
+                  detailColumns={[[child.schoolName]]}
+                />
+              ))}
+            </ContentBox>
+          : null}
+        </ApplicationAccordion>
       : null}
 
-      {(data.pendingBenefits ?? []).length > 0 ?
-        <Section heading="Väntande ersättningar">
-          {(data.pendingBenefits ?? []).map((benefit, index) => (
-            <Row
-              key={`benefit-${index}`}
-              label={benefit.benefitName ?? `Ersättning ${index + 1}`}
-              value={benefit.applicantName}
-            />
-          ))}
-        </Section>
+      {costs.length > 0 ?
+        <ApplicationAccordion title="Kostnader">
+          <TableBox
+            title="Sökta kostnader"
+            columns={['Typ av kostnad', 'Belopp', 'Specifikation']}
+            rows={costs.map((cost, index) => [
+              cost.costType === 'OTHER' && cost.otherSubType ?
+                `${faLabel('costType', cost.costType)} – ${faLabel('costOtherSubType', cost.otherSubType)}`
+              : faLabel('costType', cost.costType) || `Kostnad ${index + 1}`,
+              cellText(kr(cost.appliedAmount)),
+              cellText(cost.specification),
+            ])}
+          />
+        </ApplicationAccordion>
       : null}
 
-      {(data.assets ?? []).length > 0 ?
-        <Section heading="Tillgångar">
-          {(data.assets ?? []).map((asset, index) => (
-            <Row
-              key={`asset-${index}`}
-              label={faLabel('assetCategory', asset.assetCategory) || `Tillgång ${index + 1}`}
-              value={assetValue(asset)}
+      {incomes.length > 0 || pendingBenefits.length > 0 || assets.length > 0 ?
+        <ApplicationAccordion title="Inkomster och tillgångar">
+          {incomes.length > 0 ?
+            <TableBox
+              title="Inkomster"
+              columns={['Typ av inkomst', 'Belopp', 'Mottagare']}
+              rows={incomes.map((income, index) => [
+                faLabel('incomeType', income.incomeType) || `Inkomst ${index + 1}`,
+                cellText(kr(income.amount)),
+                cellText(faLabel('person', income.recipient)),
+              ])}
             />
-          ))}
-        </Section>
+          : null}
+          {pendingBenefits.length > 0 ?
+            <TableBox
+              title="Väntande ersättningar"
+              columns={['Ersättning', 'Sökt av']}
+              rows={pendingBenefits.map((benefit, index) => [
+                benefit.benefitName ?? `Ersättning ${index + 1}`,
+                cellText(benefit.applicantName),
+              ])}
+            />
+          : null}
+          {assets.length > 0 ?
+            <TableBox
+              title="Tillgångar"
+              columns={['Typ av tillgång', 'Värde / beskrivning']}
+              rows={assets.map((asset, index) => [
+                faLabel('assetCategory', asset.assetCategory) || `Tillgång ${index + 1}`,
+                cellText(assetValue(asset)),
+              ])}
+            />
+          : null}
+        </ApplicationAccordion>
       : null}
 
-      {(data.plannings ?? []).length > 0 ?
-        <Section heading="Planering">
-          {(data.plannings ?? []).map((planning, index) => (
-            <Fragment key={`planning-${index}`}>
-              <Row
-                label={faLabel('person', planning.person) || `Planering ${index + 1}`}
-                value={faLabel('planningType', planning.planningType)}
+      {plannings.length > 0 || jobApplications.length > 0 || plannedActivities.length > 0 ?
+        <ApplicationAccordion title="Planering">
+          {plannings.map((planning, index) => (
+            <AnswerBox
+              key={`planning-${index}`}
+              title={faLabel('person', planning.person) || `Planering ${index + 1}`}
+              items={[
+                { label: 'Planering', value: faLabel('planningType', planning.planningType) },
+                { label: 'Sjukskrivning', value: sickLeaveSummary(planning) },
+              ]}
+            />
+          ))}
+          {jobApplications.length > 0 ?
+            <TableBox
+              title="Sökta jobb"
+              columns={['Tjänst', 'Arbetsgivare och ort', 'Ansökningsdatum']}
+              rows={jobApplications.map((job, index) => [
+                job.jobTitle ?? `Sökt jobb ${index + 1}`,
+                cellText(job.employerAndPlace),
+                cellText(job.applicationDate),
+              ])}
+            />
+          : null}
+          {plannedActivities.length > 0 ?
+            <TableBox
+              title="Aktiviteter"
+              columns={['Aktivitet', 'Från', 'Till']}
+              rows={plannedActivities.map((activity, index) => [
+                activity.activity ?? `Aktivitet ${index + 1}`,
+                cellText(activity.periodFrom),
+                cellText(activity.periodTo),
+              ])}
+            />
+          : null}
+        </ApplicationAccordion>
+      : null}
+
+      {persons.length > 0 ?
+        <ApplicationAccordion title="Utbetalning och kontaktuppgifter">
+          <ContentBox>
+            {persons.map((person, index) => (
+              <PersonCard
+                key={`person-${index}`}
+                name={faLabel('person', person.role) || `Person ${index + 1}`}
+                detailColumns={[
+                  [
+                    faLabel('paymentMethod', person.paymentMethod),
+                    [person.clearingNumber, person.accountNumber].filter(Boolean).join(' '),
+                  ],
+                  [person.email, person.phone],
+                ]}
               />
-              <Row label="Sjukskrivning" value={sickLeaveSummary(planning)} />
-            </Fragment>
-          ))}
-          {(data.jobApplications ?? []).map((job, index) => (
-            <Row
-              key={`job-${index}`}
-              label={`Sökt jobb ${index + 1}`}
-              value={[job.jobTitle, job.employerAndPlace, job.applicationDate].filter(Boolean).join(' · ')}
-            />
-          ))}
-          {(data.plannedActivities ?? []).map((activity, index) => (
-            <Row
-              key={`activity-${index}`}
-              label={`Aktivitet ${index + 1}`}
-              value={[activity.activity, activity.periodFrom, activity.periodTo].filter(Boolean).join(' · ')}
-            />
-          ))}
-        </Section>
+            ))}
+          </ContentBox>
+        </ApplicationAccordion>
       : null}
 
-      {(data.persons ?? []).length > 0 ?
-        <Section heading="Utbetalning och kontaktuppgifter">
-          {(data.persons ?? []).map((person, index) => (
-            <Row
-              key={`person-${index}`}
-              label={faLabel('person', person.role) || `Person ${index + 1}`}
-              value={[
-                faLabel('paymentMethod', person.paymentMethod),
-                [person.clearingNumber, person.accountNumber].filter(Boolean).join(' '),
-                person.email,
-                person.phone,
-              ]
-                .filter(Boolean)
-                .join(' · ')}
-            />
-          ))}
-        </Section>
+      {stayItems.some(hasAnswer) ?
+        <ApplicationAccordion title="Vistelse och försäkran">
+          <AnswerBox items={stayItems} />
+        </ApplicationAccordion>
       : null}
-
-      <Section heading="Vistelse och försäkran">
-        <Row label="Vistas i kommunen under ansökningsmånaden" value={yesNo(data.staysInMunicipality)} />
-        <Row label="Beskrivning av vistelse" value={data.stayDescription} />
-        <Row label="Försäkran lämnad" value={yesNo(data.attestation)} />
-      </Section>
     </>
   );
 };
 
 /**
- * Fliken "Ärendeuppgifter" — intressenterna på ärendet listas högst upp (skrivskyddat), därefter de
- * uppgifter medborgaren skickade in (FinancialAssistanceData).
+ * Ansökan utan form-snapshot — intressenterna och jobbstimulansen från Lifecare högst upp (skrivskyddat),
+ * därefter de uppgifter medborgaren skickade in (FinancialAssistanceData), varje grupp som ett dragspel.
  */
 export const ErrandApplicationData: FC<{ errand: Errand }> = ({ errand }) => {
   const [data, setData] = useState<FinancialAssistanceData | null>(null);
@@ -220,19 +289,20 @@ export const ErrandApplicationData: FC<{ errand: Errand }> = ({ errand }) => {
   }, [errand.id]);
 
   return (
-    <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-32">
-      <section className="flex flex-col gap-12">
-        <h2 className="text-h2-sm md:text-h2-md m-0">Intressenter</h2>
+    <div className="flex flex-col gap-24">
+      <ApplicationAccordion title="Personuppgifter">
         <ErrandStakeholders errandId={errand.id ?? ''} />
-      </section>
+      </ApplicationAccordion>
 
-      <ErrandJobStimulus errandId={errand.id ?? ''} />
+      <ApplicationAccordion title="Jobbstimulans">
+        <ErrandJobStimulus errandId={errand.id ?? ''} />
+      </ApplicationAccordion>
 
       {isLoading ?
         <Spinner size={3} />
       : data ?
         <ApplicationSections data={data} />
-      : <p>Inga inskickade uppgifter att visa för det här ärendet.</p>}
+      : <p className="m-0">Inga inskickade uppgifter att visa för det här ärendet.</p>}
     </div>
   );
 };

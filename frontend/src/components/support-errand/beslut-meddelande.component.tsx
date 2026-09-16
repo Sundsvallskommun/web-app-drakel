@@ -88,10 +88,10 @@ export const BeslutMeddelande: FC<{
   };
 
   return (
-    <>
-      <div className="pt-24 flex flex-col gap-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
-          <FormControl id="beslut-fraskategori" className="w-full">
+    <div className="flex flex-col gap-24">
+      <div className="flex flex-col gap-12">
+        <div className="flex flex-wrap gap-x-24 gap-y-16">
+          <FormControl id="beslut-fraskategori" className="w-full md:w-[28rem]">
             <FormLabel>Beslutsformulering – kategori</FormLabel>
             <Combobox
               value={categoryId}
@@ -115,7 +115,7 @@ export const BeslutMeddelande: FC<{
             </Combobox>
           </FormControl>
 
-          <FormControl id="beslut-frasrubrik" className="w-full">
+          <FormControl id="beslut-frasrubrik" className="w-full md:w-[36rem]">
             <FormLabel>Beslutsformulering – rubrik</FormLabel>
             <Combobox
               key={`${categoryId}-${insertNonce}`}
@@ -146,18 +146,11 @@ export const BeslutMeddelande: FC<{
           <span className="font-bold">{PERIOD_PLACEHOLDER}</span> (period) fylls i från beräkningen senare.
           {applicantName ? '' : ' Sökandes namn kunde inte hämtas — namn-platshållaren lämnas oersatt.'}
         </p>
-
-        <Checkbox
-          checked={addFullfoljd}
-          onChange={(event) => {
-            onAddFullfoljdChange(event.target.checked);
-          }}
-        >
-          Lägg till fullföljdshänvisning
-        </Checkbox>
       </div>
+
       <FormControl id="beslut-meddelande" className="w-full">
-        <FormLabel>Beslutsmeddelande</FormLabel>
+        {/* The surrounding box is already titled "Beslutsmeddelande", so the label is for screen readers only. */}
+        <FormLabel className="sr-only">Beslutsmeddelande</FormLabel>
         <TextEditor
           className="text-editor-with-toolbar w-full"
           value={value}
@@ -172,6 +165,16 @@ export const BeslutMeddelande: FC<{
           }}
         />
       </FormControl>
-    </>
+
+      {/* The fullföljdshänvisning is appended to the end of the message on save, hence placed under the editor. */}
+      <Checkbox
+        checked={addFullfoljd}
+        onChange={(event) => {
+          onAddFullfoljdChange(event.target.checked);
+        }}
+      >
+        Lägg till fullföljdshänvisning
+      </Checkbox>
+    </div>
   );
 };

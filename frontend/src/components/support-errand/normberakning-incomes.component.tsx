@@ -1,6 +1,13 @@
 'use client';
 
-import { addNormRow, deleteNormRow, NormIncomeRow, restoreNormRow, TypeOption, updateNormRow } from '@services/normberakning-service';
+import {
+  addNormRow,
+  deleteNormRow,
+  NormIncomeRow,
+  restoreNormRow,
+  TypeOption,
+  updateNormRow,
+} from '@services/normberakning-service';
 import { Button, DatePicker, FormControl, FormLabel, Input, Select, Spinner, Table } from '@sk-web-gui/react';
 import { formatAmount } from '@utils/format-amount';
 import dayjs from 'dayjs';
@@ -8,6 +15,7 @@ import { RotateCcw, Trash2 } from 'lucide-react';
 import { FC, FocusEvent, useState } from 'react';
 
 import { NormberakningSummaBox } from './normberakning-summa-box.component';
+import { NormberakningTableBox } from './normberakning-table-box.component';
 
 const parseAmount = (value: string): number | undefined => {
   const normalized = value.trim().replace(',', '.');
@@ -75,12 +83,13 @@ export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-16 py-24">
-      <NormberakningSummaBox label="Summa inkomster" value={displayAmount(incomeSum)} />
-
+    <NormberakningTableBox
+      title="Inkomster"
+      summary={<NormberakningSummaBox label="Summa inkomster" value={displayAmount(incomeSum)} />}
+    >
       {error && <p className="text-error-surface-primary m-0">{error}</p>}
 
-      <Table dense background>
+      <Table dense>
         <Table.Header>
           <Table.HeaderColumn>Typ</Table.HeaderColumn>
           <Table.HeaderColumn>Belopp S</Table.HeaderColumn>
@@ -145,7 +154,7 @@ export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({
           </Select>
         </FormControl>
       </div>
-    </div>
+    </NormberakningTableBox>
   );
 };
 

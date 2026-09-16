@@ -2,25 +2,23 @@
 
 import { useErrandDocuments } from '@hooks/use-errand-documents';
 import { deleteDocument, Document, lockDocument } from '@services/document-service';
-import { Button, Modal, Spinner } from '@sk-web-gui/react';
-import { formatDateTime } from '@utils/date-time';
-import { looksLikeHtml, sanitizeHtml } from '@utils/sanitize-html';
+import { Button, Modal } from '@sk-web-gui/react';
 import { Lock, Pencil, Plus, Trash } from 'lucide-react';
 import { FC, useState } from 'react';
 
 import { DocumentCreateModal } from './document-create-modal.component';
 import { DocumentEditModal } from './document-edit-modal.component';
+import { ErrandSectionHeader } from './errand-section-header.component';
 import { LifecareSourceBadge } from './lifecare-source-badge.component';
-
-/** WORKING = editable draft, LOCKED = upprättad (read-only) handling. */
-const statusLabel = (status?: string): string => (status === 'LOCKED' ? 'Upprättad' : 'Utkast');
+import { RecordAction, RecordActionsMenu } from './record-actions-menu.component';
+import { RecordBodyText } from './record-body-text.component';
+import { RecordCard, RecordCardDetail } from './record-card.component';
+import { RecordList } from './record-list.component';
+import { RecordStatusBadge } from './record-status-badge.component';
 
 /** Sort newest first by the documented date and time. */
 const byDateDesc = (a: Document, b: Document): number =>
   (b.documentDateTime ?? '').localeCompare(a.documentDateTime ?? '');
-
-const metaLine = (document: Document): string =>
-  [document.type, formatDateTime(document.documentDateTime), document.createdBy].filter(Boolean).join(' · ');
 
 /** "Dokument" tab — the errand's formal case documents (Lifecare handlingar): list + create/edit/lock/delete. */
 export const ErrandDocuments: FC<{ errandId: string }> = ({ errandId }) => {
@@ -56,99 +54,81 @@ export const ErrandDocuments: FC<{ errandId: string }> = ({ errandId }) => {
     }
   };
 
+  /** Only WORKING (utkast) documents can be edited, locked or deleted. */
+  const actionsFor = (document: Document): RecordAction[] =>
+    document.status === 'LOCKED' ?
+      []
+    : [
+        {
+          label: 'Redigera',
+          icon: <Pencil />,
+          onClick: () => {
+            setEditDocument(document);
+          },
+        },
+        {
+          label: 'Lås',
+          icon: <Lock />,
+          onClick: () => {
+            setLockTarget(document);
+          },
+        },
+        { label: 'Ta bort', icon: <Trash />, onClick: () => void remove(document.id) },
+      ];
+
   return (
     <div className="flex flex-col gap-24">
-      <div className="flex items-center justify-between gap-12 flex-wrap">
-        <h2 className="text-h3-sm md:text-h3-md m-0">Dokument</h2>
-        <Button
-          color="vattjom"
-          variant="primary"
-          size="sm"
-          leftIcon={<Plus />}
-          onClick={() => {
-            setShowCreate(true);
-          }}
-        >
-          Nytt dokument
-        </Button>
-      </div>
+      <ErrandSectionHeader
+        title="Dokument"
+        description="Dokument som upprättas i ärendet. Ett utkast kan redigeras tills det låses och blir en upprättad handling."
+        action={
+          <Button
+            color="vattjom"
+            variant="primary"
+            size="sm"
+            leftIcon={<Plus />}
+            onClick={() => {
+              setShowCreate(true);
+            }}
+          >
+            Nytt dokument
+          </Button>
+        }
+      />
 
       {error && <p className="text-error-surface-primary m-0">Det gick inte att hämta dokumenten ({String(error)})</p>}
 
-      {isLoading ?
-        <Spinner size={4} />
-      : documents.length === 0 ?
-        <p className="m-0 text-dark-secondary">Inga dokument.</p>
-      : <ul className="flex flex-col gap-12 m-0 p-0 list-none max-w-[56rem]">
-          {[...documents].sort(byDateDesc).map((document, index) => {
-            const working = document.status !== 'LOCKED';
-            return (
-              <li
-                key={document.id ?? index}
-                className="rounded-12 border-1 border-divider bg-background-content p-16 flex flex-col gap-8"
-              >
-                <div className="flex items-start justify-between gap-12">
-                  <span className="font-bold break-words">{document.heading}</span>
-                  <span className="flex shrink-0 items-center gap-8">
-                    <LifecareSourceBadge source={document.source} />
-                    <span
-                      className={
-                        working ?
-                          'shrink-0 text-small rounded-8 px-8 py-2 bg-gray-100 text-gray-600'
-                        : 'shrink-0 text-small rounded-8 px-8 py-2 bg-success-background-100 text-success-surface-primary'
-                      }
-                    >
-                      {statusLabel(document.status)}
-                    </span>
-                  </span>
-                </div>
-                <span className="text-small text-dark-secondary">{metaLine(document)}</span>
-                {document.text ?
-                  looksLikeHtml(document.text) ?
-                    <div
-                      className="m-0 break-words [&_p]:m-0"
-                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(document.text) }}
-                    />
-                  : <p className="m-0 break-words whitespace-pre-wrap">{document.text}</p>
-                : null}
-                {working ?
-                  <div className="flex gap-8 pt-4">
-                    <Button
-                      size="sm"
-                      variant="tertiary"
-                      leftIcon={<Pencil />}
-                      onClick={() => {
-                        setEditDocument(document);
-                      }}
-                    >
-                      Redigera
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="tertiary"
-                      leftIcon={<Lock />}
-                      onClick={() => {
-                        setLockTarget(document);
-                      }}
-                    >
-                      Lås
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="tertiary"
-                      leftIcon={<Trash />}
-                      loading={busyId === document.id}
-                      onClick={() => void remove(document.id)}
-                    >
-                      Ta bort
-                    </Button>
-                  </div>
-                : null}
-              </li>
-            );
-          })}
-        </ul>
-      }
+      <RecordList
+        title="Tillagda dokument"
+        isLoading={isLoading}
+        isEmpty={documents.length === 0}
+        emptyText="Inga dokument."
+      >
+        {[...documents].sort(byDateDesc).map((document, index) => (
+          <RecordCard
+            key={document.id ?? index}
+            heading={document.heading}
+            dateTime={document.documentDateTime}
+            badges={
+              <>
+                <LifecareSourceBadge source={document.source} />
+                <RecordStatusBadge status={document.status} workingLabel="Utkast" />
+              </>
+            }
+            menu={
+              <RecordActionsMenu
+                recordLabel={document.heading}
+                actions={actionsFor(document)}
+                loading={!!document.id && busyId === document.id}
+              />
+            }
+          >
+            <RecordCardDetail label="Tillagd av" value={document.createdBy} />
+            <RecordCardDetail label="Typ" value={document.type} />
+            <RecordBodyText text={document.text} />
+          </RecordCard>
+        ))}
+      </RecordList>
 
       {showCreate ?
         <DocumentCreateModal

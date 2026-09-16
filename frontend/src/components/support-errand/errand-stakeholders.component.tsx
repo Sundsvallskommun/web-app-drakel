@@ -2,18 +2,19 @@
 
 import { Stakeholder } from '@data-contracts/backend/data-contracts';
 import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
-import { Avatar, Spinner } from '@sk-web-gui/react';
-import { getInitials } from '@utils/get-initials';
+import { Spinner } from '@sk-web-gui/react';
 import { stakeholderDisplayName } from '@utils/stakeholder-name';
 import { compareByRole, stakeholderRoleLabel } from '@utils/stakeholder-role';
 import { FC } from 'react';
 
-const stakeholderContact = (stakeholder: Stakeholder): string => {
-  const channels = stakeholder.contactChannels
-    ?.map((channel) => channel.value)
-    .filter(Boolean)
-    .join(' · ');
-  return channels !== undefined && channels.length > 0 ? channels : 'Inga kontaktuppgifter';
+import { ContentBox } from './content-box.component';
+import { PersonCard } from './person-card.component';
+
+const stakeholderContactChannels = (stakeholder: Stakeholder): string[] => {
+  const channels = (stakeholder.contactChannels ?? [])
+    .map((channel) => channel.value)
+    .filter((value): value is string => !!value && value.length > 0);
+  return channels.length > 0 ? channels : ['Inga kontaktuppgifter'];
 };
 
 /** Formats the (Citizen-enriched) address as "c/o …, Gatan 1, 852 31 Sundsvall". Empty when unknown. */
@@ -24,7 +25,17 @@ const stakeholderAddress = (stakeholder: Stakeholder): string => {
     .join(', ');
 };
 
-/** Lists an errand's stakeholders (read-only) as cards. Editing or adding is not allowed. */
+/** Groups the (role-ordered) stakeholders by their role label, keeping the order of first appearance. */
+const groupByRoleLabel = (stakeholders: Stakeholder[]): { roleLabel: string; members: Stakeholder[] }[] => {
+  const groups = new Map<string, Stakeholder[]>();
+  stakeholders.forEach((stakeholder) => {
+    const roleLabel = stakeholderRoleLabel(stakeholder.role) || 'Intressent';
+    groups.set(roleLabel, [...(groups.get(roleLabel) ?? []), stakeholder]);
+  });
+  return [...groups.entries()].map(([roleLabel, members]) => ({ roleLabel, members }));
+};
+
+/** Lists an errand's stakeholders (read-only), one grey box per role with a card per person. */
 export const ErrandStakeholders: FC<{ errandId: string }> = ({ errandId }) => {
   const { stakeholders, isLoading, error } = useErrandStakeholders(errandId);
 
@@ -39,32 +50,23 @@ export const ErrandStakeholders: FC<{ errandId: string }> = ({ errandId }) => {
   }
 
   // Sökande (applicant) first, then co-applicant etc.
-  const orderedStakeholders = [...stakeholders].sort(compareByRole);
+  const roleGroups = groupByRoleLabel([...stakeholders].sort(compareByRole));
 
   return (
-    <div className="flex flex-col gap-16">
-      {orderedStakeholders.map((stakeholder, index) => (
-        <div
-          key={stakeholder.id ?? index}
-          className="border-1 border-divider rounded-12 overflow-hidden bg-background-content"
-        >
-          <div className="bg-vattjom-surface-primary text-white px-16 py-8 font-bold">
-            {stakeholderRoleLabel(stakeholder.role) || 'Intressent'}
-          </div>
-          <div className="p-16 flex items-center gap-16">
-            <Avatar initials={getInitials(stakeholderDisplayName(stakeholder))} rounded color="vattjom" />
-            <div className="flex flex-col">
-              <span className="font-bold">{stakeholderDisplayName(stakeholder)}</span>
-              {stakeholder.personalNumber ?
-                <span className="text-small text-dark-secondary">Personnummer: {stakeholder.personalNumber}</span>
-              : null}
-              <span className="text-small">{stakeholderContact(stakeholder)}</span>
-              {stakeholderAddress(stakeholder) ?
-                <span className="text-small text-dark-secondary">{stakeholderAddress(stakeholder)}</span>
-              : null}
-            </div>
-          </div>
-        </div>
+    <div className="flex flex-col gap-40">
+      {roleGroups.map(({ roleLabel, members }) => (
+        <ContentBox key={roleLabel} title={roleLabel}>
+          {members.map((stakeholder, index) => (
+            <PersonCard
+              key={stakeholder.id ?? index}
+              name={stakeholderDisplayName(stakeholder)}
+              detailColumns={[
+                [stakeholder.personalNumber, stakeholderAddress(stakeholder)],
+                stakeholderContactChannels(stakeholder),
+              ]}
+            />
+          ))}
+        </ContentBox>
       ))}
     </div>
   );
