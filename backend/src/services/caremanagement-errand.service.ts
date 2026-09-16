@@ -67,10 +67,6 @@ class CaremanagementErrandService {
     const body: PatchErrand = patch;
     return this.apiService.patch<Errand>({ url: caremanagementUrl('errands', errandId), data: body });
   }
-
-  async deleteErrand(errandId: string): Promise<ApiResponse<null>> {
-    return this.apiService.delete<null>({ url: caremanagementUrl('errands', errandId) });
-  }
 }
 
 export default CaremanagementErrandService;

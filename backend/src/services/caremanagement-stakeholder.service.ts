@@ -3,7 +3,6 @@ import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 
 import { Stakeholder } from '@/data-contracts/caremanagement/data-contracts';
-import { CreateStakeholderDto } from '@/dtos/stakeholder.dto';
 
 import CitizenService, { PersonName } from './citizen.service';
 
@@ -58,13 +57,6 @@ class CaremanagementStakeholderService {
       applicant: applicant ? toPartyReference(applicant) : undefined,
       coApplicants: stakeholders.filter(stakeholder => stakeholder.role === CO_APPLICANT_ROLE).map(stakeholder => toPartyReference(stakeholder)),
     };
-  }
-
-  async createStakeholder(errandId: string, stakeholder: CreateStakeholderDto): Promise<ApiResponse<null>> {
-    return this.apiService.post<null>({
-      url: caremanagementUrl('errands', errandId, 'stakeholders'),
-      data: stakeholder,
-    });
   }
 
   private async fetchStakeholders(errandId: string): Promise<ApiResponse<Stakeholder[]>> {

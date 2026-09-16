@@ -8,12 +8,11 @@ import { UploadedFileLike } from '@services/caremanagement-attachment.service';
 import CaremanagementErrandService from '@services/caremanagement-errand.service';
 import CaremanagementStakeholderService from '@services/caremanagement-stakeholder.service';
 import { Response } from 'express';
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, QueryParams, Req, Res, UploadedFile, UseBefore } from 'routing-controllers';
+import { Body, Controller, Get, HttpCode, Param, Patch, Post, QueryParams, Req, Res, UploadedFile, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
 import { MAX_UPLOAD_FILE_SIZE_BYTES } from '@/constants/upload';
 import { CreateErrandDto, FindErrandsQueryDto, PatchErrandDto } from '@/dtos/errand.dto';
-import { CreateStakeholderDto } from '@/dtos/stakeholder.dto';
 import { AttachmentsApiResponse } from '@/responses/attachment.response';
 import { ErrandApiResponse, ErrandsApiResponse } from '@/responses/errand.response';
 import { StakeholdersApiResponse } from '@/responses/stakeholder.response';
@@ -21,9 +20,6 @@ import { StakeholdersApiResponse } from '@/responses/stakeholder.response';
 // caremanagement requires a typeSlug on every errand. Until per-type modules are configured this is
 // a single configured value (env override, with a sensible default).
 const DEFAULT_TYPE_SLUG = 'financial-assistance';
-
-// TODO: hardcoded for now — no ROLE metadata configured yet. Every added stakeholder gets PRIMARY.
-const DEFAULT_STAKEHOLDER_ROLE = 'PRIMARY';
 
 const singleAttachmentUploadOptions = {
   options: {
@@ -69,16 +65,6 @@ export class ErrandController {
     return { data: res.data?.data ?? null, message: 'success' };
   }
 
-  @Post('/errands')
-  @HttpCode(201)
-  @OpenAPI({ summary: 'Create an errand' })
-  @ResponseSchema(ErrandApiResponse)
-  @UseBefore(authMiddleware, validationMiddleware(CreateErrandDto, 'body'))
-  async createErrand(@Body() errand: CreateErrandDto) {
-    const res = await this.errandService.createErrand(errand);
-    return { data: res.data, message: 'success' };
-  }
-
   @Post('/errands/initiate')
   @HttpCode(201)
   @OpenAPI({ summary: 'Create a new empty (draft) errand and return it' })
@@ -104,14 +90,6 @@ export class ErrandController {
   async updateErrand(@Param('errandId') errandId: string, @Body() patch: PatchErrandDto) {
     const res = await this.errandService.updateErrand(errandId, patch);
     return { data: res.data, message: 'success' };
-  }
-
-  @Delete('/errands/:errandId')
-  @OpenAPI({ summary: 'Delete an errand' })
-  @UseBefore(authMiddleware)
-  async deleteErrand(@Param('errandId') errandId: string) {
-    await this.errandService.deleteErrand(errandId);
-    return { data: null, message: 'success' };
   }
 
   @Get('/errands/:errandId/attachments')
@@ -151,14 +129,5 @@ export class ErrandController {
   async getStakeholders(@Param('errandId') errandId: string) {
     const res = await this.stakeholderService.readStakeholders(errandId);
     return { data: res.data, message: 'success' };
-  }
-
-  @Post('/errands/:errandId/stakeholders')
-  @HttpCode(201)
-  @OpenAPI({ summary: 'Add a stakeholder to an errand' })
-  @UseBefore(authMiddleware, validationMiddleware(CreateStakeholderDto, 'body'))
-  async createStakeholder(@Param('errandId') errandId: string, @Body() stakeholder: CreateStakeholderDto) {
-    await this.stakeholderService.createStakeholder(errandId, Object.assign({}, stakeholder, { role: DEFAULT_STAKEHOLDER_ROLE }));
-    return { data: null, message: 'success' };
   }
 }
