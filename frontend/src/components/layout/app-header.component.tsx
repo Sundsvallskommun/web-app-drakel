@@ -1,77 +1,60 @@
 'use client';
 
-import { ErrandStatusLabel } from '@components/support-errands/errand-status-label.component';
 import { useUserStore } from '@services/user-service/user-service';
-import { Divider, Logo, UserMenu } from '@sk-web-gui/react';
+import { Button, Logo, UserMenu } from '@sk-web-gui/react';
 import { getInitials } from '@utils/get-initials';
-import { stakeholderRoleLabel } from '@utils/stakeholder-role';
+import { ExternalLink } from 'lucide-react';
 import NextLink from 'next/link';
 import { useParams } from 'next/navigation';
 import { useShallow } from 'zustand/react/shallow';
 
-import { useErrandHeader } from './errand-header-context';
+import { HeaderNotifications } from './header-notifications.component';
 import { userMenuGroups } from './user-menu-groups';
 
-const EMPTY_ERRAND_TITLE = 'Empty errand';
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
-/** Slim top header for the errand/register pages (draken look): brand, user menu, "new errand".
- *  On an errand page it shows the errand's status + title instead of the full brand logo. */
+/** Dark top header for the errand/register pages: service logo, "Nytt ärende", notifications and user menu. */
 export const AppHeader = () => {
   const user = useUserStore(useShallow((state) => state.user));
-  const { errand } = useErrandHeader();
   const { locale } = useParams<{ locale: string }>();
   const appName = process.env.NEXT_PUBLIC_APP_NAME ?? 'Drakel';
 
   return (
-    <nav className="shrink-0 bg-background-content border-b-1 border-divider px-24 md:px-40 py-8 flex items-center justify-between gap-16">
-      {errand ?
-        <div className="flex items-center gap-16 min-w-0">
-          <NextLink href={`/${locale}/oversikt`} className="no-underline shrink-0" aria-label="Till översikten">
-            <Logo variant="symbol" className="h-32" />
-          </NextLink>
-          <ErrandStatusLabel status={errand.status} />
-          <span className="flex min-w-0 flex-col">
-            <span className="font-bold truncate">
-              {errand.title && errand.title !== EMPTY_ERRAND_TITLE ? errand.title : 'Nytt ärende'}
-            </span>
-            {errand.errandNumber ?
-              <span className="text-small text-secondary truncate">{errand.errandNumber}</span>
-            : null}
-          </span>
-          {errand.parties?.length ?
-            <>
-              <Divider orientation="vertical" className="h-32" />
-              <div className="flex items-center gap-16 min-w-0">
-                {errand.parties.map((party, index) => (
-                  <span key={party.personalNumber ?? index} className="flex min-w-0 flex-col leading-tight">
-                    <span className="text-small truncate">
-                      <span className="text-secondary">{stakeholderRoleLabel(party.role) || 'Part'}: </span>
-                      {party.name}
-                    </span>
-                    {party.personalNumber ?
-                      <span className="text-small text-secondary">{party.personalNumber}</span>
-                    : null}
-                  </span>
-                ))}
-              </div>
-            </>
-          : null}
-        </div>
-      : <NextLink href={`/${locale}/oversikt`} className="no-underline" aria-label="Till översikten">
-          <Logo variant="service" title="Drakel" subtitle={appName} />
-        </NextLink>
-      }
+    <header className="shrink-0 bg-gray-600 border-b-1 border-divider px-24 py-12 flex items-center justify-between gap-40">
+      <NextLink href={`/${locale}/oversikt`} className="no-underline min-w-0" aria-label="Till översikten">
+        <Logo variant="service" inverted title="Drakel" subtitle={appName} />
+      </NextLink>
 
-      <div className="flex items-center gap-16 shrink-0">
-        <UserMenu
-          data-cy="usermenu"
-          initials={getInitials(user.name)}
-          menuTitle={`${user.name} (${user.username})`}
-          menuGroups={userMenuGroups}
-          buttonRounded={false}
-          buttonSize="sm"
-        />
+      <div className="flex items-center gap-24 shrink-0">
+        {/* Registrering skapar ett utkast direkt, så det öppnas i en ny flik för att inte lämna pågående ärende. */}
+        <Button
+          color="vattjom"
+          inverted
+          rightIcon={<ExternalLink />}
+          onClick={() => {
+            window.open(`${basePath}/${locale}/registrera`, '_blank', 'noopener');
+          }}
+        >
+          Nytt ärende
+        </Button>
+
+        <HeaderNotifications />
+
+        <div className="flex items-center gap-12">
+          <span className="hidden md:flex flex-col text-light-primary leading-tight">
+            <span className="font-bold">{user.name}</span>
+            <span className="text-small text-light-secondary">{user.username}</span>
+          </span>
+          <UserMenu
+            data-cy="usermenu"
+            initials={getInitials(user.name)}
+            menuTitle={`${user.name} (${user.username})`}
+            menuGroups={userMenuGroups}
+            buttonRounded={false}
+            buttonSize="sm"
+          />
+        </div>
       </div>
-    </nav>
+    </header>
   );
 };

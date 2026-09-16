@@ -16,7 +16,7 @@ const SECTION_LABELS: Record<SectionKey, string> = {
 };
 
 /**
- * "Besluta och utbetala" action for the sidebar. On confirm it sends the beslut to the applicant through
+ * "Besluta och utbetala" action for the administration bar. On confirm it sends the beslut to the applicant through
  * the chosen Messaging channels (Mina sidor / digital brevlåda / brev) — which renders the beslut PDF and
  * saves it as a DECISION attachment — and then closes the errand (status CLOSED). The digital-brevlåda
  * channel is only offered when the applicant has a reachable mailbox. When `checkApprovals` is set (renewal
@@ -88,25 +88,25 @@ export const ErrandAvsluta: FC<{ errandId: string; onClosed: () => void; checkAp
       return;
     }
     setConfirmOpen(false);
-    // Closed; surface any channels that couldn't be reached (shown in the sidebar above the button).
+    // Closed; surface any channels that couldn't be reached (shown next to the button).
     const failedChannels = sendRes.data ?? [];
     setError(failedChannels.length > 0 ? `Beslutet kunde inte skickas till: ${failedChannels.join(', ')}.` : undefined);
     onClosed();
   };
 
   return (
-    <div className="flex flex-col gap-8">
-      {error && <p className="text-error-surface-primary m-0 text-small">{error}</p>}
+    <div className="flex items-center gap-8">
       <Button
         color="vattjom"
         variant="primary"
-        className="w-full"
+        size="sm"
         loading={checking}
         loadingText="Förbereder…"
         onClick={() => void openConfirm()}
       >
         Besluta och utbetala
       </Button>
+      {error && <p className="text-error-surface-primary m-0 text-small">{error}</p>}
 
       <Modal
         show={confirmOpen}

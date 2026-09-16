@@ -41,8 +41,7 @@ export const ErrandWarnings: FC<ErrandWarningsProps> = ({ errandId, warnings, is
 
   return (
     <div className="flex flex-col gap-16">
-      <div className="flex items-center justify-between gap-12 flex-wrap">
-        <h2 className="text-h4-sm md:text-h4-md m-0">Varningar</h2>
+      <div className="flex items-center justify-end gap-12 flex-wrap">
         <Checkbox
           checked={showCurrentOnly}
           onChange={(event) => {
@@ -95,7 +94,9 @@ export const ErrandWarnings: FC<ErrandWarningsProps> = ({ errandId, warnings, is
                     color="vattjom"
                     loading={busyId === warning.id}
                     loadingText="Kvitterar…"
-                    onClick={() => void runStatusChange(warning.id, () => acknowledgeWarning(errandId, warning.id ?? ''))}
+                    onClick={() =>
+                      void runStatusChange(warning.id, () => acknowledgeWarning(errandId, warning.id ?? ''))
+                    }
                   >
                     Kvittera
                   </Button>

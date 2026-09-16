@@ -3,6 +3,7 @@
 import { Lookup } from '@data-contracts/backend/data-contracts';
 import { Administrator } from '@services/administrator-service';
 import { Button, Checkbox, Chip, SearchField } from '@sk-web-gui/react';
+import { PRIORITY_OPTIONS } from '@utils/errand-priority';
 import { ListFilter } from 'lucide-react';
 import { FC, useState } from 'react';
 
@@ -16,12 +17,6 @@ export interface ErrandFilters {
 }
 
 export const emptyFilters: ErrandFilters = { status: [], priority: [], assignee: [] };
-
-const PRIORITY_OPTIONS: FilterOption[] = [
-  { value: 'LOW', label: 'Låg' },
-  { value: 'MEDIUM', label: 'Medel' },
-  { value: 'HIGH', label: 'Hög' },
-];
 
 interface ErrandsFilterProps {
   query: string;
