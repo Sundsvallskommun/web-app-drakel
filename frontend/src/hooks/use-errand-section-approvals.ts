@@ -6,7 +6,9 @@ import {
   SectionKey,
   setSectionApproval,
 } from '@services/section-approval-service';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+
+import { useServiceQuery } from './use-service-query';
 
 interface UseErrandSectionApprovalsResult {
   approvals: SectionApprovals;
@@ -17,30 +19,19 @@ interface UseErrandSectionApprovalsResult {
   refresh: () => void;
 }
 
+const NO_APPROVALS: SectionApprovals = {};
+
 /**
  * Loads and mutates the approval state of an errand's three EB sections. Instantiated once at the
- * errand-detail level so the per-section checkboxes and the sidebar Avsluta button share one source.
+ * errand-detail level so the per-section checkboxes and the "Besluta och utbetala" action share one source.
  */
 export const useErrandSectionApprovals = (errandId: string, enabled = true): UseErrandSectionApprovalsResult => {
-  const [approvals, setApprovals] = useState<SectionApprovals>({});
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [pendingSection, setPendingSection] = useState<SectionKey>();
-
-  const load = useCallback(() => {
-    if (!errandId || !enabled) {
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(true);
-    void getSectionApprovals(errandId).then((res) => {
-      setApprovals(res.data ?? {});
-      setIsLoading(false);
-    });
-  }, [errandId, enabled]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const fetchApprovals = useCallback(() => getSectionApprovals(errandId), [errandId]);
+  const { data, isLoading, refresh } = useServiceQuery(fetchApprovals, {
+    initialData: NO_APPROVALS,
+    enabled: enabled && !!errandId,
+  });
 
   const setApproval = useCallback(
     async (section: SectionKey, approved: boolean): Promise<boolean> => {
@@ -48,12 +39,12 @@ export const useErrandSectionApprovals = (errandId: string, enabled = true): Use
       const res = await setSectionApproval(errandId, section, approved);
       setPendingSection(undefined);
       if (!res.error) {
-        load();
+        refresh();
       }
       return !res.error;
     },
-    [errandId, load]
+    [errandId, refresh]
   );
 
-  return { approvals, isLoading, pendingSection, setApproval, refresh: load };
+  return { approvals: data, isLoading, pendingSection, setApproval, refresh };
 };

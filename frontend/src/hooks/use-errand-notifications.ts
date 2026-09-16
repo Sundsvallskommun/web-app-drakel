@@ -1,40 +1,31 @@
 'use client';
 
 import { acknowledgeNotification, ErrandNotification, getNotifications } from '@services/notification-service';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 
-export interface UseErrandNotificationsResult {
+import { ServiceError, useServiceQuery } from './use-service-query';
+
+interface UseErrandNotificationsResult {
   notifications: ErrandNotification[];
   unacknowledgedCount: number;
   isLoading: boolean;
-  error?: number | string | boolean;
+  error?: ServiceError;
   refresh: () => void;
   acknowledge: (notification: ErrandNotification) => Promise<void>;
 }
 
+const NO_NOTIFICATIONS: ErrandNotification[] = [];
+
 /** Loads the current handläggare's notifications and exposes a per-notification acknowledge. */
 export const useErrandNotifications = (): UseErrandNotificationsResult => {
-  const [notifications, setNotifications] = useState<ErrandNotification[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<number | string | boolean>();
-
-  const load = useCallback(() => {
-    setIsLoading(true);
-    void getNotifications().then((res) => {
-      if (res.error) {
-        setError(res.error);
-        setNotifications([]);
-      } else {
-        setError(undefined);
-        setNotifications(res.data ?? []);
-      }
-      setIsLoading(false);
-    });
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const {
+    data: notifications,
+    isLoading,
+    error,
+    refresh,
+  } = useServiceQuery(getNotifications, {
+    initialData: NO_NOTIFICATIONS,
+  });
 
   const acknowledge = useCallback(
     async (notification: ErrandNotification): Promise<void> => {
@@ -43,13 +34,13 @@ export const useErrandNotifications = (): UseErrandNotificationsResult => {
       }
       const res = await acknowledgeNotification(notification.errandId, notification.id, true);
       if (!res.error) {
-        load();
+        refresh();
       }
     },
-    [load]
+    [refresh]
   );
 
   const unacknowledgedCount = notifications.filter((notification) => !notification.acknowledged).length;
 
-  return { notifications, unacknowledgedCount, isLoading, error, refresh: load, acknowledge };
+  return { notifications, unacknowledgedCount, isLoading, error, refresh, acknowledge };
 };

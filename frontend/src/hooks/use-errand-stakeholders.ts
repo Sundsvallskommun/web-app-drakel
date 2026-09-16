@@ -2,41 +2,22 @@
 
 import { Stakeholder } from '@data-contracts/backend/data-contracts';
 import { getErrandStakeholders } from '@services/errand-service/errand-service';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
+
+import { ServiceError, useServiceQuery } from './use-service-query';
 
 interface UseErrandStakeholdersResult {
   stakeholders: Stakeholder[];
   isLoading: boolean;
-  error?: number | string | boolean;
+  error?: ServiceError;
   refresh: () => void;
 }
 
+const NO_STAKEHOLDERS: Stakeholder[] = [];
+
 /** Loads the stakeholders for an errand from the dedicated list endpoint. */
 export const useErrandStakeholders = (errandId: string): UseErrandStakeholdersResult => {
-  const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<number | string | boolean>();
-
-  const load = useCallback(() => {
-    if (!errandId) {
-      return;
-    }
-    setIsLoading(true);
-    void getErrandStakeholders(errandId).then((res) => {
-      if (res.error) {
-        setError(res.error);
-        setStakeholders([]);
-      } else {
-        setError(undefined);
-        setStakeholders(res.data ?? []);
-      }
-      setIsLoading(false);
-    });
-  }, [errandId]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  return { stakeholders, isLoading, error, refresh: load };
+  const fetchStakeholders = useCallback(() => getErrandStakeholders(errandId), [errandId]);
+  const { data, ...query } = useServiceQuery(fetchStakeholders, { initialData: NO_STAKEHOLDERS, ready: !!errandId });
+  return { stakeholders: data, ...query };
 };

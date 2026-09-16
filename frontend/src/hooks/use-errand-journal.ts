@@ -1,51 +1,26 @@
 'use client';
 
 import { getJournalEntries, getJournalTypes, JournalEntry, JournalEntryType } from '@services/journal-service';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
+
+import { ServiceError, useServiceQuery } from './use-service-query';
 
 interface UseErrandJournalResult {
   entries: JournalEntry[];
   types: JournalEntryType[];
   isLoading: boolean;
-  error?: number | string | boolean;
+  error?: ServiceError;
   refresh: () => void;
 }
 
+const NO_ENTRIES: JournalEntry[] = [];
+const NO_TYPES: JournalEntryType[] = [];
+
 /** Loads an errand's journalanteckningar and the selectable journal entry types. */
 export const useErrandJournal = (errandId: string): UseErrandJournalResult => {
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
-  const [types, setTypes] = useState<JournalEntryType[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<number | string | boolean>();
-
-  const load = useCallback(() => {
-    if (!errandId) {
-      return;
-    }
-    setIsLoading(true);
-    void getJournalEntries(errandId).then((res) => {
-      if (res.error) {
-        setError(res.error);
-        setEntries([]);
-      } else {
-        setError(undefined);
-        setEntries(res.data ?? []);
-      }
-      setIsLoading(false);
-    });
-  }, [errandId]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  useEffect(() => {
-    void getJournalTypes().then((res) => {
-      if (!res.error) {
-        setTypes(res.data ?? []);
-      }
-    });
-  }, []);
-
-  return { entries, types, isLoading, error, refresh: load };
+  const fetchEntries = useCallback(() => getJournalEntries(errandId), [errandId]);
+  const { data, ...query } = useServiceQuery(fetchEntries, { initialData: NO_ENTRIES, ready: !!errandId });
+  // The type list is a best-effort lookup: failing to load it just leaves the type picker empty.
+  const { data: types } = useServiceQuery(getJournalTypes, { initialData: NO_TYPES });
+  return { entries: data, types, ...query };
 };

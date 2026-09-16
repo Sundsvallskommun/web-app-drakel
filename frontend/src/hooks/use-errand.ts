@@ -2,41 +2,25 @@
 
 import { Errand } from '@data-contracts/backend/data-contracts';
 import { getErrand } from '@services/errand-service/errand-service';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
+
+import { ServiceError, useServiceQuery } from './use-service-query';
 
 interface UseErrandResult {
   errand?: Errand;
   isLoading: boolean;
-  error?: number | string | boolean;
+  error?: ServiceError;
   refresh: () => void;
 }
 
+const NO_ERRAND: Errand | undefined = undefined;
+
 /** Loads a single errand (including its embedded stakeholders) by id or errand number. */
 export const useErrand = (errandId: string): UseErrandResult => {
-  const [errand, setErrand] = useState<Errand>();
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<number | string | boolean>();
-
-  const load = useCallback(() => {
-    if (!errandId) {
-      return;
-    }
-    setIsLoading(true);
-    void getErrand(errandId).then((res) => {
-      if (res.error) {
-        setError(res.error);
-        setErrand(undefined);
-      } else {
-        setError(undefined);
-        setErrand(res.data);
-      }
-      setIsLoading(false);
-    });
-  }, [errandId]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  return { errand, isLoading, error, refresh: load };
+  const fetchErrand = useCallback(() => getErrand(errandId), [errandId]);
+  const { data, ...query } = useServiceQuery<Errand | undefined>(fetchErrand, {
+    initialData: NO_ERRAND,
+    ready: !!errandId,
+  });
+  return { errand: data, ...query };
 };

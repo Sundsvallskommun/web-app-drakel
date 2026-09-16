@@ -1,41 +1,25 @@
 'use client';
 
 import { getPaymentStatus, PaymentStatus } from '@services/payment-service';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
+
+import { ServiceError, useServiceQuery } from './use-service-query';
 
 interface UseErrandPaymentResult {
   status?: PaymentStatus;
   isLoading: boolean;
-  error?: number | string | boolean;
+  error?: ServiceError;
   refresh: () => void;
 }
 
+const NO_STATUS: PaymentStatus | undefined = undefined;
+
 /** Loads the Lifecare utbetalning status for an errand. */
 export const useErrandPayment = (errandId: string): UseErrandPaymentResult => {
-  const [status, setStatus] = useState<PaymentStatus>();
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<number | string | boolean>();
-
-  const load = useCallback(() => {
-    if (!errandId) {
-      return;
-    }
-    setIsLoading(true);
-    void getPaymentStatus(errandId).then((res) => {
-      if (res.error) {
-        setError(res.error);
-        setStatus(undefined);
-      } else {
-        setError(undefined);
-        setStatus(res.data ?? undefined);
-      }
-      setIsLoading(false);
-    });
-  }, [errandId]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  return { status, isLoading, error, refresh: load };
+  const fetchStatus = useCallback(() => getPaymentStatus(errandId), [errandId]);
+  const { data, ...query } = useServiceQuery<PaymentStatus | undefined>(fetchStatus, {
+    initialData: NO_STATUS,
+    ready: !!errandId,
+  });
+  return { status: data, ...query };
 };

@@ -2,26 +2,13 @@
 
 import { Lookup } from '@data-contracts/backend/data-contracts';
 import { getStatuses } from '@services/metadata-service/metadata-service';
-import { useEffect, useState } from 'react';
+
+import { useServiceQuery } from './use-service-query';
+
+const NO_STATUSES: Lookup[] = [];
 
 /** Loads the STATUS metadata lookups used by the overview status filter. */
 export const useStatuses = (): { statuses: Lookup[]; isLoading: boolean } => {
-  const [statuses, setStatuses] = useState<Lookup[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    let active = true;
-    void getStatuses().then((res) => {
-      if (!active) {
-        return;
-      }
-      setStatuses(res.error ? [] : (res.data ?? []));
-      setIsLoading(false);
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  return { statuses, isLoading };
+  const { data, isLoading } = useServiceQuery(getStatuses, { initialData: NO_STATUSES });
+  return { statuses: data, isLoading };
 };

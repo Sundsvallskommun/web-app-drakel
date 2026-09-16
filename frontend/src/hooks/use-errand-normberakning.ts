@@ -1,42 +1,29 @@
 'use client';
 
 import { getNormberakningDraft, NormberakningDraft } from '@services/normberakning-service';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
+
+import { ServiceError, useServiceQuery } from './use-service-query';
 
 interface UseErrandNormberakningResult {
   draft?: NormberakningDraft;
   isLoading: boolean;
-  error?: number | string | boolean;
+  error?: ServiceError;
   refresh: () => void;
 }
 
-/** Loads the draft normberäkning (income rows) for an errand. */
+const NO_DRAFT: NormberakningDraft | undefined = undefined;
+
+/**
+ * Loads the draft normberäkning (income rows) for an errand. A 404 means no draft exists yet for the errand,
+ * which is a normal state rather than an error.
+ */
 export const useErrandNormberakning = (errandId: string): UseErrandNormberakningResult => {
-  const [draft, setDraft] = useState<NormberakningDraft>();
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<number | string | boolean>();
-
-  const load = useCallback(() => {
-    if (!errandId) {
-      return;
-    }
-    setIsLoading(true);
-    void getNormberakningDraft(errandId).then((res) => {
-      // A 404 means no draft normberäkning exists yet for this errand — a normal state, not an error.
-      if (res.error && res.error !== 404) {
-        setError(res.error);
-        setDraft(undefined);
-      } else {
-        setError(undefined);
-        setDraft(res.data ?? undefined);
-      }
-      setIsLoading(false);
-    });
-  }, [errandId]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  return { draft, isLoading, error, refresh: load };
+  const fetchDraft = useCallback(() => getNormberakningDraft(errandId), [errandId]);
+  const { data, ...query } = useServiceQuery<NormberakningDraft | undefined>(fetchDraft, {
+    initialData: NO_DRAFT,
+    ready: !!errandId,
+    notFoundAsEmpty: true,
+  });
+  return { draft: data, ...query };
 };
