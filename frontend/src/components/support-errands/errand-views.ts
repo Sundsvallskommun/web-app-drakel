@@ -1,6 +1,6 @@
 /**
  * The status "views" in the overview sidebar — a small fixed set that replaces the per-status list:
- * Alla (no status filter), Nya (RECEIVED), Öppna (everything except CLOSED) and Avslutade (CLOSED).
+ * Alla (no status filter), Nya (RECEIVED), Öppna (everything except RECEIVED and CLOSED) and Avslutade (CLOSED).
  */
 export type ErrandView = 'all' | 'new' | 'open' | 'closed';
 
@@ -16,6 +16,6 @@ export const ERRAND_VIEWS: ErrandViewItem[] = [
   { key: 'closed', label: 'Avslutade ärenden' },
 ];
 
-/** "Nya ärenden" filters on this status; "Avslutade ärenden" on CLOSED; "Öppna ärenden" is everything but CLOSED. */
+/** "Nya ärenden" filters on this status; "Avslutade ärenden" on CLOSED; "Öppna ärenden" is everything but these two. */
 export const NEW_ERRAND_STATUS = 'RECEIVED';
 export const CLOSED_ERRAND_STATUS = 'CLOSED';

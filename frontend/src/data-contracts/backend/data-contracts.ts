@@ -302,6 +302,7 @@ export interface Errand {
   modified?: string;
   touched?: string;
   applicantName?: string;
+  coApplicantName?: string;
 }
 
 export interface PagingAndSortingMetaData {

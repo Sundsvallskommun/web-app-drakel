@@ -1,96 +1,84 @@
 'use client';
 
-import { HoverTooltip } from '@components/common/hover-tooltip.component';
-import { Badge, Button, cx } from '@sk-web-gui/react';
-import { ChevronsLeft, ChevronsRight, type LucideIcon } from 'lucide-react';
-import { FC, ReactNode, useState } from 'react';
+import { Badge, Button, Divider } from '@sk-web-gui/react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { FC, Fragment, ReactNode } from 'react';
 
 export interface SidebarSection {
   key: string;
   label: string;
-  icon: LucideIcon;
-  /** Optional count shown as a badge on the section's icon (e.g. number of notes). */
+  /** Optional count shown as a badge next to the section title (e.g. number of notes). */
   badge?: number;
   component: ReactNode;
 }
 
+const SidebarAccordionItem: FC<{ section: SidebarSection; open: boolean; onToggle: () => void }> = ({
+  section,
+  open,
+  onToggle,
+}) => {
+  const contentId = `errand-sidebar-${section.key}`;
+  return (
+    <div className="px-20 flex flex-col gap-24">
+      <div className="flex items-center gap-16 py-4">
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={contentId}
+          onClick={onToggle}
+          className="flex flex-1 items-center gap-8 min-w-0 text-left"
+        >
+          <h2 className="text-h4-sm m-0 truncate">{section.label}</h2>
+          {section.badge !== undefined ?
+            <Badge color="tertiary" inverted size="sm" counter={section.badge > 99 ? '99+' : section.badge} />
+          : null}
+        </button>
+        <Button
+          variant="tertiary"
+          showBackground={false}
+          size="sm"
+          iconButton
+          aria-label={open ? `Stäng ${section.label}` : `Öppna ${section.label}`}
+          aria-expanded={open}
+          aria-controls={contentId}
+          leftIcon={open ? <ChevronUp /> : <ChevronDown />}
+          onClick={onToggle}
+        />
+      </div>
+      {open ?
+        <div id={contentId}>{section.component}</div>
+      : null}
+    </div>
+  );
+};
+
 /**
- * Collapsible right-edge sidebar for the errand view (draken look): a vertical icon rail selects a
- * section, whose panel is shown alongside. Built from @sk-web-gui/react, with no global-store
- * coupling — sections are passed in.
+ * Right-hand column of the errand view: a stack of accordion sections (Varningar, Anteckningar, …). The open
+ * sections are controlled by the parent so it can lazy-load each section's data only once it's opened.
  */
 export const ErrandSidebar: FC<{
   sections: SidebarSection[];
-  /** The active section key (controlled by the parent so it can lazy-load that section's data). */
-  selected: string;
-  onSelect: (key: string) => void;
-}> = ({ sections, selected, onSelect }) => {
-  const [open, setOpen] = useState<boolean>(true);
-  const active = sections.find((section) => section.key === selected) ?? sections[0];
-
-  return (
-    <aside
-      data-cy="errand-sidebar"
-      className={cx(
-        'transition-all ease-in-out duration-150 flex bg-background-content h-full shrink-0',
-        open ? 'w-full sm:w-[40rem] sm:min-w-[40rem]' : 'w-[5.6rem]'
-      )}
-    >
-      <div
-        role="menubar"
-        aria-orientation="vertical"
-        className="h-full flex flex-col justify-between border-1 border-y-0 border-divider min-w-[5.6rem]"
-      >
-        <div className="flex flex-col pt-18 lg:pt-32 gap-12 pb-12 items-center w-full px-8">
-          {sections.map((section) => {
-            const Icon = section.icon;
-            return (
-              <HoverTooltip key={section.key} label={section.label} position="left">
-                <Button
-                  role="menuitem"
-                  aria-label={section.label}
-                  onClick={() => {
-                    onSelect(section.key);
-                    setOpen(true);
-                  }}
-                  color="primary"
-                  inverted={selected !== section.key}
-                  iconButton
-                  className="relative"
-                  leftIcon={<Icon />}
-                >
-                  {section.badge ?
-                    <Badge
-                      className="absolute -top-10 -right-10"
-                      rounded
-                      inverted
-                      color="vattjom"
-                      size="sm"
-                      counter={section.badge > 99 ? '99+' : section.badge}
-                    />
-                  : null}
-                </Button>
-              </HoverTooltip>
-            );
-          })}
-        </div>
-        <div className="flex pt-24 w-full justify-center pb-12">
-          <Button
-            color="primary"
-            variant="tertiary"
-            aria-label={open ? 'Stäng sidomeny' : 'Öppna sidomeny'}
-            iconButton
-            leftIcon={open ? <ChevronsRight /> : <ChevronsLeft />}
-            onClick={() => {
-              setOpen(!open);
-            }}
-          />
-        </div>
-      </div>
-
-      <div className={cx('overflow-x-hidden overflow-y-auto', open ? 'w-full px-20' : 'w-0 px-0')}>
-        <div className="h-fit w-full py-32">{open ? active?.component : null}</div>
-      </div>
-    </aside>
-  );
-};
+  openKeys: string[];
+  onToggle: (key: string) => void;
+}> = ({ sections, openKeys, onToggle }) => (
+  <aside
+    data-cy="errand-sidebar"
+    className="shrink-0 w-full lg:w-[36rem] xl:w-[44rem] h-full overflow-y-auto bg-background-content border-l-1 border-divider pt-24 pb-32 flex flex-col gap-24"
+  >
+    {sections.map((section, index) => (
+      <Fragment key={section.key}>
+        {index > 0 ?
+          // sk Divider grows by default (flex-1), which would stretch it in this flex column.
+          <Divider className="grow-0" />
+        : null}
+        <SidebarAccordionItem
+          section={section}
+          open={openKeys.includes(section.key)}
+          onToggle={() => {
+            onToggle(section.key);
+          }}
+        />
+      </Fragment>
+    ))}
+  </aside>
+);

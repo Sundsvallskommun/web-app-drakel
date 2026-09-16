@@ -58,8 +58,6 @@ export const ErrandEvents: FC<{ errandId: string }> = ({ errandId }) => {
 
   return (
     <div className="flex flex-col gap-12">
-      <h2 className="text-h4-sm md:text-h4-md m-0">Händelselogg</h2>
-
       <div className="flex flex-col gap-8">
         <Select
           size="sm"
@@ -113,7 +111,9 @@ export const ErrandEvents: FC<{ errandId: string }> = ({ errandId }) => {
                     <span className="text-small text-dark-secondary shrink-0">{sourceLabel(event.source)}</span>
                   : null}
                 </div>
-                {event.target ? <span className="text-small break-words">{event.target}</span> : null}
+                {event.target ?
+                  <span className="text-small break-words">{event.target}</span>
+                : null}
                 <span className="text-small text-dark-secondary break-words">
                   {actorLabel(event)} · {formatWhen(event.created)}
                 </span>

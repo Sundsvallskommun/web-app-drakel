@@ -2,11 +2,12 @@
 
 import { useErrandMessages } from '@hooks/use-errand-messages';
 import { Message } from '@services/errand-service/errand-service';
-import { Button, Divider, Spinner } from '@sk-web-gui/react';
-import dayjs from 'dayjs';
+import { Button, Spinner, Tabs } from '@sk-web-gui/react';
+import { getInitials } from '@utils/get-initials';
 import { ArrowDown, MessageSquare } from 'lucide-react';
-import { FC, UIEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { FC, ReactNode, UIEvent, useEffect, useMemo, useRef, useState } from 'react';
 
+import { ConversationHeader } from './conversation-header.component';
 import { ErrandMessage } from './errand-message.component';
 import { ErrandNewMessage } from './errand-new-message.component';
 
@@ -14,23 +15,33 @@ import { ErrandNewMessage } from './errand-new-message.component';
 const PAGE_SIZE = 24;
 // How long a jumped-to message stays highlighted after "Hoppa till".
 const HIGHLIGHT_DURATION_MS = 2000;
+const MESSAGES_TAB = 0;
+const SHARED_ATTACHMENTS_TAB = 1;
 
-const formatDateDivider = (created?: string): string => {
-  if (!created) {
-    return 'Utan datum';
-  }
-  const date = dayjs(created);
-  if (date.isSame(dayjs(), 'day')) {
-    return 'Idag';
-  }
-  if (date.isSame(dayjs().subtract(1, 'day'), 'day')) {
-    return 'Igår';
-  }
-  return date.format('YYYY-MM-DD');
-};
+interface ErrandMessagesProps {
+  errandId: string;
+  /** The applicant(s) the conversation is held with; shown as the conversation's counterpart. */
+  applicantNames?: string[];
+  errandNumber?: string;
+  /** Content of the "Delade bilagor" tab: the files shared in the conversation. */
+  sharedAttachments: ReactNode;
+}
 
-export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
+/**
+ * The errand's conversation. An errand has exactly one conversation (handläggare ↔ sökande) in one channel, so
+ * there is no conversation list: the header names the counterpart, and its tabs switch between the thread
+ * (with the composer) and the files shared in it.
+ */
+export const ErrandMessages: FC<ErrandMessagesProps> = ({
+  errandId,
+  applicantNames = [],
+  errandNumber,
+  sharedAttachments,
+}) => {
   const { messages, isLoading, error, refresh } = useErrandMessages(errandId);
+  const counterpartName = applicantNames.length ? applicantNames.join(', ') : 'Sökande';
+  const counterpartInitials = getInitials(applicantNames[0] ?? 'Sökande');
+  const [activeTab, setActiveTab] = useState<number>(MESSAGES_TAB);
   const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
   const [showScrollButton, setShowScrollButton] = useState<boolean>(false);
   const [replyTo, setReplyTo] = useState<Message>();
@@ -51,7 +62,6 @@ export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
 
   const visible = messages.slice(Math.max(messages.length - visibleCount, 0));
   const hasMore = visibleCount < messages.length;
-  const latestMessageId = messages.at(-1)?.id;
 
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     const scrollArea = scrollAreaRef.current;
@@ -108,42 +118,28 @@ export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
     setReplyTo(undefined);
   };
 
-  return (
-    <div className="rounded-16 border-1 border-divider bg-background-content flex flex-col overflow-hidden">
-      <div className="border-b-1 border-divider px-20 py-16 desktop:px-32">
-        <div className="flex flex-col gap-8 desktop:flex-row desktop:items-center desktop:justify-between">
-          <div>
-            <h2 className="text-large font-bold m-0">Meddelanden</h2>
-            <p className="text-small text-secondary m-0">
-              {messages.length ?
-                `${messages.length} ${messages.length === 1 ? 'meddelande' : 'meddelanden'}`
-              : 'Inga meddelanden'}
-            </p>
-          </div>
-          <span className="text-small text-secondary">Äldst överst, senaste längst ned</span>
-        </div>
-      </div>
-
-      <div className="relative min-h-[260px] bg-background-100">
+  const thread = (
+    <>
+      <div className="relative flex min-h-[26rem] flex-1 flex-col">
         {isLoading ?
-          <div className="min-h-[260px] flex items-center justify-center">
+          <div className="flex flex-1 items-center justify-center">
             <Spinner size={3} />
           </div>
         : error ?
-          <div className="min-h-[260px] flex items-center justify-center px-20 text-center">
+          <div className="flex flex-1 items-center justify-center px-20 text-center">
             <p className="m-0">Det gick inte att hämta meddelanden ({String(error)})</p>
           </div>
         : messages.length ?
           <div
             ref={scrollAreaRef}
-            className="max-h-[min(62vh,600px)] overflow-y-auto px-16 py-20 desktop:px-32"
+            className="max-h-[62vh] flex-1 overflow-y-auto px-20 pt-40 pb-24 md:px-40 desktop:max-h-none desktop:basis-0"
             onScroll={updateScrollButton}
             role="log"
             aria-label="Ärendemeddelanden"
             aria-live="polite"
           >
             {hasMore ?
-              <div className="flex justify-center pb-16">
+              <div className="flex justify-center pb-24">
                 <Button
                   size="sm"
                   variant="secondary"
@@ -155,28 +151,16 @@ export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
                 </Button>
               </div>
             : null}
-            <ul className="flex flex-col gap-y-16">
+            <ul className="m-0 p-0 list-none flex flex-col gap-40">
               {visible.map((message, index) => (
                 <li
                   id={message.id ? `message-${message.id}` : undefined}
                   key={message.id ?? index}
-                  className="flex flex-col gap-y-12 scroll-mt-16"
+                  className="scroll-mt-16"
                 >
-                  {(
-                    index === 0 || formatDateDivider(message.created) !== formatDateDivider(visible[index - 1]?.created)
-                  ) ?
-                    <div className="flex items-center gap-12">
-                      <Divider className="m-0 grow" />
-                      <span className="text-small text-secondary whitespace-nowrap">
-                        {formatDateDivider(message.created)}
-                      </span>
-                      <Divider className="m-0 grow" />
-                    </div>
-                  : null}
                   <ErrandMessage
                     message={message}
                     errandId={errandId}
-                    isLatest={message.id === latestMessageId}
                     isHighlighted={message.id === highlightId}
                     repliedMessage={message.inReplyToId ? messagesById.get(message.inReplyToId) : undefined}
                     onReply={setReplyTo}
@@ -186,10 +170,10 @@ export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
               ))}
             </ul>
           </div>
-        : <div className="min-h-[260px] flex flex-col items-center justify-center gap-12 text-center text-secondary px-20">
+        : <div className="flex flex-1 flex-col items-center justify-center gap-12 px-20 text-center text-dark-secondary">
             <MessageSquare size={42} />
             <div>
-              <p className="font-bold text-body m-0">Inga meddelanden än</p>
+              <p className="m-0 font-bold">Inga meddelanden än</p>
               <p className="m-0 text-small">Skriv ett meddelande nedan för att starta dialogen.</p>
             </div>
           </div>
@@ -209,7 +193,7 @@ export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
         : null}
       </div>
 
-      <div className="border-t-1 border-divider bg-background-content px-20 py-16 desktop:px-32">
+      <div className="px-20 py-16 md:px-40">
         <ErrandNewMessage
           errandId={errandId}
           replyTo={replyTo}
@@ -219,6 +203,39 @@ export const ErrandMessages: FC<{ errandId: string }> = ({ errandId }) => {
           onSent={handleSent}
         />
       </div>
-    </div>
+    </>
+  );
+
+  return (
+    // The conversation fills the errand's content card: header with the counterpart and the Meddelanden /
+    // Delade bilagor tabs, then the active tab's content.
+    <section
+      className="flex min-h-[52rem] flex-col desktop:h-[min(85vh,89.5rem)]"
+      aria-label={`Konversation med ${counterpartName}`}
+    >
+      <ConversationHeader name={counterpartName} initials={counterpartInitials} errandNumber={errandNumber} />
+
+      <Tabs
+        size="sm"
+        className="flex min-h-0 flex-1 flex-col"
+        tabslistClassName="px-20 md:pl-40 md:pr-16 border-b-1 border-divider"
+        panelsClassName="flex min-h-0 flex-1 flex-col"
+        current={activeTab}
+        onTabChange={setActiveTab}
+      >
+        <Tabs.Item>
+          <Tabs.Button>Meddelanden</Tabs.Button>
+          <Tabs.Content className="flex min-h-0 flex-1 flex-col">
+            {activeTab === MESSAGES_TAB ? thread : null}
+          </Tabs.Content>
+        </Tabs.Item>
+        <Tabs.Item>
+          <Tabs.Button>Delade bilagor</Tabs.Button>
+          <Tabs.Content className="min-h-0 flex-1 overflow-y-auto px-20 py-40 md:px-40">
+            {activeTab === SHARED_ATTACHMENTS_TAB ? sharedAttachments : null}
+          </Tabs.Content>
+        </Tabs.Item>
+      </Tabs>
+    </section>
   );
 };

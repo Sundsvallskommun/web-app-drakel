@@ -75,8 +75,6 @@ export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
 
   return (
     <div className="flex flex-col gap-16 h-full">
-      <h2 className="text-h4-sm md:text-h4-md m-0">Bevakningar</h2>
-
       {(error ?? loadError) && (
         <p className="text-error-surface-primary m-0">{error ?? 'Det gick inte att hämta bevakningar'}</p>
       )}

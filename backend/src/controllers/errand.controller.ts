@@ -2,6 +2,7 @@ import { CAREMANAGEMENT_TYPE_SLUG } from '@config';
 import { RequestWithUser } from '@interfaces/auth.interface';
 import authMiddleware from '@middlewares/auth.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
+import ApplicantNameService from '@services/applicant-name.service';
 import CaremanagementAttachmentService from '@services/caremanagement-attachment.service';
 import { UploadedFileLike } from '@services/caremanagement-attachment.service';
 import CaremanagementErrandService from '@services/caremanagement-errand.service';
@@ -38,6 +39,7 @@ export class ErrandController {
   private errandService = new CaremanagementErrandService();
   private attachmentService = new CaremanagementAttachmentService();
   private stakeholderService = new CaremanagementStakeholderService();
+  private applicantNameService = new ApplicantNameService();
 
   @Get('/errands')
   @OpenAPI({ summary: 'Search errands (paged)' })
@@ -45,7 +47,8 @@ export class ErrandController {
   @UseBefore(authMiddleware)
   async findErrands(@QueryParams() query: FindErrandsQueryDto) {
     const res = await this.errandService.findErrands(query);
-    return { data: res.data, message: 'success' };
+    const errands = await this.applicantNameService.addApplicantNames(res.data?.errands ?? []);
+    return { data: { ...res.data, errands }, message: 'success' };
   }
 
   @Get('/errands/:identifier')

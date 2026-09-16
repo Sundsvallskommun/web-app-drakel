@@ -2,25 +2,23 @@
 
 import { useErrandJournal } from '@hooks/use-errand-journal';
 import { deleteJournalEntry, JournalEntry, lockJournalEntry } from '@services/journal-service';
-import { Button, Modal, Spinner } from '@sk-web-gui/react';
-import { formatDateTime } from '@utils/date-time';
-import { looksLikeHtml, sanitizeHtml } from '@utils/sanitize-html';
+import { Button, Modal } from '@sk-web-gui/react';
 import { Lock, Pencil, Plus, Trash } from 'lucide-react';
 import { FC, useState } from 'react';
 
+import { ErrandSectionHeader } from './errand-section-header.component';
 import { JournalEntryCreateModal } from './journal-entry-create-modal.component';
 import { JournalEntryEditModal } from './journal-entry-edit-modal.component';
 import { LifecareSourceBadge } from './lifecare-source-badge.component';
-
-/** WORKING = editable arbetsanteckning, LOCKED = upprättad (read-only) handling. */
-const statusLabel = (status?: string): string => (status === 'LOCKED' ? 'Upprättad' : 'Arbetsanteckning');
+import { RecordAction, RecordActionsMenu } from './record-actions-menu.component';
+import { RecordBodyText } from './record-body-text.component';
+import { RecordCard, RecordCardDetail } from './record-card.component';
+import { RecordList } from './record-list.component';
+import { RecordStatusBadge } from './record-status-badge.component';
 
 /** Sort newest first by the documented date and time. */
 const byDateDesc = (a: JournalEntry, b: JournalEntry): number =>
   (b.entryDateTime ?? '').localeCompare(a.entryDateTime ?? '');
-
-const metaLine = (entry: JournalEntry): string =>
-  [entry.type, formatDateTime(entry.entryDateTime), entry.createdBy].filter(Boolean).join(' · ');
 
 /** "Journal" tab — the errand's journalanteckningar (Lifecare case journal): list + create/edit/lock/delete. */
 export const ErrandJournal: FC<{ errandId: string }> = ({ errandId }) => {
@@ -56,99 +54,81 @@ export const ErrandJournal: FC<{ errandId: string }> = ({ errandId }) => {
     }
   };
 
+  /** Only WORKING (arbetsanteckning) entries can be edited, locked or deleted. */
+  const actionsFor = (entry: JournalEntry): RecordAction[] =>
+    entry.status === 'LOCKED' ?
+      []
+    : [
+        {
+          label: 'Redigera',
+          icon: <Pencil />,
+          onClick: () => {
+            setEditEntry(entry);
+          },
+        },
+        {
+          label: 'Lås',
+          icon: <Lock />,
+          onClick: () => {
+            setLockTarget(entry);
+          },
+        },
+        { label: 'Ta bort', icon: <Trash />, onClick: () => void remove(entry.id) },
+      ];
+
   return (
     <div className="flex flex-col gap-24">
-      <div className="flex items-center justify-between gap-12 flex-wrap">
-        <h2 className="text-h3-sm md:text-h3-md m-0">Journal</h2>
-        <Button
-          color="vattjom"
-          variant="primary"
-          size="sm"
-          leftIcon={<Plus />}
-          onClick={() => {
-            setShowCreate(true);
-          }}
-        >
-          Ny journalanteckning
-        </Button>
-      </div>
+      <ErrandSectionHeader
+        title="Journal"
+        description="Journalanteckningar som dokumenterar handläggningen av ärendet. En arbetsanteckning kan redigeras tills den låses och blir en upprättad handling."
+        action={
+          <Button
+            color="vattjom"
+            variant="primary"
+            size="sm"
+            leftIcon={<Plus />}
+            onClick={() => {
+              setShowCreate(true);
+            }}
+          >
+            Ny journalanteckning
+          </Button>
+        }
+      />
 
       {error && <p className="text-error-surface-primary m-0">Det gick inte att hämta journalen ({String(error)})</p>}
 
-      {isLoading ?
-        <Spinner size={4} />
-      : entries.length === 0 ?
-        <p className="m-0 text-dark-secondary">Inga journalanteckningar.</p>
-      : <ul className="flex flex-col gap-12 m-0 p-0 list-none max-w-[56rem]">
-          {[...entries].sort(byDateDesc).map((entry, index) => {
-            const working = entry.status !== 'LOCKED';
-            return (
-              <li
-                key={entry.id ?? index}
-                className="rounded-12 border-1 border-divider bg-background-content p-16 flex flex-col gap-8"
-              >
-                <div className="flex items-start justify-between gap-12">
-                  <span className="font-bold break-words">{entry.heading}</span>
-                  <span className="flex shrink-0 items-center gap-8">
-                    <LifecareSourceBadge source={entry.source} />
-                    <span
-                      className={
-                        working ?
-                          'shrink-0 text-small rounded-8 px-8 py-2 bg-gray-100 text-gray-600'
-                        : 'shrink-0 text-small rounded-8 px-8 py-2 bg-success-background-100 text-success-surface-primary'
-                      }
-                    >
-                      {statusLabel(entry.status)}
-                    </span>
-                  </span>
-                </div>
-                <span className="text-small text-dark-secondary">{metaLine(entry)}</span>
-                {entry.text ?
-                  looksLikeHtml(entry.text) ?
-                    <div
-                      className="m-0 break-words [&_p]:m-0"
-                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.text) }}
-                    />
-                  : <p className="m-0 break-words whitespace-pre-wrap">{entry.text}</p>
-                : null}
-                {working ?
-                  <div className="flex gap-8 pt-4">
-                    <Button
-                      size="sm"
-                      variant="tertiary"
-                      leftIcon={<Pencil />}
-                      onClick={() => {
-                        setEditEntry(entry);
-                      }}
-                    >
-                      Redigera
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="tertiary"
-                      leftIcon={<Lock />}
-                      onClick={() => {
-                        setLockTarget(entry);
-                      }}
-                    >
-                      Lås
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="tertiary"
-                      leftIcon={<Trash />}
-                      loading={busyId === entry.id}
-                      onClick={() => void remove(entry.id)}
-                    >
-                      Ta bort
-                    </Button>
-                  </div>
-                : null}
-              </li>
-            );
-          })}
-        </ul>
-      }
+      <RecordList
+        title="Tillagda journalanteckningar"
+        isLoading={isLoading}
+        isEmpty={entries.length === 0}
+        emptyText="Inga journalanteckningar."
+      >
+        {[...entries].sort(byDateDesc).map((entry, index) => (
+          <RecordCard
+            key={entry.id ?? index}
+            heading={entry.heading}
+            dateTime={entry.entryDateTime}
+            badges={
+              <>
+                <LifecareSourceBadge source={entry.source} />
+                <RecordStatusBadge status={entry.status} workingLabel="Arbetsanteckning" />
+              </>
+            }
+            menu={
+              <RecordActionsMenu
+                recordLabel={entry.heading}
+                actions={actionsFor(entry)}
+                loading={!!entry.id && busyId === entry.id}
+              />
+            }
+          >
+            <RecordCardDetail label="Tillagd av" value={entry.createdBy} />
+            <RecordCardDetail label="Typ" value={entry.type} />
+            <RecordBodyText text={entry.text} />
+          </RecordCard>
+        ))}
+      </RecordList>
 
       {showCreate ?
         <JournalEntryCreateModal

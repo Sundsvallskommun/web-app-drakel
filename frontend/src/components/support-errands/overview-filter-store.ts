@@ -16,6 +16,8 @@ interface OverviewFilterState {
   query: string;
   filters: ErrandFilters;
   sort: OverviewSort | undefined;
+  /** Only errands assigned to the logged-in handläggare. */
+  onlyMine: boolean;
   onlyUnread: boolean;
   page: number;
   pageSize: number;
@@ -26,6 +28,7 @@ interface OverviewFilterActions {
   setQuery: (query: string) => void;
   setFilter: (key: keyof ErrandFilters, value: string[]) => void;
   clearFilters: () => void;
+  setOnlyMine: (onlyMine: boolean) => void;
   setOnlyUnread: (onlyUnread: boolean) => void;
   setPage: (page: number) => void;
   setPageSize: (pageSize: number) => void;
@@ -39,6 +42,7 @@ const initialState: OverviewFilterState = {
   query: '',
   filters: emptyFilters,
   sort: undefined,
+  onlyMine: false,
   onlyUnread: false,
   page: 0,
   pageSize: DEFAULT_PAGE_SIZE,
@@ -68,6 +72,9 @@ export const useOverviewFilterStore = create<OverviewFilterState & OverviewFilte
       },
       clearFilters: () => {
         set({ filters: emptyFilters, page: 0 });
+      },
+      setOnlyMine: (onlyMine) => {
+        set({ onlyMine, page: 0 });
       },
       setOnlyUnread: (onlyUnread) => {
         set({ onlyUnread, page: 0 });
@@ -99,6 +106,7 @@ export const useOverviewFilterStore = create<OverviewFilterState & OverviewFilte
         query: state.query,
         filters: state.filters,
         sort: state.sort,
+        onlyMine: state.onlyMine,
         onlyUnread: state.onlyUnread,
         pageSize: state.pageSize,
       }),

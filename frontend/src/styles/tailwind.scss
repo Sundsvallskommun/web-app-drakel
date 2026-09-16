@@ -17,3 +17,32 @@
   overflow-wrap: break-word;
   word-break: break-word;
 }
+
+// Message composer (Meddelanden): rounded box as in the design, a one-to-few-line writing area that grows with
+// the text, and room on the right for the "Skicka" button positioned over the editor.
+.message-editor {
+  .ql-toolbar.ql-snow {
+    border-top-left-radius: 1.2rem;
+    border-top-right-radius: 1.2rem;
+  }
+
+  .ql-container.ql-snow {
+    border-bottom-left-radius: 1.2rem;
+    border-bottom-right-radius: 1.2rem;
+  }
+
+  .ql-editor {
+    min-height: 5.6rem;
+    max-height: 30rem;
+    overflow-y: auto;
+    padding: 1.6rem 12rem 1.6rem 1.6rem;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .ql-editor.ql-blank::before {
+    font-style: normal;
+    left: 1.6rem;
+    right: 12rem;
+  }
+}

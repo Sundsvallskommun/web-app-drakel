@@ -1,12 +1,20 @@
 'use client';
 
-import { addNormRow, deleteNormRow, NormExpenseRow, restoreNormRow, TypeOption, updateNormRow } from '@services/normberakning-service';
+import {
+  addNormRow,
+  deleteNormRow,
+  NormExpenseRow,
+  restoreNormRow,
+  TypeOption,
+  updateNormRow,
+} from '@services/normberakning-service';
 import { Button, FormControl, FormLabel, Input, Select, Spinner, Table } from '@sk-web-gui/react';
 import { formatAmount } from '@utils/format-amount';
 import { RotateCcw, Trash2 } from 'lucide-react';
 import { FC, FocusEvent, useState } from 'react';
 
 import { NormberakningSummaBox } from './normberakning-summa-box.component';
+import { NormberakningTableBox } from './normberakning-table-box.component';
 
 const parseAmount = (value: string): number | undefined => {
   const normalized = value.trim().replace(',', '.');
@@ -29,6 +37,8 @@ const expenseLabel = (row: NormExpenseRow, typeLabels: Record<string, string>): 
 
 interface NormberakningExpensesProps {
   errandId: string;
+  /** The title of the grey table box (e.g. "Utgifter"). */
+  title: string;
   rows: NormExpenseRow[];
   sum?: number;
   summaLabel: string;
@@ -45,6 +55,7 @@ interface NormberakningExpensesProps {
  */
 export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
   errandId,
+  title,
   rows,
   sum,
   summaLabel,
@@ -85,12 +96,13 @@ export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-16 py-24">
-      <NormberakningSummaBox label={summaLabel} value={displayAmount(sum)} />
-
+    <NormberakningTableBox
+      title={title}
+      summary={<NormberakningSummaBox label={summaLabel} value={displayAmount(sum)} />}
+    >
       {error && <p className="text-error-surface-primary m-0">{error}</p>}
 
-      <Table dense background>
+      <Table dense>
         <Table.Header>
           <Table.HeaderColumn>Typ</Table.HeaderColumn>
           <Table.HeaderColumn>Ansökt</Table.HeaderColumn>
@@ -157,7 +169,7 @@ export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
           </Select>
         </FormControl>
       </div>
-    </div>
+    </NormberakningTableBox>
   );
 };
 

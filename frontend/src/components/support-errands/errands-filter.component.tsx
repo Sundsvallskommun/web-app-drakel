@@ -1,12 +1,17 @@
 'use client';
 
 import { Lookup } from '@data-contracts/backend/data-contracts';
+import { useDebouncedValue } from '@hooks/use-debounced-value';
 import { Administrator } from '@services/administrator-service';
-import { Button, Checkbox, Chip, SearchField } from '@sk-web-gui/react';
-import { ListFilter } from 'lucide-react';
-import { FC, useState } from 'react';
+import { Checkbox, Chip, SearchField } from '@sk-web-gui/react';
+import { PRIORITY_OPTIONS } from '@utils/errand-priority';
+import { errandStatusLabel } from '@utils/errand-status';
+import { FC, useEffect, useRef, useState } from 'react';
 
 import { ErrandFilterDropdown, FilterOption } from './errand-filter-dropdown.component';
+
+// How long typing has to pause before "Filtrera i listan" refetches the list.
+const SEARCH_DEBOUNCE_MS = 400;
 
 /** Active overview filters; each is multi-select (an OR within each group, AND between groups). */
 export interface ErrandFilters {
@@ -16,12 +21,6 @@ export interface ErrandFilters {
 }
 
 export const emptyFilters: ErrandFilters = { status: [], priority: [], assignee: [] };
-
-const PRIORITY_OPTIONS: FilterOption[] = [
-  { value: 'LOW', label: 'Låg' },
-  { value: 'MEDIUM', label: 'Medel' },
-  { value: 'HIGH', label: 'Hög' },
-];
 
 interface ErrandsFilterProps {
   query: string;
@@ -33,14 +32,16 @@ interface ErrandsFilterProps {
   administrators: Administrator[];
   /** The status filter is only offered on the "Alla ärenden" view (the other views already scope status). */
   showStatusFilter: boolean;
+  onlyMine: boolean;
+  onOnlyMineChange: (checked: boolean) => void;
   onlyUnread: boolean;
   onOnlyUnreadChange: (checked: boolean) => void;
 }
 
 /**
- * Overview filter row (draken-style): a search field with a Sök button, a "Dölj filter" toggle, and — when
- * open — a bar of dropdown filters (status/priority) plus the "olästa meddelanden" checkbox and removable
- * filter chips.
+ * Overview filter bar: a grey group with "Filtrera i listan" (filters as you type, on errand number and
+ * applicant), the status/priority/handläggare dropdowns and the "Mina ärenden" / "Olästa meddelanden"
+ * checkboxes, with the active filter values as removable chips below.
  */
 export const ErrandsFilter: FC<ErrandsFilterProps> = ({
   query,
@@ -51,16 +52,32 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
   statuses,
   administrators,
   showStatusFilter,
+  onlyMine,
+  onOnlyMineChange,
   onlyUnread,
   onOnlyUnreadChange,
 }) => {
-  const [show, setShow] = useState<boolean>(true);
-  // The search field commits on Sök/Enter (not on every keystroke), so it holds its own editing value.
   const [searchInput, setSearchInput] = useState<string>(query);
+  const debouncedSearch = useDebouncedValue(searchInput, SEARCH_DEBOUNCE_MS);
+  // The last search applied to the list, so a debounced value that was already committed (by Enter) isn't
+  // applied a second time.
+  const appliedSearchRef = useRef<string>(query);
+
+  const applySearch = (search: string) => {
+    appliedSearchRef.current = search;
+    onQueryChange(search);
+  };
+
+  useEffect(() => {
+    if (debouncedSearch !== appliedSearchRef.current) {
+      appliedSearchRef.current = debouncedSearch;
+      onQueryChange(debouncedSearch);
+    }
+  }, [debouncedSearch, onQueryChange]);
 
   const statusOptions: FilterOption[] = statuses.map((status) => ({
     value: status.name ?? '',
-    label: status.displayName ?? status.name ?? '',
+    label: status.displayName ?? errandStatusLabel(status.name ?? ''),
   }));
   const assigneeOptions: FilterOption[] = administrators.map((admin) => ({
     value: admin.username,
@@ -83,79 +100,73 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
   };
 
   return (
-    <div className="w-full flex flex-col gap-16 py-19">
-      <div className="w-full flex flex-wrap items-center justify-between gap-16">
+    <div className="w-full flex flex-col gap-16">
+      <div className="w-full flex flex-wrap items-center gap-4 rounded-16 bg-background-color-mixin-1 py-12 pl-12 pr-16">
         <SearchField
-          className="flex-grow max-w-[48rem]"
+          className="w-full sm:w-[22rem] mr-4"
+          size="md"
           value={searchInput}
-          showSearchButton
-          placeholder="Sök på ärendenummer eller sökande…"
+          showSearchButton={false}
+          placeholder="Filtrera i listan"
+          aria-label="Filtrera i listan på ärendenummer eller sökande"
           onChange={(event) => {
             setSearchInput(event.target.value);
           }}
           onSearch={() => {
-            onQueryChange(searchInput);
+            applySearch(searchInput);
           }}
           onReset={() => {
             setSearchInput('');
-            onQueryChange('');
+            applySearch('');
           }}
         />
-        <Button
-          onClick={() => {
-            setShow(!show);
+        {showStatusFilter && (
+          <ErrandFilterDropdown
+            label="Status"
+            options={statusOptions}
+            selected={filters.status}
+            searchable
+            onChange={(values) => {
+              onFilterChange('status', values);
+            }}
+          />
+        )}
+        <ErrandFilterDropdown
+          label="Prioritet"
+          options={PRIORITY_OPTIONS}
+          selected={filters.priority}
+          onChange={(values) => {
+            onFilterChange('priority', values);
           }}
-          variant={show ? 'tertiary' : 'primary'}
-          inverted={!show}
-          color="vattjom"
-          leftIcon={<ListFilter />}
-        >
-          {show ? 'Dölj filter' : `Visa filter${activeCount ? ` (${activeCount})` : ''}`}
-        </Button>
-      </div>
-
-      {show && (
-        <div className="flex flex-wrap gap-16 items-center">
-          <div className="flex flex-wrap items-center gap-4 p-10 bg-background-200 rounded-12">
-            {showStatusFilter && (
-              <ErrandFilterDropdown
-                label="Status"
-                options={statusOptions}
-                selected={filters.status}
-                searchable
-                onChange={(values) => {
-                  onFilterChange('status', values);
-                }}
-              />
-            )}
-            <ErrandFilterDropdown
-              label="Prioritet"
-              options={PRIORITY_OPTIONS}
-              selected={filters.priority}
-              onChange={(values) => {
-                onFilterChange('priority', values);
-              }}
-            />
-            <ErrandFilterDropdown
-              label="Handläggare"
-              options={assigneeOptions}
-              selected={filters.assignee}
-              searchable
-              onChange={(values) => {
-                onFilterChange('assignee', values);
-              }}
-            />
-          </div>
+        />
+        <ErrandFilterDropdown
+          label="Handläggare"
+          options={assigneeOptions}
+          selected={filters.assignee}
+          searchable
+          onChange={(values) => {
+            onFilterChange('assignee', values);
+          }}
+        />
+        <div className="flex flex-1 flex-wrap items-center justify-end gap-x-24 gap-y-8 text-small text-dark-secondary">
+          <Checkbox
+            checked={onlyMine}
+            onChange={(event) => {
+              onOnlyMineChange(event.target.checked);
+            }}
+          >
+            Mina ärenden
+          </Checkbox>
           <Checkbox
             checked={onlyUnread}
             onChange={(event) => {
               onOnlyUnreadChange(event.target.checked);
             }}
           >
-            Visa endast ärenden med olästa meddelanden
+            Olästa meddelanden
           </Checkbox>
         </div>
-      )}
+      </div>
 
       {activeCount > 0 && (
         <div className="flex gap-8 flex-wrap items-center">

@@ -5,7 +5,7 @@ import { Button, Modal, Spinner } from '@sk-web-gui/react';
 import { FC, useState } from 'react';
 
 /**
- * Sidebar action for a supplementary application: opens a dialog listing the applicant's Lifecare
+ * Administration-bar action for a supplementary application: opens a dialog listing the applicant's Lifecare
  * aktualiseringar, lets the handläggare pick one, and archives the errand's application PDF onto it —
  * which records the chosen aktualisering on the errand.
  */
@@ -54,8 +54,8 @@ export const ErrandAktualisering: FC<{ errandId: string; onArchived: () => void 
   };
 
   return (
-    <div className="flex flex-col gap-8">
-      <Button variant="secondary" className="w-full" onClick={openModal}>
+    <>
+      <Button variant="secondary" size="sm" onClick={openModal}>
         Arkivera till aktualisering
       </Button>
 
@@ -69,8 +69,8 @@ export const ErrandAktualisering: FC<{ errandId: string; onArchived: () => void 
       >
         <Modal.Content className="flex flex-col gap-12">
           <p className="m-0 text-small text-dark-secondary">
-            Välj en aktualisering att arkivera ansökningens sammanställnings-PDF till. Den valda
-            aktualiseringen registreras på ärendet.
+            Välj en aktualisering att arkivera ansökningens sammanställnings-PDF till. Den valda aktualiseringen
+            registreras på ärendet.
           </p>
 
           {loading ?
@@ -89,9 +89,9 @@ export const ErrandAktualisering: FC<{ errandId: string; onArchived: () => void 
                       setSelectedId(actualisation.id);
                     }}
                     className={`w-full text-left rounded-12 p-12 border-1 ${
-                      selectedId === actualisation.id ? 'border-vattjom-surface-primary bg-background-200' : (
-                        'border-divider'
-                      )
+                      selectedId === actualisation.id ?
+                        'border-vattjom-surface-primary bg-background-200'
+                      : 'border-divider'
                     }`}
                   >
                     <span className="font-bold block break-words">
@@ -140,6 +140,6 @@ export const ErrandAktualisering: FC<{ errandId: string; onArchived: () => void 
           </Button>
         </Modal.Footer>
       </Modal>
-    </div>
+    </>
   );
 };

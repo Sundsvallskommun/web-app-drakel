@@ -1,10 +1,9 @@
 'use client';
 
 import { Errand } from '@data-contracts/backend/data-contracts';
-import { Pagination, Select, Spinner, Table } from '@sk-web-gui/react';
-import { prettyTime } from '@utils/pretty-time';
+import { Button, Pagination, Select, Spinner, Table } from '@sk-web-gui/react';
 import dayjs from 'dayjs';
-import { ChevronDown, ChevronsUpDown, ChevronUp } from 'lucide-react';
+import { ArrowRight, ChevronDown, ChevronsUpDown, ChevronUp } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { FC } from 'react';
 
@@ -31,11 +30,13 @@ interface ErrandsTableProps {
   sortDirection?: SortDirection;
   /** Toggle the server-side sort for a sortable column. */
   onSort?: (sortKey: string) => void;
+  /** Display name for a handläggare username. */
+  assigneeName: (assignedUserId: string) => string;
 }
 
 interface Column {
   label: string;
-  render: (errand: Errand) => React.ReactNode;
+  render: (errand: Errand, assigneeName: (assignedUserId: string) => string) => React.ReactNode;
   /** When set, the header is a button that toggles server-side sorting on this field. */
   sortKey?: string;
 }
@@ -46,43 +47,61 @@ const errandRouteSegment = (errand: Errand): string | undefined => errand.errand
 const columns: Column[] = [
   { label: 'Status', sortKey: 'status', render: (errand) => <ErrandStatusLabel status={errand.status} /> },
   {
-    label: 'Senaste aktivitet',
-    sortKey: 'touched',
-    render: (errand) => {
-      const touched = errand.touched ?? errand.modified;
-      return (
-        <div className="whitespace-nowrap">
-          <time dateTime={touched}>{prettyTime(touched)}</time>
-          <div className="italic text-small">Ärendet uppdaterades</div>
-        </div>
-      );
-    },
-  },
-  {
     label: 'Ärende',
     sortKey: 'errandNumber',
     render: (errand) => (
-      <div className="max-w-[280px]">
+      <div className="max-w-[24rem] desktop:max-w-[40rem] leading-tight">
         <div className="font-bold truncate">{errand.title ?? '(utan titel)'}</div>
-        <div className="text-small text-secondary truncate">{errand.errandNumber ?? '—'}</div>
-      </div>
-    ),
-  },
-  {
-    label: 'Inskickat',
-    sortKey: 'created',
-    render: (errand) => (
-      <div className="whitespace-nowrap">
-        <time dateTime={errand.created}>{formatDate(errand.created)}</time>
+        <div className="truncate">{errand.errandNumber ?? '—'}</div>
       </div>
     ),
   },
   {
     label: 'Sökande',
     sortKey: 'applicantName',
-    render: (errand) => <div className="max-w-[220px] truncate">{errand.applicantName ?? '—'}</div>,
+    render: (errand) => (
+      <div className="max-w-[22rem] leading-tight">
+        <div className="truncate">{errand.applicantName ?? '—'}</div>
+        {errand.coApplicantName ?
+          <div className="truncate text-small text-dark-secondary" title={errand.coApplicantName}>
+            <span className="sr-only">Medsökande: </span>
+            {errand.coApplicantName}
+          </div>
+        : null}
+      </div>
+    ),
   },
   { label: 'Prioritet', sortKey: 'priority', render: (errand) => <PriorityLabel priority={errand.priority} /> },
+  {
+    label: 'Registrerat',
+    sortKey: 'created',
+    render: (errand) => (
+      <time className="whitespace-nowrap" dateTime={errand.created}>
+        {formatDate(errand.created)}
+      </time>
+    ),
+  },
+  {
+    label: 'Uppdaterat',
+    sortKey: 'touched',
+    render: (errand) => {
+      const touched = errand.touched ?? errand.modified;
+      return (
+        <time className="whitespace-nowrap" dateTime={touched}>
+          {formatDate(touched)}
+        </time>
+      );
+    },
+  },
+  {
+    label: 'Handläggare',
+    sortKey: 'assignedUserId',
+    render: (errand, assigneeName) => (
+      <div className="max-w-[22rem] truncate">
+        {errand.assignedUserId ? assigneeName(errand.assignedUserId) : 'Ej tilldelad'}
+      </div>
+    ),
+  },
 ];
 
 /** Sort affordance shown in a sortable column header: inactive (both arrows) or the active direction. */
@@ -105,6 +124,7 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({
   sortColumn,
   sortDirection,
   onSort,
+  assigneeName,
 }) => {
   const router = useRouter();
   const { locale } = useParams<{ locale: string }>();
@@ -117,7 +137,7 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({
   };
 
   return (
-    <div className="max-w-full relative">
+    <div className="max-w-full relative overflow-x-hidden">
       {isLoading && (
         <div className="z-10 absolute bg-background-content opacity-50 w-full h-full flex items-center justify-center">
           <Spinner size={5} />
@@ -139,7 +159,7 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({
 
         {errands.length > 0 && (
           <>
-            <Table.Header>
+            <Table.Header className="border-b-1 border-dark-primary">
               {columns.map((column, index) => {
                 const sortKey = column.sortKey;
                 return (
@@ -160,6 +180,9 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({
                   </Table.HeaderColumn>
                 );
               })}
+              <Table.HeaderColumn>
+                <span className="sr-only">Öppna</span>
+              </Table.HeaderColumn>
             </Table.Header>
             <Table.Body>
               {errands.map((errand) => (
@@ -179,8 +202,23 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({
                   }}
                 >
                   {columns.map((column, index) => (
-                    <Table.Column key={`cell-${index}`}>{column.render(errand)}</Table.Column>
+                    <Table.Column key={`cell-${index}`}>{column.render(errand, assigneeName)}</Table.Column>
                   ))}
+                  <Table.Column className="text-right">
+                    {/* The whole row opens the errand; the arrow is the visible affordance for it. */}
+                    <Button
+                      variant="tertiary"
+                      size="sm"
+                      iconButton
+                      tabIndex={-1}
+                      aria-hidden
+                      leftIcon={<ArrowRight />}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        openErrand(errand);
+                      }}
+                    />
+                  </Table.Column>
                 </Table.Row>
               ))}
             </Table.Body>
@@ -205,16 +243,14 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({
                 >
                   {PAGE_SIZE_OPTIONS.map((option) => (
                     <Select.Option key={option} value={String(option)}>
-                      {option}
+                      {option} st
                     </Select.Option>
                   ))}
                 </Select>
               </div>
               {totalPages > 1 ?
-                <div className="sk-table-paginationwrapper justify-self-center">
+                <div className="justify-self-center">
                   <Pagination
-                    showFirst
-                    showLast
                     pagesBefore={1}
                     pagesAfter={1}
                     pages={totalPages}

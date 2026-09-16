@@ -2,6 +2,7 @@
 
 import { renderPdf } from '@services/pdf-service';
 import { Button, Modal, Spinner } from '@sk-web-gui/react';
+import { ScanEye } from 'lucide-react';
 import { FC, useState } from 'react';
 
 /** Converts a base64 PDF to an object URL so it can be shown in an <iframe>. */
@@ -65,7 +66,9 @@ export const PdfPreviewButton: FC<{
   return (
     <>
       <Button
-        variant="secondary"
+        color="vattjom"
+        inverted
+        leftIcon={<ScanEye />}
         disabled={disabled || loading}
         loading={loading}
         loadingText="Skapar förhandsgranskning…"

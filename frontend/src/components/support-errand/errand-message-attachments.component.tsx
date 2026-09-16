@@ -6,6 +6,7 @@ import { Spinner } from '@sk-web-gui/react';
 import { FC } from 'react';
 
 import { AttachmentList } from './attachment-list.component';
+import { ErrandSectionHeader } from './errand-section-header.component';
 
 interface ErrandMessageAttachmentsProps {
   errandId: string;
@@ -15,7 +16,7 @@ interface ErrandMessageAttachmentsProps {
   summaryAttachment?: Attachment;
   isLoading: boolean;
   loadError: boolean;
-  /** Hide the internal "Bilagor från meddelanden" heading (e.g. when shown inside a titled disclosure). */
+  /** Hide the tab heading and description (e.g. when shown inside a titled disclosure). */
   hideHeading?: boolean;
 }
 
@@ -34,7 +35,11 @@ export const ErrandMessageAttachments: FC<ErrandMessageAttachmentsProps> = ({
   hideHeading = false,
 }) => {
   return (
-    <div className="flex flex-col gap-16">
+    <div className="flex flex-col gap-40">
+      {hideHeading ? null : (
+        <ErrandSectionHeader title="Bilagor" description="Här samlas filer som har skickats i ärendets meddelanden." />
+      )}
+
       {summaryAttachment?.id ?
         <PdfPreview
           errandId={errandId}
@@ -43,13 +48,17 @@ export const ErrandMessageAttachments: FC<ErrandMessageAttachmentsProps> = ({
         />
       : null}
 
-      {hideHeading ? null : <span className="font-bold">Bilagor från meddelanden</span>}
-
       {isLoading ?
         <Spinner size={3} />
       : loadError ?
         <p className="m-0">Det gick inte att hämta bilagor</p>
-      : <AttachmentList errandId={errandId} attachments={attachments} placeholder="Inga bilagor i meddelanden" />}
+      : <AttachmentList
+          errandId={errandId}
+          attachments={attachments}
+          heading="Bilagor från meddelanden"
+          placeholder="Inga bilagor i meddelanden"
+        />
+      }
     </div>
   );
 };

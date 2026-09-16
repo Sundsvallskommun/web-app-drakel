@@ -2,7 +2,6 @@
 
 import { AttachmentPdfButton } from '@components/common/attachment-pdf-button.component';
 import { PdfPreview } from '@components/common/pdf-preview.component';
-import { HeaderParty, useErrandHeader } from '@components/layout/errand-header-context';
 import { useErrand } from '@hooks/use-errand';
 import { useErrandAttachments } from '@hooks/use-errand-attachments';
 import { useErrandBevakningar } from '@hooks/use-errand-bevakningar';
@@ -16,9 +15,10 @@ import { Badge, Spinner, Tabs } from '@sk-web-gui/react';
 import { CLIENT_FILES_PDF } from '@utils/attachment-names';
 import { stakeholderDisplayName } from '@utils/stakeholder-name';
 import { compareByRole } from '@utils/stakeholder-role';
-import { AlertTriangle, Bell, Check, History, NotebookPen, UserCog } from 'lucide-react';
-import { FC, Fragment, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Check } from 'lucide-react';
+import { FC, Fragment, ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 
+import { ErrandAdministrationBar } from './errand-administration-bar.component';
 import { ErrandAktualisering } from './errand-aktualisering.component';
 import { ErrandApplicationSummary } from './errand-application-summary.component';
 import { ErrandAttachments } from './errand-attachments.component';
@@ -27,10 +27,10 @@ import { ErrandBeslut } from './errand-beslut.component';
 import { ErrandBevakningar } from './errand-bevakningar.component';
 import { ErrandDocuments } from './errand-documents.component';
 import { ErrandEvents } from './errand-events.component';
-import { ErrandInfoPanel } from './errand-info-panel.component';
 import { ErrandJournal } from './errand-journal.component';
 import { ErrandMessageAttachments } from './errand-message-attachments.component';
 import { ErrandMessages } from './errand-messages.component';
+import { ErrandMetaCard } from './errand-meta-card.component';
 import { ErrandNormberakning } from './errand-normberakning.component';
 import { ErrandNotes } from './errand-notes.component';
 import { ErrandSidebar, SidebarSection } from './errand-sidebar.component';
@@ -45,24 +45,50 @@ const EMPTY_ERRAND_TITLE = 'Empty errand';
 interface ErrandSubTab {
   label: string;
   content: ReactNode;
+  /** Count shown as a badge after the label (e.g. number of attachments). */
+  counter?: number;
   /** Shows a green check next to the sub-tab label once the section is approved. */
   approved?: boolean;
 }
-/** A top-level tab group (Ansökan, Dokumentation, …) holding one or more sub-tabs. */
+/** A top-level tab group (Ärende, Meddelanden, Dokumentation) holding one or more sub-tabs. */
 interface ErrandTabGroup {
   label: string;
+  counter?: number;
   tabs: ErrandSubTab[];
 }
+
+/** A tab label followed by its optional count badge and "godkänd" check. */
+const TabLabel: FC<{ label: string; counter?: number; approved?: boolean }> = ({ label, counter, approved }) => (
+  <span className="inline-flex items-center gap-8">
+    {approved ?
+      <Check size={18} className="text-gronsta-surface-primary" aria-label="Godkänd" />
+    : null}
+    {label}
+    {counter !== undefined ?
+      <Badge color="tertiary" inverted size="sm" counter={counter > 99 ? '99+' : counter} />
+    : null}
+  </span>
+);
+
+/** Padding for the content of a sub-tab inside the errand's content card. */
+const ErrandTabPanel: FC<{ children: ReactNode }> = ({ children }) => (
+  <div className="px-24 md:px-48 pt-40 pb-64 flex flex-col gap-24">{children}</div>
+);
 
 export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   const { errand, isLoading, error, refresh } = useErrand(errandId);
   const [activeTab, setActiveTab] = useState<number>(0);
   const [activeSubTab, setActiveSubTab] = useState<number>(0);
-  const [activeSidebar, setActiveSidebar] = useState<string>('info');
-  const { setErrand: setHeaderErrand } = useErrandHeader();
+  // Keys of the expanded right-column sections; a section's data only loads once it's expanded.
+  const [openSidebarSections, setOpenSidebarSections] = useState<string[]>([]);
+  const toggleSidebarSection = useCallback((key: string) => {
+    setOpenSidebarSections((current) =>
+      current.includes(key) ? current.filter((openKey) => openKey !== key) : [...current, key]
+    );
+  }, []);
   const { form, setField, isDirty, saving, error: saveError, save } = useErrandForm(errand, refresh);
 
-  // The central "Spara ärende" button also saves the Beslut tab: ErrandBeslut registers its save here
+  // The central "Spara" button also saves the Beslut tab: ErrandBeslut registers its save here
   // (only while that tab is mounted), and the button runs both. canSaveBeslut keeps the button enabled
   // while a beslut can be saved even when the handläggning fields aren't dirty.
   const beslutSaveRef = useRef<(() => Promise<boolean>) | null>(null);
@@ -102,9 +128,9 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   // Approvals load eagerly (not gated on the active sub-tab) so the per-section "godkänd" checks show on
   // the Normberäkning/Beslut/Utbetalning tabs the moment the errand opens.
   const approvalsEnabled = showCalculationSections;
-  const warningsEnabled = onNormberakningSubTab || activeSidebar === 'warnings';
-  const notesEnabled = activeSidebar === 'notes';
-  const bevakningarEnabled = activeSidebar === 'bevakningar';
+  const warningsEnabled = onNormberakningSubTab || openSidebarSections.includes('warnings');
+  const notesEnabled = openSidebarSections.includes('notes');
+  const bevakningarEnabled = openSidebarSections.includes('bevakningar');
 
   const {
     notes,
@@ -127,8 +153,8 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     refresh: refreshAttachments,
   } = useErrandAttachments(resolvedErrandId);
 
-  // Section approvals back the per-section checkboxes, the tab "godkänd" checks and the sidebar Avsluta
-  // button — so they load eagerly with the errand (see approvalsEnabled above).
+  // Section approvals back the per-section checkboxes, the tab "godkänd" checks and the "Besluta och
+  // utbetala" action — so they load eagerly with the errand (see approvalsEnabled above).
   const { approvals, pendingSection, setApproval } = useErrandSectionApprovals(resolvedErrandId, approvalsEnabled);
   const {
     bevakningar,
@@ -136,25 +162,21 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     error: bevakningarError,
     refresh: refreshBevakningar,
   } = useErrandBevakningar(resolvedErrandId, bevakningarEnabled);
-  // Sökande + medsökande surfaced at the top of the errand (next to the errand number).
+  // Sökande + medsökande surfaced in the meta card under the errand title.
   const { stakeholders } = useErrandStakeholders(resolvedErrandId);
-  // Sidebar badge counts — backed by unlogged count endpoints, so they load with the errand (the lists
+  // Right-column badge counts — backed by unlogged count endpoints, so they load with the errand (the lists
   // stay lazy) and are refreshed after a section mutates.
   const { counts, refresh: refreshCounts } = useErrandCounts(resolvedErrandId);
-  const headerParties = useMemo<HeaderParty[]>(
+  const applicantNames = useMemo<string[]>(
     () =>
       stakeholders
         .filter((stakeholder) => stakeholder.role === 'APPLICANT' || stakeholder.role === 'CO_APPLICANT')
         .sort(compareByRole)
-        .map((stakeholder) => ({
-          role: stakeholder.role,
-          name: stakeholderDisplayName(stakeholder),
-          personalNumber: stakeholder.personalNumber,
-        })),
+        .map((stakeholder) => stakeholderDisplayName(stakeholder)),
     [stakeholders]
   );
 
-  // Only OPEN warnings are actionable — acknowledged/closed ones disappear from the sidebar.
+  // Only OPEN warnings are actionable — acknowledged/closed ones disappear from the right column.
   const openWarnings = warnings.filter((warning) => warning.status === 'OPEN');
 
   // The consolidated client conversation files PDF (documentType CONVERSATION) — previewed atop the
@@ -178,22 +200,6 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
       attachment.documentType !== 'DECISION'
   );
 
-  // Surface the errand's status/title into the slim app header, and clear it on leave.
-  useEffect(() => {
-    if (errand) {
-      setHeaderErrand({
-        id: errand.id,
-        errandNumber: errand.errandNumber,
-        title: errand.title,
-        status: errand.status,
-        parties: headerParties,
-      });
-    }
-    return () => {
-      setHeaderErrand(undefined);
-    };
-  }, [errand?.id, errand?.errandNumber, errand?.title, errand?.status, headerParties, setHeaderErrand]);
-
   if (isLoading) {
     return (
       <div className="flex justify-center my-32">
@@ -211,40 +217,8 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
 
   const sections: SidebarSection[] = [
     {
-      key: 'info',
-      label: 'Handläggning',
-      icon: UserCog,
-      component: (
-        <ErrandInfoPanel
-          form={form}
-          setField={setField}
-          isDirty={isDirty || canSaveBeslut}
-          saving={saving || savingAll}
-          error={saveError}
-          onSave={() => void saveAll()}
-          avslutaSlot={
-            // Beslut/utbetalning gäller bara återansökan, och bara medan ärendet inte är avslutat.
-            isRenewalApplication && errand.status !== 'CLOSED' ?
-              <ErrandAvsluta
-                errandId={apiErrandId}
-                onClosed={() => {
-                  refresh();
-                  refreshAttachments();
-                }}
-                checkApprovals={showCalculationSections}
-              />
-            : undefined
-          }
-          actualiseringSlot={
-            isSupplementaryApplication ? <ErrandAktualisering errandId={apiErrandId} onArchived={refresh} /> : undefined
-          }
-        />
-      ),
-    },
-    {
       key: 'warnings',
       label: 'Varningar',
-      icon: AlertTriangle,
       badge: counts.warnings,
       component: (
         <ErrandWarnings
@@ -262,7 +236,6 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     {
       key: 'notes',
       label: 'Anteckningar',
-      icon: NotebookPen,
       badge: counts.notes,
       component: (
         <ErrandNotes
@@ -280,7 +253,6 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     {
       key: 'bevakningar',
       label: 'Bevakningar',
-      icon: Bell,
       badge: counts.bevakningar,
       component: (
         <ErrandBevakningar
@@ -298,7 +270,6 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     {
       key: 'events',
       label: 'Händelselogg',
-      icon: History,
       component: <ErrandEvents errandId={errand.id ?? ''} />,
     },
   ];
@@ -313,7 +284,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
         {
           label: 'Ansökan',
           content: (
-            <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
+            <ErrandTabPanel>
               {/* Den strukturerade sammanställningen (form-snapshot "som det var", annars live-data). Den
                   genererade CASE_DATA-sammanställnings-PDF:en nås via "Visa pdf"-knappen till höger om titeln. */}
               <ErrandApplicationSummary
@@ -334,13 +305,14 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                   : null
                 }
               />
-            </div>
+            </ErrandTabPanel>
           ),
         },
         {
-          label: `Bilagor (${errandAttachments.length})`,
+          label: 'Bilagor',
+          counter: errandAttachments.length,
           content: (
-            <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
+            <ErrandTabPanel>
               <ErrandAttachments
                 errandId={apiErrandId}
                 attachments={errandAttachments}
@@ -358,7 +330,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                   title="Sammanställning bilagor från meddelanden"
                 />
               : null}
-            </div>
+            </ErrandTabPanel>
           ),
         },
         // Calculation / decision / payment only apply to a renewal (and any unknown/generic type).
@@ -368,7 +340,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               label: 'Normberäkning',
               approved: !!approvals.calculation?.approved,
               content: (
-                <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
+                <ErrandTabPanel>
                   <ErrandNormberakning
                     errandId={apiErrandId}
                     warnings={openWarnings}
@@ -384,14 +356,14 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                       />
                     }
                   />
-                </div>
+                </ErrandTabPanel>
               ),
             },
             {
               label: 'Beslut',
               approved: !!approvals.decision?.approved,
               content: (
-                <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
+                <ErrandTabPanel>
                   <ErrandBeslut
                     errandId={apiErrandId}
                     locked={!!approvals.decision?.approved}
@@ -405,16 +377,17 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                     }
                     onRegisterSave={registerBeslutSave}
                   />
-                </div>
+                </ErrandTabPanel>
               ),
             },
             {
               label: 'Utbetalning',
               approved: !!approvals.payment?.approved,
               content: (
-                <div className="pt-24 pb-40 px-24 md:px-40 flex flex-col gap-24">
+                <ErrandTabPanel>
                   <ErrandUtbetalning
                     errandId={apiErrandId}
+                    locked={!!approvals.payment?.approved}
                     headerSlot={
                       <SectionApprovalCheckbox
                         label="Markera utbetalning som komplett"
@@ -424,7 +397,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                       />
                     }
                   />
-                </div>
+                </ErrandTabPanel>
               ),
             },
           ]
@@ -432,28 +405,29 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
       ],
     },
     {
-      label: `Meddelanden (${counts.unreadMessages})`,
+      label: 'Meddelanden',
+      counter: counts.unreadMessages,
+      // A single tab: the conversation fills the content card itself and holds its own Meddelanden /
+      // Delade bilagor tabs in the conversation header.
       tabs: [
         {
           label: 'Meddelanden',
           content: (
-            <div className="pt-24 pb-40 px-24 md:px-40">
-              <ErrandMessages errandId={apiErrandId} />
-            </div>
-          ),
-        },
-        {
-          label: `Bilagor (${conversationAttachments.length})`,
-          content: (
-            <div className="pt-24 pb-40 px-24 md:px-40">
-              <ErrandMessageAttachments
-                errandId={apiErrandId}
-                attachments={conversationAttachments}
-                summaryAttachment={conversationSummaryAttachment}
-                isLoading={attachmentsLoading}
-                loadError={!!attachmentsError}
-              />
-            </div>
+            <ErrandMessages
+              errandId={apiErrandId}
+              applicantNames={applicantNames}
+              errandNumber={errand.errandNumber}
+              sharedAttachments={
+                <ErrandMessageAttachments
+                  errandId={apiErrandId}
+                  attachments={conversationAttachments}
+                  summaryAttachment={conversationSummaryAttachment}
+                  isLoading={attachmentsLoading}
+                  loadError={!!attachmentsError}
+                  hideHeading
+                />
+              }
+            />
           ),
         },
       ],
@@ -467,17 +441,17 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
             {
               label: 'Journal',
               content: (
-                <div className="pt-24 pb-40 px-24 md:px-40">
+                <ErrandTabPanel>
                   <ErrandJournal errandId={apiErrandId} />
-                </div>
+                </ErrandTabPanel>
               ),
             },
             {
               label: 'Dokument',
               content: (
-                <div className="pt-24 pb-40 px-24 md:px-40">
+                <ErrandTabPanel>
                   <ErrandDocuments errandId={apiErrandId} />
-                </div>
+                </ErrandTabPanel>
               ),
             },
           ],
@@ -487,76 +461,94 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   ];
 
   return (
-    // The AppShell provides the bg-background-100 page background and full height; the sidebar sits
-    // flush against the right edge while the main content is padded.
-    <div className="flex w-full h-full overflow-hidden">
-      <main className="flex-grow min-w-0 flex justify-center px-24 md:px-40 pt-24 pb-40 overflow-y-auto">
-        <div className="w-full max-w-errand flex flex-col gap-16">
-          <h1 className="m-0 break-words">{heading}</h1>
+    // The AppShell provides the bg-background-100 page background and full height: the administration bar
+    // sits under the header, the main content scrolls and the right column sits flush against the edge.
+    <div className="flex flex-col w-full h-full overflow-hidden">
+      <ErrandAdministrationBar
+        form={form}
+        setField={setField}
+        isDirty={isDirty || canSaveBeslut}
+        saving={saving || savingAll}
+        error={saveError}
+        onSave={() => void saveAll()}
+        actions={
+          <>
+            {/* Beslut/utbetalning gäller bara återansökan, och bara medan ärendet inte är avslutat. */}
+            {isRenewalApplication && errand.status !== 'CLOSED' ?
+              <ErrandAvsluta
+                errandId={apiErrandId}
+                onClosed={() => {
+                  refresh();
+                  refreshAttachments();
+                }}
+                checkApprovals={showCalculationSections}
+              />
+            : null}
+            {isSupplementaryApplication ?
+              <ErrandAktualisering errandId={apiErrandId} onArchived={refresh} />
+            : null}
+          </>
+        }
+      />
 
-          {/* Huvudtabsen (grupperna) ligger direkt på main-bakgrunden; själva innehållskortet (vit
-              bakgrund + ram) flyttas in i varje panel, med ev. sub-tabs högst upp i kortet. */}
-          <Tabs
-            className="px-2"
-            size="lg"
-            current={activeTab}
-            onTabChange={(index) => {
-              setActiveTab(index);
-              setActiveSubTab(0);
-            }}
-          >
-            {tabGroups.map((group, groupIndex) => (
-              <Tabs.Item key={group.label}>
-                <Tabs.Button className="text-base">{group.label}</Tabs.Button>
-                <Tabs.Content>
-                  <div className="border-1 border-divider rounded-12 bg-background-content">
-                    {/* Only the active group + sub-tab mounts its content, so inactive tabs never fetch
-                        (and thus never log a read) until the handläggare opens them. */}
-                    {groupIndex !== activeTab ?
-                      null
-                    : group.tabs.length > 1 ?
-                      <Tabs
-                        current={activeSubTab}
-                        onTabChange={setActiveSubTab}
-                        tabslistClassName="mt-24 ml-24"
-                        panelsClassName="border-t-1 border-divider"
-                      >
-                        {group.tabs.map((subTab, subIndex) => (
-                          <Tabs.Item key={subTab.label}>
-                            <Tabs.Button className="text-base">
-                              <span className="inline-flex items-center gap-8">
-                                {subTab.label}
-                                {subTab.approved ?
-                                  // The same lucide Check that Alert renders for type="success". Badge types
-                                  // `counter` as string|number but renders any node, so the icon goes there.
-                                  // Badge's smallest preset is "sm" (fixed h-22); scale the whole badge down a
-                                  // touch so the green check reads as a small tab marker.
-                                  <Badge
-                                    inverted
-                                    color="gronsta"
-                                    rounded
-                                    size="sm"
-                                    className="scale-90"
-                                    counter={(<Check size={14} />) as unknown as string}
-                                    aria-label="Godkänd"
-                                  />
-                                : null}
-                              </span>
-                            </Tabs.Button>
-                            <Tabs.Content>{subIndex === activeSubTab ? subTab.content : null}</Tabs.Content>
-                          </Tabs.Item>
-                        ))}
-                      </Tabs>
-                    : group.tabs.map((subTab) => <Fragment key={subTab.label}>{subTab.content}</Fragment>)}
-                  </div>
-                </Tabs.Content>
-              </Tabs.Item>
-            ))}
-          </Tabs>
-        </div>
-      </main>
+      <div className="flex grow min-h-0">
+        <main className="flex-grow min-w-0 overflow-y-auto px-24 md:px-64 pb-40">
+          <div className="w-full max-w-errand mx-auto flex flex-col">
+            <div className="py-40 flex flex-col gap-24">
+              <h1 className="m-0 break-words text-h2-sm md:text-h2-md">{heading}</h1>
+              <ErrandMetaCard errand={errand} applicantNames={applicantNames} />
+            </div>
 
-      <ErrandSidebar sections={sections} selected={activeSidebar} onSelect={setActiveSidebar} />
+            {/* Huvudtabsen (grupperna) ligger direkt på sidbakgrunden; innehållskortet (vit bakgrund + ram) ligger
+                i varje panel, med ev. sub-tabs i kortets sidhuvud. */}
+            <Tabs
+              className="px-2"
+              size="lg"
+              panelsClassName="pt-40"
+              current={activeTab}
+              onTabChange={(index) => {
+                setActiveTab(index);
+                setActiveSubTab(0);
+              }}
+            >
+              {tabGroups.map((group, groupIndex) => (
+                <Tabs.Item key={group.label}>
+                  <Tabs.Button>
+                    <TabLabel label={group.label} counter={group.counter} />
+                  </Tabs.Button>
+                  <Tabs.Content>
+                    <div className="border-1 border-divider rounded-16 bg-background-content">
+                      {/* Only the active group + sub-tab mounts its content, so inactive tabs never fetch
+                          (and thus never log a read) until the handläggare opens them. */}
+                      {groupIndex !== activeTab ?
+                        null
+                      : group.tabs.length > 1 ?
+                        <Tabs
+                          current={activeSubTab}
+                          onTabChange={setActiveSubTab}
+                          tabslistClassName="px-20 pt-16"
+                          panelsClassName="border-t-1 border-divider"
+                        >
+                          {group.tabs.map((subTab, subIndex) => (
+                            <Tabs.Item key={subTab.label}>
+                              <Tabs.Button>
+                                <TabLabel label={subTab.label} counter={subTab.counter} approved={subTab.approved} />
+                              </Tabs.Button>
+                              <Tabs.Content>{subIndex === activeSubTab ? subTab.content : null}</Tabs.Content>
+                            </Tabs.Item>
+                          ))}
+                        </Tabs>
+                      : group.tabs.map((subTab) => <Fragment key={subTab.label}>{subTab.content}</Fragment>)}
+                    </div>
+                  </Tabs.Content>
+                </Tabs.Item>
+              ))}
+            </Tabs>
+          </div>
+        </main>
+
+        <ErrandSidebar sections={sections} openKeys={openSidebarSections} onToggle={toggleSidebarSection} />
+      </div>
     </div>
   );
 };
