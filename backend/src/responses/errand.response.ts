@@ -181,6 +181,13 @@ export class Errand {
   @IsString()
   @IsOptional()
   applicantName?: string;
+  /**
+   * Co-applicant name(s) ("Förnamn Efternamn", comma-separated if several) from the CO_APPLICANT stakeholders,
+   * resolved by the BFF for the errand list; absent when the errand has no co-applicant.
+   */
+  @IsString()
+  @IsOptional()
+  coApplicantName?: string;
 }
 
 export class PagingAndSortingMetaData {
