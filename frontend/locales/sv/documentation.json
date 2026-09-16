@@ -1,1 +1,52 @@
-{}
+{
+  "journal": {
+    "title": "Journal",
+    "description": "Journalanteckningar som dokumenterar handläggningen av ärendet. En arbetsanteckning kan redigeras tills den låses och blir en upprättad handling.",
+    "newEntry": "Ny journalanteckning",
+    "listTitle": "Tillagda journalanteckningar",
+    "loadError": "Det gick inte att hämta journalen",
+    "empty": "Inga journalanteckningar.",
+    "workingStatus": "Arbetsanteckning",
+    "saveError": "Det gick inte att spara journalanteckningen",
+    "editTitle": "Redigera journalanteckning",
+    "lockTitle": "Lås journalanteckning",
+    "lockConfirm": "Vill du låsa <heading></heading>? Den blir en upprättad handling och kan inte ändras eller tas bort."
+  },
+  "documents": {
+    "title": "Dokument",
+    "description": "Dokument som upprättas i ärendet. Ett utkast kan redigeras tills det låses och blir en upprättad handling.",
+    "newDocument": "Nytt dokument",
+    "listTitle": "Tillagda dokument",
+    "loadError": "Det gick inte att hämta dokumenten",
+    "empty": "Inga dokument.",
+    "workingStatus": "Utkast",
+    "saveError": "Det gick inte att spara dokumentet",
+    "editTitle": "Redigera dokument",
+    "lockTitle": "Lås dokument",
+    "lockConfirm": "Vill du låsa <heading></heading>? Det blir en upprättad handling och kan inte ändras eller tas bort."
+  },
+  "record": {
+    "addedBy": "Tillagd av",
+    "type": "Typ",
+    "lockedStatus": "Upprättad",
+    "actions": "Åtgärder",
+    "actionsFor": "Åtgärder för {{recordLabel}}"
+  },
+  "form": {
+    "typeRequired": "Typ *",
+    "selectType": "Välj typ",
+    "template": "Mall",
+    "documentTemplate": "Dokumentmall",
+    "templatePlaceholder": "Välj mall (ersätter texten)",
+    "templateSearch": "Sök mall…",
+    "phrase": "Frastext",
+    "phrasePlaceholder": "Infoga fras vid markören",
+    "phraseSearch": "Sök fras…",
+    "headingRequired": "Rubrik *",
+    "dateRequired": "Datum *",
+    "time": "Tid",
+    "text": "Text",
+    "create": "Skapa",
+    "saveChangeError": "Det gick inte att spara ändringen"
+  }
+}

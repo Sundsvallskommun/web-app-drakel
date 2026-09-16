@@ -2,6 +2,7 @@
 
 import { Checkbox } from '@sk-web-gui/react';
 import { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { NormberakningTableBox } from './normberakning-table-box.component';
 
@@ -25,20 +26,22 @@ interface NormberakningGemensammaProps {
 export const NormberakningGemensamma: FC<NormberakningGemensammaProps> = ({
   hasCustomHouseholdSize,
   householdSize,
-}) => (
-  <NormberakningTableBox title="Gemensamma kostnader">
-    <Checkbox checked={!!hasCustomHouseholdSize} disabled>
-      Annan hushållsstorlek
-    </Checkbox>
+}) => {
+  const { t } = useTranslation('calculation');
 
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-24">
-      <Field label="Hushållsstorlek" value={householdSize == null ? '—' : String(householdSize)} />
-      <Field label="Belopp för 1 persons hushåll" value="—" />
-      <Field label="Summa" value="—" />
-    </div>
+  return (
+    <NormberakningTableBox title={t('sharedCosts.title')}>
+      <Checkbox checked={!!hasCustomHouseholdSize} disabled>
+        {t('sharedCosts.customHouseholdSize')}
+      </Checkbox>
 
-    <p className="text-small text-dark-secondary m-0">
-      Beloppen för gemensamma kostnader beräknas i Lifecare och exponeras inte av API:t ännu.
-    </p>
-  </NormberakningTableBox>
-);
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-24">
+        <Field label={t('sharedCosts.householdSize')} value={householdSize == null ? '—' : String(householdSize)} />
+        <Field label={t('sharedCosts.onePersonHouseholdAmount')} value="—" />
+        <Field label={t('sharedCosts.sum')} value="—" />
+      </div>
+
+      <p className="text-small text-dark-secondary m-0">{t('sharedCosts.info')}</p>
+    </NormberakningTableBox>
+  );
+};

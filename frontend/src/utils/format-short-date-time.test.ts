@@ -14,6 +14,12 @@ describe('formatShortDateTime', () => {
     expect(formatShortDateTime(lastYearDateTime.format())).toBe(`12 aug ${lastYearDateTime.year()}, 09:05`);
   });
 
+  it('uses English month names when the language is English', () => {
+    const currentYearDateTime = dayjs().month(9).date(3).hour(8).minute(30).format();
+    expect(formatShortDateTime(currentYearDateTime, 'en')).toBe('3 Oct, 08:30');
+    expect(formatShortDateTime(currentYearDateTime, 'sv')).toBe('3 okt, 08:30');
+  });
+
   it('returns an empty string when the value is missing or unparsable', () => {
     expect(formatShortDateTime()).toBe('');
     expect(formatShortDateTime('inte ett datum')).toBe('');

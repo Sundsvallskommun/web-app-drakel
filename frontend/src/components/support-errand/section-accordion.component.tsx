@@ -3,6 +3,7 @@
 import { Button } from '@sk-web-gui/react';
 import { type LucideIcon, Minus, Plus } from 'lucide-react';
 import { FC, ReactNode, useId, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface SectionAccordionProps {
   title: string;
@@ -16,6 +17,7 @@ interface SectionAccordionProps {
  * content indented below.
  */
 export const SectionAccordion: FC<SectionAccordionProps> = ({ title, icon: Icon, initialOpen = true, children }) => {
+  const { t } = useTranslation('errand');
   const [open, setOpen] = useState<boolean>(initialOpen);
   const contentId = useId();
   const toggle = () => {
@@ -42,7 +44,10 @@ export const SectionAccordion: FC<SectionAccordionProps> = ({ title, icon: Icon,
           variant="tertiary"
           size="sm"
           iconButton
-          aria-label={open ? `Fäll ihop ${title}` : `Fäll ut ${title}`}
+          aria-label={t(open ? 'sectionAccordion.collapse' : 'sectionAccordion.expand', {
+            title,
+            interpolation: { escapeValue: false },
+          })}
           aria-expanded={open}
           aria-controls={contentId}
           leftIcon={open ? <Minus /> : <Plus />}

@@ -12,6 +12,7 @@ import { Button, FormControl, FormLabel, Input, Select, Spinner, Table } from '@
 import { formatAmount } from '@utils/format-amount';
 import { RotateCcw, Trash2 } from 'lucide-react';
 import { FC, FocusEvent, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { NormberakningSummaBox } from './normberakning-summa-box.component';
 import { NormberakningTableBox } from './normberakning-table-box.component';
@@ -63,6 +64,7 @@ export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
   types,
   onChanged,
 }) => {
+  const { t } = useTranslation('calculation');
   const typeLabels: Record<string, string> = {};
   for (const type of types) {
     if (type.code) {
@@ -79,7 +81,7 @@ export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
     setError(undefined);
     const result = await action();
     if (result.error) {
-      setError('Det gick inte att spara ändringen');
+      setError(t('table.saveError'));
       return;
     }
     onChanged();
@@ -104,19 +106,19 @@ export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
 
       <Table dense>
         <Table.Header>
-          <Table.HeaderColumn>Typ</Table.HeaderColumn>
-          <Table.HeaderColumn>Ansökt</Table.HeaderColumn>
-          <Table.HeaderColumn>Förslag</Table.HeaderColumn>
-          <Table.HeaderColumn>Godkänt</Table.HeaderColumn>
-          <Table.HeaderColumn>Anmärkning</Table.HeaderColumn>
+          <Table.HeaderColumn>{t('table.type')}</Table.HeaderColumn>
+          <Table.HeaderColumn>{t('expenses.applied')}</Table.HeaderColumn>
+          <Table.HeaderColumn>{t('expenses.proposed')}</Table.HeaderColumn>
+          <Table.HeaderColumn>{t('expenses.approved')}</Table.HeaderColumn>
+          <Table.HeaderColumn>{t('table.note')}</Table.HeaderColumn>
           <Table.HeaderColumn>
-            <span className="sr-only">Åtgärder</span>
+            <span className="sr-only">{t('table.actions')}</span>
           </Table.HeaderColumn>
         </Table.Header>
         <Table.Body>
           {rows.length === 0 ?
             <Table.Row>
-              <Table.Column>Inga rader</Table.Column>
+              <Table.Column>{t('expenses.empty')}</Table.Column>
             </Table.Row>
           : rows.map((row, index) => (
               <ExpenseRow
@@ -150,7 +152,7 @@ export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
 
       <div className="flex items-end gap-12">
         <FormControl className="w-[20rem]">
-          <FormLabel className="text-small">Lägg till rad</FormLabel>
+          <FormLabel className="text-small">{t('table.addRow')}</FormLabel>
           <Select
             size="sm"
             value=""
@@ -160,7 +162,7 @@ export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
               }
             }}
           >
-            <Select.Option value="">Välj typ</Select.Option>
+            <Select.Option value="">{t('expenses.selectType')}</Select.Option>
             {types.map((type) => (
               <Select.Option key={type.code} value={type.code ?? ''}>
                 {type.displayName ?? type.code}
@@ -180,6 +182,7 @@ const ExpenseRow: FC<{
   typeLabels: Record<string, string>;
   onAction: (action: () => Promise<{ error?: unknown }>) => void;
 }> = ({ errandId, row, typeLabels, onAction }) => {
+  const { t } = useTranslation('calculation');
   const [applied, setApplied] = useState<string>(row.appliedAmount?.toString() ?? '');
   const [amount, setAmount] = useState<string>(row.caseworkerAmount?.toString() ?? '');
   const [note, setNote] = useState<string>(row.note ?? '');
@@ -195,14 +198,14 @@ const ExpenseRow: FC<{
         <Table.Column>—</Table.Column>
         <Table.Column>—</Table.Column>
         <Table.Column>
-          <span className="italic">Borttagen</span>
+          <span className="italic">{t('table.deleted')}</span>
         </Table.Column>
         <Table.Column>
           <Button
             size="sm"
             variant="tertiary"
             iconButton
-            aria-label="Återställ rad"
+            aria-label={t('table.restoreRow')}
             leftIcon={<RotateCcw />}
             onClick={() => {
               onAction(() => restoreNormRow(errandId, 'expenses', rowId));
@@ -242,7 +245,7 @@ const ExpenseRow: FC<{
           size="sm"
           inputMode="decimal"
           className="max-w-[9rem]"
-          placeholder="Ansökt"
+          placeholder={t('expenses.applied')}
           value={applied}
           onChange={(event) => {
             setApplied(event.target.value);
@@ -280,7 +283,7 @@ const ExpenseRow: FC<{
           size="sm"
           variant="tertiary"
           iconButton
-          aria-label="Ta bort rad"
+          aria-label={t('table.deleteRow')}
           leftIcon={<Trash2 />}
           onClick={() => {
             onAction(() => deleteNormRow(errandId, 'expenses', rowId));
@@ -305,6 +308,7 @@ const DraftExpenseRow: FC<{
   onRemove: () => void;
   onError: (message: string) => void;
 }> = ({ errandId, bucket, costType, typeLabel, onCommitted, onRemove, onError }) => {
+  const { t } = useTranslation('calculation');
   const [applied, setApplied] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
   const [note, setNote] = useState<string>('');
@@ -324,7 +328,7 @@ const DraftExpenseRow: FC<{
     });
     setSaving(false);
     if (result.error) {
-      onError('Det gick inte att lägga till raden');
+      onError(t('table.addError'));
       return;
     }
     onCommitted();
@@ -349,7 +353,7 @@ const DraftExpenseRow: FC<{
           size="sm"
           inputMode="decimal"
           className="max-w-[9rem]"
-          placeholder="Ansökt"
+          placeholder={t('expenses.applied')}
           value={applied}
           onChange={(event) => {
             setApplied(event.target.value);
@@ -362,7 +366,7 @@ const DraftExpenseRow: FC<{
           size="sm"
           inputMode="decimal"
           className="max-w-[9rem]"
-          placeholder="Belopp"
+          placeholder={t('expenses.amount')}
           value={amount}
           onChange={(event) => {
             setAmount(event.target.value);
@@ -373,7 +377,7 @@ const DraftExpenseRow: FC<{
         <Input
           size="sm"
           maxLength={80}
-          placeholder="Anmärkning"
+          placeholder={t('table.note')}
           value={note}
           onChange={(event) => {
             setNote(event.target.value);
@@ -387,7 +391,7 @@ const DraftExpenseRow: FC<{
             size="sm"
             variant="tertiary"
             iconButton
-            aria-label="Ta bort rad"
+            aria-label={t('table.deleteRow')}
             leftIcon={<Trash2 />}
             onClick={onRemove}
           />

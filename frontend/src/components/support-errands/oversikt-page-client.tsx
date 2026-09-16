@@ -6,9 +6,10 @@ import { useStatuses } from '@hooks/use-statuses';
 import { useUserStore } from '@services/user-service/user-service';
 import { Spinner } from '@sk-web-gui/react';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 
-import { CLOSED_ERRAND_STATUS, ERRAND_VIEWS, ErrandView, NEW_ERRAND_STATUS } from './errand-views';
+import { CLOSED_ERRAND_STATUS, ErrandView, NEW_ERRAND_STATUS } from './errand-views';
 import { ErrandsFilter } from './errands-filter.component';
 import { ErrandsTable } from './errands-table.component';
 import { useOverviewFilterStore } from './overview-filter-store';
@@ -68,6 +69,7 @@ const buildErrandFilter = (
 };
 
 const OversiktPageContent = () => {
+  const { t } = useTranslation('overview');
   // Filter/sort/paging state lives in a shared store so it survives navigating into an errand and back.
   const selectedView = useOverviewFilterStore((state) => state.selectedView);
   const query = useOverviewFilterStore((state) => state.query);
@@ -118,7 +120,7 @@ const OversiktPageContent = () => {
 
   const totalPages = meta.totalPages ?? 1;
   const totalRecords = meta.totalRecords ?? errands.length;
-  const heading = ERRAND_VIEWS.find((view) => view.key === selectedView)?.label ?? 'Alla ärenden';
+  const heading = t(`views.${selectedView}`, { defaultValue: t('views.all') });
 
   return (
     // The AppShell (header) wraps the page; the sidebar and the scrolling main column fill the rest.
@@ -148,7 +150,7 @@ const OversiktPageContent = () => {
             onOnlyUnreadChange={setOnlyUnread}
           />
           <p className="m-0 text-dark-secondary" aria-live="polite">
-            {isLoading ? 'Hämtar ärenden…' : `Visar ${totalRecords} ${totalRecords === 1 ? 'ärende' : 'ärenden'}`}
+            {isLoading ? t('list.fetching') : t('list.showing', { count: totalRecords })}
           </p>
           <ErrandsTable
             errands={errands}

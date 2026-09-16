@@ -1,5 +1,8 @@
 {
   "userMenu": {
     "label": "Användarmeny"
-  }
+  },
+  "logoLink": "Till översikten",
+  "newErrand": "Nytt ärende",
+  "notifications": "Notiser"
 }

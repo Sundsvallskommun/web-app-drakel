@@ -5,6 +5,7 @@ import { PdfPreview } from '@components/common/pdf-preview.component';
 import { Attachment } from '@data-contracts/backend/data-contracts';
 import { SUMMARY_PDF } from '@utils/attachment-names';
 import { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { AttachmentList } from './attachment-list.component';
 import { AttachmentUploadField } from './attachment-upload-field.component';
@@ -35,13 +36,14 @@ export const ErrandAttachments: FC<ErrandAttachmentsProps> = ({
   isLoading,
   loadError,
   refresh,
-  heading = 'Bilagor',
+  heading,
 }) => {
+  const { t } = useTranslation('attachments');
   const summaryAttachment = attachments.find((attachment) => (attachment.fileName ?? '').toLowerCase() === SUMMARY_PDF);
 
   return (
     <div className="flex flex-col gap-40">
-      <ErrandSectionHeader title="Bilagor" description="Här samlas bilagor som är kopplade till ärendet." />
+      <ErrandSectionHeader title={t('title')} description={t('errandAttachments.description')} />
 
       <AttachmentUploadField errandId={errandId} onUploaded={refresh} />
 
@@ -49,18 +51,18 @@ export const ErrandAttachments: FC<ErrandAttachmentsProps> = ({
         <PdfPreview
           errandId={errandId}
           attachmentId={summaryAttachment.id}
-          title="Sammanställning bilagor från ansökan"
+          title={t('errandAttachments.summaryTitle')}
         />
       : null}
 
-      <AsyncContent isLoading={isLoading} error={loadError} errorText="Det gick inte att hämta bilagor">
-        <AttachmentList errandId={errandId} attachments={attachments} heading={heading} />
+      <AsyncContent isLoading={isLoading} error={loadError} errorText={t('loadError')}>
+        <AttachmentList errandId={errandId} attachments={attachments} heading={heading ?? t('title')} />
         {messageAttachments ?
           <AttachmentList
             errandId={errandId}
             attachments={messageAttachments}
-            heading="Bilagor från meddelanden"
-            placeholder="Inga bilagor i meddelanden"
+            heading={t('messageAttachments.heading')}
+            placeholder={t('messageAttachments.empty')}
           />
         : null}
       </AsyncContent>

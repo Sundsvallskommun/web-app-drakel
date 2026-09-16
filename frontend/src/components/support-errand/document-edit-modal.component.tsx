@@ -8,6 +8,7 @@ import { toEditorMarkup } from '@utils/sanitize-html';
 import { todayDate } from '@utils/today-date';
 import dynamic from 'next/dynamic';
 import { FC, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const DocumentEditor = dynamic(() => import('./document-editor.component'), {
   ssr: false,
@@ -21,6 +22,7 @@ export const DocumentEditModal: FC<{
   onClose: () => void;
   onSaved: () => void;
 }> = ({ errandId, document, onClose, onSaved }) => {
+  const { t } = useTranslation('documentation');
   const documented = splitDateTime(document.documentDateTime);
   const [heading, setHeading] = useState<string>(document.heading ?? '');
   const [documentDate, setDocumentDate] = useState<string>(documented.date || todayDate());
@@ -47,17 +49,17 @@ export const DocumentEditModal: FC<{
     const res = await updateDocument(errandId, document.id, input);
     setSaving(false);
     if (res.error) {
-      setError('Det gick inte att spara ändringen');
+      setError(t('form.saveChangeError'));
       return;
     }
     onSaved();
   };
 
   return (
-    <Modal show onClose={onClose} label="Redigera dokument" className="w-[88rem] max-w-[90vw]">
+    <Modal show onClose={onClose} label={t('documents.editTitle')} className="w-[88rem] max-w-[90vw]">
       <Modal.Content className="flex flex-col gap-12">
         <FormControl id="document-edit-heading" className="w-full">
-          <FormLabel>Rubrik *</FormLabel>
+          <FormLabel>{t('form.headingRequired')}</FormLabel>
           <Input
             value={heading}
             onChange={(event) => {
@@ -68,7 +70,7 @@ export const DocumentEditModal: FC<{
 
         <div className="grid grid-cols-2 gap-12">
           <FormControl id="document-edit-date" className="w-full">
-            <FormLabel>Datum *</FormLabel>
+            <FormLabel>{t('form.dateRequired')}</FormLabel>
             <DatePicker
               type="date"
               value={documentDate}
@@ -78,7 +80,7 @@ export const DocumentEditModal: FC<{
             />
           </FormControl>
           <FormControl id="document-edit-time" className="w-full">
-            <FormLabel>Tid</FormLabel>
+            <FormLabel>{t('form.time')}</FormLabel>
             <DatePicker
               type="time"
               value={documentTime}
@@ -90,7 +92,7 @@ export const DocumentEditModal: FC<{
         </div>
 
         <FormControl id="document-edit-text" className="w-full">
-          <FormLabel>Text</FormLabel>
+          <FormLabel>{t('form.text')}</FormLabel>
           <DocumentEditor value={content} onChange={setContent} />
         </FormControl>
 
@@ -98,10 +100,10 @@ export const DocumentEditModal: FC<{
       </Modal.Content>
       <Modal.Footer>
         <Button variant="secondary" onClick={onClose}>
-          Avbryt
+          {t('common:cancel')}
         </Button>
         <Button color="vattjom" variant="primary" loading={saving} disabled={!canSave} onClick={() => void save()}>
-          Spara
+          {t('common:save')}
         </Button>
       </Modal.Footer>
     </Modal>

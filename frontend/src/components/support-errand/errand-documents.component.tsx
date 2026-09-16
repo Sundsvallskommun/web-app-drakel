@@ -5,6 +5,7 @@ import { deleteDocument, Document, lockDocument } from '@services/document-servi
 import { Button, Modal } from '@sk-web-gui/react';
 import { Lock, Pencil, Plus, Trash } from 'lucide-react';
 import { FC, useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 
 import { DocumentCreateModal } from './document-create-modal.component';
 import { DocumentEditModal } from './document-edit-modal.component';
@@ -12,7 +13,7 @@ import { ErrandSectionHeader } from './errand-section-header.component';
 import { LifecareSourceBadge } from './lifecare-source-badge.component';
 import { RecordAction, RecordActionsMenu } from './record-actions-menu.component';
 import { RecordBodyText } from './record-body-text.component';
-import { RecordCard, RecordCardDetail } from './record-card.component';
+import { RecordCard, RecordCardDetail, RecordHeadingEmphasis } from './record-card.component';
 import { RecordList } from './record-list.component';
 import { RecordStatusBadge } from './record-status-badge.component';
 
@@ -23,6 +24,7 @@ const byDateDesc = (a: Document, b: Document): number =>
 /** "Dokument" tab — the errand's formal case documents (Lifecare handlingar): list + create/edit/lock/delete. */
 export const ErrandDocuments: FC<{ errandId: string }> = ({ errandId }) => {
   const { documents, types, isLoading, error, refresh } = useErrandDocuments(errandId);
+  const { t } = useTranslation('documentation');
 
   const [showCreate, setShowCreate] = useState<boolean>(false);
   const [editDocument, setEditDocument] = useState<Document>();
@@ -60,27 +62,27 @@ export const ErrandDocuments: FC<{ errandId: string }> = ({ errandId }) => {
       []
     : [
         {
-          label: 'Redigera',
+          label: t('common:edit'),
           icon: <Pencil />,
           onClick: () => {
             setEditDocument(document);
           },
         },
         {
-          label: 'Lås',
+          label: t('common:lock'),
           icon: <Lock />,
           onClick: () => {
             setLockTarget(document);
           },
         },
-        { label: 'Ta bort', icon: <Trash />, onClick: () => void remove(document.id) },
+        { label: t('common:delete'), icon: <Trash />, onClick: () => void remove(document.id) },
       ];
 
   return (
     <div className="flex flex-col gap-24">
       <ErrandSectionHeader
-        title="Dokument"
-        description="Dokument som upprättas i ärendet. Ett utkast kan redigeras tills det låses och blir en upprättad handling."
+        title={t('documents.title')}
+        description={t('documents.description')}
         action={
           <Button
             color="vattjom"
@@ -91,18 +93,18 @@ export const ErrandDocuments: FC<{ errandId: string }> = ({ errandId }) => {
               setShowCreate(true);
             }}
           >
-            Nytt dokument
+            {t('documents.newDocument')}
           </Button>
         }
       />
 
       <RecordList
         error={error}
-        errorText="Det gick inte att hämta dokumenten"
-        title="Tillagda dokument"
+        errorText={t('documents.loadError')}
+        title={t('documents.listTitle')}
         isLoading={isLoading}
         isEmpty={documents.length === 0}
-        emptyText="Inga dokument."
+        emptyText={t('documents.empty')}
       >
         {[...documents].sort(byDateDesc).map((document, index) => (
           <RecordCard
@@ -112,7 +114,7 @@ export const ErrandDocuments: FC<{ errandId: string }> = ({ errandId }) => {
             badges={
               <>
                 <LifecareSourceBadge source={document.source} />
-                <RecordStatusBadge status={document.status} workingLabel="Utkast" />
+                <RecordStatusBadge status={document.status} workingLabel={t('documents.workingStatus')} />
               </>
             }
             menu={
@@ -123,8 +125,8 @@ export const ErrandDocuments: FC<{ errandId: string }> = ({ errandId }) => {
               />
             }
           >
-            <RecordCardDetail label="Tillagd av" value={document.createdBy} />
-            <RecordCardDetail label="Typ" value={document.type} />
+            <RecordCardDetail label={t('record.addedBy')} value={document.createdBy} />
+            <RecordCardDetail label={t('record.type')} value={document.type} />
             <RecordBodyText text={document.text} />
           </RecordCard>
         ))}
@@ -163,12 +165,15 @@ export const ErrandDocuments: FC<{ errandId: string }> = ({ errandId }) => {
         onClose={() => {
           setLockTarget(undefined);
         }}
-        label="Lås dokument"
+        label={t('documents.lockTitle')}
       >
         <Modal.Content>
           <p className="m-0">
-            Vill du låsa <strong>{lockTarget?.heading}</strong>? Det blir en upprättad handling och kan inte ändras
-            eller tas bort.
+            <Trans
+              t={t}
+              i18nKey="documents.lockConfirm"
+              components={{ heading: <RecordHeadingEmphasis heading={lockTarget?.heading} /> }}
+            />
           </p>
         </Modal.Content>
         <Modal.Footer>
@@ -178,10 +183,10 @@ export const ErrandDocuments: FC<{ errandId: string }> = ({ errandId }) => {
               setLockTarget(undefined);
             }}
           >
-            Avbryt
+            {t('common:cancel')}
           </Button>
           <Button color="vattjom" variant="primary" loading={busyId === lockTarget?.id} onClick={() => void lock()}>
-            Lås
+            {t('common:lock')}
           </Button>
         </Modal.Footer>
       </Modal>

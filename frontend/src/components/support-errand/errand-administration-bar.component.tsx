@@ -5,9 +5,9 @@ import { ErrandForm } from '@hooks/use-errand-form';
 import { useStatuses } from '@hooks/use-statuses';
 import { useUserStore } from '@services/user-service/user-service';
 import { Button, Divider, Select } from '@sk-web-gui/react';
-import { PRIORITY_OPTIONS } from '@utils/errand-priority';
-import { errandStatusLabel } from '@utils/errand-status';
+import { ERRAND_PRIORITIES } from '@utils/errand-priority';
 import { FC, ReactNode, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 
 import { ErrandTilldela } from './errand-tilldela.component';
@@ -39,6 +39,7 @@ export const ErrandAdministrationBar: FC<ErrandAdministrationBarProps> = ({
   onSave,
   actions,
 }) => {
+  const { t } = useTranslation('errand');
   const { statuses } = useStatuses();
   const { administrators } = useAdministrators();
   const username = useUserStore(useShallow((state) => state.user.username));
@@ -47,15 +48,17 @@ export const ErrandAdministrationBar: FC<ErrandAdministrationBarProps> = ({
   // då saknas options och Select:en faller tillbaka på "Välj status" trots att ärendet har en status.
   // Inkludera därför alltid ärendets nuvarande status så den visas och kan behållas.
   const statusOptions = useMemo(() => {
+    const statusLabel = (status: string, fallback?: string): string =>
+      t(`common:status.${status.toUpperCase()}`, { defaultValue: fallback ?? status });
     const options = statuses.map((lookup) => ({
       name: lookup.name ?? '',
-      label: lookup.displayName ?? errandStatusLabel(lookup.name ?? ''),
+      label: statusLabel(lookup.name ?? '', lookup.displayName),
     }));
     if (form.status && !options.some((option) => option.name === form.status)) {
-      options.unshift({ name: form.status, label: errandStatusLabel(form.status) });
+      options.unshift({ name: form.status, label: statusLabel(form.status) });
     }
     return options;
-  }, [statuses, form.status]);
+  }, [statuses, form.status, t]);
 
   // Handläggare come from Active Directory. Always include the errand's current assignee (even if it's not
   // in the roster, e.g. "Ta ärende" set it to the logged-in user) so it stays selectable and displayable.
@@ -73,7 +76,7 @@ export const ErrandAdministrationBar: FC<ErrandAdministrationBarProps> = ({
     <div className="shrink-0 bg-background-content shadow-50 px-24 py-16 flex flex-wrap items-center gap-x-24 gap-y-12 relative z-10">
       <div className="flex items-center gap-6 text-small whitespace-nowrap">
         <span>
-          <strong>Handläggare:</strong> {assigneeName ?? 'Ej tilldelad'}
+          <strong>{t('administrationBar.caseWorker')}</strong> {assigneeName ?? t('administrationBar.notAssigned')}
         </span>
         {username && form.assignedUserId !== username ?
           <Button
@@ -83,7 +86,7 @@ export const ErrandAdministrationBar: FC<ErrandAdministrationBarProps> = ({
               setField('assignedUserId', username);
             }}
           >
-            Ta ärende
+            {t('administrationBar.takeErrand')}
           </Button>
         : null}
       </div>
@@ -105,7 +108,7 @@ export const ErrandAdministrationBar: FC<ErrandAdministrationBarProps> = ({
 
       <div className="flex flex-wrap items-center gap-24">
         <label htmlFor="errand-status" className="flex items-center gap-8 text-small font-bold">
-          Status
+          {t('administrationBar.status')}
           <Select
             id="errand-status"
             size="sm"
@@ -116,7 +119,7 @@ export const ErrandAdministrationBar: FC<ErrandAdministrationBarProps> = ({
           >
             {!form.status && (
               <Select.Option value="" disabled>
-                Ej satt
+                {t('common:notSet')}
               </Select.Option>
             )}
             {statusOptions.map((option) => (
@@ -128,7 +131,7 @@ export const ErrandAdministrationBar: FC<ErrandAdministrationBarProps> = ({
         </label>
 
         <label htmlFor="errand-priority" className="flex items-center gap-8 text-small font-bold">
-          Prioritet
+          {t('administrationBar.priority')}
           <Select
             id="errand-priority"
             size="sm"
@@ -139,12 +142,12 @@ export const ErrandAdministrationBar: FC<ErrandAdministrationBarProps> = ({
           >
             {!form.priority && (
               <Select.Option value="" disabled>
-                Ej satt
+                {t('common:notSet')}
               </Select.Option>
             )}
-            {PRIORITY_OPTIONS.map((option) => (
-              <Select.Option key={option.value} value={option.value}>
-                {option.label}
+            {ERRAND_PRIORITIES.map((priority) => (
+              <Select.Option key={priority} value={priority}>
+                {t(`common:priority.${priority}`)}
               </Select.Option>
             ))}
           </Select>
@@ -161,10 +164,10 @@ export const ErrandAdministrationBar: FC<ErrandAdministrationBarProps> = ({
           size="sm"
           disabled={!isDirty}
           loading={saving}
-          loadingText="Sparar…"
+          loadingText={t('common:saving')}
           onClick={onSave}
         >
-          Spara
+          {t('common:save')}
         </Button>
       </div>
     </div>

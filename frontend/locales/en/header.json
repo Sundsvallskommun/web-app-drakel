@@ -1,5 +1,8 @@
 {
   "userMenu": {
     "label": "User menu"
-  }
+  },
+  "logoLink": "Go to the overview",
+  "newErrand": "New errand",
+  "notifications": "Notifications"
 }

@@ -6,5 +6,8 @@
     "SAML_MISSING_ATTRIBUTES": "The user is missing the required attributes",
     "MISSING_PERMISSIONS": "The user is missing permissions",
     "NO_USER": "Failed to set up the user"
+  },
+  "loader": {
+    "label": "Loading information"
   }
 }

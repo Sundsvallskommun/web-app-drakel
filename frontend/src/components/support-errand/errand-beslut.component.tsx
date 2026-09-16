@@ -11,6 +11,7 @@ import { resolveBeslutAmount, resolveBeslutPeriod } from '@utils/beslut';
 import { formatAmount } from '@utils/format-amount';
 import dayjs from 'dayjs';
 import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { BeslutMeddelande } from './beslut-meddelande.component';
 import { ContentBox } from './content-box.component';
@@ -40,6 +41,7 @@ export const ErrandBeslut: FC<{
   /** Registers this tab's save with the parent so the central "Spara ärende" button runs it (null = nothing to save). */
   onRegisterSave?: (save: (() => Promise<boolean>) | null) => void;
 }> = ({ errandId, locked = false, headerSlot, onRegisterSave }) => {
+  const { t } = useTranslation('decision');
   const { draft, isLoading: draftLoading } = useErrandNormberakning(errandId);
   const { options, recommendation, savedBeslut, isLoading: beslutLoading, refresh } = useErrandBeslut(errandId);
 
@@ -91,8 +93,7 @@ export const ErrandBeslut: FC<{
   const recommendedOption = options.find((option) => option.code === recommendation?.value);
   const amount = resolveBeslutAmount(selectedOption, savedBeslut?.amount ?? recommendation?.amount);
 
-  const recommendationLabel =
-    recommendedOption?.displayName ?? recommendation?.value ?? '— (ingen rekommendation från normberäkningen ännu)';
+  const recommendationLabel = recommendedOption?.displayName ?? recommendation?.value ?? t('details.noRecommendation');
 
   // The beslut counts as dirty — and the central "Spara ärende" button lights up — only when a field
   // differs from the saved beslut (or, before any save, the prefilled recommendation) or the user has
@@ -136,7 +137,7 @@ export const ErrandBeslut: FC<{
       decisionMessage,
     });
     if (result.error) {
-      setSaveError('Det gick inte att spara beslutet');
+      setSaveError(t('details.saveError'));
       return false;
     }
     setSaved(true);
@@ -164,11 +165,7 @@ export const ErrandBeslut: FC<{
   }, [onRegisterSave, locked, beslutDirty]);
 
   const header = (
-    <ErrandSectionHeader
-      title="Beslut"
-      description="Datum, beslut och period förifylls från normberäkningens rekommendation. Beloppet följer valt beslut."
-      action={headerSlot}
-    >
+    <ErrandSectionHeader title={t('header.title')} description={t('header.description')} action={headerSlot}>
       {locked ?
         <LockedBanner />
       : null}
@@ -190,12 +187,12 @@ export const ErrandBeslut: FC<{
     <div className="flex flex-col gap-24">
       {header}
 
-      <ContentBox title="Beslutsuppgifter">
+      <ContentBox title={t('details.title')}>
         <LockFieldset locked={locked}>
           <div className="flex flex-col gap-24">
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-24 gap-y-16">
               <FormControl id="beslut-datum" className="w-full">
-                <FormLabel>Datum *</FormLabel>
+                <FormLabel>{t('details.date')}</FormLabel>
                 <Input
                   type="date"
                   value={date}
@@ -206,7 +203,7 @@ export const ErrandBeslut: FC<{
               </FormControl>
 
               <FormControl id="beslut-typ" className="w-full">
-                <FormLabel>Beslut *</FormLabel>
+                <FormLabel>{t('details.decision')}</FormLabel>
                 <Select
                   className="w-full"
                   value={beslutCode}
@@ -214,18 +211,20 @@ export const ErrandBeslut: FC<{
                     setBeslutCode(event.target.value);
                   }}
                 >
-                  <Select.Option value="">Välj beslut</Select.Option>
+                  <Select.Option value="">{t('details.selectDecision')}</Select.Option>
                   {options.map((option) => (
                     <Select.Option key={option.code} value={option.code ?? ''}>
                       {option.displayName ?? option.code}
                     </Select.Option>
                   ))}
                 </Select>
-                <span className="text-small text-dark-secondary mt-4">Rekommenderat beslut: {recommendationLabel}</span>
+                <span className="text-small text-dark-secondary mt-4">
+                  {t('details.recommended', { label: recommendationLabel })}
+                </span>
               </FormControl>
 
               <FormControl id="beslut-fran" className="w-full">
-                <FormLabel>Från</FormLabel>
+                <FormLabel>{t('details.from')}</FormLabel>
                 <Input
                   type="date"
                   value={fromDate}
@@ -236,7 +235,7 @@ export const ErrandBeslut: FC<{
               </FormControl>
 
               <FormControl id="beslut-till" className="w-full">
-                <FormLabel>Till</FormLabel>
+                <FormLabel>{t('details.to')}</FormLabel>
                 <Input
                   type="date"
                   value={toDate}
@@ -249,12 +248,12 @@ export const ErrandBeslut: FC<{
 
             {/* Belopp is derived (0 for an avslag, otherwise the recommended amount), so it's shown
                 as a read-only value rather than an input field. */}
-            <LabeledValue label="Belopp att bevilja">
+            <LabeledValue label={t('details.amount')}>
               <span className="font-bold">{formatAmount(amount ?? 0)}</span>
             </LabeledValue>
 
             {saveError && <p className="text-error-surface-primary m-0">{saveError}</p>}
-            {saved && <p className="text-dark-secondary m-0">Beslutet sparades.</p>}
+            {saved && <p className="text-dark-secondary m-0">{t('details.saved')}</p>}
           </div>
         </LockFieldset>
       </ContentBox>
@@ -262,16 +261,16 @@ export const ErrandBeslut: FC<{
       {/* The "Förhandsgranska" button is read-only, so it sits in the box header OUTSIDE the LockFieldset and
           remains clickable even when the section is approved/locked. Only the editor below is locked. */}
       <ContentBox
-        title="Beslutsmeddelande"
+        title={t('message.title')}
         action={
           // Wrap so the preview button is one flex item — its fragment (Button + Modal) would otherwise
           // become two children and justify-between would push the button to the middle.
           <div>
             <PdfPreviewButton
               buildHtml={buildDecisionMessage}
-              label="Förhandsgranska"
-              modalLabel="Förhandsgranska beslut"
-              emptyMessage="Det finns inget beslutsmeddelande att förhandsgranska."
+              label={t('common:preview')}
+              modalLabel={t('message.previewModalLabel')}
+              emptyMessage={t('message.previewEmpty')}
             />
           </div>
         }

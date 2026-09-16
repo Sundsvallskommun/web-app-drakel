@@ -2,18 +2,20 @@
 
 import { Alert } from '@sk-web-gui/alert';
 import { FC, ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
 /** The "section approved and locked" banner — a green success Alert shown above a locked section. */
-export const LockedBanner: FC = () => (
-  <Alert type="success">
-    <Alert.Icon />
-    <Alert.Content>
-      <Alert.Content.Title>
-        Sektionen är godkänd och låst för redigering. Avmarkera godkännandet för att redigera igen.
-      </Alert.Content.Title>
-    </Alert.Content>
-  </Alert>
-);
+export const LockedBanner: FC = () => {
+  const { t } = useTranslation('errand');
+  return (
+    <Alert type="success">
+      <Alert.Icon />
+      <Alert.Content>
+        <Alert.Content.Title>{t('lockedBanner')}</Alert.Content.Title>
+      </Alert.Content>
+    </Alert>
+  );
+};
 
 /**
  * Disables every input/select/button inside while keeping the content fully visible and scrollable, so an

@@ -3,8 +3,7 @@
 import TextEditor, { TextEditorValue } from '@sk-web-gui/text-editor';
 import type Quill from 'quill';
 import { FC, useEffect, useRef } from 'react';
-
-const ATTACH_LABEL = 'Bifoga fil';
+import { useTranslation } from 'react-i18next';
 
 // The toolbar from the design: headings and inline styles, lists, then image (used to attach files) and link.
 const MESSAGE_TOOLBAR = [
@@ -27,6 +26,9 @@ const MessageEditor: FC<{
   /** Moves focus into the editor whenever this value changes (e.g. the id of the message being replied to). */
   focusKey?: string;
 }> = ({ value, onChange, placeholder, readOnly, onAttachClick, focusKey }) => {
+  const { t } = useTranslation('messages');
+  const attachLabel = t('editor.attachFile');
+  const editorLabel = t('editor.ariaLabel');
   const quillRef = useRef<Quill | null>(null);
   const onAttachClickRef = useRef(onAttachClick);
 
@@ -44,7 +46,15 @@ const MessageEditor: FC<{
     toolbar.addHandler('image', () => {
       onAttachClickRef.current();
     });
-    quill.root.setAttribute('aria-label', 'Nytt meddelande');
+  }, []);
+
+  // Follows the UI language: re-runs (and relabels) when the translated labels change.
+  useEffect(() => {
+    const quill = quillRef.current;
+    if (!quill) {
+      return;
+    }
+    quill.root.setAttribute('aria-label', editorLabel);
 
     // TextEditor labels the image button "Infoga bild" (aria-label + tooltip) on every render; since the button
     // attaches files here, keep relabelling it whenever that happens.
@@ -53,14 +63,14 @@ const MessageEditor: FC<{
       return;
     }
     const relabel = () => {
-      if (imageButton.getAttribute('aria-label') !== ATTACH_LABEL) {
-        imageButton.setAttribute('aria-label', ATTACH_LABEL);
+      if (imageButton.getAttribute('aria-label') !== attachLabel) {
+        imageButton.setAttribute('aria-label', attachLabel);
       }
       const tooltip = imageButton.querySelector('.tooltip-container');
-      if (tooltip && tooltip.textContent !== ATTACH_LABEL && tooltip.textContent) {
+      if (tooltip && tooltip.textContent !== attachLabel && tooltip.textContent) {
         tooltip.querySelectorAll('*').forEach((element) => {
           if (element.childNodes.length === 1 && element.firstChild?.nodeType === Node.TEXT_NODE) {
-            element.textContent = ATTACH_LABEL;
+            element.textContent = attachLabel;
           }
         });
       }
@@ -77,7 +87,7 @@ const MessageEditor: FC<{
     return () => {
       observer.disconnect();
     };
-  }, []);
+  }, [attachLabel, editorLabel]);
 
   useEffect(() => {
     quillRef.current?.root.setAttribute('data-placeholder', placeholder);

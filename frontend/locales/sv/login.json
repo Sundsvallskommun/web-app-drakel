@@ -6,5 +6,8 @@
     "SAML_MISSING_ATTRIBUTES": "Användaren saknar rätt attribut",
     "MISSING_PERMISSIONS": "Användaren saknar rättigheter",
     "NO_USER": "Misslyckades att konfigurera användare"
+  },
+  "loader": {
+    "label": "Laddar information"
   }
 }

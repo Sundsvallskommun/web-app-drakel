@@ -12,6 +12,7 @@ import { combineDateAndTime } from '@utils/date-time';
 import { todayDate } from '@utils/today-date';
 import dynamic from 'next/dynamic';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // The rich-text editor + template/phrase pickers are shared with the document editor (the templating
 // service filters by the type code, and journal/document type codes don't overlap).
@@ -41,6 +42,7 @@ export const JournalEntryCreateModal: FC<{
   onClose: () => void;
   onCreated: () => void;
 }> = ({ errandId, types, onClose, onCreated }) => {
+  const { t } = useTranslation('documentation');
   const [typeCode, setTypeCode] = useState<string>('');
   const [heading, setHeading] = useState<string>('');
   const [entryDate, setEntryDate] = useState<string>(todayDate());
@@ -110,18 +112,18 @@ export const JournalEntryCreateModal: FC<{
     const res = await createJournalEntry(errandId, input);
     setSaving(false);
     if (res.error) {
-      setError('Det gick inte att spara journalanteckningen');
+      setError(t('journal.saveError'));
       return;
     }
     onCreated();
   };
 
   return (
-    <Modal show onClose={onClose} label="Ny journalanteckning" className="w-[88rem] max-w-[90vw]">
+    <Modal show onClose={onClose} label={t('journal.newEntry')} className="w-[88rem] max-w-[90vw]">
       <Modal.Content className="flex flex-col gap-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
           <FormControl id="journal-new-type" className="w-full">
-            <FormLabel>Typ *</FormLabel>
+            <FormLabel>{t('form.typeRequired')}</FormLabel>
             <Select
               className="w-full"
               value={typeCode}
@@ -129,7 +131,7 @@ export const JournalEntryCreateModal: FC<{
                 setTypeCode(event.target.value);
               }}
             >
-              <Select.Option value="">Välj typ</Select.Option>
+              <Select.Option value="">{t('form.selectType')}</Select.Option>
               {types.map((journalType) => (
                 <Select.Option key={journalType.code} value={journalType.code ?? ''}>
                   {journalType.displayName ?? journalType.code}
@@ -139,12 +141,12 @@ export const JournalEntryCreateModal: FC<{
           </FormControl>
 
           <FormControl id="journal-new-template" className="w-full">
-            <FormLabel>Mall</FormLabel>
+            <FormLabel>{t('form.template')}</FormLabel>
             <Combobox
               key={`doc-${typeCode}`}
               disabled={!typeCode}
-              placeholder="Välj mall (ersätter texten)"
-              searchPlaceholder="Sök mall…"
+              placeholder={t('form.templatePlaceholder')}
+              searchPlaceholder={t('form.templateSearch')}
               onSelect={(event) => {
                 const identifier = comboboxValue(event.target.value);
                 if (identifier) {
@@ -164,12 +166,12 @@ export const JournalEntryCreateModal: FC<{
           </FormControl>
 
           <FormControl id="journal-new-phrase" className="w-full">
-            <FormLabel>Frastext</FormLabel>
+            <FormLabel>{t('form.phrase')}</FormLabel>
             <Combobox
               key={`phrase-${typeCode}-${phraseNonce}`}
               disabled={!typeCode}
-              placeholder="Infoga fras vid markören"
-              searchPlaceholder="Sök fras…"
+              placeholder={t('form.phrasePlaceholder')}
+              searchPlaceholder={t('form.phraseSearch')}
               onSelect={(event) => {
                 const identifier = comboboxValue(event.target.value);
                 if (identifier) {
@@ -190,7 +192,7 @@ export const JournalEntryCreateModal: FC<{
         </div>
 
         <FormControl id="journal-new-heading" className="w-full">
-          <FormLabel>Rubrik *</FormLabel>
+          <FormLabel>{t('form.headingRequired')}</FormLabel>
           <Input
             value={heading}
             onChange={(event) => {
@@ -201,7 +203,7 @@ export const JournalEntryCreateModal: FC<{
 
         <div className="grid grid-cols-2 gap-12">
           <FormControl id="journal-new-date" className="w-full">
-            <FormLabel>Datum *</FormLabel>
+            <FormLabel>{t('form.dateRequired')}</FormLabel>
             <DatePicker
               type="date"
               value={entryDate}
@@ -211,7 +213,7 @@ export const JournalEntryCreateModal: FC<{
             />
           </FormControl>
           <FormControl id="journal-new-time" className="w-full">
-            <FormLabel>Tid</FormLabel>
+            <FormLabel>{t('form.time')}</FormLabel>
             <DatePicker
               type="time"
               value={entryTime}
@@ -223,7 +225,7 @@ export const JournalEntryCreateModal: FC<{
         </div>
 
         <FormControl id="journal-new-text" className="w-full">
-          <FormLabel>Text</FormLabel>
+          <FormLabel>{t('form.text')}</FormLabel>
           <DocumentEditor value={content} onChange={setContent} registerInsert={registerInsert} />
         </FormControl>
 
@@ -231,10 +233,10 @@ export const JournalEntryCreateModal: FC<{
       </Modal.Content>
       <Modal.Footer>
         <Button variant="secondary" onClick={onClose}>
-          Avbryt
+          {t('common:cancel')}
         </Button>
         <Button color="vattjom" variant="primary" loading={saving} disabled={!canCreate} onClick={() => void create()}>
-          Skapa
+          {t('form.create')}
         </Button>
       </Modal.Footer>
     </Modal>

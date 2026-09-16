@@ -3,10 +3,11 @@
 import { Attachment } from '@data-contracts/backend/data-contracts';
 import { useAttachmentImagePreviews } from '@hooks/use-attachment-previews';
 import { downloadUnifiedAttachment } from '@services/errand-service/errand-service';
-import { attachmentCategoryLabel } from '@utils/attachment-category';
+import { attachmentCategoryKey } from '@utils/attachment-category';
 import { formatFileSize } from '@utils/format-file-size';
 import dayjs from 'dayjs';
 import { FC, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { AttachmentFileRow } from './attachment-file-row.component';
 import { AttachmentPreviewModal, isPreviewableAttachment } from './attachment-preview-modal.component';
@@ -31,12 +32,8 @@ interface AttachmentListProps {
  * and previews route conversation files through the message endpoint automatically (handled in the service
  * via the attachment's documentType/messageId). Reused by the Bilagor tab and the "Bilagor från meddelanden" tab.
  */
-export const AttachmentList: FC<AttachmentListProps> = ({
-  errandId,
-  attachments,
-  heading,
-  placeholder = 'Inga bilagor',
-}) => {
+export const AttachmentList: FC<AttachmentListProps> = ({ errandId, attachments, heading, placeholder }) => {
+  const { t } = useTranslation('attachments');
   const imagePreviews = useAttachmentImagePreviews(errandId, attachments);
   const [downloadingId, setDownloadingId] = useState<string>();
   const [error, setError] = useState<string>();
@@ -51,7 +48,7 @@ export const AttachmentList: FC<AttachmentListProps> = ({
     try {
       await downloadUnifiedAttachment(errandId, attachment);
     } catch {
-      setError('Det gick inte att hämta filen');
+      setError(t('downloadError'));
     } finally {
       setDownloadingId(undefined);
     }
@@ -67,15 +64,16 @@ export const AttachmentList: FC<AttachmentListProps> = ({
       : null}
 
       {attachments.length === 0 ?
-        <p className="m-0 border-t-1 border-divider pt-12 text-dark-secondary">{placeholder}</p>
+        <p className="m-0 border-t-1 border-divider pt-12 text-dark-secondary">{placeholder ?? t('list.empty')}</p>
       : <ul className="m-0 flex list-none flex-col p-0">
           {attachments.map((attachment, index) => {
-            const fileName = attachment.fileName ?? 'bilaga';
+            const fileName = attachment.fileName ?? t('fallbackFileName');
+            const categoryKey = attachmentCategoryKey(attachment);
             return (
               <li key={attachment.id ?? index} className="border-t-1 border-divider">
                 <AttachmentFileRow
                   fileName={fileName}
-                  category={attachmentCategoryLabel(attachment)}
+                  category={categoryKey ? t(`category.${categoryKey}`) : undefined}
                   description={attachmentDescription(attachment)}
                   thumbnail={attachment.id ? imagePreviews[attachment.id] : undefined}
                   canPreview={isPreviewableAttachment(attachment)}

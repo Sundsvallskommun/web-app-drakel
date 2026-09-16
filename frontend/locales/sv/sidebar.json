@@ -1,1 +1,93 @@
-{}
+{
+  "sections": {
+    "warnings": "Varningar",
+    "notes": "Anteckningar",
+    "bevakningar": "Bevakningar",
+    "events": "Händelselogg"
+  },
+  "toggle": {
+    "open": "Öppna {{section}}",
+    "close": "Stäng {{section}}"
+  },
+  "warnings": {
+    "showCurrent": "Visa aktuella",
+    "updateError": "Det gick inte att uppdatera varningen",
+    "loadError": "Det gick inte att hämta varningar",
+    "emptyCurrent": "Inga aktuella varningar",
+    "empty": "Inga varningar",
+    "acknowledge": "Kvittera",
+    "acknowledging": "Kvitterar…",
+    "reopen": "Återöppna",
+    "reopening": "Återöppnar…",
+    "status": {
+      "ACKNOWLEDGED": "Kvitterad",
+      "CLOSED": "Stängd"
+    },
+    "types": {
+      "UNHANDLED_INCOME": "Ej hanterad inkomst",
+      "INCOME_CHANGE": "Inkomständring",
+      "MISSING_SSBTEK": "Saknas i SSBTEK",
+      "NEW_INCOME": "Ny inkomst",
+      "NEW_EXPENSE": "Ny utgift",
+      "NEW_PERSON": "Ny person",
+      "INCOME_DROPPED": "Bortfallen inkomst",
+      "HOUSEHOLD_CHANGE": "Ändrad hushållssammansättning",
+      "HOUSING_COST_CHANGE": "Ändrad boendekostnad",
+      "INCOME_DUPLICATED": "Möjlig dubbelförd inkomst",
+      "EXPENSE_REVIEW": "Kräver skälighetsbedömning",
+      "EXPENSE_CAPPED": "Utgift över tak"
+    }
+  },
+  "notes": {
+    "saveError": "Det gick inte att spara anteckningen",
+    "updateError": "Det gick inte att uppdatera anteckningen",
+    "deleteError": "Det gick inte att ta bort anteckningen",
+    "loadError": "Det gick inte att hämta anteckningarna",
+    "empty": "Det finns inga anteckningar.",
+    "edited": "(redigerad)",
+    "edit": "Ändra anteckning",
+    "delete": "Ta bort anteckning",
+    "newNote": "Ny anteckning",
+    "saving": "Sparar",
+    "editModalLabel": "Ändra anteckning",
+    "noteText": "Anteckningstext"
+  },
+  "bevakningar": {
+    "saveError": "Det gick inte att spara bevakningen",
+    "deleteError": "Det gick inte att ta bort bevakningen",
+    "loadError": "Det gick inte att hämta bevakningar",
+    "empty": "Inga bevakningar.",
+    "delete": "Ta bort bevakning",
+    "title": "Rubrik *",
+    "titlePlaceholder": "Vad ska bevakas?",
+    "from": "Från *",
+    "to": "Till",
+    "description": "Beskrivning",
+    "saving": "Sparar",
+    "add": "Lägg till bevakning"
+  },
+  "events": {
+    "filterSource": "Filtrera på källa",
+    "allSources": "Alla källor",
+    "sourceOptions": {
+      "HTTP": "Åtkomst (vem läste/rörde)",
+      "EVENT": "Ändringar (vad ändrades)"
+    },
+    "filterAction": "Filtrera på händelse",
+    "allActions": "Alla händelser",
+    "actions": {
+      "READ": "Läst",
+      "CREATE": "Skapad",
+      "UPDATE": "Ändrad",
+      "DELETE": "Borttagen"
+    },
+    "sources": {
+      "HTTP": "Åtkomst",
+      "EVENT": "Ändring"
+    },
+    "system": "System",
+    "loadError": "Det gick inte att hämta händelseloggen",
+    "empty": "Inga händelser.",
+    "showMore": "Visa fler"
+  }
+}

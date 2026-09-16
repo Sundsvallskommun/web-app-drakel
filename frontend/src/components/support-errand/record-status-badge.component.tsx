@@ -1,5 +1,8 @@
+'use client';
+
 import { cx } from '@sk-web-gui/react';
 import { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface RecordStatusBadgeProps {
   status?: 'WORKING' | 'LOCKED';
@@ -9,6 +12,7 @@ interface RecordStatusBadgeProps {
 
 /** Status badge for a journal entry or document: the working label, or "Upprättad" once locked. */
 export const RecordStatusBadge: FC<RecordStatusBadgeProps> = ({ status, workingLabel }) => {
+  const { t } = useTranslation('documentation');
   const isLocked = status === 'LOCKED';
   return (
     <span
@@ -17,7 +21,7 @@ export const RecordStatusBadge: FC<RecordStatusBadgeProps> = ({ status, workingL
         isLocked ? 'bg-success-background-100 text-success-surface-primary' : 'bg-gray-100 text-gray-600'
       )}
     >
-      {isLocked ? 'Upprättad' : workingLabel}
+      {isLocked ? t('record.lockedStatus') : workingLabel}
     </span>
   );
 };

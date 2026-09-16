@@ -3,6 +3,7 @@
 import { Errand, PatchErrandDto } from '@data-contracts/backend/data-contracts';
 import { updateErrand } from '@services/errand-service/errand-service';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface ErrandForm {
   contactReason: string;
@@ -26,6 +27,7 @@ const fromErrand = (errand?: Errand): ErrandForm => ({
  * mirroring draken, which has one save rather than per-section saves.
  */
 export const useErrandForm = (errand: Errand | undefined, onSaved: () => void) => {
+  const { t } = useTranslation('errand');
   const [form, setForm] = useState<ErrandForm>(() => fromErrand(errand));
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string>();
@@ -57,7 +59,7 @@ export const useErrandForm = (errand: Errand | undefined, onSaved: () => void) =
     const result = await updateErrand(errand.id, patch);
     setSaving(false);
     if (result.error) {
-      setError('Det gick inte att spara ärendet');
+      setError(t('form.saveError'));
       return;
     }
     onSaved();

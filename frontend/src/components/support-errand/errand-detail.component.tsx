@@ -17,6 +17,7 @@ import { stakeholderDisplayName } from '@utils/stakeholder-name';
 import { compareByRole } from '@utils/stakeholder-role';
 import { Check } from 'lucide-react';
 import { FC, Fragment, ReactNode, useCallback, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ErrandAdministrationBar } from './errand-administration-bar.component';
 import { ErrandAktualisering } from './errand-aktualisering.component';
@@ -58,17 +59,20 @@ interface ErrandTabGroup {
 }
 
 /** A tab label followed by its optional count badge and "godkänd" check. */
-const TabLabel: FC<{ label: string; counter?: number; approved?: boolean }> = ({ label, counter, approved }) => (
-  <span className="inline-flex items-center gap-8">
-    {approved ?
-      <Check size={18} className="text-gronsta-surface-primary" aria-label="Godkänd" />
-    : null}
-    {label}
-    {counter !== undefined ?
-      <Badge color="tertiary" inverted size="sm" counter={counter > 99 ? '99+' : counter} />
-    : null}
-  </span>
-);
+const TabLabel: FC<{ label: string; counter?: number; approved?: boolean }> = ({ label, counter, approved }) => {
+  const { t } = useTranslation('errand');
+  return (
+    <span className="inline-flex items-center gap-8">
+      {approved ?
+        <Check size={18} className="text-gronsta-surface-primary" aria-label={t('detail.approved')} />
+      : null}
+      {label}
+      {counter !== undefined ?
+        <Badge color="tertiary" inverted size="sm" counter={counter > 99 ? '99+' : counter} />
+      : null}
+    </span>
+  );
+};
 
 /** Padding for the content of a sub-tab inside the errand's content card. */
 const ErrandTabPanel: FC<{ children: ReactNode }> = ({ children }) => (
@@ -76,6 +80,7 @@ const ErrandTabPanel: FC<{ children: ReactNode }> = ({ children }) => (
 );
 
 export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
+  const { t } = useTranslation('errand');
   const { errand, isLoading, error, refresh } = useErrand(errandId);
   const [activeTab, setActiveTab] = useState<number>(0);
   const [activeSubTab, setActiveSubTab] = useState<number>(0);
@@ -172,8 +177,8 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
       stakeholders
         .filter((stakeholder) => stakeholder.role === 'APPLICANT' || stakeholder.role === 'CO_APPLICANT')
         .sort(compareByRole)
-        .map((stakeholder) => stakeholderDisplayName(stakeholder)),
-    [stakeholders]
+        .map((stakeholder) => stakeholderDisplayName(stakeholder, t('common:unknownStakeholder'))),
+    [stakeholders, t]
   );
 
   // Only OPEN warnings are actionable — acknowledged/closed ones disappear from the right column.
@@ -209,16 +214,23 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   }
 
   if (error || !errand) {
-    return <p className="my-32">Det gick inte att hämta ärendet ({String(error ?? 'okänt fel')})</p>;
+    return (
+      <p className="my-32">
+        {t('detail.loadError', {
+          error: String(error ?? t('detail.unknownError')),
+          interpolation: { escapeValue: false },
+        })}
+      </p>
+    );
   }
 
-  const heading = errand.title && errand.title !== EMPTY_ERRAND_TITLE ? errand.title : 'Registrera nytt ärende';
+  const heading = errand.title && errand.title !== EMPTY_ERRAND_TITLE ? errand.title : t('detail.newErrandHeading');
   const apiErrandId = errand.id ?? errandId;
 
   const sections: SidebarSection[] = [
     {
       key: 'warnings',
-      label: 'Varningar',
+      label: t('sidebar:sections.warnings'),
       badge: counts.warnings,
       component: (
         <ErrandWarnings
@@ -235,7 +247,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     },
     {
       key: 'notes',
-      label: 'Anteckningar',
+      label: t('sidebar:sections.notes'),
       badge: counts.notes,
       component: (
         <ErrandNotes
@@ -252,7 +264,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     },
     {
       key: 'bevakningar',
-      label: 'Bevakningar',
+      label: t('sidebar:sections.bevakningar'),
       badge: counts.bevakningar,
       component: (
         <ErrandBevakningar
@@ -269,7 +281,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     },
     {
       key: 'events',
-      label: 'Händelselogg',
+      label: t('sidebar:sections.events'),
       component: <ErrandEvents errandId={errand.id ?? ''} />,
     },
   ];
@@ -279,10 +291,10 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   // Meddelanden and Dokumentation are separate groups (Händelselogg lives in the right column).
   const tabGroups: ErrandTabGroup[] = [
     {
-      label: 'Ärende',
+      label: t('detail.tabs.errand'),
       tabs: [
         {
-          label: 'Ansökan',
+          label: t('detail.tabs.application'),
           content: (
             <ErrandTabPanel>
               {/* Den strukturerade sammanställningen (form-snapshot "som det var", annars live-data). Den
@@ -298,8 +310,8 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                       <AttachmentPdfButton
                         errandId={apiErrandId}
                         attachmentId={caseDataAttachment.id}
-                        label="Visa pdf"
-                        modalLabel="Sammanställning (PDF)"
+                        label={t('detail.showPdf')}
+                        modalLabel={t('detail.summaryPdf')}
                       />
                     </div>
                   : null
@@ -309,7 +321,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           ),
         },
         {
-          label: 'Bilagor',
+          label: t('detail.tabs.attachments'),
           counter: errandAttachments.length,
           content: (
             <ErrandTabPanel>
@@ -319,7 +331,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                 isLoading={attachmentsLoading}
                 loadError={!!attachmentsError}
                 refresh={refreshAttachments}
-                heading="Bilagor från ansökan"
+                heading={t('detail.attachmentsFromApplication')}
               />
               {/* The message-attachments summary PDF is mirrored here so it's also reachable under the
                   regular Bilagor tab (the full conversation list stays under Meddelanden → Bilagor). */}
@@ -327,7 +339,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                 <PdfPreview
                   errandId={apiErrandId}
                   attachmentId={conversationSummaryAttachment.id}
-                  title="Sammanställning bilagor från meddelanden"
+                  title={t('detail.messageAttachmentsSummary')}
                 />
               : null}
             </ErrandTabPanel>
@@ -337,7 +349,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
         ...(showCalculationSections ?
           [
             {
-              label: 'Normberäkning',
+              label: t('detail.tabs.calculation'),
               approved: !!approvals.calculation?.approved,
               content: (
                 <ErrandTabPanel>
@@ -349,7 +361,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                     handlaggare={errand.assignedUserId}
                     headerSlot={
                       <SectionApprovalCheckbox
-                        label="Markera normberäkning som komplett"
+                        label={t('detail.approval.calculation')}
                         approval={approvals.calculation}
                         disabled={pendingSection === 'CALCULATION'}
                         onChange={(approved) => void setApproval('CALCULATION', approved)}
@@ -360,7 +372,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               ),
             },
             {
-              label: 'Beslut',
+              label: t('detail.tabs.decision'),
               approved: !!approvals.decision?.approved,
               content: (
                 <ErrandTabPanel>
@@ -369,7 +381,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                     locked={!!approvals.decision?.approved}
                     headerSlot={
                       <SectionApprovalCheckbox
-                        label="Markera beslut som komplett"
+                        label={t('detail.approval.decision')}
                         approval={approvals.decision}
                         disabled={pendingSection === 'DECISION'}
                         onChange={(approved) => void setApproval('DECISION', approved)}
@@ -381,7 +393,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               ),
             },
             {
-              label: 'Utbetalning',
+              label: t('detail.tabs.payment'),
               approved: !!approvals.payment?.approved,
               content: (
                 <ErrandTabPanel>
@@ -390,7 +402,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                     locked={!!approvals.payment?.approved}
                     headerSlot={
                       <SectionApprovalCheckbox
-                        label="Markera utbetalning som komplett"
+                        label={t('detail.approval.payment')}
                         approval={approvals.payment}
                         disabled={pendingSection === 'PAYMENT'}
                         onChange={(approved) => void setApproval('PAYMENT', approved)}
@@ -405,13 +417,13 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
       ],
     },
     {
-      label: 'Meddelanden',
+      label: t('detail.tabs.messages'),
       counter: counts.unreadMessages,
       // A single tab: the conversation fills the content card itself and holds its own Meddelanden /
       // Delade bilagor tabs in the conversation header.
       tabs: [
         {
-          label: 'Meddelanden',
+          label: t('detail.tabs.messages'),
           content: (
             <ErrandMessages
               errandId={apiErrandId}
@@ -436,10 +448,10 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     ...(showDocumentation ?
       [
         {
-          label: 'Dokumentation',
+          label: t('detail.tabs.documentation'),
           tabs: [
             {
-              label: 'Journal',
+              label: t('detail.tabs.journal'),
               content: (
                 <ErrandTabPanel>
                   <ErrandJournal errandId={apiErrandId} />
@@ -447,7 +459,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               ),
             },
             {
-              label: 'Dokument',
+              label: t('detail.tabs.documents'),
               content: (
                 <ErrandTabPanel>
                   <ErrandDocuments errandId={apiErrandId} />

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { PriorityLabel } from './priority-label.component';
 
 describe('PriorityLabel', () => {
-  it('renders the Swedish label for a known priority', () => {
+  it('renders the translated (Swedish) label for a known priority', () => {
     render(<PriorityLabel priority="HIGH" />);
     expect(screen.getByText('Hög')).toBeInTheDocument();
   });

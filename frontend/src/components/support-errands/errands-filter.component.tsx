@@ -4,9 +4,9 @@ import { Lookup } from '@data-contracts/backend/data-contracts';
 import { useDebouncedValue } from '@hooks/use-debounced-value';
 import { Administrator } from '@services/administrator-service';
 import { Checkbox, Chip, SearchField } from '@sk-web-gui/react';
-import { PRIORITY_OPTIONS } from '@utils/errand-priority';
-import { errandStatusLabel } from '@utils/errand-status';
+import { ERRAND_PRIORITIES } from '@utils/errand-priority';
 import { FC, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ErrandFilterDropdown, FilterOption } from './errand-filter-dropdown.component';
 
@@ -57,6 +57,7 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
   onlyUnread,
   onOnlyUnreadChange,
 }) => {
+  const { t } = useTranslation('overview');
   const [searchInput, setSearchInput] = useState<string>(query);
   const debouncedSearch = useDebouncedValue(searchInput, SEARCH_DEBOUNCE_MS);
   // The last search applied to the list, so a debounced value that was already committed (by Enter) isn't
@@ -75,9 +76,16 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
     }
   }, [debouncedSearch, onQueryChange]);
 
+  // Known status codes use the UI-language label; unknown ones fall back to the lookup's display name.
   const statusOptions: FilterOption[] = statuses.map((status) => ({
     value: status.name ?? '',
-    label: status.displayName ?? errandStatusLabel(status.name ?? ''),
+    label: t(`common:status.${(status.name ?? '').toUpperCase()}`, {
+      defaultValue: status.displayName ?? status.name ?? '',
+    }),
+  }));
+  const priorityOptions: FilterOption[] = ERRAND_PRIORITIES.map((priority) => ({
+    value: priority,
+    label: t(`common:priority.${priority}`),
   }));
   const assigneeOptions: FilterOption[] = administrators.map((admin) => ({
     value: admin.username,
@@ -86,7 +94,7 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
 
   const statusLabel = (value: string): string => statusOptions.find((option) => option.value === value)?.label ?? value;
   const priorityLabel = (value: string): string =>
-    PRIORITY_OPTIONS.find((option) => option.value === value)?.label ?? value;
+    priorityOptions.find((option) => option.value === value)?.label ?? value;
   const assigneeLabel = (value: string): string =>
     assigneeOptions.find((option) => option.value === value)?.label ?? value;
 
@@ -107,8 +115,8 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
           size="md"
           value={searchInput}
           showSearchButton={false}
-          placeholder="Filtrera i listan"
-          aria-label="Filtrera i listan på ärendenummer eller sökande"
+          placeholder={t('filter.searchPlaceholder')}
+          aria-label={t('filter.searchLabel')}
           onChange={(event) => {
             setSearchInput(event.target.value);
           }}
@@ -122,7 +130,7 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
         />
         {showStatusFilter && (
           <ErrandFilterDropdown
-            label="Status"
+            label={t('filter.status')}
             options={statusOptions}
             selected={filters.status}
             searchable
@@ -132,15 +140,15 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
           />
         )}
         <ErrandFilterDropdown
-          label="Prioritet"
-          options={PRIORITY_OPTIONS}
+          label={t('filter.priority')}
+          options={priorityOptions}
           selected={filters.priority}
           onChange={(values) => {
             onFilterChange('priority', values);
           }}
         />
         <ErrandFilterDropdown
-          label="Handläggare"
+          label={t('filter.assignee')}
           options={assigneeOptions}
           selected={filters.assignee}
           searchable
@@ -155,7 +163,7 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
               onOnlyMineChange(event.target.checked);
             }}
           >
-            Mina ärenden
+            {t('filter.onlyMine')}
           </Checkbox>
           <Checkbox
             checked={onlyUnread}
@@ -163,7 +171,7 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
               onOnlyUnreadChange(event.target.checked);
             }}
           >
-            Olästa meddelanden
+            {t('filter.onlyUnread')}
           </Checkbox>
         </div>
       </div>
@@ -173,7 +181,7 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
           {filters.status.map((value) => (
             <Chip
               key={`status-${value}`}
-              aria-label={`Rensa status ${statusLabel(value)}`}
+              aria-label={t('filter.clearStatus', { status: statusLabel(value) })}
               onClick={() => {
                 removeValue('status', value);
               }}
@@ -184,18 +192,18 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
           {filters.priority.map((value) => (
             <Chip
               key={`priority-${value}`}
-              aria-label={`Rensa prioritet ${priorityLabel(value)}`}
+              aria-label={t('filter.clearPriority', { priority: priorityLabel(value) })}
               onClick={() => {
                 removeValue('priority', value);
               }}
             >
-              {priorityLabel(value)} prioritet
+              {t('filter.priorityChip', { priority: priorityLabel(value) })}
             </Chip>
           ))}
           {filters.assignee.map((value) => (
             <Chip
               key={`assignee-${value}`}
-              aria-label={`Rensa handläggare ${assigneeLabel(value)}`}
+              aria-label={t('filter.clearAssignee', { assignee: assigneeLabel(value) })}
               onClick={() => {
                 removeValue('assignee', value);
               }}
@@ -203,8 +211,8 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
               {assigneeLabel(value)}
             </Chip>
           ))}
-          <Chip aria-label="Rensa alla filter" onClick={onClearFilters}>
-            Rensa alla
+          <Chip aria-label={t('filter.clearAllLabel')} onClick={onClearFilters}>
+            {t('filter.clearAll')}
           </Chip>
         </div>
       )}

@@ -16,6 +16,7 @@ import { Eye, Paperclip, Reply, SendHorizontal, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { FC, useRef, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm, useWatch } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 
 import { isPreviewableMimeType, LocalFilePreviewModal } from './attachment-preview-modal.component';
@@ -56,6 +57,7 @@ export const ErrandNewMessage: FC<{
   replyTo?: Message;
   onCancelReply: () => void;
 }> = ({ errandId, onSent, replyTo, onCancelReply }) => {
+  const { t } = useTranslation('messages');
   const formMethods = useForm<NewMessageForm>({ defaultValues: { files: [] }, mode: 'onChange' });
   const [messageValue, setMessageValue] = useState<TextEditorValue>(EMPTY_MESSAGE);
   const [emptyMessageError, setEmptyMessageError] = useState<boolean>(false);
@@ -107,7 +109,7 @@ export const ErrandNewMessage: FC<{
       replyTo?.id
     );
     if (result.error) {
-      formMethods.setError('root', { type: 'manual', message: 'Det gick inte att skicka meddelandet' });
+      formMethods.setError('root', { type: 'manual', message: t('newMessage.sendError') });
       return;
     }
     formMethods.reset();
@@ -123,9 +125,11 @@ export const ErrandNewMessage: FC<{
             <div className="flex items-start gap-8 rounded-8 border-l-4 border-vattjom-surface-primary bg-background-color-mixin-1 px-12 py-8">
               <Reply size={16} className="shrink-0 mt-2 text-dark-secondary" />
               <div className="flex flex-col gap-y-2 min-w-0 grow">
-                <span className="text-small font-bold">Svarar på {senderLabel(replyTo, currentUser)}</span>
+                <span className="text-small font-bold">
+                  {t('message.replyingTo', { sender: senderLabel(replyTo, t, currentUser) })}
+                </span>
                 <span className="text-small text-dark-secondary line-clamp-2 break-words">
-                  {messagePreview(replyTo)}
+                  {messagePreview(replyTo, t)}
                 </span>
               </div>
               <Button
@@ -133,7 +137,7 @@ export const ErrandNewMessage: FC<{
                 size="sm"
                 iconButton
                 className="shrink-0"
-                aria-label="Avbryt svar"
+                aria-label={t('newMessage.cancelReply')}
                 onClick={onCancelReply}
               >
                 <X size={18} />
@@ -146,7 +150,7 @@ export const ErrandNewMessage: FC<{
             <div className="relative">
               <MessageEditor
                 value={messageValue}
-                placeholder={replyTo ? 'Skriv ett svar' : 'Skriv ett meddelande'}
+                placeholder={replyTo ? t('newMessage.replyPlaceholder') : t('newMessage.placeholder')}
                 readOnly={formMethods.formState.isSubmitting}
                 focusKey={replyTo?.id}
                 onAttachClick={openFilePicker}
@@ -164,13 +168,13 @@ export const ErrandNewMessage: FC<{
                 loading={formMethods.formState.isSubmitting}
                 disabled={isOverLimit || isOverFileLimit}
               >
-                {replyTo ? 'Skicka svar' : 'Skicka'}
+                {replyTo ? t('newMessage.sendReply') : t('common:send')}
               </Button>
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-x-12 gap-y-4 text-small text-dark-secondary">
               <span className="flex flex-wrap items-center gap-x-12">
-                Max {MAX_ATTACHMENT_FILE_SIZE_MB} MB per fil.
+                {t('newMessage.maxFileSize', { maxSizeMb: MAX_ATTACHMENT_FILE_SIZE_MB })}
                 <Button
                   variant="link"
                   size="sm"
@@ -178,24 +182,22 @@ export const ErrandNewMessage: FC<{
                     setShowFileTypes(true);
                   }}
                 >
-                  Visa tillåtna filtyper
+                  {t('newMessage.showAllowedFileTypes')}
                 </Button>
               </span>
               {/* Only surface the counter as the message approaches the limit. */}
               {messageMarkup.length > MESSAGE_CHARACTER_LIMIT * 0.8 ?
                 <span className={isOverLimit ? 'text-error-surface-primary' : undefined}>
-                  {messageMarkup.length} / {MESSAGE_CHARACTER_LIMIT} tecken
+                  {t('newMessage.characterCount', { length: messageMarkup.length, limit: MESSAGE_CHARACTER_LIMIT })}
                 </span>
               : null}
             </div>
 
             {emptyMessageError ?
-              <FormErrorMessage>Skriv ett meddelande</FormErrorMessage>
+              <FormErrorMessage>{t('newMessage.emptyError')}</FormErrorMessage>
             : null}
             {isOverLimit ?
-              <FormErrorMessage>
-                Meddelandet får vara högst {MESSAGE_CHARACTER_LIMIT} tecken inklusive formatering.
-              </FormErrorMessage>
+              <FormErrorMessage>{t('newMessage.overLimit', { limit: MESSAGE_CHARACTER_LIMIT })}</FormErrorMessage>
             : null}
             {formMethods.formState.errors.root ?
               <FormErrorMessage>{formMethods.formState.errors.root.message}</FormErrorMessage>
@@ -204,7 +206,7 @@ export const ErrandNewMessage: FC<{
               <FormErrorMessage>{formMethods.formState.errors.files.message}</FormErrorMessage>
             : null}
             {isOverFileLimit ?
-              <FormErrorMessage>Du kan bifoga max {MAX_ATTACHMENT_FILES} filer.</FormErrorMessage>
+              <FormErrorMessage>{t('newMessage.tooManyFiles', { maxFiles: MAX_ATTACHMENT_FILES })}</FormErrorMessage>
             : null}
 
             {/* The file input is driven by the editor toolbar's image button (see openFilePicker). */}
@@ -225,11 +227,11 @@ export const ErrandNewMessage: FC<{
           </div>
 
           {files.length ?
-            <section className="flex flex-col gap-8" aria-label="Valda bilagor">
+            <section className="flex flex-col gap-8" aria-label={t('newMessage.selectedAttachments')}>
               <div className="flex items-baseline justify-between gap-12">
-                <h4 className="text-small font-bold m-0">Valda bilagor</h4>
+                <h4 className="text-small font-bold m-0">{t('newMessage.selectedAttachments')}</h4>
                 <span className="text-small text-dark-secondary">
-                  {files.length} / {MAX_ATTACHMENT_FILES} filer
+                  {t('newMessage.fileCount', { selected: files.length, maxFiles: MAX_ATTACHMENT_FILES })}
                 </span>
               </div>
               <ul className="m-0 p-0 w-full flex flex-wrap gap-16">
@@ -249,7 +251,7 @@ export const ErrandNewMessage: FC<{
                         size="sm"
                         iconButton
                         className="shrink-0"
-                        aria-label={`Förhandsgranska ${uploadFileName(file)}`}
+                        aria-label={t('newMessage.previewFile', { fileName: uploadFileName(file) })}
                         onClick={() => {
                           setPreviewFile(file.file);
                         }}
@@ -263,7 +265,7 @@ export const ErrandNewMessage: FC<{
                       size="sm"
                       iconButton
                       className="shrink-0"
-                      aria-label={`Ta bort ${uploadFileName(file)}`}
+                      aria-label={t('newMessage.removeFile', { fileName: uploadFileName(file) })}
                       onClick={() => {
                         removeFile(file);
                       }}
@@ -290,7 +292,7 @@ export const ErrandNewMessage: FC<{
         onClose={() => {
           setShowFileTypes(false);
         }}
-        label="Tillåtna filtyper"
+        label={t('newMessage.allowedFileTypes')}
         className="w-full max-w-[433px]"
       >
         <Modal.Content>

@@ -1,6 +1,8 @@
+'use client';
+
 import { Label } from '@sk-web-gui/react';
-import { errandStatusLabel } from '@utils/errand-status';
 import { ComponentProps, FC } from 'react';
+import { useTranslation } from 'react-i18next';
 
 type LabelColor = ComponentProps<typeof Label>['color'];
 
@@ -22,6 +24,7 @@ const STATUS_COLORS: Record<string, LabelColor> = {
 };
 
 export const ErrandStatusLabel: FC<{ status?: string }> = ({ status }) => {
+  const { t } = useTranslation();
   if (!status) {
     return null;
   }
@@ -31,7 +34,7 @@ export const ErrandStatusLabel: FC<{ status?: string }> = ({ status }) => {
       color={STATUS_COLORS[status.toUpperCase()] ?? 'tertiary'}
       className="max-h-full h-auto text-center whitespace-nowrap"
     >
-      {errandStatusLabel(status)}
+      {t(`common:status.${status.toUpperCase()}`, { defaultValue: status })}
     </Label>
   );
 };

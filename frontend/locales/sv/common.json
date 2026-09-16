@@ -48,5 +48,9 @@
     "CO_APPLICANT": "Medsökande",
     "CHILD": "Barn",
     "VISITATION_CHILD": "Umgängesbarn"
-  }
+  },
+  "dateRange": {
+    "from": "Från {{date}}"
+  },
+  "unknownStakeholder": "Okänd intressent"
 }

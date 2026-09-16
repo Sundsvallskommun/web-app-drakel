@@ -8,6 +8,7 @@ import { Button } from '@sk-web-gui/react';
 import { formatApplicationMonth } from '@utils/application-month';
 import { RotateCcw } from 'lucide-react';
 import { FC, ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ContentBox } from './content-box.component';
 import { ErrandSectionHeader } from './errand-section-header.component';
@@ -15,36 +16,39 @@ import { LabeledValue } from './labeled-value.component';
 import { LockedBanner } from './lockable-section.component';
 
 /** The Lifecare payment status as an Alert: unavailable, utbetald or not yet utbetald. */
-const PaymentStatusAlert: FC<{ status: PaymentStatus }> = ({ status }) =>
-  status.unavailable ?
-    <Alert type="neutral">
-      <Alert.Icon />
-      <Alert.Content>
-        <Alert.Content.Title className="font-bold">Utbetalningsstatus är inte tillgänglig</Alert.Content.Title>
-        <Alert.Content.Description>
-          Status hämtas från Lifecare och kunde inte läsas just nu. Försök igen senare.
-        </Alert.Content.Description>
-      </Alert.Content>
-    </Alert>
-  : status.effectuated ?
-    <Alert type="success">
-      <Alert.Icon />
-      <Alert.Content>
-        <Alert.Content.Title className="font-bold">Utbetald</Alert.Content.Title>
-        {status.paymentDate ?
-          <Alert.Content.Description>Utbetalningsdatum: {status.paymentDate}</Alert.Content.Description>
-        : null}
-      </Alert.Content>
-    </Alert>
-  : <Alert type="warning">
-      <Alert.Icon />
-      <Alert.Content>
-        <Alert.Content.Title className="font-bold">Inte utbetald ännu</Alert.Content.Title>
-        <Alert.Content.Description>
-          Ingen verkställd Lifecare-utbetalning för ansökningsmånaden.
-        </Alert.Content.Description>
-      </Alert.Content>
-    </Alert>;
+const PaymentStatusAlert: FC<{ status: PaymentStatus }> = ({ status }) => {
+  const { t } = useTranslation('decision');
+
+  return (
+    status.unavailable ?
+      <Alert type="neutral">
+        <Alert.Icon />
+        <Alert.Content>
+          <Alert.Content.Title className="font-bold">{t('payment.unavailable.title')}</Alert.Content.Title>
+          <Alert.Content.Description>{t('payment.unavailable.description')}</Alert.Content.Description>
+        </Alert.Content>
+      </Alert>
+    : status.effectuated ?
+      <Alert type="success">
+        <Alert.Icon />
+        <Alert.Content>
+          <Alert.Content.Title className="font-bold">{t('payment.paid.title')}</Alert.Content.Title>
+          {status.paymentDate ?
+            <Alert.Content.Description>
+              {t('payment.paid.paymentDate', { date: status.paymentDate })}
+            </Alert.Content.Description>
+          : null}
+        </Alert.Content>
+      </Alert>
+    : <Alert type="warning">
+        <Alert.Icon />
+        <Alert.Content>
+          <Alert.Content.Title className="font-bold">{t('payment.notPaid.title')}</Alert.Content.Title>
+          <Alert.Content.Description>{t('payment.notPaid.description')}</Alert.Content.Description>
+        </Alert.Content>
+      </Alert>
+  );
+};
 
 /**
  * "Utbetalning" tab — reads whether the Lifecare utbetalning for the errand's application month has
@@ -58,24 +62,22 @@ export const ErrandUtbetalning: FC<{
   /** Rendered to the right of the section heading (the "Markera som komplett" approval control). */
   headerSlot?: ReactNode;
 }> = ({ errandId, locked = false, headerSlot }) => {
+  const { t, i18n } = useTranslation('decision');
   const { status, isLoading, error, refresh } = useErrandPayment(errandId);
 
   const renderStatus = (): ReactNode => {
     if (isLoading || error || !status) {
       return (
-        <AsyncContent
-          isLoading={isLoading}
-          error={error ?? !status}
-          errorText="Det gick inte att hämta utbetalningsstatus"
-          centered
-        >
+        <AsyncContent isLoading={isLoading} error={error ?? !status} errorText={t('payment.loadError')} centered>
           {null}
         </AsyncContent>
       );
     }
     return (
       <>
-        <LabeledValue label="Avser ansökan">{formatApplicationMonth(status.applicationMonth)}</LabeledValue>
+        <LabeledValue label={t('payment.applicationMonth')}>
+          {formatApplicationMonth(status.applicationMonth, i18n.language)}
+        </LabeledValue>
         <PaymentStatusAlert status={status} />
       </>
     );
@@ -84,8 +86,8 @@ export const ErrandUtbetalning: FC<{
   return (
     <div className="flex flex-col gap-24">
       <ErrandSectionHeader
-        title="Utbetalning"
-        description="Visar om utbetalningen för ansökningsmånaden är verkställd i Lifecare. Själva utbetalningen görs i Lifecare."
+        title={t('payment.header.title')}
+        description={t('payment.header.description')}
         action={headerSlot}
       >
         {locked ?
@@ -94,10 +96,10 @@ export const ErrandUtbetalning: FC<{
       </ErrandSectionHeader>
 
       <ContentBox
-        title="Utbetalningsstatus"
+        title={t('payment.statusTitle')}
         action={
           <Button size="sm" variant="tertiary" leftIcon={<RotateCcw />} disabled={isLoading} onClick={refresh}>
-            Uppdatera
+            {t('common:update')}
           </Button>
         }
       >

@@ -1,1 +1,105 @@
-{}
+{
+  "header": {
+    "title": "Norm calculation",
+    "description": "Draft of the norm calculation for the application. Income and expenses can be adjusted – the result is calculated in Lifecare."
+  },
+  "loadError": "Could not fetch the norm calculation ({{error}})",
+  "noDraft": "No norm calculation has been created for this errand yet. The draft is created automatically once the income data (SSBTEK) has been fetched.",
+  "preview": {
+    "modalLabel": "Preview calculation",
+    "empty": "There is no calculation to preview."
+  },
+  "details": {
+    "title": "Calculation details",
+    "applicationMonth": "Application for",
+    "norm": "Norm",
+    "calculationDate": "Calculation date",
+    "from": "From",
+    "to": "To"
+  },
+  "tabs": {
+    "family": "Family",
+    "incomes": "Income",
+    "expenses": "Expenses",
+    "livingCosts": "Other living costs",
+    "sharedCosts": "Shared costs"
+  },
+  "table": {
+    "type": "Type",
+    "note": "Remark",
+    "actions": "Actions",
+    "addRow": "Add row",
+    "deleted": "Removed",
+    "restoreRow": "Restore row",
+    "deleteRow": "Remove row",
+    "saveError": "Could not save the change",
+    "addError": "Could not add the row"
+  },
+  "family": {
+    "title": "Persons covered",
+    "included": "Covered",
+    "notIncluded": "Not covered",
+    "name": "Name",
+    "role": "Role",
+    "includedFrom": "Included from",
+    "includedTo": "Included to",
+    "days": "Days",
+    "normInterval": "Norm interval",
+    "empty": "No persons",
+    "addPerson": "Add new person",
+    "addVisitationChild": "Add new visitation child",
+    "editingInfo": "The family rows come from the calculation. Editing (covered/days/persons) can be added when needed."
+  },
+  "incomes": {
+    "title": "Income",
+    "sum": "Total income",
+    "applicantAmount": "Amount A",
+    "applicantDate": "Date A",
+    "coApplicantAmount": "Amount CA",
+    "coApplicantDate": "Date CA",
+    "empty": "No income rows",
+    "fallbackType": "Income",
+    "selectType": "Select income type"
+  },
+  "expenses": {
+    "title": "Expenses",
+    "sum": "Total expenses",
+    "applied": "Applied for",
+    "proposed": "Proposed",
+    "approved": "Approved",
+    "amount": "Amount",
+    "empty": "No rows",
+    "selectType": "Select type"
+  },
+  "livingCosts": {
+    "title": "Other living costs",
+    "sum": "Total special costs"
+  },
+  "sharedCosts": {
+    "title": "Shared costs",
+    "customHouseholdSize": "Different household size",
+    "householdSize": "Household size",
+    "onePersonHouseholdAmount": "Amount for a 1-person household",
+    "sum": "Total",
+    "info": "The amounts for shared costs are calculated in Lifecare and are not exposed by the API yet."
+  },
+  "warnings": {
+    "acknowledge": "Acknowledge",
+    "acknowledging": "Acknowledging…",
+    "acknowledgeError": "Could not acknowledge the warning"
+  },
+  "warningType": {
+    "UNHANDLED_INCOME": "Unhandled income",
+    "INCOME_CHANGE": "Income change",
+    "MISSING_SSBTEK": "Missing in SSBTEK",
+    "NEW_INCOME": "New income",
+    "NEW_EXPENSE": "New expense",
+    "NEW_PERSON": "New person",
+    "INCOME_DROPPED": "Discontinued income",
+    "HOUSEHOLD_CHANGE": "Changed household composition",
+    "HOUSING_COST_CHANGE": "Changed housing cost",
+    "INCOME_DUPLICATED": "Possibly duplicated income",
+    "EXPENSE_REVIEW": "Requires reasonableness assessment",
+    "EXPENSE_CAPPED": "Expense above cap"
+  }
+}

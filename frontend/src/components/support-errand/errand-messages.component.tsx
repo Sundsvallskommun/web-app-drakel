@@ -6,6 +6,7 @@ import { Button, Spinner, Tabs } from '@sk-web-gui/react';
 import { getInitials } from '@utils/get-initials';
 import { ArrowDown, MessageSquare } from 'lucide-react';
 import { FC, ReactNode, UIEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ConversationHeader } from './conversation-header.component';
 import { ErrandMessage } from './errand-message.component';
@@ -38,9 +39,11 @@ export const ErrandMessages: FC<ErrandMessagesProps> = ({
   errandNumber,
   sharedAttachments,
 }) => {
+  const { t } = useTranslation('messages');
   const { messages, isLoading, error, refresh } = useErrandMessages(errandId);
-  const counterpartName = applicantNames.length ? applicantNames.join(', ') : 'Sökande';
-  const counterpartInitials = getInitials(applicantNames[0] ?? 'Sökande');
+  const applicantLabel = t('sender.applicant');
+  const counterpartName = applicantNames.length ? applicantNames.join(', ') : applicantLabel;
+  const counterpartInitials = getInitials(applicantNames[0] ?? applicantLabel);
   const [activeTab, setActiveTab] = useState<number>(MESSAGES_TAB);
   const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
   const [showScrollButton, setShowScrollButton] = useState<boolean>(false);
@@ -127,7 +130,7 @@ export const ErrandMessages: FC<ErrandMessagesProps> = ({
           </div>
         : error ?
           <div className="flex flex-1 items-center justify-center px-20 text-center">
-            <p className="m-0">Det gick inte att hämta meddelanden ({String(error)})</p>
+            <p className="m-0">{t('thread.loadError', { error: String(error) })}</p>
           </div>
         : messages.length ?
           <div
@@ -135,7 +138,7 @@ export const ErrandMessages: FC<ErrandMessagesProps> = ({
             className="max-h-[62vh] flex-1 overflow-y-auto px-20 pt-40 pb-24 md:px-40 desktop:max-h-none desktop:basis-0"
             onScroll={updateScrollButton}
             role="log"
-            aria-label="Ärendemeddelanden"
+            aria-label={t('thread.ariaLabel')}
             aria-live="polite"
           >
             {hasMore ?
@@ -147,7 +150,7 @@ export const ErrandMessages: FC<ErrandMessagesProps> = ({
                     setVisibleCount((prev) => prev + PAGE_SIZE);
                   }}
                 >
-                  Visa äldre meddelanden
+                  {t('thread.showOlder')}
                 </Button>
               </div>
             : null}
@@ -173,8 +176,8 @@ export const ErrandMessages: FC<ErrandMessagesProps> = ({
         : <div className="flex flex-1 flex-col items-center justify-center gap-12 px-20 text-center text-dark-secondary">
             <MessageSquare size={42} />
             <div>
-              <p className="m-0 font-bold">Inga meddelanden än</p>
-              <p className="m-0 text-small">Skriv ett meddelande nedan för att starta dialogen.</p>
+              <p className="m-0 font-bold">{t('thread.emptyTitle')}</p>
+              <p className="m-0 text-small">{t('thread.emptyDescription')}</p>
             </div>
           </div>
         }
@@ -184,7 +187,7 @@ export const ErrandMessages: FC<ErrandMessagesProps> = ({
             size="sm"
             color="vattjom"
             iconButton
-            aria-label="Gå till senaste meddelandet"
+            aria-label={t('thread.scrollToLatest')}
             leftIcon={<ArrowDown />}
             onClick={() => {
               scrollToBottom();
@@ -211,7 +214,7 @@ export const ErrandMessages: FC<ErrandMessagesProps> = ({
     // Delade bilagor tabs, then the active tab's content.
     <section
       className="flex min-h-[52rem] flex-col desktop:h-[min(85vh,89.5rem)]"
-      aria-label={`Konversation med ${counterpartName}`}
+      aria-label={t('conversation.ariaLabel', { name: counterpartName })}
     >
       <ConversationHeader name={counterpartName} initials={counterpartInitials} errandNumber={errandNumber} />
 
@@ -224,13 +227,13 @@ export const ErrandMessages: FC<ErrandMessagesProps> = ({
         onTabChange={setActiveTab}
       >
         <Tabs.Item>
-          <Tabs.Button>Meddelanden</Tabs.Button>
+          <Tabs.Button>{t('conversation.messagesTab')}</Tabs.Button>
           <Tabs.Content className="flex min-h-0 flex-1 flex-col">
             {activeTab === MESSAGES_TAB ? thread : null}
           </Tabs.Content>
         </Tabs.Item>
         <Tabs.Item>
-          <Tabs.Button>Delade bilagor</Tabs.Button>
+          <Tabs.Button>{t('conversation.sharedAttachmentsTab')}</Tabs.Button>
           <Tabs.Content className="min-h-0 flex-1 overflow-y-auto px-20 py-40 md:px-40">
             {activeTab === SHARED_ATTACHMENTS_TAB ? sharedAttachments : null}
           </Tabs.Content>

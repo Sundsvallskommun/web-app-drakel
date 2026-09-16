@@ -8,7 +8,9 @@ import {
   FormSnapshotSection,
 } from '@data-contracts/backend/data-contracts';
 import { applicationSectionIcon } from '@utils/application-section-icon';
+import { FileCheck } from 'lucide-react';
 import { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ContentBox } from './content-box.component';
 import { LabeledValue } from './labeled-value.component';
@@ -146,6 +148,7 @@ const RepeatingGroupInstance: FC<{ title?: string; fields: FormSnapshotField[] }
 
 /** A repeating group's instances, as a table when they fit one and as cards otherwise. */
 const RepeatingGroupContent: FC<{ field: FormSnapshotField }> = ({ field }) => {
+  const { t } = useTranslation('application');
   const instances = visibleInstances(field);
   if (instances.length === 0) {
     return <span className="text-dark-secondary">—</span>;
@@ -167,7 +170,7 @@ const RepeatingGroupContent: FC<{ field: FormSnapshotField }> = ({ field }) => {
       {instances.map((instance, index) => (
         <RepeatingGroupInstance
           key={index}
-          title={instances.length > 1 ? `${field.label ?? 'Post'} ${index + 1}` : undefined}
+          title={instances.length > 1 ? `${field.label ?? t('snapshot.fallbackGroupTitle')} ${index + 1}` : undefined}
           fields={instance}
         />
       ))}
@@ -236,15 +239,18 @@ const SnapshotSection: FC<{ section: FormSnapshotSection; fallbackTitle: string 
   );
 };
 
-const AttestationSection: FC<{ attestation: FormSnapshotAttestation }> = ({ attestation }) => (
-  <SectionAccordion title="Försäkran" icon={applicationSectionIcon('Försäkran')} initialOpen>
-    <ContentBox>
-      <LabeledValue label={attestation.label ?? 'Försäkran'}>
-        {attestation.answer?.display ?? attestation.answer?.value ?? '—'}
-      </LabeledValue>
-    </ContentBox>
-  </SectionAccordion>
-);
+const AttestationSection: FC<{ attestation: FormSnapshotAttestation }> = ({ attestation }) => {
+  const { t } = useTranslation('application');
+  return (
+    <SectionAccordion title={t('snapshot.attestation')} icon={FileCheck} initialOpen>
+      <ContentBox>
+        <LabeledValue label={attestation.label ?? t('snapshot.attestation')}>
+          {attestation.answer?.display ?? attestation.answer?.value ?? '—'}
+        </LabeledValue>
+      </ContentBox>
+    </SectionAccordion>
+  );
+};
 
 /**
  * Re-renders a captured application FormSnapshot as the read-only "sammanställning" — the form exactly as
@@ -254,11 +260,16 @@ const AttestationSection: FC<{ attestation: FormSnapshotAttestation }> = ({ atte
  * shown. The heading (title, capture time, "Visa pdf") is rendered by the surrounding tab.
  */
 export const FormSnapshotView: FC<{ snapshot: FormSnapshot }> = ({ snapshot }) => {
+  const { t } = useTranslation('application');
   const sections = (snapshot.sections ?? []).filter((section) => wasVisible(section.visible));
   return (
     <div className="flex flex-col gap-24">
       {sections.map((section, index) => (
-        <SnapshotSection key={section.id ?? index} section={section} fallbackTitle={`Avsnitt ${index + 1}`} />
+        <SnapshotSection
+          key={section.id ?? index}
+          section={section}
+          fallbackTitle={t('snapshot.fallbackSectionTitle', { number: index + 1 })}
+        />
       ))}
       {snapshot.attestation ?
         <AttestationSection attestation={snapshot.attestation} />

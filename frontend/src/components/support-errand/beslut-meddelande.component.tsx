@@ -6,6 +6,7 @@ import { Checkbox, Combobox, FormControl, FormLabel } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { stakeholderDisplayName } from '@utils/stakeholder-name';
 import { FC, useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 
 import {
   ALL_CATEGORY_ID,
@@ -16,12 +17,6 @@ import {
   NAME_PLACEHOLDER,
   PERIOD_PLACEHOLDER,
 } from './beslut-phrases';
-
-// "Alla" first, then the real categories.
-const CATEGORY_OPTIONS = [
-  { id: ALL_CATEGORY_ID, name: 'Alla' },
-  ...BESLUT_PHRASE_GROUPS.map((group) => ({ id: group.id, name: group.name })),
-];
 
 // A single-select combobox reports its value as a string; guard against the array shape just in case.
 const eventValue = (value: unknown): string =>
@@ -55,9 +50,17 @@ export const BeslutMeddelande: FC<{
   /** Called when the user edits the message (typing or inserting a phrase) — not on programmatic load. */
   onUserEdit?: () => void;
 }> = ({ errandId, value, onChange, addFullfoljd, onAddFullfoljdChange, onUserEdit }) => {
+  const { t } = useTranslation('decision');
   const { stakeholders } = useErrandStakeholders(errandId);
   const applicant = stakeholders.find((stakeholder) => stakeholder.role === 'APPLICANT');
   const applicantName = applicant ? stakeholderDisplayName(applicant) : '';
+
+  // "Alla" first, then the real categories. The category names belong to the Swedish phrase texts, so they
+  // are shown as-is; only "Alla" is a UI word.
+  const categoryOptions = [
+    { id: ALL_CATEGORY_ID, name: t('message.allCategories') },
+    ...BESLUT_PHRASE_GROUPS.map((group) => ({ id: group.id, name: group.name })),
+  ];
 
   const [categoryId, setCategoryId] = useState<string>(ALL_CATEGORY_ID);
   // Bumped after every insert so the rubrik combobox remounts and clears — letting the same rubrik be
@@ -92,11 +95,11 @@ export const BeslutMeddelande: FC<{
       <div className="flex flex-col gap-12">
         <div className="flex flex-wrap gap-x-24 gap-y-16">
           <FormControl id="beslut-fraskategori" className="w-full md:w-[28rem]">
-            <FormLabel>Beslutsformulering – kategori</FormLabel>
+            <FormLabel>{t('message.categoryLabel')}</FormLabel>
             <Combobox
               value={categoryId}
-              placeholder="Välj kategori"
-              searchPlaceholder="Sök kategori…"
+              placeholder={t('message.categoryPlaceholder')}
+              searchPlaceholder={t('message.categorySearch')}
               onSelect={(event) => {
                 const next = eventValue(event.target.value);
                 if (next && next !== categoryId) {
@@ -106,7 +109,7 @@ export const BeslutMeddelande: FC<{
             >
               <Combobox.Input className="w-full" />
               <Combobox.List>
-                {CATEGORY_OPTIONS.map((option) => (
+                {categoryOptions.map((option) => (
                   <Combobox.Option key={option.id} value={option.id}>
                     {option.name}
                   </Combobox.Option>
@@ -116,11 +119,11 @@ export const BeslutMeddelande: FC<{
           </FormControl>
 
           <FormControl id="beslut-frasrubrik" className="w-full md:w-[36rem]">
-            <FormLabel>Beslutsformulering – rubrik</FormLabel>
+            <FormLabel>{t('message.headingLabel')}</FormLabel>
             <Combobox
               key={`${categoryId}-${insertNonce}`}
-              placeholder="Välj och lägg till frastext"
-              searchPlaceholder="Sök rubrik…"
+              placeholder={t('message.headingPlaceholder')}
+              searchPlaceholder={t('message.headingSearch')}
               onSelect={(event) => {
                 const phrase = headings.find((candidate) => candidate.id === eventValue(event.target.value));
                 if (phrase) {
@@ -141,16 +144,19 @@ export const BeslutMeddelande: FC<{
         </div>
 
         <p className="m-0 text-small text-dark-secondary">
-          <span className="font-bold">{NAME_PLACEHOLDER}</span> ersätts med sökandes namn.{' '}
-          <span className="font-bold">{AMOUNT_PLACEHOLDER}</span> (belopp) och{' '}
-          <span className="font-bold">{PERIOD_PLACEHOLDER}</span> (period) fylls i från beräkningen senare.
-          {applicantName ? '' : ' Sökandes namn kunde inte hämtas — namn-platshållaren lämnas oersatt.'}
+          <Trans
+            t={t}
+            i18nKey="message.placeholderHelp"
+            values={{ name: NAME_PLACEHOLDER, amount: AMOUNT_PLACEHOLDER, period: PERIOD_PLACEHOLDER }}
+            components={{ bold: <span className="font-bold" /> }}
+          />
+          {applicantName ? '' : ` ${t('message.applicantNameMissing')}`}
         </p>
       </div>
 
       <FormControl id="beslut-meddelande" className="w-full">
         {/* The surrounding box is already titled "Beslutsmeddelande", so the label is for screen readers only. */}
-        <FormLabel className="sr-only">Beslutsmeddelande</FormLabel>
+        <FormLabel className="sr-only">{t('message.title')}</FormLabel>
         <TextEditor
           className="text-editor-with-toolbar w-full"
           value={value}
@@ -173,7 +179,7 @@ export const BeslutMeddelande: FC<{
           onAddFullfoljdChange(event.target.checked);
         }}
       >
-        Lägg till fullföljdshänvisning
+        {t('message.addFullfoljd')}
       </Checkbox>
     </div>
   );

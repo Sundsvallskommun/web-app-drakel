@@ -1,1 +1,213 @@
-{}
+{
+  "summary": {
+    "title": "Application",
+    "snapshotDescription": "{{title}} as completed by the applicant.",
+    "snapshotDescriptionWithDate": "{{title}} as completed by the applicant, filled in {{capturedAt}}.",
+    "snapshotFallbackTitle": "The summary",
+    "liveDataDescription": "The details the applicant provided in the application via Mina sidor."
+  },
+  "snapshot": {
+    "fallbackSectionTitle": "Section {{number}}",
+    "fallbackGroupTitle": "Entry",
+    "attestation": "Declaration"
+  },
+  "data": {
+    "emptyText": "No submitted details to show for this errand.",
+    "sections": {
+      "personalDetails": "Personal details",
+      "jobStimulus": "Job stimulus",
+      "application": "Application",
+      "householdAndHousing": "Household and housing",
+      "costs": "Costs",
+      "incomesAndAssets": "Income and assets",
+      "planning": "Planning",
+      "paymentAndContact": "Payment and contact details",
+      "stayAndAttestation": "Residence and declaration"
+    },
+    "application": {
+      "applicationType": "Type of application",
+      "maritalStatus": "Marital status",
+      "period": "Application period",
+      "normType": "Norm",
+      "otherBenefit": "Other assistance"
+    },
+    "housing": {
+      "hasChildrenUnder21": "Children under 21 in the home",
+      "housingForm": "Type of housing",
+      "personCount": "Number of people in the household",
+      "roomsPlusKitchen": "Number of rooms + kitchen",
+      "description": "Description of housing"
+    },
+    "children": {
+      "title": "Children",
+      "fallbackName": "Child {{number}}"
+    },
+    "costs": {
+      "title": "Costs applied for",
+      "fallbackName": "Cost {{number}}",
+      "columns": {
+        "type": "Type of cost",
+        "amount": "Amount",
+        "specification": "Specification"
+      }
+    },
+    "incomes": {
+      "title": "Income",
+      "fallbackName": "Income {{number}}",
+      "columns": {
+        "type": "Type of income",
+        "amount": "Amount",
+        "recipient": "Recipient"
+      }
+    },
+    "pendingBenefits": {
+      "title": "Pending benefits",
+      "fallbackName": "Benefit {{number}}",
+      "columns": {
+        "benefit": "Benefit",
+        "appliedBy": "Applied for by"
+      }
+    },
+    "assets": {
+      "title": "Assets",
+      "fallbackName": "Asset {{number}}",
+      "columns": {
+        "type": "Type of asset",
+        "valueOrDescription": "Value / description"
+      }
+    },
+    "plannings": {
+      "fallbackTitle": "Planning {{number}}",
+      "planning": "Planning",
+      "sickLeave": "Sick leave"
+    },
+    "jobApplications": {
+      "title": "Jobs applied for",
+      "fallbackName": "Job applied for {{number}}",
+      "columns": {
+        "jobTitle": "Position",
+        "employerAndPlace": "Employer and location",
+        "applicationDate": "Application date"
+      }
+    },
+    "activities": {
+      "title": "Activities",
+      "fallbackName": "Activity {{number}}",
+      "columns": {
+        "activity": "Activity",
+        "from": "From",
+        "to": "To"
+      }
+    },
+    "persons": {
+      "fallbackName": "Person {{number}}"
+    },
+    "stay": {
+      "staysInMunicipality": "Stays in the municipality during the application month",
+      "description": "Description of stay",
+      "attestation": "Declaration given"
+    }
+  },
+  "stakeholders": {
+    "errorText": "Could not fetch stakeholders",
+    "emptyText": "No stakeholders",
+    "fallbackRole": "Stakeholder",
+    "unknownName": "Unknown stakeholder",
+    "noContactDetails": "No contact details"
+  },
+  "jobStimulus": {
+    "title": "Job stimulus periods",
+    "errorText": "Could not fetch job stimulus periods",
+    "emptyText": "No job stimulus periods."
+  },
+  "labels": {
+    "applicationType": {
+      "NEW": "New application",
+      "RENEWAL": "Renewal application",
+      "SUPPLEMENTARY": "Supplementary application"
+    },
+    "maritalStatus": {
+      "SINGLE": "Single",
+      "COHABITING": "Married or cohabiting"
+    },
+    "normType": {
+      "NATIONAL_NORM": "National standard",
+      "OTHER_NORM": "Other norm"
+    },
+    "periodChoice": {
+      "CURRENT_MONTH": "This month",
+      "NEXT_MONTH": "Next month",
+      "OTHER_BENEFIT": "Other assistance"
+    },
+    "housingForm": {
+      "NO_HOUSING_OR_INSTITUTION": "No housing, or lives in supported housing/an institution",
+      "RENTAL": "Rental apartment",
+      "SUBLET": "Sublet",
+      "LODGER": "Lodger",
+      "CONDOMINIUM": "Tenant-owned apartment",
+      "OWNED_HOUSE": "Owns a detached or terraced house",
+      "RENTED_HOUSE": "Rents a detached or terraced house",
+      "LIVING_WITH_PARENTS": "Lives with parents"
+    },
+    "costType": {
+      "RENT": "Rent (not parking/garage)",
+      "ELECTRICITY": "Electricity (total amount)",
+      "HOME_INSURANCE": "Home insurance (monthly cost)",
+      "INTERNET": "Internet",
+      "UNEMPLOYMENT_FUND": "Unemployment insurance fund",
+      "UNION_FEE": "Trade union fee",
+      "TRAVEL_APPROVED": "Travel to approved planning/activity",
+      "TRAVEL_MEDICAL_TRANSPORT": "Travel by medical transport/mobility service to approved planning/activity (patient fee)",
+      "MEDICAL_CARE": "Medical care (within the high-cost protection)",
+      "MEDICINE": "Medicine (within the high-cost protection/benefit/patient fee)",
+      "OTHER": "Other assistance"
+    },
+    "costOtherSubType": {
+      "OTHER": "Other",
+      "MUNICIPAL_FEES": "Municipal fees (preschool/home care)",
+      "ACUTE_DENTAL": "Emergency dental care/basic examination"
+    },
+    "incomeType": {
+      "SALARY": "Salary",
+      "SWISH_DEPOSITS": "Swish/account deposits",
+      "OCCUPATIONAL_PENSION_INSURANCE": "Occupational pension/insurance (AFA, AMF, KPA, SPV etc)",
+      "CHILD_SUPPORT": "Child support from the other parent",
+      "RENT_SHARE_FROM_CHILD": "Rent share from child/lodger",
+      "FINANCIAL_AID_OTHER_MUNICIPALITY": "Financial assistance from another municipality",
+      "OTHER_INCOME": "Other income (loan, gambling winnings, living off an asset, gift, cash)"
+    },
+    "assetCategory": {
+      "BANK_SAVINGS": "Bank balance / savings",
+      "REAL_ESTATE": "Real estate",
+      "COMPANY": "Company",
+      "VEHICLE": "Vehicle",
+      "OTHER": "Art, jewellery or other assets"
+    },
+    "propertyType": {
+      "CONDOMINIUM": "Tenant-owned apartment",
+      "HOUSE": "House",
+      "PROPERTY": "Real estate",
+      "HOLIDAY_HOME": "Holiday home"
+    },
+    "vehicleType": {
+      "CAR": "Car",
+      "BOAT": "Boat",
+      "MOTORCYCLE": "Motorcycle",
+      "CARAVAN": "Caravan",
+      "MOPED": "Moped",
+      "SNOWMOBILE": "Snowmobile",
+      "OTHER": "Other"
+    },
+    "planningType": {
+      "WORK": "Work",
+      "JOBSEEKING": "Job seeking",
+      "SICK_LEAVE": "On sick leave",
+      "SFI": "SFI student",
+      "OTHER": "Other planning"
+    },
+    "paymentMethod": {
+      "BANK_ACCOUNT": "Bank account",
+      "OTHER": "Other"
+    }
+  }
+}

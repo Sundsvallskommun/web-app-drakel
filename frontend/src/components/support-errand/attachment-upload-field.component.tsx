@@ -4,8 +4,9 @@ import { uploadAttachment } from '@services/errand-service/errand-service';
 import { CustomOnChangeEventUploadFile, FileUpload, Spinner } from '@sk-web-gui/react';
 import { ALLOWED_ATTACHMENT_FILE_EXTENSIONS, MAX_ATTACHMENT_FILE_SIZE_MB } from '@utils/attachment-upload-limits';
 import { FC, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-const ALLOWED_FILE_TYPES_TEXT = `Tillåtna filtyper: ${ALLOWED_ATTACHMENT_FILE_EXTENSIONS.join(', ')}`;
+const ALLOWED_EXTENSIONS_TEXT = ALLOWED_ATTACHMENT_FILE_EXTENSIONS.join(', ');
 
 interface AttachmentUploadFieldProps {
   errandId: string;
@@ -19,6 +20,7 @@ interface AttachmentUploadFieldProps {
  * mime-type restriction text is hidden in favour of the readable extension list underneath.
  */
 export const AttachmentUploadField: FC<AttachmentUploadFieldProps> = ({ errandId, onUploaded }) => {
+  const { t } = useTranslation('attachments');
   const [uploadingFileName, setUploadingFileName] = useState<string>();
   const [error, setError] = useState<string>();
 
@@ -32,7 +34,7 @@ export const AttachmentUploadField: FC<AttachmentUploadFieldProps> = ({ errandId
     const result = await uploadAttachment(errandId, file);
     setUploadingFileName(undefined);
     if (result.error) {
-      setError(`Det gick inte att ladda upp ${file.name}`);
+      setError(t('upload.uploadError', { fileName: file.name }));
       return;
     }
     onUploaded();
@@ -41,7 +43,7 @@ export const AttachmentUploadField: FC<AttachmentUploadFieldProps> = ({ errandId
   return (
     <div className="flex flex-col gap-8">
       <span className="font-bold text-dark-primary" id="attachment-upload-label">
-        Ladda upp bilaga
+        {t('upload.label')}
       </span>
       <FileUpload.Field
         name="errandAttachmentUpload"
@@ -53,17 +55,21 @@ export const AttachmentUploadField: FC<AttachmentUploadFieldProps> = ({ errandId
         className="w-full [&_.sk-form-file-upload-field-button-content-restrictions]:hidden [&_.sk-form-file-upload-field-button]:py-16"
         onChange={(event) => void upload(event)}
         onInvalid={(message) => {
-          // sk-web-gui's file type message lists every accepted mime type; show the readable list instead.
-          setError(message.startsWith('Filtypen') ? `Filtypen stöds inte. ${ALLOWED_FILE_TYPES_TEXT}` : message);
+          // sk-web-gui's (Swedish) file type message lists every accepted mime type; show the readable list instead.
+          setError(
+            message.startsWith('Filtypen') ?
+              t('upload.unsupportedFileType', { extensions: ALLOWED_EXTENSIONS_TEXT })
+            : message
+          );
         }}
       />
       <span className="text-small text-dark-secondary">
-        {ALLOWED_FILE_TYPES_TEXT}. Max filstorlek: {MAX_ATTACHMENT_FILE_SIZE_MB} MB.
+        {t('upload.restrictions', { extensions: ALLOWED_EXTENSIONS_TEXT, maxSizeMb: MAX_ATTACHMENT_FILE_SIZE_MB })}
       </span>
       {uploadingFileName ?
         <span className="flex items-center gap-8 text-small text-dark-secondary" role="status">
           <Spinner size={2} />
-          Laddar upp {uploadingFileName}…
+          {t('upload.uploading', { fileName: uploadingFileName })}
         </span>
       : null}
       {error ?

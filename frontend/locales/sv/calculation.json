@@ -1,1 +1,105 @@
-{}
+{
+  "header": {
+    "title": "Normberäkning",
+    "description": "Utkast till normberäkningen för ansökan. Inkomster och utgifter kan justeras – resultatet beräknas i Lifecare."
+  },
+  "loadError": "Det gick inte att hämta normberäkningen ({{error}})",
+  "noDraft": "Ingen normberäkning har skapats för det här ärendet ännu. Draften skapas automatiskt när inkomstunderlaget (SSBTEK) har hämtats.",
+  "preview": {
+    "modalLabel": "Förhandsgranska beräkning",
+    "empty": "Det finns ingen beräkning att förhandsgranska."
+  },
+  "details": {
+    "title": "Beräkningsuppgifter",
+    "applicationMonth": "Avser ansökan",
+    "norm": "Norm",
+    "calculationDate": "Beräkningsdatum",
+    "from": "Från",
+    "to": "Till"
+  },
+  "tabs": {
+    "family": "Familj",
+    "incomes": "Inkomster",
+    "expenses": "Utgifter",
+    "livingCosts": "Levnadskostnader i övrigt",
+    "sharedCosts": "Gemensamma kostnader"
+  },
+  "table": {
+    "type": "Typ",
+    "note": "Anmärkning",
+    "actions": "Åtgärder",
+    "addRow": "Lägg till rad",
+    "deleted": "Borttagen",
+    "restoreRow": "Återställ rad",
+    "deleteRow": "Ta bort rad",
+    "saveError": "Det gick inte att spara ändringen",
+    "addError": "Det gick inte att lägga till raden"
+  },
+  "family": {
+    "title": "Personer som omfattas",
+    "included": "Omfattas",
+    "notIncluded": "Omfattas inte",
+    "name": "Namn",
+    "role": "Roll",
+    "includedFrom": "Ingår från",
+    "includedTo": "Ingår till",
+    "days": "Dagar",
+    "normInterval": "Normintervall",
+    "empty": "Inga personer",
+    "addPerson": "Lägg till ny person",
+    "addVisitationChild": "Lägg till nytt umgängesbarn",
+    "editingInfo": "Familjeraderna kommer från beräkningen. Redigering (omfattas/dagar/personer) kan kopplas på när det behövs."
+  },
+  "incomes": {
+    "title": "Inkomster",
+    "sum": "Summa inkomster",
+    "applicantAmount": "Belopp S",
+    "applicantDate": "Datum S",
+    "coApplicantAmount": "Belopp M",
+    "coApplicantDate": "Datum M",
+    "empty": "Inga inkomstrader",
+    "fallbackType": "Inkomst",
+    "selectType": "Välj inkomsttyp"
+  },
+  "expenses": {
+    "title": "Utgifter",
+    "sum": "Summa utgifter",
+    "applied": "Ansökt",
+    "proposed": "Förslag",
+    "approved": "Godkänt",
+    "amount": "Belopp",
+    "empty": "Inga rader",
+    "selectType": "Välj typ"
+  },
+  "livingCosts": {
+    "title": "Levnadskostnader i övrigt",
+    "sum": "Summa särskilda kostnader"
+  },
+  "sharedCosts": {
+    "title": "Gemensamma kostnader",
+    "customHouseholdSize": "Annan hushållsstorlek",
+    "householdSize": "Hushållsstorlek",
+    "onePersonHouseholdAmount": "Belopp för 1 persons hushåll",
+    "sum": "Summa",
+    "info": "Beloppen för gemensamma kostnader beräknas i Lifecare och exponeras inte av API:t ännu."
+  },
+  "warnings": {
+    "acknowledge": "Kvittera",
+    "acknowledging": "Kvitterar…",
+    "acknowledgeError": "Det gick inte att kvittera varningen"
+  },
+  "warningType": {
+    "UNHANDLED_INCOME": "Ej hanterad inkomst",
+    "INCOME_CHANGE": "Inkomständring",
+    "MISSING_SSBTEK": "Saknas i SSBTEK",
+    "NEW_INCOME": "Ny inkomst",
+    "NEW_EXPENSE": "Ny utgift",
+    "NEW_PERSON": "Ny person",
+    "INCOME_DROPPED": "Bortfallen inkomst",
+    "HOUSEHOLD_CHANGE": "Ändrad hushållssammansättning",
+    "HOUSING_COST_CHANGE": "Ändrad boendekostnad",
+    "INCOME_DUPLICATED": "Möjlig dubbelförd inkomst",
+    "EXPENSE_REVIEW": "Kräver skälighetsbedömning",
+    "EXPENSE_CAPPED": "Utgift över tak"
+  }
+}

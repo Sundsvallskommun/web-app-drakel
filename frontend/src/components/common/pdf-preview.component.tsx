@@ -4,6 +4,7 @@ import { getAttachmentBlob } from '@services/errand-service/errand-service';
 import { Disclosure } from '@sk-web-gui/react';
 import { FileText } from 'lucide-react';
 import { FC, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface PdfPreviewProps {
   errandId: string;
@@ -16,6 +17,7 @@ interface PdfPreviewProps {
  * i draken-public). Hämtar bilagan som blob och visar den via en object-URL. Utan disclosure-omslag.
  */
 export const PdfPreviewFrame: FC<PdfPreviewProps> = ({ errandId, attachmentId, title }) => {
+  const { t } = useTranslation('attachments');
   const [url, setUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
@@ -46,12 +48,10 @@ export const PdfPreviewFrame: FC<PdfPreviewProps> = ({ errandId, attachmentId, t
   }, [errandId, attachmentId]);
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-[60rem] text-dark-secondary">Laddar förhandsgranskning...</div>
-    );
+    return <div className="flex justify-center items-center h-[60rem] text-dark-secondary">{t('preview.loading')}</div>;
   }
   if (error) {
-    return <div className="flex justify-center items-center h-[20rem] text-error">Kunde inte visa förhandsgranskningen</div>;
+    return <div className="flex justify-center items-center h-[20rem] text-error">{t('preview.error')}</div>;
   }
   return <iframe src={`${url}#pagemode=none`} className="w-full h-[95rem] border-0" title={title} />;
 };

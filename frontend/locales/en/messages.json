@@ -1,1 +1,52 @@
-{}
+{
+  "conversation": {
+    "ariaLabel": "Conversation with {{name}}",
+    "messagesTab": "Messages",
+    "sharedAttachmentsTab": "Shared attachments",
+    "errandNumber": "Errand: #{{errandNumber}}"
+  },
+  "thread": {
+    "ariaLabel": "Errand messages",
+    "loadError": "Could not load messages ({{error}})",
+    "showOlder": "Show older messages",
+    "emptyTitle": "No messages yet",
+    "emptyDescription": "Write a message below to start the conversation.",
+    "scrollToLatest": "Go to the latest message"
+  },
+  "sender": {
+    "applicant": "Applicant",
+    "me": "Me",
+    "caseWorker": "Case worker",
+    "namedCaseWorker": "{{author}} (Case worker)"
+  },
+  "message": {
+    "attachmentOnly": "Attached file",
+    "replyToEarlierMessage": "Reply to an earlier message",
+    "jumpToQuoted": "Jump to the quoted message",
+    "replyingTo": "Replying to {{sender}}",
+    "sent": "Sent ",
+    "reply": "Reply to message from {{sender}}"
+  },
+  "newMessage": {
+    "placeholder": "Write a message",
+    "replyPlaceholder": "Write a reply",
+    "cancelReply": "Cancel reply",
+    "sendReply": "Send reply",
+    "maxFileSize": "Max {{maxSizeMb}} MB per file.",
+    "showAllowedFileTypes": "Show allowed file types",
+    "allowedFileTypes": "Allowed file types",
+    "characterCount": "{{length}} / {{limit}} characters",
+    "emptyError": "Write a message",
+    "overLimit": "The message may be at most {{limit}} characters including formatting.",
+    "tooManyFiles": "You can attach at most {{maxFiles}} files.",
+    "sendError": "Could not send the message",
+    "selectedAttachments": "Selected attachments",
+    "fileCount": "{{selected}} / {{maxFiles}} files",
+    "previewFile": "Preview {{fileName}}",
+    "removeFile": "Remove {{fileName}}"
+  },
+  "editor": {
+    "ariaLabel": "New message",
+    "attachFile": "Attach file"
+  }
+}

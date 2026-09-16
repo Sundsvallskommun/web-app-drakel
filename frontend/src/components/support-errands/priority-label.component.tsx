@@ -1,25 +1,30 @@
+'use client';
+
 import { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // Literal class names (not constructed) so Tailwind keeps them.
-const priorityConfig = (priority?: string): { dot: string; label: string } => {
+const priorityDotClass = (priority?: string): string => {
   switch (priority?.toUpperCase()) {
     case 'HIGH':
-      return { dot: 'bg-error-surface-primary', label: 'Hög' };
+      return 'bg-error-surface-primary';
     case 'MEDIUM':
-      return { dot: 'bg-warning-surface-primary', label: 'Medel' };
+      return 'bg-warning-surface-primary';
     case 'LOW':
-      return { dot: 'bg-vattjom-surface-primary', label: 'Låg' };
+      return 'bg-vattjom-surface-primary';
     default:
-      return { dot: 'bg-gray-300', label: priority ?? '—' };
+      return 'bg-gray-300';
   }
 };
 
-/** Priority as a coloured dot + Swedish label, mirroring draken's overview. */
+/** Priority as a coloured dot + translated label, mirroring draken's overview. */
 export const PriorityLabel: FC<{ priority?: string }> = ({ priority }) => {
-  const { dot, label } = priorityConfig(priority);
+  const { t } = useTranslation();
+  const label =
+    priority ? t(`common:priority.${priority.toUpperCase()}`, { defaultValue: priority }) : t('common:none');
   return (
     <span className="flex items-center gap-8 whitespace-nowrap">
-      <span className={`inline-block w-10 h-10 rounded-full ${dot}`} aria-hidden />
+      <span className={`inline-block w-10 h-10 rounded-full ${priorityDotClass(priority)}`} aria-hidden />
       {label}
     </span>
   );

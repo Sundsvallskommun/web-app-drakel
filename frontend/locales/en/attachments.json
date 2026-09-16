@@ -1,1 +1,60 @@
-{}
+{
+  "title": "Attachments",
+  "fallbackFileName": "attachment",
+  "loadError": "Could not load attachments",
+  "downloadError": "Could not download the file",
+  "actions": {
+    "showFile": "Show {{fileName}}",
+    "downloadFile": "Download {{fileName}}"
+  },
+  "preview": {
+    "title": "Preview",
+    "loading": "Loading preview...",
+    "error": "Could not show the preview"
+  },
+  "pdfButton": {
+    "label": "Show PDF",
+    "modalLabel": "Preview PDF"
+  },
+  "pdfPreviewButton": {
+    "label": "Preview PDF",
+    "creating": "Creating preview…",
+    "empty": "There is nothing to preview.",
+    "createError": "Could not create the preview."
+  },
+  "list": {
+    "empty": "No attachments"
+  },
+  "category": {
+    "documentType": {
+      "APPLICATION": "application",
+      "GENERATED": "generated",
+      "ERRAND": "errand",
+      "CASE_DATA": "errand data",
+      "DECISION": "decision",
+      "MESSAGE_HISTORY": "message history"
+    },
+    "senderRole": {
+      "CLIENT": "from applicant",
+      "CASEWORKER": "from case worker"
+    },
+    "conversation": "message"
+  },
+  "upload": {
+    "label": "Upload attachment",
+    "restrictions": "Allowed file types: {{extensions}}. Max file size: {{maxSizeMb}} MB.",
+    "unsupportedFileType": "The file type is not supported. Allowed file types: {{extensions}}",
+    "uploading": "Uploading {{fileName}}…",
+    "uploadError": "Could not upload {{fileName}}"
+  },
+  "errandAttachments": {
+    "description": "Attachments linked to the errand are collected here.",
+    "summaryTitle": "Summary of attachments from the application"
+  },
+  "messageAttachments": {
+    "heading": "Attachments from messages",
+    "empty": "No attachments in messages",
+    "description": "Files sent in the errand's messages are collected here.",
+    "summaryTitle": "Summary of attachments from messages"
+  }
+}

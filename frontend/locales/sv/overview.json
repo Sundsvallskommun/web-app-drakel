@@ -1,1 +1,83 @@
-{}
+{
+  "views": {
+    "all": "Alla ärenden",
+    "new": "Nya ärenden",
+    "open": "Öppna ärenden",
+    "closed": "Avslutade ärenden"
+  },
+  "sidebar": {
+    "heading": "Ärenden",
+    "closeMenu": "Stäng sidomeny",
+    "openMenu": "Öppna sidomeny"
+  },
+  "filter": {
+    "searchPlaceholder": "Filtrera i listan",
+    "searchLabel": "Filtrera i listan på ärendenummer eller sökande",
+    "dropdownSearchPlaceholder": "Skriv för att söka",
+    "status": "Status",
+    "priority": "Prioritet",
+    "assignee": "Handläggare",
+    "onlyMine": "Mina ärenden",
+    "onlyUnread": "Olästa meddelanden",
+    "priorityChip": "{{priority}} prioritet",
+    "clearStatus": "Rensa status {{status}}",
+    "clearPriority": "Rensa prioritet {{priority}}",
+    "clearAssignee": "Rensa handläggare {{assignee}}",
+    "clearAll": "Rensa alla",
+    "clearAllLabel": "Rensa alla filter"
+  },
+  "list": {
+    "fetching": "Hämtar ärenden…",
+    "showing_one": "Visar {{count}} ärende",
+    "showing_other": "Visar {{count}} ärenden"
+  },
+  "table": {
+    "columns": {
+      "status": "Status",
+      "errand": "Ärende",
+      "applicant": "Sökande",
+      "priority": "Prioritet",
+      "created": "Registrerat",
+      "updated": "Uppdaterat",
+      "assignee": "Handläggare"
+    },
+    "untitled": "(utan titel)",
+    "unassigned": "Ej tilldelad",
+    "loadError": "Det gick inte att hämta ärenden ({{error}})",
+    "empty": "Det finns inga ärenden",
+    "caption": "Ärenden, sida {{page}} av {{totalPages}}",
+    "sortBy": "Sortera på {{column}}",
+    "open": "Öppna",
+    "rowLabel": "Ärende {{title}}, öppna ärende",
+    "rowLabelUntitled": "utan titel",
+    "pageSize": "Rader per sida:",
+    "pageSizeOption": "{{size}} st"
+  },
+  "notifications": {
+    "heading": "Notiser",
+    "close": "Stäng notiser",
+    "loadError": "Det gick inte att hämta notiser",
+    "empty": "Inga notiser.",
+    "unread": "Nya",
+    "read": "Tidigare",
+    "markAsRead": "Markera som läst",
+    "fallbackTitle": "Notis",
+    "subTypes": {
+      "MESSAGE": "Nytt meddelande",
+      "DECISION": "Nytt beslut",
+      "ATTACHMENT": "Ny bilaga",
+      "ERRAND": "Ärende uppdaterat",
+      "STAKEHOLDER": "Intressent uppdaterad",
+      "PARAMETER": "Parameter ändrad",
+      "SYSTEM": "Systemhändelse"
+    }
+  },
+  "registration": {
+    "initiating": "Registrerar nytt ärende…",
+    "initiateError": "Det gick inte att initiera ett nytt ärende"
+  },
+  "relativeTime": {
+    "today": "Idag {{time}}",
+    "yesterday": "Igår {{time}}"
+  }
+}

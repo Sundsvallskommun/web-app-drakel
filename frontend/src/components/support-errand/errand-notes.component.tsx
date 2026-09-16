@@ -6,6 +6,7 @@ import { Avatar, Button, Divider, FormControl, Modal, Textarea } from '@sk-web-g
 import { prettyTime } from '@utils/pretty-time';
 import { Pencil, Trash } from 'lucide-react';
 import { FC, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const initials = (author?: string): string => (author ? author.trim().charAt(0).toUpperCase() : '?');
 
@@ -18,6 +19,7 @@ interface ErrandNotesProps {
 }
 
 export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, loadError, refresh }) => {
+  const { t } = useTranslation('sidebar');
   const [error, setError] = useState<string>();
   const [text, setText] = useState<string>('');
   const [saving, setSaving] = useState<boolean>(false);
@@ -32,7 +34,7 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
     const res = await createNote(errandId, body);
     setSaving(false);
     if (res.error) {
-      setError('Det gick inte att spara anteckningen');
+      setError(t('notes.saveError'));
       return;
     }
     setText('');
@@ -45,7 +47,7 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
     if (!body) return;
     const res = await updateNote(errandId, editNote.id, body);
     if (res.error) {
-      setError('Det gick inte att uppdatera anteckningen');
+      setError(t('notes.updateError'));
       return;
     }
     setEditNote(undefined);
@@ -56,7 +58,7 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
     if (!note.id) return;
     const res = await deleteNote(errandId, note.id);
     if (res.error) {
-      setError('Det gick inte att ta bort anteckningen');
+      setError(t('notes.deleteError'));
       return;
     }
     refresh();
@@ -69,9 +71,9 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
       <AsyncContent
         isLoading={isLoading}
         error={loadError}
-        errorText="Det gick inte att hämta anteckningarna"
+        errorText={t('notes.loadError')}
         isEmpty={notes.length === 0}
-        emptyText="Det finns inga anteckningar."
+        emptyText={t('notes.empty')}
       >
         <div className="flex flex-col" data-cy="notes-wrapper">
           {notes.map((note, index) => (
@@ -85,8 +87,8 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
                     </p>
                     <p className="my-0 text-small text-dark-secondary">
                       {note.author ? `${note.author} · ` : ''}
-                      {prettyTime(note.modified ?? note.created)}
-                      {note.modified ? ' (redigerad)' : ''}
+                      {prettyTime(note.modified ?? note.created, t)}
+                      {note.modified ? ` ${t('notes.edited')}` : ''}
                     </p>
                   </div>
                 </div>
@@ -96,7 +98,7 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
                     size="sm"
                     variant="tertiary"
                     iconButton
-                    aria-label="Ändra anteckning"
+                    aria-label={t('notes.edit')}
                     onClick={() => {
                       setEditNote(note);
                       setEditText(note.body ?? '');
@@ -107,7 +109,7 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
                     size="sm"
                     variant="tertiary"
                     iconButton
-                    aria-label="Ta bort anteckning"
+                    aria-label={t('notes.delete')}
                     onClick={() => void remove(note)}
                     leftIcon={<Trash />}
                   />
@@ -124,8 +126,8 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
           <Textarea
             className="w-full"
             rows={4}
-            placeholder="Ny anteckning"
-            aria-label="Ny anteckning"
+            placeholder={t('notes.newNote')}
+            aria-label={t('notes.newNote')}
             value={text}
             onChange={(event) => {
               setText(event.target.value);
@@ -137,12 +139,12 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
           color="primary"
           size="sm"
           loading={saving}
-          loadingText="Sparar"
+          loadingText={t('notes.saving')}
           disabled={!errandId || text.trim() === ''}
           onClick={() => void add()}
           data-cy="save-note-button"
         >
-          Spara
+          {t('common:save')}
         </Button>
       </div>
 
@@ -152,7 +154,7 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
         onClose={() => {
           setEditNote(undefined);
         }}
-        label="Ändra anteckning"
+        label={t('notes.editModalLabel')}
       >
         <Modal.Content>
           <Textarea
@@ -162,7 +164,7 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
             onChange={(event) => {
               setEditText(event.target.value);
             }}
-            aria-label="Anteckningstext"
+            aria-label={t('notes.noteText')}
           />
         </Modal.Content>
         <Modal.Footer>
@@ -172,7 +174,7 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
             disabled={editText.trim() === ''}
             onClick={() => void saveEdit()}
           >
-            Spara
+            {t('common:save')}
           </Button>
         </Modal.Footer>
       </Modal>

@@ -2,6 +2,7 @@
 
 import { Button, FormControl, FormLabel, Modal, Select } from '@sk-web-gui/react';
 import { FC, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface AssigneeOption {
   value: string;
@@ -17,6 +18,7 @@ export const ErrandTilldela: FC<{
   options: AssigneeOption[];
   onAssign: (username: string) => void;
 }> = ({ assignedUserId, options, onAssign }) => {
+  const { t } = useTranslation('errand');
   const [open, setOpen] = useState<boolean>(false);
   const [selected, setSelected] = useState<string>(assignedUserId);
 
@@ -30,7 +32,7 @@ export const ErrandTilldela: FC<{
           setOpen(true);
         }}
       >
-        Tilldela
+        {t('assign.button')}
       </Button>
 
       <Modal
@@ -38,11 +40,11 @@ export const ErrandTilldela: FC<{
         onClose={() => {
           setOpen(false);
         }}
-        label="Tilldela ärende"
+        label={t('assign.modalLabel')}
       >
         <Modal.Content>
           <FormControl id="assignee" className="w-full">
-            <FormLabel>Handläggare</FormLabel>
+            <FormLabel>{t('assign.caseWorker')}</FormLabel>
             <Select
               className="w-full"
               value={selected}
@@ -52,7 +54,7 @@ export const ErrandTilldela: FC<{
             >
               {!selected && (
                 <Select.Option value="" disabled>
-                  Välj handläggare
+                  {t('assign.selectCaseWorker')}
                 </Select.Option>
               )}
               {options.map((option) => (
@@ -70,7 +72,7 @@ export const ErrandTilldela: FC<{
               setOpen(false);
             }}
           >
-            Avbryt
+            {t('common:cancel')}
           </Button>
           <Button
             color="vattjom"
@@ -81,7 +83,7 @@ export const ErrandTilldela: FC<{
               setOpen(false);
             }}
           >
-            Tilldela
+            {t('assign.confirm')}
           </Button>
         </Modal.Footer>
       </Modal>

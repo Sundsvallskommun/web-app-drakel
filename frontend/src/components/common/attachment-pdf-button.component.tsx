@@ -2,6 +2,7 @@
 
 import { Button, Modal } from '@sk-web-gui/react';
 import { FC, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { PdfPreviewFrame } from './pdf-preview.component';
 
@@ -14,7 +15,10 @@ export const AttachmentPdfButton: FC<{
   attachmentId: string;
   label?: string;
   modalLabel?: string;
-}> = ({ errandId, attachmentId, label = 'Visa pdf', modalLabel = 'Förhandsgranska PDF' }) => {
+}> = ({ errandId, attachmentId, label, modalLabel }) => {
+  const { t } = useTranslation('attachments');
+  const buttonLabel = label ?? t('pdfButton.label');
+  const modalTitle = modalLabel ?? t('pdfButton.modalLabel');
   const [open, setOpen] = useState<boolean>(false);
 
   return (
@@ -25,7 +29,7 @@ export const AttachmentPdfButton: FC<{
           setOpen(true);
         }}
       >
-        {label}
+        {buttonLabel}
       </Button>
 
       <Modal
@@ -33,11 +37,13 @@ export const AttachmentPdfButton: FC<{
         onClose={() => {
           setOpen(false);
         }}
-        label={modalLabel}
+        label={modalTitle}
         className="w-[80rem] max-w-full"
       >
         <Modal.Content>
-          {open ? <PdfPreviewFrame errandId={errandId} attachmentId={attachmentId} title={modalLabel} /> : null}
+          {open ?
+            <PdfPreviewFrame errandId={errandId} attachmentId={attachmentId} title={modalTitle} />
+          : null}
         </Modal.Content>
       </Modal>
     </>

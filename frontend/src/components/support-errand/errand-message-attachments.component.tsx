@@ -4,6 +4,7 @@ import { AsyncContent } from '@components/common/async-content.component';
 import { PdfPreview } from '@components/common/pdf-preview.component';
 import { Attachment } from '@data-contracts/backend/data-contracts';
 import { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { AttachmentList } from './attachment-list.component';
 import { ErrandSectionHeader } from './errand-section-header.component';
@@ -34,26 +35,27 @@ export const ErrandMessageAttachments: FC<ErrandMessageAttachmentsProps> = ({
   loadError,
   hideHeading = false,
 }) => {
+  const { t } = useTranslation('attachments');
   return (
     <div className="flex flex-col gap-40">
       {hideHeading ? null : (
-        <ErrandSectionHeader title="Bilagor" description="Här samlas filer som har skickats i ärendets meddelanden." />
+        <ErrandSectionHeader title={t('title')} description={t('messageAttachments.description')} />
       )}
 
       {summaryAttachment?.id ?
         <PdfPreview
           errandId={errandId}
           attachmentId={summaryAttachment.id}
-          title="Sammanställning bilagor från meddelanden"
+          title={t('messageAttachments.summaryTitle')}
         />
       : null}
 
-      <AsyncContent isLoading={isLoading} error={loadError} errorText="Det gick inte att hämta bilagor">
+      <AsyncContent isLoading={isLoading} error={loadError} errorText={t('loadError')}>
         <AttachmentList
           errandId={errandId}
           attachments={attachments}
-          heading="Bilagor från meddelanden"
-          placeholder="Inga bilagor i meddelanden"
+          heading={t('messageAttachments.heading')}
+          placeholder={t('messageAttachments.empty')}
         />
       </AsyncContent>
     </div>

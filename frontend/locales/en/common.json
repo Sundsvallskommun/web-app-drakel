@@ -48,5 +48,9 @@
     "CO_APPLICANT": "Co-applicant",
     "CHILD": "Child",
     "VISITATION_CHILD": "Visiting child"
-  }
+  },
+  "dateRange": {
+    "from": "From {{date}}"
+  },
+  "unknownStakeholder": "Unknown stakeholder"
 }

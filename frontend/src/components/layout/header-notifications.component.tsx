@@ -5,16 +5,18 @@ import { useErrandNotifications } from '@hooks/use-errand-notifications';
 import { Badge, Button } from '@sk-web-gui/react';
 import { Bell } from 'lucide-react';
 import { FC, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 /** Bell button for the dark app header; opens the handläggare's notifications in a drawer from the right. */
 export const HeaderNotifications: FC = () => {
+  const { t } = useTranslation('header');
   const notifications = useErrandNotifications();
   const [showNotifications, setShowNotifications] = useState<boolean>(false);
 
   return (
     <>
       <Button
-        aria-label="Notiser"
+        aria-label={t('notifications')}
         variant="tertiary"
         inverted
         showBackground={false}
@@ -47,7 +49,7 @@ export const HeaderNotifications: FC = () => {
             }}
           />
           <aside
-            aria-label="Notiser"
+            aria-label={t('notifications')}
             className="fixed inset-y-0 right-0 z-30 flex w-full flex-col bg-background-content p-24 shadow-lg sm:w-[40rem]"
           >
             <NotificationsPanel

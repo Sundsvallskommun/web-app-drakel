@@ -5,15 +5,10 @@ import { updateErrand } from '@services/errand-service/errand-service';
 import { getSectionApprovals, SectionKey } from '@services/section-approval-service';
 import { Button, Checkbox, Modal } from '@sk-web-gui/react';
 import { FC, useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 
 // The status an errand gets when avslutat.
 const CLOSED_STATUS = 'CLOSED';
-
-const SECTION_LABELS: Record<SectionKey, string> = {
-  CALCULATION: 'Normberäkning',
-  PAYMENT: 'Utbetalning',
-  DECISION: 'Beslut',
-};
 
 /**
  * "Besluta och utbetala" action for the administration bar. On confirm it sends the beslut to the applicant through
@@ -27,8 +22,9 @@ export const ErrandAvsluta: FC<{ errandId: string; onClosed: () => void; checkAp
   onClosed,
   checkApprovals = true,
 }) => {
+  const { t } = useTranslation('errand');
   const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
-  const [unapproved, setUnapproved] = useState<string[]>([]);
+  const [unapproved, setUnapproved] = useState<SectionKey[]>([]);
   const [checking, setChecking] = useState<boolean>(false);
   const [working, setWorking] = useState<boolean>(false);
   const [error, setError] = useState<string>();
@@ -49,7 +45,7 @@ export const ErrandAvsluta: FC<{ errandId: string; onClosed: () => void; checkAp
     setMailboxAvailable(available);
     setDigitalBrevlada(available);
 
-    let pending: string[] = [];
+    let pending: SectionKey[] = [];
     if (checkApprovals) {
       const res = await getSectionApprovals(errandId);
       const approvals = res.data ?? {};
@@ -61,7 +57,7 @@ export const ErrandAvsluta: FC<{ errandId: string; onClosed: () => void; checkAp
         ] as const
       )
         .filter(([, approval]) => !approval?.approved)
-        .map(([key]) => SECTION_LABELS[key]);
+        .map(([key]) => key);
     }
     setUnapproved(pending);
     setChecking(false);
@@ -78,19 +74,26 @@ export const ErrandAvsluta: FC<{ errandId: string; onClosed: () => void; checkAp
     });
     if (sendRes.error) {
       setWorking(false);
-      setError('Det gick inte att skicka beslutet till någon kanal');
+      setError(t('decideAndPay.sendError'));
       return;
     }
     const result = await updateErrand(errandId, { status: CLOSED_STATUS });
     setWorking(false);
     if (result.error) {
-      setError('Beslutet skickades men ärendet kunde inte avslutas');
+      setError(t('decideAndPay.closeError'));
       return;
     }
     setConfirmOpen(false);
     // Closed; surface any channels that couldn't be reached (shown next to the button).
     const failedChannels = sendRes.data ?? [];
-    setError(failedChannels.length > 0 ? `Beslutet kunde inte skickas till: ${failedChannels.join(', ')}.` : undefined);
+    setError(
+      failedChannels.length > 0 ?
+        t('decideAndPay.failedChannels', {
+          channels: failedChannels.join(', '),
+          interpolation: { escapeValue: false },
+        })
+      : undefined
+    );
     onClosed();
   };
 
@@ -101,10 +104,10 @@ export const ErrandAvsluta: FC<{ errandId: string; onClosed: () => void; checkAp
         variant="primary"
         size="sm"
         loading={checking}
-        loadingText="Förbereder…"
+        loadingText={t('decideAndPay.preparing')}
         onClick={() => void openConfirm()}
       >
-        Besluta och utbetala
+        {t('decideAndPay.button')}
       </Button>
       {error && <p className="text-error-surface-primary m-0 text-small">{error}</p>}
 
@@ -113,25 +116,30 @@ export const ErrandAvsluta: FC<{ errandId: string; onClosed: () => void; checkAp
         onClose={() => {
           setConfirmOpen(false);
         }}
-        label="Besluta och utbetala"
+        label={t('decideAndPay.button')}
       >
         <Modal.Content className="flex flex-col gap-16">
           {unapproved.length > 0 ?
             <p className="m-0">
-              Du har inte godkänt {unapproved.length === 1 ? 'sektionen' : 'sektionerna'}{' '}
-              <strong>{unapproved.join(', ')}</strong>.
+              <Trans
+                t={t}
+                i18nKey="decideAndPay.unapproved"
+                count={unapproved.length}
+                values={{ sections: unapproved.map((section) => t(`decideAndPay.sections.${section}`)).join(', ') }}
+                components={{ strong: <strong /> }}
+              />
             </p>
           : null}
 
           <div className="flex flex-col gap-8">
-            <span className="text-small text-dark-secondary">Skicka beslutet via:</span>
+            <span className="text-small text-dark-secondary">{t('decideAndPay.sendVia')}</span>
             <Checkbox
               checked={minaSidor}
               onChange={(event) => {
                 setMinaSidor(event.target.checked);
               }}
             >
-              Mina sidor
+              {t('decideAndPay.channels.minaSidor')}
             </Checkbox>
             {mailboxAvailable ?
               <Checkbox
@@ -140,7 +148,7 @@ export const ErrandAvsluta: FC<{ errandId: string; onClosed: () => void; checkAp
                   setDigitalBrevlada(event.target.checked);
                 }}
               >
-                Digital brevlåda
+                {t('decideAndPay.channels.digitalMailbox')}
               </Checkbox>
             : null}
             <Checkbox
@@ -149,7 +157,7 @@ export const ErrandAvsluta: FC<{ errandId: string; onClosed: () => void; checkAp
                 setBrev(event.target.checked);
               }}
             >
-              Brev
+              {t('decideAndPay.channels.letter')}
             </Checkbox>
           </div>
         </Modal.Content>
@@ -160,16 +168,16 @@ export const ErrandAvsluta: FC<{ errandId: string; onClosed: () => void; checkAp
               setConfirmOpen(false);
             }}
           >
-            Avbryt
+            {t('common:cancel')}
           </Button>
           <Button
             color="vattjom"
             variant="primary"
             loading={working}
-            loadingText="Verkställer…"
+            loadingText={t('decideAndPay.executing')}
             onClick={() => void confirmAndSend()}
           >
-            Besluta och utbetala
+            {t('decideAndPay.button')}
           </Button>
         </Modal.Footer>
       </Modal>

@@ -6,8 +6,10 @@ import { useUserStore } from '@services/user-service/user-service';
 import { Button, cx } from '@sk-web-gui/react';
 import { htmlToPlainText } from '@utils/sanitize-html';
 import dayjs from 'dayjs';
+import type { TFunction } from 'i18next';
 import { CornerUpLeft, Reply } from 'lucide-react';
 import { FC, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 
 import { AttachmentPreviewModal, isPreviewableAttachment } from './attachment-preview-modal.component';
@@ -21,31 +23,31 @@ export interface CurrentUser {
 }
 
 /** OUTBOUND = handläggare (our side); anything else is the applicant ("Sökande"). */
-export const senderLabel = (message: Message, currentUser?: CurrentUser): string => {
+export const senderLabel = (message: Message, t: TFunction, currentUser?: CurrentUser): string => {
   if (message.direction !== 'OUTBOUND') {
-    return 'Sökande';
+    return t('messages:sender.applicant');
   }
   if (message.author && message.author === currentUser?.username) {
     // The user store defaults the name to an empty string before it has loaded.
     if (currentUser.name) {
       return currentUser.name;
     }
-    return 'Jag';
+    return t('messages:sender.me');
   }
   if (message.author) {
-    return `${message.author} (Handläggare)`;
+    return t('messages:sender.namedCaseWorker', { author: message.author });
   }
-  return 'Handläggare';
+  return t('messages:sender.caseWorker');
 };
 
 /** Short text shown when quoting/replying to a message; falls back when the message is attachment-only. */
-export const messagePreview = (message: Message): string => {
+export const messagePreview = (message: Message, t: TFunction): string => {
   // An attachment-only message has an empty body; `??` alone wouldn't catch the empty string.
   const body = message.body ? htmlToPlainText(message.body) : '';
   if (body) {
     return body;
   }
-  return 'Bifogad fil';
+  return t('messages:message.attachmentOnly');
 };
 
 const formatMessageTimestamp = (created: string): string => dayjs(created).format('YYYY-MM-DD, HH:mm');
@@ -56,11 +58,12 @@ const RepliedMessageQuote: FC<{
   currentUser?: CurrentUser;
   onJumpTo: (messageId: string) => void;
 }> = ({ repliedMessage, currentUser, onJumpTo }) => {
+  const { t } = useTranslation('messages');
   if (!repliedMessage) {
     return (
       <div className="flex items-center gap-8 rounded-8 border-l-4 border-vattjom-surface-primary bg-background-content px-12 py-8 text-small text-dark-secondary">
         <CornerUpLeft size={16} className="shrink-0 text-vattjom-surface-primary" />
-        Svar på ett tidigare meddelande
+        {t('message.replyToEarlierMessage')}
       </div>
     );
   }
@@ -68,7 +71,7 @@ const RepliedMessageQuote: FC<{
     <button
       type="button"
       className="flex w-full min-w-0 flex-col gap-4 rounded-8 border-l-4 border-vattjom-surface-primary bg-background-content px-12 py-8 text-left transition hover:bg-background-100"
-      aria-label="Hoppa till det citerade meddelandet"
+      aria-label={t('message.jumpToQuoted')}
       onClick={() => {
         if (repliedMessage.id) {
           onJumpTo(repliedMessage.id);
@@ -77,9 +80,11 @@ const RepliedMessageQuote: FC<{
     >
       <span className="flex items-center gap-6 text-small font-bold text-dark-primary">
         <CornerUpLeft size={16} className="shrink-0 text-vattjom-surface-primary" />
-        Svarar på {senderLabel(repliedMessage, currentUser)}
+        {t('message.replyingTo', { sender: senderLabel(repliedMessage, t, currentUser) })}
       </span>
-      <span className="line-clamp-2 break-words text-small text-dark-secondary">{messagePreview(repliedMessage)}</span>
+      <span className="line-clamp-2 break-words text-small text-dark-secondary">
+        {messagePreview(repliedMessage, t)}
+      </span>
     </button>
   );
 };
@@ -98,6 +103,7 @@ export const ErrandMessage: FC<{
   onReply: (message: Message) => void;
   onJumpTo: (messageId: string) => void;
 }> = ({ message, errandId, isHighlighted = false, repliedMessage, onReply, onJumpTo }) => {
+  const { t } = useTranslation('messages');
   const currentUser = useUserStore(useShallow((state) => ({ username: state.user.username, name: state.user.name })));
   const [downloadingAttachmentId, setDownloadingAttachmentId] = useState<string>();
   const [downloadError, setDownloadError] = useState<string>();
@@ -114,7 +120,7 @@ export const ErrandMessage: FC<{
   });
 
   const isOutbound = message.direction === 'OUTBOUND';
-  const sender = senderLabel(message, currentUser);
+  const sender = senderLabel(message, t, currentUser);
 
   const downloadAttachment = async (attachmentId?: string, fileName?: string) => {
     if (!message.id || !attachmentId) {
@@ -125,7 +131,7 @@ export const ErrandMessage: FC<{
     try {
       await downloadMessageAttachment(errandId, message.id, attachmentId, fileName);
     } catch {
-      setDownloadError('Det gick inte att hämta filen');
+      setDownloadError(t('attachments:downloadError'));
     } finally {
       setDownloadingAttachmentId(undefined);
     }
@@ -138,7 +144,7 @@ export const ErrandMessage: FC<{
           <span className="truncate text-dark-primary">{sender}</span>
           {message.created ?
             <time dateTime={message.created} className="text-small text-dark-secondary">
-              <span className="sr-only">Skickat </span>
+              <span className="sr-only">{t('message.sent')}</span>
               {formatMessageTimestamp(message.created)}
             </time>
           : null}
@@ -150,7 +156,7 @@ export const ErrandMessage: FC<{
           iconButton
           leftIcon={<Reply />}
           className="shrink-0"
-          aria-label={`Svara på meddelande från ${sender}`}
+          aria-label={t('message.reply', { sender })}
           onClick={() => {
             onReply(message);
           }}
@@ -169,11 +175,11 @@ export const ErrandMessage: FC<{
         : null}
 
         {message.attachments?.length ?
-          <section className="flex flex-wrap gap-16" aria-label="Bilagor">
+          <section className="flex flex-wrap gap-16" aria-label={t('attachments:title')}>
             {message.attachments.map((attachment, index) => (
               <MessageAttachmentChip
                 key={attachment.id ?? index}
-                fileName={attachment.fileName ?? 'bilaga'}
+                fileName={attachment.fileName ?? t('attachments:fallbackFileName')}
                 canPreview={isPreviewableAttachment(toPreviewAttachment(attachment))}
                 isDownloading={downloadingAttachmentId === attachment.id}
                 downloadDisabled={!message.id || !attachment.id}

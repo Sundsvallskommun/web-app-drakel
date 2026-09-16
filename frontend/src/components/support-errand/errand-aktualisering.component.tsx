@@ -3,6 +3,7 @@
 import { Actualisation, archiveToActualisation, getActualisations } from '@services/actualisation-service';
 import { Button, Modal, Spinner } from '@sk-web-gui/react';
 import { FC, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Administration-bar action for a supplementary application: opens a dialog listing the applicant's Lifecare
@@ -10,6 +11,7 @@ import { FC, useState } from 'react';
  * which records the chosen aktualisering on the errand.
  */
 export const ErrandAktualisering: FC<{ errandId: string; onArchived: () => void }> = ({ errandId, onArchived }) => {
+  const { t } = useTranslation('errand');
   const [open, setOpen] = useState<boolean>(false);
   const [actualisations, setActualisations] = useState<Actualisation[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -46,7 +48,7 @@ export const ErrandAktualisering: FC<{ errandId: string; onArchived: () => void 
     const res = await archiveToActualisation(errandId, selectedId);
     setArchiving(false);
     if (res.error) {
-      setArchiveError('Det gick inte att arkivera till aktualiseringen');
+      setArchiveError(t('actualisation.archiveError'));
       return;
     }
     setArchived(true);
@@ -56,7 +58,7 @@ export const ErrandAktualisering: FC<{ errandId: string; onArchived: () => void 
   return (
     <>
       <Button variant="secondary" size="sm" onClick={openModal}>
-        Arkivera till aktualisering
+        {t('actualisation.button')}
       </Button>
 
       <Modal
@@ -64,21 +66,18 @@ export const ErrandAktualisering: FC<{ errandId: string; onArchived: () => void 
         onClose={() => {
           setOpen(false);
         }}
-        label="Arkivera till aktualisering"
+        label={t('actualisation.modalLabel')}
         className="w-[48rem]"
       >
         <Modal.Content className="flex flex-col gap-12">
-          <p className="m-0 text-small text-dark-secondary">
-            Välj en aktualisering att arkivera ansökningens sammanställnings-PDF till. Den valda aktualiseringen
-            registreras på ärendet.
-          </p>
+          <p className="m-0 text-small text-dark-secondary">{t('actualisation.description')}</p>
 
           {loading ?
             <Spinner size={3} />
           : loadError ?
-            <p className="m-0">Det gick inte att hämta aktualiseringar</p>
+            <p className="m-0">{t('actualisation.loadError')}</p>
           : actualisations.length === 0 ?
-            <p className="m-0 text-dark-secondary">Inga aktualiseringar hittades för sökanden.</p>
+            <p className="m-0 text-dark-secondary">{t('actualisation.empty')}</p>
           : <ul className="flex flex-col gap-8 m-0 p-0 list-none">
               {actualisations.map((actualisation) => (
                 <li key={actualisation.id}>
@@ -95,11 +94,13 @@ export const ErrandAktualisering: FC<{ errandId: string; onArchived: () => void 
                     }`}
                   >
                     <span className="font-bold block break-words">
-                      {actualisation.name ?? actualisation.type ?? `Aktualisering ${actualisation.id}`}
+                      {actualisation.name ??
+                        actualisation.type ??
+                        t('actualisation.fallbackName', { id: actualisation.id })}
                     </span>
                     <span className="text-small text-dark-secondary block">
                       {[
-                        actualisation.id ? `ID ${actualisation.id}` : null,
+                        actualisation.id ? t('actualisation.id', { id: actualisation.id }) : null,
                         actualisation.date,
                         actualisation.type,
                         actualisation.status,
@@ -116,7 +117,7 @@ export const ErrandAktualisering: FC<{ errandId: string; onArchived: () => void 
             </ul>
           }
 
-          {archived && <p className="text-dark-secondary m-0">Dokumentet arkiverades till aktualiseringen.</p>}
+          {archived && <p className="text-dark-secondary m-0">{t('actualisation.archived')}</p>}
           {archiveError && <p className="text-error-surface-primary m-0">{archiveError}</p>}
         </Modal.Content>
         <Modal.Footer>
@@ -126,17 +127,17 @@ export const ErrandAktualisering: FC<{ errandId: string; onArchived: () => void 
               setOpen(false);
             }}
           >
-            Stäng
+            {t('common:close')}
           </Button>
           <Button
             color="vattjom"
             variant="primary"
             disabled={selectedId === undefined || archiving || archived}
             loading={archiving}
-            loadingText="Arkiverar…"
+            loadingText={t('actualisation.archiving')}
             onClick={() => void archive()}
           >
-            Arkivera
+            {t('actualisation.archive')}
           </Button>
         </Modal.Footer>
       </Modal>

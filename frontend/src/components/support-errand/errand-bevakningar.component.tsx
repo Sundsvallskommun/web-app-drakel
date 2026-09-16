@@ -6,6 +6,7 @@ import { Button, DatePicker, FormControl, FormLabel, Input, Textarea } from '@sk
 import { formatDateRange } from '@utils/date-range';
 import { Trash } from 'lucide-react';
 import { FC, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { LifecareSourceBadge } from './lifecare-source-badge.component';
 
@@ -25,6 +26,7 @@ export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
   loadError,
   refresh,
 }) => {
+  const { t } = useTranslation('sidebar');
   const [title, setTitle] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
@@ -49,7 +51,7 @@ export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
     });
     setSaving(false);
     if (res.error) {
-      setError('Det gick inte att spara bevakningen');
+      setError(t('bevakningar.saveError'));
       return;
     }
     setTitle('');
@@ -68,7 +70,7 @@ export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
     const res = await deleteBevakning(errandId, bevakningId);
     setBusyId(undefined);
     if (res.error) {
-      setError('Det gick inte att ta bort bevakningen');
+      setError(t('bevakningar.deleteError'));
       return;
     }
     refresh();
@@ -81,9 +83,9 @@ export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
       <AsyncContent
         isLoading={isLoading}
         error={loadError}
-        errorText="Det gick inte att hämta bevakningar"
+        errorText={t('bevakningar.loadError')}
         isEmpty={bevakningar.length === 0}
-        emptyText="Inga bevakningar."
+        emptyText={t('bevakningar.empty')}
       >
         <ul className="flex flex-col gap-12 m-0 p-0 list-none">
           {bevakningar.map((bevakning, index) => (
@@ -97,7 +99,7 @@ export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
                   <LifecareSourceBadge source={bevakning.source} />
                 </span>
                 <span className="text-small text-dark-secondary">
-                  {formatDateRange(bevakning.startDate, bevakning.endDate)}
+                  {formatDateRange(bevakning.startDate, bevakning.endDate, t)}
                 </span>
                 {bevakning.description ?
                   <span className="text-small break-words whitespace-pre-wrap">{bevakning.description}</span>
@@ -107,7 +109,7 @@ export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
                 size="sm"
                 variant="tertiary"
                 iconButton
-                aria-label="Ta bort bevakning"
+                aria-label={t('bevakningar.delete')}
                 loading={busyId === bevakning.id}
                 leftIcon={<Trash />}
                 onClick={() => void remove(bevakning.id)}
@@ -119,11 +121,11 @@ export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
 
       <div className="mt-auto flex flex-col gap-12 border-t-1 border-divider pt-16">
         <FormControl id="bevakning-titel" className="w-full">
-          <FormLabel>Rubrik *</FormLabel>
+          <FormLabel>{t('bevakningar.title')}</FormLabel>
           <Input
             size="sm"
             value={title}
-            placeholder="Vad ska bevakas?"
+            placeholder={t('bevakningar.titlePlaceholder')}
             onChange={(event) => {
               setTitle(event.target.value);
             }}
@@ -131,7 +133,7 @@ export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
         </FormControl>
         <div className="flex gap-12">
           <FormControl id="bevakning-fran" className="w-full">
-            <FormLabel>Från *</FormLabel>
+            <FormLabel>{t('bevakningar.from')}</FormLabel>
             <DatePicker
               type="date"
               size="sm"
@@ -142,7 +144,7 @@ export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
             />
           </FormControl>
           <FormControl id="bevakning-till" className="w-full">
-            <FormLabel>Till</FormLabel>
+            <FormLabel>{t('bevakningar.to')}</FormLabel>
             <DatePicker
               type="date"
               size="sm"
@@ -154,7 +156,7 @@ export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
           </FormControl>
         </div>
         <FormControl id="bevakning-beskrivning" className="w-full">
-          <FormLabel>Beskrivning</FormLabel>
+          <FormLabel>{t('bevakningar.description')}</FormLabel>
           <Textarea
             rows={2}
             value={description}
@@ -167,11 +169,11 @@ export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
           color="primary"
           size="sm"
           loading={saving}
-          loadingText="Sparar"
+          loadingText={t('bevakningar.saving')}
           disabled={!canSave}
           onClick={() => void add()}
         >
-          Lägg till bevakning
+          {t('bevakningar.add')}
         </Button>
       </div>
     </div>

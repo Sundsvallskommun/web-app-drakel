@@ -9,6 +9,7 @@ import { DatePicker, FormControl, FormLabel, Input, Spinner, Tabs } from '@sk-we
 import { formatApplicationMonth } from '@utils/application-month';
 import { buildNormberakningHtml } from '@utils/build-normberakning-html';
 import { FC, ReactNode, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ContentBox } from './content-box.component';
 import { ErrandSectionHeader } from './errand-section-header.component';
@@ -94,6 +95,7 @@ export const ErrandNormberakning: FC<{
   /** The assigned handläggare, shown in the preview-PDF header. */
   handlaggare?: string;
 }> = ({ errandId, warnings, onWarningsChanged, locked = false, headerSlot, handlaggare }) => {
+  const { t, i18n } = useTranslation('calculation');
   const { draft, isLoading, error, refresh } = useErrandNormberakning(errandId);
   const types = useNormberakningTypes();
   const [activeTab, setActiveTab] = useState<number>(0);
@@ -105,8 +107,8 @@ export const ErrandNormberakning: FC<{
   // The heading (with the approval checkbox) is shown in every state; the PDF preview only once there is a draft.
   const renderHeader = (previewAction?: ReactNode) => (
     <ErrandSectionHeader
-      title="Normberäkning"
-      description="Utkast till normberäkningen för ansökan. Inkomster och utgifter kan justeras – resultatet beräknas i Lifecare."
+      title={t('header.title')}
+      description={t('header.description')}
       action={
         <div className="flex items-center gap-24 flex-wrap">
           {headerSlot}
@@ -138,12 +140,8 @@ export const ErrandNormberakning: FC<{
       <div className="flex flex-col gap-24">
         {renderHeader()}
         {error ?
-          <p className="m-0">Det gick inte att hämta normberäkningen ({String(error)})</p>
-        : <p className="m-0 text-dark-secondary">
-            Ingen normberäkning har skapats för det här ärendet ännu. Draften skapas automatiskt när inkomstunderlaget
-            (SSBTEK) har hämtats.
-          </p>
-        }
+          <p className="m-0">{t('loadError', { error: String(error) })}</p>
+        : <p className="m-0 text-dark-secondary">{t('noDraft')}</p>}
       </div>
     );
   }
@@ -164,27 +162,27 @@ export const ErrandNormberakning: FC<{
                 })
               )
             }
-            modalLabel="Förhandsgranska beräkning"
-            emptyMessage="Det finns ingen beräkning att förhandsgranska."
+            modalLabel={t('preview.modalLabel')}
+            emptyMessage={t('preview.empty')}
           />
         </div>
       )}
 
-      <ContentBox title="Beräkningsuppgifter">
+      <ContentBox title={t('details.title')}>
         <div className="flex flex-wrap items-start gap-x-32 gap-y-16">
-          <FilterField label="Avser ansökan" className="w-auto">
-            <span className="block py-4">{formatApplicationMonth(draft.applicationMonth)}</span>
+          <FilterField label={t('details.applicationMonth')} className="w-auto">
+            <span className="block py-4">{formatApplicationMonth(draft.applicationMonth, i18n.language)}</span>
           </FilterField>
-          <FilterField label="Norm" required className="w-[14rem]">
+          <FilterField label={t('details.norm')} required className="w-[14rem]">
             <Input readOnly size="sm" value={draft.normType ?? ''} placeholder="—" />
           </FilterField>
-          <FilterField label="Beräkningsdatum" required>
+          <FilterField label={t('details.calculationDate')} required>
             <DatePicker type="date" readOnly size="sm" value={draft.calculationDate ?? ''} />
           </FilterField>
-          <FilterField label="Från" required>
+          <FilterField label={t('details.from')} required>
             <DatePicker type="date" readOnly size="sm" value={draft.calculationFromDate ?? ''} />
           </FilterField>
-          <FilterField label="Till" required>
+          <FilterField label={t('details.to')} required>
             <DatePicker type="date" readOnly size="sm" value={draft.calculationToDate ?? ''} />
           </FilterField>
         </div>
@@ -192,7 +190,7 @@ export const ErrandNormberakning: FC<{
 
       <Tabs size="sm" underline current={activeTab} onTabChange={setActiveTab} panelsClassName="pt-32">
         <Tabs.Item>
-          <Tabs.Button>Familj</Tabs.Button>
+          <Tabs.Button>{t('tabs.family')}</Tabs.Button>
           <Tabs.Content>
             <NormberakningTabPanel
               errandId={errandId}
@@ -205,7 +203,7 @@ export const ErrandNormberakning: FC<{
           </Tabs.Content>
         </Tabs.Item>
         <Tabs.Item>
-          <Tabs.Button>Inkomster</Tabs.Button>
+          <Tabs.Button>{t('tabs.incomes')}</Tabs.Button>
           <Tabs.Content>
             <NormberakningTabPanel
               errandId={errandId}
@@ -224,7 +222,7 @@ export const ErrandNormberakning: FC<{
           </Tabs.Content>
         </Tabs.Item>
         <Tabs.Item>
-          <Tabs.Button>Utgifter</Tabs.Button>
+          <Tabs.Button>{t('tabs.expenses')}</Tabs.Button>
           <Tabs.Content>
             <NormberakningTabPanel
               errandId={errandId}
@@ -234,10 +232,10 @@ export const ErrandNormberakning: FC<{
             >
               <NormberakningExpenses
                 errandId={errandId}
-                title="Utgifter"
+                title={t('expenses.title')}
                 rows={draft.expenses ?? []}
                 sum={draft.expenseSum}
-                summaLabel="Summa utgifter"
+                summaLabel={t('expenses.sum')}
                 bucket="EXPENSE"
                 types={types.costTypes}
                 onChanged={refresh}
@@ -246,15 +244,15 @@ export const ErrandNormberakning: FC<{
           </Tabs.Content>
         </Tabs.Item>
         <Tabs.Item>
-          <Tabs.Button>Levnadskostnader i övrigt</Tabs.Button>
+          <Tabs.Button>{t('tabs.livingCosts')}</Tabs.Button>
           <Tabs.Content>
             <NormberakningTabPanel errandId={errandId} locked={locked} onWarningsChanged={onWarningsChanged}>
               <NormberakningExpenses
                 errandId={errandId}
-                title="Levnadskostnader i övrigt"
+                title={t('livingCosts.title')}
                 rows={draft.specialExpenses ?? []}
                 sum={draft.specialExpenseSum}
-                summaLabel="Summa särskilda kostnader"
+                summaLabel={t('livingCosts.sum')}
                 bucket="SPECIAL_EXPENSE"
                 types={types.livingCostTypes}
                 onChanged={refresh}
@@ -263,7 +261,7 @@ export const ErrandNormberakning: FC<{
           </Tabs.Content>
         </Tabs.Item>
         <Tabs.Item>
-          <Tabs.Button>Gemensamma kostnader</Tabs.Button>
+          <Tabs.Button>{t('tabs.sharedCosts')}</Tabs.Button>
           <Tabs.Content>
             <NormberakningTabPanel errandId={errandId} locked={locked} onWarningsChanged={onWarningsChanged}>
               <NormberakningGemensamma

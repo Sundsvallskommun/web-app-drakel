@@ -1,1 +1,52 @@
-{}
+{
+  "journal": {
+    "title": "Journal",
+    "description": "Journal entries documenting the case handling of the errand. A working note can be edited until it is locked and becomes an official record.",
+    "newEntry": "New journal entry",
+    "listTitle": "Added journal entries",
+    "loadError": "Could not fetch the journal",
+    "empty": "No journal entries.",
+    "workingStatus": "Working note",
+    "saveError": "Could not save the journal entry",
+    "editTitle": "Edit journal entry",
+    "lockTitle": "Lock journal entry",
+    "lockConfirm": "Do you want to lock <heading></heading>? It becomes an official record and can no longer be changed or deleted."
+  },
+  "documents": {
+    "title": "Documents",
+    "description": "Documents drawn up in the errand. A draft can be edited until it is locked and becomes an official record.",
+    "newDocument": "New document",
+    "listTitle": "Added documents",
+    "loadError": "Could not fetch the documents",
+    "empty": "No documents.",
+    "workingStatus": "Draft",
+    "saveError": "Could not save the document",
+    "editTitle": "Edit document",
+    "lockTitle": "Lock document",
+    "lockConfirm": "Do you want to lock <heading></heading>? It becomes an official record and can no longer be changed or deleted."
+  },
+  "record": {
+    "addedBy": "Added by",
+    "type": "Type",
+    "lockedStatus": "Official record",
+    "actions": "Actions",
+    "actionsFor": "Actions for {{recordLabel}}"
+  },
+  "form": {
+    "typeRequired": "Type *",
+    "selectType": "Select type",
+    "template": "Template",
+    "documentTemplate": "Document template",
+    "templatePlaceholder": "Select template (replaces the text)",
+    "templateSearch": "Search template…",
+    "phrase": "Phrase",
+    "phrasePlaceholder": "Insert phrase at the cursor",
+    "phraseSearch": "Search phrase…",
+    "headingRequired": "Heading *",
+    "dateRequired": "Date *",
+    "time": "Time",
+    "text": "Text",
+    "create": "Create",
+    "saveChangeError": "Could not save the change"
+  }
+}

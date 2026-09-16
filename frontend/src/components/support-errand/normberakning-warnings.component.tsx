@@ -1,8 +1,9 @@
 'use client';
 
-import { acknowledgeWarning, Warning, warningTypeLabel } from '@services/warning-service';
+import { acknowledgeWarning, Warning } from '@services/warning-service';
 import { Alert } from '@sk-web-gui/alert';
 import { FC, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface NormberakningWarningsProps {
   errandId: string;
@@ -18,6 +19,7 @@ interface NormberakningWarningsProps {
  * "Varningar" panel.
  */
 export const NormberakningWarnings: FC<NormberakningWarningsProps> = ({ errandId, warnings, onAcknowledged }) => {
+  const { t } = useTranslation('calculation');
   const [acknowledgingId, setAcknowledgingId] = useState<string>();
   const [error, setError] = useState<string>();
 
@@ -34,7 +36,7 @@ export const NormberakningWarnings: FC<NormberakningWarningsProps> = ({ errandId
     const result = await acknowledgeWarning(errandId, warningId);
     setAcknowledgingId(undefined);
     if (result.error) {
-      setError('Det gick inte att kvittera varningen');
+      setError(t('warnings.acknowledgeError'));
       return;
     }
     onAcknowledged();
@@ -51,7 +53,9 @@ export const NormberakningWarnings: FC<NormberakningWarningsProps> = ({ errandId
               <Alert.Icon />
               <Alert.Content>
                 {warning.type ?
-                  <Alert.Content.Title className="font-bold">{warningTypeLabel(warning.type)}</Alert.Content.Title>
+                  <Alert.Content.Title className="font-bold">
+                    {t(`warningType.${warning.type}`, { defaultValue: warning.type })}
+                  </Alert.Content.Title>
                 : null}
                 <Alert.Content.Description>{warning.message}</Alert.Content.Description>
               </Alert.Content>
@@ -60,10 +64,10 @@ export const NormberakningWarnings: FC<NormberakningWarningsProps> = ({ errandId
                 variant="secondary"
                 color="vattjom"
                 loading={acknowledgingId === warning.id}
-                loadingText="Kvitterar…"
+                loadingText={t('warnings.acknowledging')}
                 onClick={() => void acknowledge(warning.id)}
               >
-                Kvittera
+                {t('warnings.acknowledge')}
               </Alert.Button>
             </Alert>
           </li>

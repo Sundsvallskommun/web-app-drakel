@@ -4,6 +4,7 @@ import { renderPdf } from '@services/pdf-service';
 import { Button, Modal, Spinner } from '@sk-web-gui/react';
 import { ScanEye } from 'lucide-react';
 import { FC, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 /** Converts a base64 PDF to an object URL so it can be shown in an <iframe>. */
 const base64ToObjectUrl = (base64: string): string => {
@@ -22,13 +23,10 @@ export const PdfPreviewButton: FC<{
   modalLabel?: string;
   emptyMessage?: string;
   disabled?: boolean;
-}> = ({
-  buildHtml,
-  label = 'Förhandsgranska PDF',
-  modalLabel = 'Förhandsgranska',
-  emptyMessage = 'Det finns inget att förhandsgranska.',
-  disabled = false,
-}) => {
+}> = ({ buildHtml, label, modalLabel, emptyMessage, disabled = false }) => {
+  const { t } = useTranslation('attachments');
+  const buttonLabel = label ?? t('pdfPreviewButton.label');
+  const modalTitle = modalLabel ?? t('common:preview');
   const [open, setOpen] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [url, setUrl] = useState<string>('');
@@ -48,14 +46,14 @@ export const PdfPreviewButton: FC<{
     const html = await buildHtml();
     if (!html) {
       setLoading(false);
-      setError(emptyMessage);
+      setError(emptyMessage ?? t('pdfPreviewButton.empty'));
       setOpen(true);
       return;
     }
     const res = await renderPdf(html);
     setLoading(false);
     if (res.error || !res.data) {
-      setError('Det gick inte att skapa förhandsgranskningen.');
+      setError(t('pdfPreviewButton.createError'));
       setOpen(true);
       return;
     }
@@ -71,18 +69,18 @@ export const PdfPreviewButton: FC<{
         leftIcon={<ScanEye />}
         disabled={disabled || loading}
         loading={loading}
-        loadingText="Skapar förhandsgranskning…"
+        loadingText={t('pdfPreviewButton.creating')}
         onClick={() => void preview()}
       >
-        {label}
+        {buttonLabel}
       </Button>
 
-      <Modal show={open} onClose={close} label={modalLabel} className="w-[80rem] max-w-full">
+      <Modal show={open} onClose={close} label={modalTitle} className="w-[80rem] max-w-full">
         <Modal.Content>
           {error ?
             <p className="text-error-surface-primary m-0">{error}</p>
           : url ?
-            <iframe src={`${url}#pagemode=none`} className="w-full h-[80rem] border-0" title={modalLabel} />
+            <iframe src={`${url}#pagemode=none`} className="w-full h-[80rem] border-0" title={modalTitle} />
           : <div className="flex justify-center items-center h-[40rem]">
               <Spinner size={4} />
             </div>

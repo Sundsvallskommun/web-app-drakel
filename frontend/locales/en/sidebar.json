@@ -1,1 +1,93 @@
-{}
+{
+  "sections": {
+    "warnings": "Warnings",
+    "notes": "Notes",
+    "bevakningar": "Reminders",
+    "events": "Activity log"
+  },
+  "toggle": {
+    "open": "Open {{section}}",
+    "close": "Close {{section}}"
+  },
+  "warnings": {
+    "showCurrent": "Show current",
+    "updateError": "Could not update the warning",
+    "loadError": "Could not load warnings",
+    "emptyCurrent": "No current warnings",
+    "empty": "No warnings",
+    "acknowledge": "Acknowledge",
+    "acknowledging": "Acknowledging…",
+    "reopen": "Reopen",
+    "reopening": "Reopening…",
+    "status": {
+      "ACKNOWLEDGED": "Acknowledged",
+      "CLOSED": "Closed"
+    },
+    "types": {
+      "UNHANDLED_INCOME": "Unhandled income",
+      "INCOME_CHANGE": "Income change",
+      "MISSING_SSBTEK": "Missing in SSBTEK",
+      "NEW_INCOME": "New income",
+      "NEW_EXPENSE": "New expense",
+      "NEW_PERSON": "New person",
+      "INCOME_DROPPED": "Discontinued income",
+      "HOUSEHOLD_CHANGE": "Changed household composition",
+      "HOUSING_COST_CHANGE": "Changed housing cost",
+      "INCOME_DUPLICATED": "Possibly duplicated income",
+      "EXPENSE_REVIEW": "Requires reasonableness assessment",
+      "EXPENSE_CAPPED": "Expense above cap"
+    }
+  },
+  "notes": {
+    "saveError": "Could not save the note",
+    "updateError": "Could not update the note",
+    "deleteError": "Could not delete the note",
+    "loadError": "Could not load the notes",
+    "empty": "There are no notes.",
+    "edited": "(edited)",
+    "edit": "Edit note",
+    "delete": "Delete note",
+    "newNote": "New note",
+    "saving": "Saving",
+    "editModalLabel": "Edit note",
+    "noteText": "Note text"
+  },
+  "bevakningar": {
+    "saveError": "Could not save the reminder",
+    "deleteError": "Could not delete the reminder",
+    "loadError": "Could not load reminders",
+    "empty": "No reminders.",
+    "delete": "Delete reminder",
+    "title": "Title *",
+    "titlePlaceholder": "What should be followed up?",
+    "from": "From *",
+    "to": "To",
+    "description": "Description",
+    "saving": "Saving",
+    "add": "Add reminder"
+  },
+  "events": {
+    "filterSource": "Filter by source",
+    "allSources": "All sources",
+    "sourceOptions": {
+      "HTTP": "Access (who read/touched)",
+      "EVENT": "Changes (what changed)"
+    },
+    "filterAction": "Filter by event",
+    "allActions": "All events",
+    "actions": {
+      "READ": "Read",
+      "CREATE": "Created",
+      "UPDATE": "Changed",
+      "DELETE": "Deleted"
+    },
+    "sources": {
+      "HTTP": "Access",
+      "EVENT": "Change"
+    },
+    "system": "System",
+    "loadError": "Could not load the activity log",
+    "empty": "No events.",
+    "showMore": "Show more"
+  }
+}

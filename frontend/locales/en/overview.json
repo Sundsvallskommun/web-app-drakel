@@ -1,1 +1,83 @@
-{}
+{
+  "views": {
+    "all": "All errands",
+    "new": "New errands",
+    "open": "Open errands",
+    "closed": "Closed errands"
+  },
+  "sidebar": {
+    "heading": "Errands",
+    "closeMenu": "Close side menu",
+    "openMenu": "Open side menu"
+  },
+  "filter": {
+    "searchPlaceholder": "Filter the list",
+    "searchLabel": "Filter the list by errand number or applicant",
+    "dropdownSearchPlaceholder": "Type to search",
+    "status": "Status",
+    "priority": "Priority",
+    "assignee": "Case worker",
+    "onlyMine": "My errands",
+    "onlyUnread": "Unread messages",
+    "priorityChip": "{{priority}} priority",
+    "clearStatus": "Clear status {{status}}",
+    "clearPriority": "Clear priority {{priority}}",
+    "clearAssignee": "Clear case worker {{assignee}}",
+    "clearAll": "Clear all",
+    "clearAllLabel": "Clear all filters"
+  },
+  "list": {
+    "fetching": "Fetching errands…",
+    "showing_one": "Showing {{count}} errand",
+    "showing_other": "Showing {{count}} errands"
+  },
+  "table": {
+    "columns": {
+      "status": "Status",
+      "errand": "Errand",
+      "applicant": "Applicant",
+      "priority": "Priority",
+      "created": "Registered",
+      "updated": "Updated",
+      "assignee": "Case worker"
+    },
+    "untitled": "(untitled)",
+    "unassigned": "Not assigned",
+    "loadError": "Could not fetch errands ({{error}})",
+    "empty": "There are no errands",
+    "caption": "Errands, page {{page}} of {{totalPages}}",
+    "sortBy": "Sort by {{column}}",
+    "open": "Open",
+    "rowLabel": "Errand {{title}}, open errand",
+    "rowLabelUntitled": "untitled",
+    "pageSize": "Rows per page:",
+    "pageSizeOption": "{{size}}"
+  },
+  "notifications": {
+    "heading": "Notifications",
+    "close": "Close notifications",
+    "loadError": "Could not fetch notifications",
+    "empty": "No notifications.",
+    "unread": "New",
+    "read": "Earlier",
+    "markAsRead": "Mark as read",
+    "fallbackTitle": "Notification",
+    "subTypes": {
+      "MESSAGE": "New message",
+      "DECISION": "New decision",
+      "ATTACHMENT": "New attachment",
+      "ERRAND": "Errand updated",
+      "STAKEHOLDER": "Stakeholder updated",
+      "PARAMETER": "Parameter changed",
+      "SYSTEM": "System event"
+    }
+  },
+  "registration": {
+    "initiating": "Registering new errand…",
+    "initiateError": "Could not initiate a new errand"
+  },
+  "relativeTime": {
+    "today": "Today {{time}}",
+    "yesterday": "Yesterday {{time}}"
+  }
+}

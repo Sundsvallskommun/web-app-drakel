@@ -1,1 +1,60 @@
-{}
+{
+  "title": "Bilagor",
+  "fallbackFileName": "bilaga",
+  "loadError": "Det gick inte att hämta bilagor",
+  "downloadError": "Det gick inte att hämta filen",
+  "actions": {
+    "showFile": "Visa {{fileName}}",
+    "downloadFile": "Ladda ner {{fileName}}"
+  },
+  "preview": {
+    "title": "Förhandsgranskning",
+    "loading": "Laddar förhandsgranskning...",
+    "error": "Kunde inte visa förhandsgranskningen"
+  },
+  "pdfButton": {
+    "label": "Visa pdf",
+    "modalLabel": "Förhandsgranska PDF"
+  },
+  "pdfPreviewButton": {
+    "label": "Förhandsgranska PDF",
+    "creating": "Skapar förhandsgranskning…",
+    "empty": "Det finns inget att förhandsgranska.",
+    "createError": "Det gick inte att skapa förhandsgranskningen."
+  },
+  "list": {
+    "empty": "Inga bilagor"
+  },
+  "category": {
+    "documentType": {
+      "APPLICATION": "ansökan",
+      "GENERATED": "genererad",
+      "ERRAND": "ärende",
+      "CASE_DATA": "ärendeuppgifter",
+      "DECISION": "beslut",
+      "MESSAGE_HISTORY": "meddelandehistorik"
+    },
+    "senderRole": {
+      "CLIENT": "från sökande",
+      "CASEWORKER": "från handläggare"
+    },
+    "conversation": "meddelande"
+  },
+  "upload": {
+    "label": "Ladda upp bilaga",
+    "restrictions": "Tillåtna filtyper: {{extensions}}. Max filstorlek: {{maxSizeMb}} MB.",
+    "unsupportedFileType": "Filtypen stöds inte. Tillåtna filtyper: {{extensions}}",
+    "uploading": "Laddar upp {{fileName}}…",
+    "uploadError": "Det gick inte att ladda upp {{fileName}}"
+  },
+  "errandAttachments": {
+    "description": "Här samlas bilagor som är kopplade till ärendet.",
+    "summaryTitle": "Sammanställning bilagor från ansökan"
+  },
+  "messageAttachments": {
+    "heading": "Bilagor från meddelanden",
+    "empty": "Inga bilagor i meddelanden",
+    "description": "Här samlas filer som har skickats i ärendets meddelanden.",
+    "summaryTitle": "Sammanställning bilagor från meddelanden"
+  }
+}

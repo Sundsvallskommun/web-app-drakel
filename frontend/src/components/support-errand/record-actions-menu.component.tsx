@@ -3,6 +3,7 @@
 import { Button, PopupMenu } from '@sk-web-gui/react';
 import { Ellipsis } from 'lucide-react';
 import { FC, ReactElement } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface RecordAction {
   label: string;
@@ -20,6 +21,7 @@ interface RecordActionsMenuProps {
 
 /** The "…" menu on a record card holding its per-record actions; renders nothing without actions. */
 export const RecordActionsMenu: FC<RecordActionsMenuProps> = ({ recordLabel, actions, loading }) => {
+  const { t } = useTranslation('documentation');
   if (actions.length === 0) {
     return null;
   }
@@ -33,7 +35,11 @@ export const RecordActionsMenu: FC<RecordActionsMenuProps> = ({ recordLabel, act
           size="sm"
           iconButton
           loading={loading}
-          aria-label={recordLabel ? `Åtgärder för ${recordLabel}` : 'Åtgärder'}
+          aria-label={
+            recordLabel ?
+              t('record.actionsFor', { recordLabel, interpolation: { escapeValue: false } })
+            : t('record.actions')
+          }
         >
           <Ellipsis />
         </PopupMenu.Button>

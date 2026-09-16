@@ -4,21 +4,17 @@ import { AsyncContent } from '@components/common/async-content.component';
 import { ErrandNotification } from '@services/notification-service';
 import { Button } from '@sk-web-gui/react';
 import dayjs from 'dayjs';
+import { TFunction } from 'i18next';
 import { Check, X } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 
-const SUBTYPE_LABELS: Record<string, string> = {
-  MESSAGE: 'Nytt meddelande',
-  DECISION: 'Nytt beslut',
-  ATTACHMENT: 'Ny bilaga',
-  ERRAND: 'Ärende uppdaterat',
-  STAKEHOLDER: 'Intressent uppdaterad',
-  PARAMETER: 'Parameter ändrad',
-  SYSTEM: 'Systemhändelse',
-};
-
-const subTypeLabel = (subType?: string): string => (subType ? (SUBTYPE_LABELS[subType] ?? subType) : 'Notis');
+/** The notification's title from its sub type (e.g. MESSAGE → "Nytt meddelande"); unknown sub types are shown as-is. */
+const subTypeLabel = (subType: string | undefined, t: TFunction): string =>
+  subType ?
+    t(`overview:notifications.subTypes.${subType}`, { defaultValue: subType })
+  : t('overview:notifications.fallbackTitle');
 const formatWhen = (created?: string): string => (created ? dayjs(created).format('YYYY-MM-DD HH:mm') : '');
 
 interface NotificationsPanelProps {
@@ -37,6 +33,7 @@ export const NotificationsPanel: FC<NotificationsPanelProps> = ({
   onAcknowledge,
   onClose,
 }) => {
+  const { t } = useTranslation('overview');
   const router = useRouter();
   const { locale } = useParams<{ locale: string }>();
 
@@ -61,7 +58,7 @@ export const NotificationsPanel: FC<NotificationsPanelProps> = ({
           openErrand(notification);
         }}
       >
-        <span className="font-bold text-small">{subTypeLabel(notification.subType)}</span>
+        <span className="font-bold text-small">{subTypeLabel(notification.subType, t)}</span>
         {notification.description ?
           <span className="text-small break-words">{notification.description}</span>
         : null}
@@ -77,7 +74,7 @@ export const NotificationsPanel: FC<NotificationsPanelProps> = ({
             onAcknowledge(notification);
           }}
         >
-          Markera som läst
+          {t('notifications.markAsRead')}
         </Button>
       : null}
     </li>
@@ -86,27 +83,34 @@ export const NotificationsPanel: FC<NotificationsPanelProps> = ({
   return (
     <div className="flex flex-col gap-12 h-full min-h-0">
       <div className="flex items-center justify-between">
-        <h2 className="text-h4-sm md:text-h4-md m-0">Notiser</h2>
-        <Button size="sm" variant="tertiary" iconButton aria-label="Stäng notiser" leftIcon={<X />} onClick={onClose} />
+        <h2 className="text-h4-sm md:text-h4-md m-0">{t('notifications.heading')}</h2>
+        <Button
+          size="sm"
+          variant="tertiary"
+          iconButton
+          aria-label={t('notifications.close')}
+          leftIcon={<X />}
+          onClick={onClose}
+        />
       </div>
 
       <AsyncContent
         isLoading={isLoading}
         error={loadError}
-        errorText="Det gick inte att hämta notiser"
+        errorText={t('notifications.loadError')}
         isEmpty={notifications.length === 0}
-        emptyText="Inga notiser."
+        emptyText={t('notifications.empty')}
       >
         <div className="flex flex-col gap-16 overflow-y-auto min-h-0">
           {unread.length ?
             <section className="flex flex-col gap-8">
-              <h3 className="text-small font-bold m-0">Nya</h3>
+              <h3 className="text-small font-bold m-0">{t('notifications.unread')}</h3>
               <ul className="flex flex-col gap-8 m-0 p-0 list-none">{unread.map((item) => renderItem(item, true))}</ul>
             </section>
           : null}
           {read.length ?
             <section className="flex flex-col gap-8">
-              <h3 className="text-small font-bold m-0">Tidigare</h3>
+              <h3 className="text-small font-bold m-0">{t('notifications.read')}</h3>
               <ul className="flex flex-col gap-8 m-0 p-0 list-none">{read.map((item) => renderItem(item, false))}</ul>
             </section>
           : null}

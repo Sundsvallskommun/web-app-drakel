@@ -1,1 +1,94 @@
-{}
+{
+  "detail": {
+    "loadError": "Could not load the errand ({{error}})",
+    "unknownError": "unknown error",
+    "newErrandHeading": "Register new errand",
+    "approved": "Approved",
+    "tabs": {
+      "errand": "Errand",
+      "application": "Application",
+      "attachments": "Attachments",
+      "calculation": "Norm calculation",
+      "decision": "Decision",
+      "payment": "Payment",
+      "messages": "Messages",
+      "documentation": "Documentation",
+      "journal": "Journal",
+      "documents": "Documents"
+    },
+    "showPdf": "Show pdf",
+    "summaryPdf": "Summary (PDF)",
+    "attachmentsFromApplication": "Attachments from the application",
+    "messageAttachmentsSummary": "Summary of attachments from messages",
+    "approval": {
+      "calculation": "Mark norm calculation as complete",
+      "decision": "Mark decision as complete",
+      "payment": "Mark payment as complete"
+    }
+  },
+  "administrationBar": {
+    "caseWorker": "Case worker:",
+    "notAssigned": "Not assigned",
+    "takeErrand": "Take errand",
+    "status": "Status",
+    "priority": "Priority"
+  },
+  "metaCard": {
+    "status": "Status",
+    "errandNumber": "Errand number",
+    "priority": "Priority",
+    "received": "Received",
+    "applicant": "Applicant",
+    "applicantAndCoApplicant": "Applicant and co-applicant"
+  },
+  "assign": {
+    "button": "Assign",
+    "modalLabel": "Assign errand",
+    "caseWorker": "Case worker",
+    "selectCaseWorker": "Select case worker",
+    "confirm": "Assign"
+  },
+  "decideAndPay": {
+    "button": "Decide and pay",
+    "preparing": "Preparing…",
+    "executing": "Executing…",
+    "sendError": "The decision could not be sent through any channel",
+    "closeError": "The decision was sent but the errand could not be closed",
+    "failedChannels": "The decision could not be sent to: {{channels}}.",
+    "unapproved_one": "You have not approved the section <strong>{{sections}}</strong>.",
+    "unapproved_other": "You have not approved the sections <strong>{{sections}}</strong>.",
+    "sendVia": "Send the decision via:",
+    "channels": {
+      "minaSidor": "Mina sidor",
+      "digitalMailbox": "Digital mailbox",
+      "letter": "Letter"
+    },
+    "sections": {
+      "CALCULATION": "Norm calculation",
+      "PAYMENT": "Payment",
+      "DECISION": "Decision"
+    }
+  },
+  "actualisation": {
+    "button": "Archive to actualisation",
+    "modalLabel": "Archive to actualisation",
+    "description": "Select an actualisation to archive the application's summary PDF to. The selected actualisation is recorded on the errand.",
+    "loadError": "Could not load actualisations",
+    "empty": "No actualisations were found for the applicant.",
+    "fallbackName": "Actualisation {{id}}",
+    "id": "ID {{id}}",
+    "archived": "The document was archived to the actualisation.",
+    "archiveError": "Could not archive to the actualisation",
+    "archiving": "Archiving…",
+    "archive": "Archive"
+  },
+  "lockedBanner": "The section is approved and locked for editing. Clear the approval to edit again.",
+  "sectionAccordion": {
+    "collapse": "Collapse {{title}}",
+    "expand": "Expand {{title}}"
+  },
+  "lifecareSourceBadge": "From Lifecare",
+  "form": {
+    "saveError": "Could not save the errand"
+  }
+}

@@ -3,6 +3,7 @@
 import { Button } from '@sk-web-gui/react';
 import { Download } from 'lucide-react';
 import { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { AttachmentFileIcon } from './attachment-file-icon.component';
 import { RecordActionsMenu } from './record-actions-menu.component';
@@ -32,31 +33,40 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
   isDownloading,
   onPreview,
   onDownload,
-}) => (
-  <div className="flex items-center gap-16 rounded-button p-12">
-    <AttachmentFileIcon thumbnail={thumbnail} />
-    <div className="flex min-w-0 flex-1 flex-col gap-2 text-dark-secondary">
-      <p className="m-0 flex min-w-0 gap-4">
-        <span className="truncate font-bold" title={fileName}>
-          {fileName}
-        </span>
-        {category ?
-          <span className="shrink-0">({category})</span>
+}) => {
+  const { t } = useTranslation('attachments');
+  return (
+    <div className="flex items-center gap-16 rounded-button p-12">
+      <AttachmentFileIcon thumbnail={thumbnail} />
+      <div className="flex min-w-0 flex-1 flex-col gap-2 text-dark-secondary">
+        <p className="m-0 flex min-w-0 gap-4">
+          <span className="truncate font-bold" title={fileName}>
+            {fileName}
+          </span>
+          {category ?
+            <span className="shrink-0">({category})</span>
+          : null}
+        </p>
+        {description ?
+          <span className="text-small">{description}</span>
         : null}
-      </p>
-      {description ?
-        <span className="text-small">{description}</span>
+      </div>
+      {canPreview ?
+        <Button
+          size="sm"
+          variant="tertiary"
+          className="shrink-0"
+          aria-label={t('actions.showFile', { fileName })}
+          onClick={onPreview}
+        >
+          {t('common:show')}
+        </Button>
       : null}
+      <RecordActionsMenu
+        recordLabel={fileName}
+        loading={isDownloading}
+        actions={[{ label: t('common:download'), icon: <Download />, onClick: onDownload }]}
+      />
     </div>
-    {canPreview ?
-      <Button size="sm" variant="tertiary" className="shrink-0" aria-label={`Visa ${fileName}`} onClick={onPreview}>
-        Visa
-      </Button>
-    : null}
-    <RecordActionsMenu
-      recordLabel={fileName}
-      loading={isDownloading}
-      actions={[{ label: 'Ladda ner', icon: <Download />, onClick: onDownload }]}
-    />
-  </div>
-);
+  );
+};

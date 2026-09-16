@@ -1,1 +1,213 @@
-{}
+{
+  "summary": {
+    "title": "Ansökan",
+    "snapshotDescription": "{{title}} så som sökanden fyllde i den.",
+    "snapshotDescriptionWithDate": "{{title}} så som sökanden fyllde i den, ifylld {{capturedAt}}.",
+    "snapshotFallbackTitle": "Sammanställningen",
+    "liveDataDescription": "Uppgifterna som sökanden lämnade i ansökan via Mina sidor."
+  },
+  "snapshot": {
+    "fallbackSectionTitle": "Avsnitt {{number}}",
+    "fallbackGroupTitle": "Post",
+    "attestation": "Försäkran"
+  },
+  "data": {
+    "emptyText": "Inga inskickade uppgifter att visa för det här ärendet.",
+    "sections": {
+      "personalDetails": "Personuppgifter",
+      "jobStimulus": "Jobbstimulans",
+      "application": "Ansökan",
+      "householdAndHousing": "Hushåll och boende",
+      "costs": "Kostnader",
+      "incomesAndAssets": "Inkomster och tillgångar",
+      "planning": "Planering",
+      "paymentAndContact": "Utbetalning och kontaktuppgifter",
+      "stayAndAttestation": "Vistelse och försäkran"
+    },
+    "application": {
+      "applicationType": "Typ av ansökan",
+      "maritalStatus": "Civilstånd",
+      "period": "Ansökningsperiod",
+      "normType": "Norm",
+      "otherBenefit": "Annat bistånd"
+    },
+    "housing": {
+      "hasChildrenUnder21": "Barn under 21 i hemmet",
+      "housingForm": "Boendeform",
+      "personCount": "Antal personer i hushållet",
+      "roomsPlusKitchen": "Antal rum + kök",
+      "description": "Beskrivning av boende"
+    },
+    "children": {
+      "title": "Barn",
+      "fallbackName": "Barn {{number}}"
+    },
+    "costs": {
+      "title": "Sökta kostnader",
+      "fallbackName": "Kostnad {{number}}",
+      "columns": {
+        "type": "Typ av kostnad",
+        "amount": "Belopp",
+        "specification": "Specifikation"
+      }
+    },
+    "incomes": {
+      "title": "Inkomster",
+      "fallbackName": "Inkomst {{number}}",
+      "columns": {
+        "type": "Typ av inkomst",
+        "amount": "Belopp",
+        "recipient": "Mottagare"
+      }
+    },
+    "pendingBenefits": {
+      "title": "Väntande ersättningar",
+      "fallbackName": "Ersättning {{number}}",
+      "columns": {
+        "benefit": "Ersättning",
+        "appliedBy": "Sökt av"
+      }
+    },
+    "assets": {
+      "title": "Tillgångar",
+      "fallbackName": "Tillgång {{number}}",
+      "columns": {
+        "type": "Typ av tillgång",
+        "valueOrDescription": "Värde / beskrivning"
+      }
+    },
+    "plannings": {
+      "fallbackTitle": "Planering {{number}}",
+      "planning": "Planering",
+      "sickLeave": "Sjukskrivning"
+    },
+    "jobApplications": {
+      "title": "Sökta jobb",
+      "fallbackName": "Sökt jobb {{number}}",
+      "columns": {
+        "jobTitle": "Tjänst",
+        "employerAndPlace": "Arbetsgivare och ort",
+        "applicationDate": "Ansökningsdatum"
+      }
+    },
+    "activities": {
+      "title": "Aktiviteter",
+      "fallbackName": "Aktivitet {{number}}",
+      "columns": {
+        "activity": "Aktivitet",
+        "from": "Från",
+        "to": "Till"
+      }
+    },
+    "persons": {
+      "fallbackName": "Person {{number}}"
+    },
+    "stay": {
+      "staysInMunicipality": "Vistas i kommunen under ansökningsmånaden",
+      "description": "Beskrivning av vistelse",
+      "attestation": "Försäkran lämnad"
+    }
+  },
+  "stakeholders": {
+    "errorText": "Det gick inte att hämta intressenter",
+    "emptyText": "Inga intressenter",
+    "fallbackRole": "Intressent",
+    "unknownName": "Okänd intressent",
+    "noContactDetails": "Inga kontaktuppgifter"
+  },
+  "jobStimulus": {
+    "title": "Jobbstimulansperioder",
+    "errorText": "Det gick inte att hämta jobbstimulansperioder",
+    "emptyText": "Inga jobbstimulansperioder."
+  },
+  "labels": {
+    "applicationType": {
+      "NEW": "Nyansökan",
+      "RENEWAL": "Återansökan",
+      "SUPPLEMENTARY": "Tilläggsansökan"
+    },
+    "maritalStatus": {
+      "SINGLE": "Ensamstående",
+      "COHABITING": "Gift eller sambo"
+    },
+    "normType": {
+      "NATIONAL_NORM": "Riksnorm",
+      "OTHER_NORM": "Annan norm"
+    },
+    "periodChoice": {
+      "CURRENT_MONTH": "Denna månad",
+      "NEXT_MONTH": "Nästa månad",
+      "OTHER_BENEFIT": "Annat bistånd"
+    },
+    "housingForm": {
+      "NO_HOUSING_OR_INSTITUTION": "Utan bostad eller bor på stödboende/institution",
+      "RENTAL": "Hyresrätt",
+      "SUBLET": "Andrahand",
+      "LODGER": "Inneboende",
+      "CONDOMINIUM": "Bostadsrätt",
+      "OWNED_HOUSE": "Äger villa eller radhus",
+      "RENTED_HOUSE": "Hyr villa eller radhus",
+      "LIVING_WITH_PARENTS": "Bor hos föräldrar"
+    },
+    "costType": {
+      "RENT": "Hyra (inte parkering/garage)",
+      "ELECTRICITY": "Elkostnad (totalsumma)",
+      "HOME_INSURANCE": "Hemförsäkring (månadskostnad)",
+      "INTERNET": "Internet",
+      "UNEMPLOYMENT_FUND": "A-kassa",
+      "UNION_FEE": "Fackföreningsavgift",
+      "TRAVEL_APPROVED": "Resor till godkänd planering/aktivitet",
+      "TRAVEL_MEDICAL_TRANSPORT": "Resor med sjukresor/färdtjänst till godkänd planering/aktivitet (egenavgift)",
+      "MEDICAL_CARE": "Läkarvård (inom högkostnadsskydd)",
+      "MEDICINE": "Medicin (inom högkostnadsskydd/förmån/egenavgift)",
+      "OTHER": "Övrigt bistånd"
+    },
+    "costOtherSubType": {
+      "OTHER": "Annat",
+      "MUNICIPAL_FEES": "Kommunala avgifter (förskola/hemtjänst)",
+      "ACUTE_DENTAL": "Akut tandvård/basundersökning"
+    },
+    "incomeType": {
+      "SALARY": "Lön",
+      "SWISH_DEPOSITS": "Swish/kontoinsättningar",
+      "OCCUPATIONAL_PENSION_INSURANCE": "Tjänstepension/försäkringar (AFA, AMF, KPA, SPV etc)",
+      "CHILD_SUPPORT": "Underhållsbidrag från den andra föräldern",
+      "RENT_SHARE_FROM_CHILD": "Hyresdel från barn/inneboende",
+      "FINANCIAL_AID_OTHER_MUNICIPALITY": "Ekonomiskt bistånd från annan kommun",
+      "OTHER_INCOME": "Annan inkomst (lån, spelvinst, försörjning av tillgång, gåva, kontanter)"
+    },
+    "assetCategory": {
+      "BANK_SAVINGS": "Banktillgodohavande / sparande",
+      "REAL_ESTATE": "Fastighet",
+      "COMPANY": "Företag",
+      "VEHICLE": "Fordon",
+      "OTHER": "Konst, smycken eller andra övriga tillgångar"
+    },
+    "propertyType": {
+      "CONDOMINIUM": "Bostadsrätt",
+      "HOUSE": "Villa",
+      "PROPERTY": "Fastighet",
+      "HOLIDAY_HOME": "Fritidshus"
+    },
+    "vehicleType": {
+      "CAR": "Bil",
+      "BOAT": "Båt",
+      "MOTORCYCLE": "MC",
+      "CARAVAN": "Husvagn",
+      "MOPED": "Moped",
+      "SNOWMOBILE": "Snöskoter",
+      "OTHER": "Annat"
+    },
+    "planningType": {
+      "WORK": "Arbete",
+      "JOBSEEKING": "Arbetssökande",
+      "SICK_LEAVE": "Sjukskriven",
+      "SFI": "SFI-studerande",
+      "OTHER": "Annan planering"
+    },
+    "paymentMethod": {
+      "BANK_ACCOUNT": "Bankkonto",
+      "OTHER": "Annat"
+    }
+  }
+}

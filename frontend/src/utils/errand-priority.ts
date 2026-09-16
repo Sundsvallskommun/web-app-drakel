@@ -1,6 +1,2 @@
-/** The errand priorities, in ascending order, with their Swedish labels. */
-export const PRIORITY_OPTIONS: { value: string; label: string }[] = [
-  { value: 'LOW', label: 'Låg' },
-  { value: 'MEDIUM', label: 'Medel' },
-  { value: 'HIGH', label: 'Hög' },
-];
+/** The errand priority codes, in ascending order; their labels are the translation keys `common:priority.<code>`. */
+export const ERRAND_PRIORITIES: string[] = ['LOW', 'MEDIUM', 'HIGH'];

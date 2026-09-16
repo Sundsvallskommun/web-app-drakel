@@ -1,1 +1,55 @@
-{}
+{
+  "header": {
+    "title": "Decision",
+    "description": "Date, decision and period are prefilled from the norm calculation's recommendation. The amount follows the selected decision."
+  },
+  "details": {
+    "title": "Decision details",
+    "date": "Date *",
+    "decision": "Decision *",
+    "selectDecision": "Select decision",
+    "recommended": "Recommended decision: {{label}}",
+    "noRecommendation": "— (no recommendation from the norm calculation yet)",
+    "from": "From",
+    "to": "To",
+    "amount": "Amount to grant",
+    "saveError": "Could not save the decision",
+    "saved": "The decision was saved."
+  },
+  "message": {
+    "title": "Decision message",
+    "previewModalLabel": "Preview decision",
+    "previewEmpty": "There is no decision message to preview.",
+    "categoryLabel": "Decision wording – category",
+    "categoryPlaceholder": "Select category",
+    "categorySearch": "Search category…",
+    "allCategories": "All",
+    "headingLabel": "Decision wording – heading",
+    "headingPlaceholder": "Select and add phrase text",
+    "headingSearch": "Search heading…",
+    "placeholderHelp": "<bold>{{name}}</bold> is replaced with the applicant's name. <bold>{{amount}}</bold> (amount) and <bold>{{period}}</bold> (period) are filled in from the calculation later.",
+    "applicantNameMissing": "The applicant's name could not be fetched — the name placeholder is left unreplaced.",
+    "addFullfoljd": "Add appeal instructions"
+  },
+  "payment": {
+    "header": {
+      "title": "Payment",
+      "description": "Shows whether the payment for the application month has been effectuated in Lifecare. The payment itself is made in Lifecare."
+    },
+    "statusTitle": "Payment status",
+    "loadError": "Could not fetch the payment status",
+    "applicationMonth": "Application for",
+    "unavailable": {
+      "title": "Payment status is not available",
+      "description": "The status is fetched from Lifecare and could not be read right now. Please try again later."
+    },
+    "paid": {
+      "title": "Paid",
+      "paymentDate": "Payment date: {{date}}"
+    },
+    "notPaid": {
+      "title": "Not paid yet",
+      "description": "No effectuated Lifecare payment for the application month."
+    }
+  }
+}

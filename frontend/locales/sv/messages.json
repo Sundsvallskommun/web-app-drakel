@@ -1,1 +1,52 @@
-{}
+{
+  "conversation": {
+    "ariaLabel": "Konversation med {{name}}",
+    "messagesTab": "Meddelanden",
+    "sharedAttachmentsTab": "Delade bilagor",
+    "errandNumber": "Ärende: #{{errandNumber}}"
+  },
+  "thread": {
+    "ariaLabel": "Ärendemeddelanden",
+    "loadError": "Det gick inte att hämta meddelanden ({{error}})",
+    "showOlder": "Visa äldre meddelanden",
+    "emptyTitle": "Inga meddelanden än",
+    "emptyDescription": "Skriv ett meddelande nedan för att starta dialogen.",
+    "scrollToLatest": "Gå till senaste meddelandet"
+  },
+  "sender": {
+    "applicant": "Sökande",
+    "me": "Jag",
+    "caseWorker": "Handläggare",
+    "namedCaseWorker": "{{author}} (Handläggare)"
+  },
+  "message": {
+    "attachmentOnly": "Bifogad fil",
+    "replyToEarlierMessage": "Svar på ett tidigare meddelande",
+    "jumpToQuoted": "Hoppa till det citerade meddelandet",
+    "replyingTo": "Svarar på {{sender}}",
+    "sent": "Skickat ",
+    "reply": "Svara på meddelande från {{sender}}"
+  },
+  "newMessage": {
+    "placeholder": "Skriv ett meddelande",
+    "replyPlaceholder": "Skriv ett svar",
+    "cancelReply": "Avbryt svar",
+    "sendReply": "Skicka svar",
+    "maxFileSize": "Max {{maxSizeMb}} MB per fil.",
+    "showAllowedFileTypes": "Visa tillåtna filtyper",
+    "allowedFileTypes": "Tillåtna filtyper",
+    "characterCount": "{{length}} / {{limit}} tecken",
+    "emptyError": "Skriv ett meddelande",
+    "overLimit": "Meddelandet får vara högst {{limit}} tecken inklusive formatering.",
+    "tooManyFiles": "Du kan bifoga max {{maxFiles}} filer.",
+    "sendError": "Det gick inte att skicka meddelandet",
+    "selectedAttachments": "Valda bilagor",
+    "fileCount": "{{selected}} / {{maxFiles}} filer",
+    "previewFile": "Förhandsgranska {{fileName}}",
+    "removeFile": "Ta bort {{fileName}}"
+  },
+  "editor": {
+    "ariaLabel": "Nytt meddelande",
+    "attachFile": "Bifoga fil"
+  }
+}

@@ -3,9 +3,11 @@
 import { Errand } from '@data-contracts/backend/data-contracts';
 import { Button, Pagination, Select, Spinner, Table } from '@sk-web-gui/react';
 import dayjs from 'dayjs';
+import { TFunction } from 'i18next';
 import { ArrowRight, ChevronDown, ChevronsUpDown, ChevronUp } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ErrandStatusLabel } from './errand-status-label.component';
 import { PriorityLabel } from './priority-label.component';
@@ -34,9 +36,15 @@ interface ErrandsTableProps {
   assigneeName: (assignedUserId: string) => string;
 }
 
+interface ColumnRenderContext {
+  assigneeName: (assignedUserId: string) => string;
+  t: TFunction;
+}
+
 interface Column {
-  label: string;
-  render: (errand: Errand, assigneeName: (assignedUserId: string) => string) => React.ReactNode;
+  /** Translation key (in the `overview` namespace) of the header label. */
+  labelKey: string;
+  render: (errand: Errand, context: ColumnRenderContext) => React.ReactNode;
   /** When set, the header is a button that toggles server-side sorting on this field. */
   sortKey?: string;
 }
@@ -45,35 +53,43 @@ const formatDate = (value?: string): string => (value ? dayjs(value).format('YYY
 const errandRouteSegment = (errand: Errand): string | undefined => errand.errandNumber ?? errand.id;
 
 const columns: Column[] = [
-  { label: 'Status', sortKey: 'status', render: (errand) => <ErrandStatusLabel status={errand.status} /> },
   {
-    label: 'Ärende',
+    labelKey: 'table.columns.status',
+    sortKey: 'status',
+    render: (errand) => <ErrandStatusLabel status={errand.status} />,
+  },
+  {
+    labelKey: 'table.columns.errand',
     sortKey: 'errandNumber',
-    render: (errand) => (
+    render: (errand, { t }) => (
       <div className="max-w-[24rem] desktop:max-w-[40rem] leading-tight">
-        <div className="font-bold truncate">{errand.title ?? '(utan titel)'}</div>
-        <div className="truncate">{errand.errandNumber ?? '—'}</div>
+        <div className="font-bold truncate">{errand.title ?? t('table.untitled')}</div>
+        <div className="truncate">{errand.errandNumber ?? t('common:none')}</div>
       </div>
     ),
   },
   {
-    label: 'Sökande',
+    labelKey: 'table.columns.applicant',
     sortKey: 'applicantName',
-    render: (errand) => (
+    render: (errand, { t }) => (
       <div className="max-w-[22rem] leading-tight">
-        <div className="truncate">{errand.applicantName ?? '—'}</div>
+        <div className="truncate">{errand.applicantName ?? t('common:none')}</div>
         {errand.coApplicantName ?
           <div className="truncate text-small text-dark-secondary" title={errand.coApplicantName}>
-            <span className="sr-only">Medsökande: </span>
+            <span className="sr-only">{t('common:role.CO_APPLICANT')}: </span>
             {errand.coApplicantName}
           </div>
         : null}
       </div>
     ),
   },
-  { label: 'Prioritet', sortKey: 'priority', render: (errand) => <PriorityLabel priority={errand.priority} /> },
   {
-    label: 'Registrerat',
+    labelKey: 'table.columns.priority',
+    sortKey: 'priority',
+    render: (errand) => <PriorityLabel priority={errand.priority} />,
+  },
+  {
+    labelKey: 'table.columns.created',
     sortKey: 'created',
     render: (errand) => (
       <time className="whitespace-nowrap" dateTime={errand.created}>
@@ -82,7 +98,7 @@ const columns: Column[] = [
     ),
   },
   {
-    label: 'Uppdaterat',
+    labelKey: 'table.columns.updated',
     sortKey: 'touched',
     render: (errand) => {
       const touched = errand.touched ?? errand.modified;
@@ -94,11 +110,11 @@ const columns: Column[] = [
     },
   },
   {
-    label: 'Handläggare',
+    labelKey: 'table.columns.assignee',
     sortKey: 'assignedUserId',
-    render: (errand, assigneeName) => (
+    render: (errand, { assigneeName, t }) => (
       <div className="max-w-[22rem] truncate">
-        {errand.assignedUserId ? assigneeName(errand.assignedUserId) : 'Ej tilldelad'}
+        {errand.assignedUserId ? assigneeName(errand.assignedUserId) : t('table.unassigned')}
       </div>
     ),
   },
@@ -126,6 +142,7 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({
   onSort,
   assigneeName,
 }) => {
+  const { t } = useTranslation('overview');
   const router = useRouter();
   const { locale } = useParams<{ locale: string }>();
 
@@ -146,14 +163,14 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({
       <Table data-cy="errands-table" aria-describedby="errandTableCaption" scrollable>
         {error ?
           <caption id="errandTableCaption" className="my-32">
-            Det gick inte att hämta ärenden ({String(error)})
+            {t('table.loadError', { error: String(error) })}
           </caption>
         : !isLoading && errands.length === 0 ?
           <caption id="errandTableCaption" className="my-32">
-            Det finns inga ärenden
+            {t('table.empty')}
           </caption>
         : <caption id="errandTableCaption" className="sr-only">
-            Ärenden, sida {page + 1} av {Math.max(totalPages, 1)}
+            {t('table.caption', { page: page + 1, totalPages: Math.max(totalPages, 1) })}
           </caption>
         }
 
@@ -162,26 +179,27 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({
             <Table.Header className="border-b-1 border-dark-primary">
               {columns.map((column, index) => {
                 const sortKey = column.sortKey;
+                const label = t(column.labelKey);
                 return (
                   <Table.HeaderColumn key={`header-${index}`}>
                     {sortKey && onSort ?
                       <button
                         type="button"
                         className="flex items-center gap-4 font-bold"
-                        aria-label={`Sortera på ${column.label}`}
+                        aria-label={t('table.sortBy', { column: label })}
                         onClick={() => {
                           onSort(sortKey);
                         }}
                       >
-                        {column.label}
+                        {label}
                         <SortIndicator active={sortColumn === sortKey} direction={sortDirection} />
                       </button>
-                    : column.label}
+                    : label}
                   </Table.HeaderColumn>
                 );
               })}
               <Table.HeaderColumn>
-                <span className="sr-only">Öppna</span>
+                <span className="sr-only">{t('table.open')}</span>
               </Table.HeaderColumn>
             </Table.Header>
             <Table.Body>
@@ -190,7 +208,9 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({
                   key={errand.id}
                   tabIndex={0}
                   role="button"
-                  aria-label={`Ärende ${errand.title ?? errand.errandNumber ?? 'utan titel'}, öppna ärende`}
+                  aria-label={t('table.rowLabel', {
+                    title: errand.title ?? errand.errandNumber ?? t('table.rowLabelUntitled'),
+                  })}
                   className="cursor-pointer"
                   onClick={() => {
                     openErrand(errand);
@@ -202,7 +222,7 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({
                   }}
                 >
                   {columns.map((column, index) => (
-                    <Table.Column key={`cell-${index}`}>{column.render(errand, assigneeName)}</Table.Column>
+                    <Table.Column key={`cell-${index}`}>{column.render(errand, { assigneeName, t })}</Table.Column>
                   ))}
                   <Table.Column className="text-right">
                     {/* The whole row opens the errand; the arrow is the visible affordance for it. */}
@@ -231,7 +251,7 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-16 w-full">
               <div className="flex items-center gap-8">
                 <label htmlFor="errand-page-size" className="text-small whitespace-nowrap">
-                  Rader per sida:
+                  {t('table.pageSize')}
                 </label>
                 <Select
                   id="errand-page-size"
@@ -243,7 +263,7 @@ export const ErrandsTable: FC<ErrandsTableProps> = ({
                 >
                   {PAGE_SIZE_OPTIONS.map((option) => (
                     <Select.Option key={option} value={String(option)}>
-                      {option} st
+                      {t('table.pageSizeOption', { size: option })}
                     </Select.Option>
                   ))}
                 </Select>

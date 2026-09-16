@@ -1,25 +1,20 @@
 import { Attachment } from '@data-contracts/backend/data-contracts';
 
-/** Short Swedish category labels for caremanagement's attachment documentTypes, shown after the file name. */
-const DOCUMENT_TYPE_LABELS: Record<string, string> = {
-  APPLICATION: 'ansökan',
-  GENERATED: 'genererad',
-  ERRAND: 'ärende',
-  CASE_DATA: 'ärendeuppgifter',
-  DECISION: 'beslut',
-  MESSAGE_HISTORY: 'meddelandehistorik',
-};
+/** caremanagement's attachment documentTypes that have a category label (`attachments:category.documentType.*`). */
+const CATEGORISED_DOCUMENT_TYPES = ['APPLICATION', 'GENERATED', 'ERRAND', 'CASE_DATA', 'DECISION', 'MESSAGE_HISTORY'];
 
 /** Conversation files are categorised by who sent them rather than by documentType. */
-const SENDER_ROLE_LABELS: Record<string, string> = {
-  CLIENT: 'från sökande',
-  CASEWORKER: 'från handläggare',
-};
+const CATEGORISED_SENDER_ROLES = ['CLIENT', 'CASEWORKER'];
 
-/** The category label for an attachment, e.g. "ansökan" or "från sökande"; undefined when unknown. */
-export const attachmentCategoryLabel = (attachment: Attachment): string | undefined => {
+/**
+ * The translation key (under `attachments:category`) of an attachment's category label, shown after the file
+ * name, e.g. "documentType.APPLICATION" or "senderRole.CLIENT"; undefined when the category is unknown.
+ */
+export const attachmentCategoryKey = (attachment: Attachment): string | undefined => {
   if (attachment.documentType === 'CONVERSATION') {
-    return SENDER_ROLE_LABELS[attachment.senderRole ?? ''] ?? 'meddelande';
+    const senderRole = attachment.senderRole ?? '';
+    return CATEGORISED_SENDER_ROLES.includes(senderRole) ? `senderRole.${senderRole}` : 'conversation';
   }
-  return DOCUMENT_TYPE_LABELS[attachment.documentType ?? ''];
+  const documentType = attachment.documentType ?? '';
+  return CATEGORISED_DOCUMENT_TYPES.includes(documentType) ? `documentType.${documentType}` : undefined;
 };

@@ -12,6 +12,7 @@ import { combineDateAndTime } from '@utils/date-time';
 import { todayDate } from '@utils/today-date';
 import dynamic from 'next/dynamic';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const DocumentEditor = dynamic(() => import('./document-editor.component'), {
   ssr: false,
@@ -39,6 +40,7 @@ export const DocumentCreateModal: FC<{
   onClose: () => void;
   onCreated: () => void;
 }> = ({ errandId, types, onClose, onCreated }) => {
+  const { t } = useTranslation('documentation');
   const [typeCode, setTypeCode] = useState<string>('');
   const [heading, setHeading] = useState<string>('');
   const [documentDate, setDocumentDate] = useState<string>(todayDate());
@@ -109,18 +111,18 @@ export const DocumentCreateModal: FC<{
     const res = await createDocument(errandId, input);
     setSaving(false);
     if (res.error) {
-      setError('Det gick inte att spara dokumentet');
+      setError(t('documents.saveError'));
       return;
     }
     onCreated();
   };
 
   return (
-    <Modal show onClose={onClose} label="Nytt dokument" className="w-[88rem] max-w-[90vw]">
+    <Modal show onClose={onClose} label={t('documents.newDocument')} className="w-[88rem] max-w-[90vw]">
       <Modal.Content className="flex flex-col gap-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
           <FormControl id="document-new-type" className="w-full">
-            <FormLabel>Typ *</FormLabel>
+            <FormLabel>{t('form.typeRequired')}</FormLabel>
             <Select
               className="w-full"
               value={typeCode}
@@ -128,7 +130,7 @@ export const DocumentCreateModal: FC<{
                 setTypeCode(event.target.value);
               }}
             >
-              <Select.Option value="">Välj typ</Select.Option>
+              <Select.Option value="">{t('form.selectType')}</Select.Option>
               {types.map((documentType) => (
                 <Select.Option key={documentType.code} value={documentType.code ?? ''}>
                   {documentType.displayName ?? documentType.code}
@@ -138,12 +140,12 @@ export const DocumentCreateModal: FC<{
           </FormControl>
 
           <FormControl id="document-new-template" className="w-full">
-            <FormLabel>Dokumentmall</FormLabel>
+            <FormLabel>{t('form.documentTemplate')}</FormLabel>
             <Combobox
               key={`doc-${typeCode}`}
               disabled={!typeCode}
-              placeholder="Välj mall (ersätter texten)"
-              searchPlaceholder="Sök mall…"
+              placeholder={t('form.templatePlaceholder')}
+              searchPlaceholder={t('form.templateSearch')}
               onSelect={(event) => {
                 const identifier = comboboxValue(event.target.value);
                 if (identifier) {
@@ -163,12 +165,12 @@ export const DocumentCreateModal: FC<{
           </FormControl>
 
           <FormControl id="document-new-phrase" className="w-full">
-            <FormLabel>Frastext</FormLabel>
+            <FormLabel>{t('form.phrase')}</FormLabel>
             <Combobox
               key={`phrase-${typeCode}-${phraseNonce}`}
               disabled={!typeCode}
-              placeholder="Infoga fras vid markören"
-              searchPlaceholder="Sök fras…"
+              placeholder={t('form.phrasePlaceholder')}
+              searchPlaceholder={t('form.phraseSearch')}
               onSelect={(event) => {
                 const identifier = comboboxValue(event.target.value);
                 if (identifier) {
@@ -189,7 +191,7 @@ export const DocumentCreateModal: FC<{
         </div>
 
         <FormControl id="document-new-heading" className="w-full">
-          <FormLabel>Rubrik *</FormLabel>
+          <FormLabel>{t('form.headingRequired')}</FormLabel>
           <Input
             value={heading}
             onChange={(event) => {
@@ -200,7 +202,7 @@ export const DocumentCreateModal: FC<{
 
         <div className="grid grid-cols-2 gap-12">
           <FormControl id="document-new-date" className="w-full">
-            <FormLabel>Datum *</FormLabel>
+            <FormLabel>{t('form.dateRequired')}</FormLabel>
             <DatePicker
               type="date"
               value={documentDate}
@@ -210,7 +212,7 @@ export const DocumentCreateModal: FC<{
             />
           </FormControl>
           <FormControl id="document-new-time" className="w-full">
-            <FormLabel>Tid</FormLabel>
+            <FormLabel>{t('form.time')}</FormLabel>
             <DatePicker
               type="time"
               value={documentTime}
@@ -222,7 +224,7 @@ export const DocumentCreateModal: FC<{
         </div>
 
         <FormControl id="document-new-text" className="w-full">
-          <FormLabel>Text</FormLabel>
+          <FormLabel>{t('form.text')}</FormLabel>
           <DocumentEditor value={content} onChange={setContent} registerInsert={registerInsert} />
         </FormControl>
 
@@ -230,10 +232,10 @@ export const DocumentCreateModal: FC<{
       </Modal.Content>
       <Modal.Footer>
         <Button variant="secondary" onClick={onClose}>
-          Avbryt
+          {t('common:cancel')}
         </Button>
         <Button color="vattjom" variant="primary" loading={saving} disabled={!canCreate} onClick={() => void create()}>
-          Skapa
+          {t('form.create')}
         </Button>
       </Modal.Footer>
     </Modal>

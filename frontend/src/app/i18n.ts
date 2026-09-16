@@ -23,6 +23,8 @@ const initLocalization = async (locale: string, namespaces: string[], i18nInstan
     fallbackNS: namespaces[0],
     ns: namespaces,
     preload: resources ? [] : i18nConfig.locales,
+    // React escapes rendered text itself; escaping interpolated values here too would show "&amp;" etc.
+    interpolation: { escapeValue: false },
   });
 
   return {

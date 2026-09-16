@@ -13,6 +13,7 @@ import { formatAmount } from '@utils/format-amount';
 import dayjs from 'dayjs';
 import { RotateCcw, Trash2 } from 'lucide-react';
 import { FC, FocusEvent, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { NormberakningSummaBox } from './normberakning-summa-box.component';
 import { NormberakningTableBox } from './normberakning-table-box.component';
@@ -56,6 +57,7 @@ export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({
   incomeTypes,
   onChanged,
 }) => {
+  const { t } = useTranslation('calculation');
   const [error, setError] = useState<string>();
   // Draft rows: picking a type below the table adds a not-yet-persisted row to the list. It's created
   // once the handläggare fills it in and focus leaves the row (see DraftIncomeRow).
@@ -66,7 +68,7 @@ export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({
     setError(undefined);
     const result = await action();
     if (result.error) {
-      setError('Det gick inte att spara ändringen');
+      setError(t('table.saveError'));
       return;
     }
     onChanged();
@@ -84,27 +86,27 @@ export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({
 
   return (
     <NormberakningTableBox
-      title="Inkomster"
-      summary={<NormberakningSummaBox label="Summa inkomster" value={displayAmount(incomeSum)} />}
+      title={t('incomes.title')}
+      summary={<NormberakningSummaBox label={t('incomes.sum')} value={displayAmount(incomeSum)} />}
     >
       {error && <p className="text-error-surface-primary m-0">{error}</p>}
 
       <Table dense>
         <Table.Header>
-          <Table.HeaderColumn>Typ</Table.HeaderColumn>
-          <Table.HeaderColumn>Belopp S</Table.HeaderColumn>
-          <Table.HeaderColumn>Datum S</Table.HeaderColumn>
-          <Table.HeaderColumn>Belopp M</Table.HeaderColumn>
-          <Table.HeaderColumn>Datum M</Table.HeaderColumn>
-          <Table.HeaderColumn>Anmärkning</Table.HeaderColumn>
+          <Table.HeaderColumn>{t('table.type')}</Table.HeaderColumn>
+          <Table.HeaderColumn>{t('incomes.applicantAmount')}</Table.HeaderColumn>
+          <Table.HeaderColumn>{t('incomes.applicantDate')}</Table.HeaderColumn>
+          <Table.HeaderColumn>{t('incomes.coApplicantAmount')}</Table.HeaderColumn>
+          <Table.HeaderColumn>{t('incomes.coApplicantDate')}</Table.HeaderColumn>
+          <Table.HeaderColumn>{t('table.note')}</Table.HeaderColumn>
           <Table.HeaderColumn>
-            <span className="sr-only">Åtgärder</span>
+            <span className="sr-only">{t('table.actions')}</span>
           </Table.HeaderColumn>
         </Table.Header>
         <Table.Body>
           {rows.length === 0 ?
             <Table.Row>
-              <Table.Column>Inga inkomstrader</Table.Column>
+              <Table.Column>{t('incomes.empty')}</Table.Column>
             </Table.Row>
           : rows.map((row, index) => (
               <IncomeRow
@@ -135,7 +137,7 @@ export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({
 
       <div className="flex items-end gap-12">
         <FormControl className="w-[20rem]">
-          <FormLabel className="text-small">Lägg till rad</FormLabel>
+          <FormLabel className="text-small">{t('table.addRow')}</FormLabel>
           <Select
             size="sm"
             value=""
@@ -145,7 +147,7 @@ export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({
               }
             }}
           >
-            <Select.Option value="">Välj inkomsttyp</Select.Option>
+            <Select.Option value="">{t('incomes.selectType')}</Select.Option>
             {incomeTypes.map((type) => (
               <Select.Option key={type.code} value={type.displayName ?? ''}>
                 {type.displayName ?? type.code}
@@ -164,6 +166,7 @@ const IncomeRow: FC<{
   row: NormIncomeRow;
   onAction: (action: () => Promise<{ error?: unknown }>) => void;
 }> = ({ errandId, row, onAction }) => {
+  const { t } = useTranslation('calculation');
   const [applicantAmount, setApplicantAmount] = useState<string>(row.applicantCaseworkerAmount?.toString() ?? '');
   const [applicantDate, setApplicantDate] = useState<string>(toDateInput(row.applicantAmountDate));
   const [coapplicantAmount, setCoapplicantAmount] = useState<string>(row.coapplicantCaseworkerAmount?.toString() ?? '');
@@ -176,21 +179,21 @@ const IncomeRow: FC<{
     return (
       <Table.Row className="opacity-50">
         <Table.Column>
-          <span className="line-through">{row.typeName ?? 'Inkomst'}</span>
+          <span className="line-through">{row.typeName ?? t('incomes.fallbackType')}</span>
         </Table.Column>
         <Table.Column>—</Table.Column>
         <Table.Column>—</Table.Column>
         <Table.Column>—</Table.Column>
         <Table.Column>—</Table.Column>
         <Table.Column>
-          <span className="italic">Borttagen</span>
+          <span className="italic">{t('table.deleted')}</span>
         </Table.Column>
         <Table.Column>
           <Button
             size="sm"
             variant="tertiary"
             iconButton
-            aria-label="Återställ rad"
+            aria-label={t('table.restoreRow')}
             leftIcon={<RotateCcw />}
             onClick={() => {
               onAction(() => restoreNormRow(errandId, 'incomes', rowId));
@@ -227,7 +230,7 @@ const IncomeRow: FC<{
   return (
     <Table.Row>
       <Table.Column>
-        <span className="font-bold">{row.typeName ?? 'Inkomst'}</span>
+        <span className="font-bold">{row.typeName ?? t('incomes.fallbackType')}</span>
       </Table.Column>
       <Table.Column>
         <Input
@@ -293,7 +296,7 @@ const IncomeRow: FC<{
           size="sm"
           variant="tertiary"
           iconButton
-          aria-label="Ta bort rad"
+          aria-label={t('table.deleteRow')}
           leftIcon={<Trash2 />}
           onClick={() => {
             onAction(() => deleteNormRow(errandId, 'incomes', rowId));
@@ -315,6 +318,7 @@ const DraftIncomeRow: FC<{
   onRemove: () => void;
   onError: (message: string) => void;
 }> = ({ errandId, typeName, onCommitted, onRemove, onError }) => {
+  const { t } = useTranslation('calculation');
   const [applicantAmount, setApplicantAmount] = useState<string>('');
   const [applicantDate, setApplicantDate] = useState<string>('');
   const [coapplicantAmount, setCoapplicantAmount] = useState<string>('');
@@ -342,7 +346,7 @@ const DraftIncomeRow: FC<{
     });
     setSaving(false);
     if (result.error) {
-      onError('Det gick inte att lägga till raden');
+      onError(t('table.addError'));
       return;
     }
     onCommitted();
@@ -367,7 +371,7 @@ const DraftIncomeRow: FC<{
           size="sm"
           className="max-w-[9rem]"
           inputMode="decimal"
-          placeholder="Belopp S"
+          placeholder={t('incomes.applicantAmount')}
           value={applicantAmount}
           onChange={(event) => {
             setApplicantAmount(event.target.value);
@@ -389,7 +393,7 @@ const DraftIncomeRow: FC<{
           size="sm"
           className="max-w-[9rem]"
           inputMode="decimal"
-          placeholder="Belopp M"
+          placeholder={t('incomes.coApplicantAmount')}
           value={coapplicantAmount}
           onChange={(event) => {
             setCoapplicantAmount(event.target.value);
@@ -410,7 +414,7 @@ const DraftIncomeRow: FC<{
         <Input
           size="sm"
           maxLength={80}
-          placeholder="Anmärkning"
+          placeholder={t('table.note')}
           value={note}
           onChange={(event) => {
             setNote(event.target.value);
@@ -424,7 +428,7 @@ const DraftIncomeRow: FC<{
             size="sm"
             variant="tertiary"
             iconButton
-            aria-label="Ta bort rad"
+            aria-label={t('table.deleteRow')}
             leftIcon={<Trash2 />}
             onClick={onRemove}
           />

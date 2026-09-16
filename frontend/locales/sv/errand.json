@@ -1,1 +1,94 @@
-{}
+{
+  "detail": {
+    "loadError": "Det gick inte att hämta ärendet ({{error}})",
+    "unknownError": "okänt fel",
+    "newErrandHeading": "Registrera nytt ärende",
+    "approved": "Godkänd",
+    "tabs": {
+      "errand": "Ärende",
+      "application": "Ansökan",
+      "attachments": "Bilagor",
+      "calculation": "Normberäkning",
+      "decision": "Beslut",
+      "payment": "Utbetalning",
+      "messages": "Meddelanden",
+      "documentation": "Dokumentation",
+      "journal": "Journal",
+      "documents": "Dokument"
+    },
+    "showPdf": "Visa pdf",
+    "summaryPdf": "Sammanställning (PDF)",
+    "attachmentsFromApplication": "Bilagor från ansökan",
+    "messageAttachmentsSummary": "Sammanställning bilagor från meddelanden",
+    "approval": {
+      "calculation": "Markera normberäkning som komplett",
+      "decision": "Markera beslut som komplett",
+      "payment": "Markera utbetalning som komplett"
+    }
+  },
+  "administrationBar": {
+    "caseWorker": "Handläggare:",
+    "notAssigned": "Ej tilldelad",
+    "takeErrand": "Ta ärende",
+    "status": "Status",
+    "priority": "Prioritet"
+  },
+  "metaCard": {
+    "status": "Status",
+    "errandNumber": "Ärendenummer",
+    "priority": "Prioritet",
+    "received": "Inkom",
+    "applicant": "Sökande",
+    "applicantAndCoApplicant": "Sökande och medsökande"
+  },
+  "assign": {
+    "button": "Tilldela",
+    "modalLabel": "Tilldela ärende",
+    "caseWorker": "Handläggare",
+    "selectCaseWorker": "Välj handläggare",
+    "confirm": "Tilldela"
+  },
+  "decideAndPay": {
+    "button": "Besluta och utbetala",
+    "preparing": "Förbereder…",
+    "executing": "Verkställer…",
+    "sendError": "Det gick inte att skicka beslutet till någon kanal",
+    "closeError": "Beslutet skickades men ärendet kunde inte avslutas",
+    "failedChannels": "Beslutet kunde inte skickas till: {{channels}}.",
+    "unapproved_one": "Du har inte godkänt sektionen <strong>{{sections}}</strong>.",
+    "unapproved_other": "Du har inte godkänt sektionerna <strong>{{sections}}</strong>.",
+    "sendVia": "Skicka beslutet via:",
+    "channels": {
+      "minaSidor": "Mina sidor",
+      "digitalMailbox": "Digital brevlåda",
+      "letter": "Brev"
+    },
+    "sections": {
+      "CALCULATION": "Normberäkning",
+      "PAYMENT": "Utbetalning",
+      "DECISION": "Beslut"
+    }
+  },
+  "actualisation": {
+    "button": "Arkivera till aktualisering",
+    "modalLabel": "Arkivera till aktualisering",
+    "description": "Välj en aktualisering att arkivera ansökningens sammanställnings-PDF till. Den valda aktualiseringen registreras på ärendet.",
+    "loadError": "Det gick inte att hämta aktualiseringar",
+    "empty": "Inga aktualiseringar hittades för sökanden.",
+    "fallbackName": "Aktualisering {{id}}",
+    "id": "ID {{id}}",
+    "archived": "Dokumentet arkiverades till aktualiseringen.",
+    "archiveError": "Det gick inte att arkivera till aktualiseringen",
+    "archiving": "Arkiverar…",
+    "archive": "Arkivera"
+  },
+  "lockedBanner": "Sektionen är godkänd och låst för redigering. Avmarkera godkännandet för att redigera igen.",
+  "sectionAccordion": {
+    "collapse": "Fäll ihop {{title}}",
+    "expand": "Fäll ut {{title}}"
+  },
+  "lifecareSourceBadge": "Från Lifecare",
+  "form": {
+    "saveError": "Det gick inte att spara ärendet"
+  }
+}

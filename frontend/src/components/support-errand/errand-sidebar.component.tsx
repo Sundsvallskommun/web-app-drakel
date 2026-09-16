@@ -3,6 +3,7 @@
 import { Badge, Button, Divider } from '@sk-web-gui/react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { FC, Fragment, ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface SidebarSection {
   key: string;
@@ -17,6 +18,7 @@ const SidebarAccordionItem: FC<{ section: SidebarSection; open: boolean; onToggl
   open,
   onToggle,
 }) => {
+  const { t } = useTranslation('sidebar');
   const contentId = `errand-sidebar-${section.key}`;
   return (
     <div className="px-20 flex flex-col gap-24">
@@ -38,7 +40,9 @@ const SidebarAccordionItem: FC<{ section: SidebarSection; open: boolean; onToggl
           showBackground={false}
           size="sm"
           iconButton
-          aria-label={open ? `Stäng ${section.label}` : `Öppna ${section.label}`}
+          aria-label={
+            open ? t('toggle.close', { section: section.label }) : t('toggle.open', { section: section.label })
+          }
           aria-expanded={open}
           aria-controls={contentId}
           leftIcon={open ? <ChevronUp /> : <ChevronDown />}

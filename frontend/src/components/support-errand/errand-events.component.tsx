@@ -6,18 +6,13 @@ import { ErrandEvent } from '@services/event-service';
 import { Button, Select } from '@sk-web-gui/react';
 import dayjs from 'dayjs';
 import { FC, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // The log can be long (it records every errand-scoped request), so reveal it in pages.
 const PAGE_SIZE = 50;
 
-const ACTION_LABELS: Record<string, string> = {
-  READ: 'Läst',
-  CREATE: 'Skapad',
-  UPDATE: 'Ändrad',
-  DELETE: 'Borttagen',
-};
-
-const actionLabel = (action?: string): string => (action ? (ACTION_LABELS[action] ?? action) : '—');
+// The action codes the log can be filtered on; their labels are the translation keys `sidebar:events.actions.<code>`.
+const ACTIONS = ['READ', 'CREATE', 'UPDATE', 'DELETE'];
 
 const actionChipClass = (action?: string): string => {
   switch (action) {
@@ -33,22 +28,17 @@ const actionChipClass = (action?: string): string => {
 };
 
 // HTTP = the access log (who read/touched), EVENT = the domain-event change log (what changed, incl. process/system).
-const SOURCE_LABELS: Record<string, string> = {
-  HTTP: 'Åtkomst',
-  EVENT: 'Ändring',
-};
+const SOURCES = ['HTTP', 'EVENT'];
 
-const sourceLabel = (source?: string): string => (source ? (SOURCE_LABELS[source] ?? source) : '');
-
-// actor is null when no X-Sent-By header was sent on the originating request.
-const actorLabel = (event: ErrandEvent): string => (event.actor?.trim() ? event.actor : 'System');
-const formatWhen = (created?: string): string => (created ? dayjs(created).format('YYYY-MM-DD HH:mm') : '—');
+const formatWhen = (created?: string): string | undefined =>
+  created ? dayjs(created).format('YYYY-MM-DD HH:mm') : undefined;
 
 /**
  * "Händelselogg" — the errand's who/what/when activity log (reads + writes), newest first. Rendered as a
  * compact card list (with stacked filters) so it fits the right sidebar.
  */
 export const ErrandEvents: FC<{ errandId: string }> = ({ errandId }) => {
+  const { t } = useTranslation('sidebar');
   const [action, setAction] = useState<string>('');
   const [source, setSource] = useState<string>('');
   const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
@@ -57,47 +47,58 @@ export const ErrandEvents: FC<{ errandId: string }> = ({ errandId }) => {
   const visible = events.slice(0, visibleCount);
   const hasMore = visibleCount < events.length;
 
+  const actionLabel = (eventAction?: string): string =>
+    eventAction ? t(`events.actions.${eventAction}`, { defaultValue: eventAction }) : t('common:none');
+  const sourceLabel = (eventSource?: string): string =>
+    eventSource ? t(`events.sources.${eventSource}`, { defaultValue: eventSource }) : '';
+  // actor is null when no X-Sent-By header was sent on the originating request.
+  const actorLabel = (event: ErrandEvent): string => (event.actor?.trim() ? event.actor : t('events.system'));
+
   return (
     <div className="flex flex-col gap-12">
       <div className="flex flex-col gap-8">
         <Select
           size="sm"
           className="w-full"
-          aria-label="Filtrera på källa"
+          aria-label={t('events.filterSource')}
           value={source}
           onChange={(changeEvent) => {
             setSource(changeEvent.target.value);
             setVisibleCount(PAGE_SIZE);
           }}
         >
-          <Select.Option value="">Alla källor</Select.Option>
-          <Select.Option value="HTTP">Åtkomst (vem läste/rörde)</Select.Option>
-          <Select.Option value="EVENT">Ändringar (vad ändrades)</Select.Option>
+          <Select.Option value="">{t('events.allSources')}</Select.Option>
+          {SOURCES.map((sourceOption) => (
+            <Select.Option key={sourceOption} value={sourceOption}>
+              {t(`events.sourceOptions.${sourceOption}`)}
+            </Select.Option>
+          ))}
         </Select>
         <Select
           size="sm"
           className="w-full"
-          aria-label="Filtrera på händelse"
+          aria-label={t('events.filterAction')}
           value={action}
           onChange={(changeEvent) => {
             setAction(changeEvent.target.value);
             setVisibleCount(PAGE_SIZE);
           }}
         >
-          <Select.Option value="">Alla händelser</Select.Option>
-          <Select.Option value="READ">Läst</Select.Option>
-          <Select.Option value="CREATE">Skapad</Select.Option>
-          <Select.Option value="UPDATE">Ändrad</Select.Option>
-          <Select.Option value="DELETE">Borttagen</Select.Option>
+          <Select.Option value="">{t('events.allActions')}</Select.Option>
+          {ACTIONS.map((actionOption) => (
+            <Select.Option key={actionOption} value={actionOption}>
+              {t(`events.actions.${actionOption}`)}
+            </Select.Option>
+          ))}
         </Select>
       </div>
 
       <AsyncContent
         isLoading={isLoading}
         error={error}
-        errorText="Det gick inte att hämta händelseloggen"
+        errorText={t('events.loadError')}
         isEmpty={events.length === 0}
-        emptyText="Inga händelser."
+        emptyText={t('events.empty')}
       >
         <ul className="flex flex-col gap-8 m-0 p-0 list-none">
           {visible.map((event, index) => (
@@ -114,7 +115,7 @@ export const ErrandEvents: FC<{ errandId: string }> = ({ errandId }) => {
                 <span className="text-small break-words">{event.target}</span>
               : null}
               <span className="text-small text-dark-secondary break-words">
-                {actorLabel(event)} · {formatWhen(event.created)}
+                {actorLabel(event)} · {formatWhen(event.created) ?? t('common:none')}
               </span>
             </li>
           ))}
@@ -128,7 +129,7 @@ export const ErrandEvents: FC<{ errandId: string }> = ({ errandId }) => {
               setVisibleCount((prev) => prev + PAGE_SIZE);
             }}
           >
-            Visa fler
+            {t('events.showMore')}
           </Button>
         : null}
       </AsyncContent>

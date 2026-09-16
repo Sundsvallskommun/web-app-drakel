@@ -6,6 +6,7 @@ import { getInitials } from '@utils/get-initials';
 import { ExternalLink } from 'lucide-react';
 import NextLink from 'next/link';
 import { useParams } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 
 import { HeaderNotifications } from './header-notifications.component';
@@ -15,6 +16,7 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
 /** Dark top header for the errand/register pages: service logo, "Nytt ärende", notifications and user menu. */
 export const AppHeader = () => {
+  const { t } = useTranslation('header');
   const user = useUserStore(useShallow((state) => state.user));
   const userMenuGroups = useUserMenuGroups();
   const { locale } = useParams<{ locale: string }>();
@@ -22,7 +24,7 @@ export const AppHeader = () => {
 
   return (
     <header className="shrink-0 bg-gray-600 border-b-1 border-divider px-24 py-12 flex items-center justify-between gap-40">
-      <NextLink href={`/${locale}/oversikt`} className="no-underline min-w-0" aria-label="Till översikten">
+      <NextLink href={`/${locale}/oversikt`} className="no-underline min-w-0" aria-label={t('logoLink')}>
         <Logo variant="service" inverted title="Drakel" subtitle={appName} />
       </NextLink>
 
@@ -36,7 +38,7 @@ export const AppHeader = () => {
             window.open(`${basePath}/${locale}/registrera`, '_blank', 'noopener');
           }}
         >
-          Nytt ärende
+          {t('newErrand')}
         </Button>
 
         <HeaderNotifications />

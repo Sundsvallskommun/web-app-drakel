@@ -5,6 +5,7 @@ import { getUnifiedAttachmentBlob } from '@services/errand-service/errand-servic
 import { Modal, Spinner } from '@sk-web-gui/react';
 import { renderAsync } from 'docx-preview';
 import { FC, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const isImageMimeType = (mimeType: string): boolean => mimeType.startsWith('image/');
 const isPdfMimeType = (mimeType: string): boolean => mimeType === 'application/pdf';
@@ -32,6 +33,7 @@ const FilePreview: FC<{ blob?: Blob; mimeType: string; fileName: string; isLoadi
   isLoading,
   error,
 }) => {
+  const { t } = useTranslation('attachments');
   const [url, setUrl] = useState<string>('');
   const docxContainerRef = useRef<HTMLDivElement>(null);
   const isImage = isImageMimeType(mimeType);
@@ -65,9 +67,7 @@ const FilePreview: FC<{ blob?: Blob; mimeType: string; fileName: string; isLoadi
   }, [blob, isDocx]);
 
   if (error) {
-    return (
-      <div className="flex justify-center items-center h-[20rem] text-error">Kunde inte visa förhandsgranskningen</div>
-    );
+    return <div className="flex justify-center items-center h-[20rem] text-error">{t('preview.error')}</div>;
   }
   if (isDocx) {
     // The container ref must stay mounted while loading so the render can target it.
@@ -115,6 +115,7 @@ interface AttachmentPreviewModalProps {
  * documentType/messageId).
  */
 export const AttachmentPreviewModal: FC<AttachmentPreviewModalProps> = ({ errandId, attachment, onClose }) => {
+  const { t } = useTranslation('attachments');
   const [blob, setBlob] = useState<Blob>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
@@ -150,11 +151,17 @@ export const AttachmentPreviewModal: FC<AttachmentPreviewModalProps> = ({ errand
     };
   }, [errandId, attachment?.id]);
 
-  const title = attachment?.fileName ?? 'Förhandsgranskning';
+  const title = attachment?.fileName ?? t('preview.title');
 
   return (
     <Modal show={!!attachment} onClose={onClose} className="w-[84rem] max-w-full" label={title}>
-      <FilePreview blob={blob} mimeType={attachment?.mimeType ?? ''} fileName={title} isLoading={isLoading} error={error} />
+      <FilePreview
+        blob={blob}
+        mimeType={attachment?.mimeType ?? ''}
+        fileName={title}
+        isLoading={isLoading}
+        error={error}
+      />
     </Modal>
   );
 };
@@ -165,7 +172,8 @@ export const AttachmentPreviewModal: FC<AttachmentPreviewModalProps> = ({ errand
  * so no fetch is needed.
  */
 export const LocalFilePreviewModal: FC<{ file?: File; onClose: () => void }> = ({ file, onClose }) => {
-  const title = file?.name ?? 'Förhandsgranskning';
+  const { t } = useTranslation('attachments');
+  const title = file?.name ?? t('preview.title');
   return (
     <Modal show={!!file} onClose={onClose} className="w-[84rem] max-w-full" label={title}>
       <FilePreview blob={file} mimeType={file?.type ?? ''} fileName={title} isLoading={false} error={false} />

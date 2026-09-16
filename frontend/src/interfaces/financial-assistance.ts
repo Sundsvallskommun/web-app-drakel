@@ -1,5 +1,8 @@
+import dayjs from 'dayjs';
+import type { TFunction } from 'i18next';
+
 /**
- * Läs-modell + svenska etiketter för en ekonomiskt bistånd-ansökans data (FinancialAssistanceData)
+ * Läs-modell + (översatta) etiketter för en ekonomiskt bistånd-ansökans data (FinancialAssistanceData)
  * som medborgaren skickat in från Mina sidor. Visas skrivskyddat i handläggargränssnittet under
  * fliken "Ärendeuppgifter". Speglar caremanagement-kontraktet för de fält som renderas; backend
  * släpper igenom `data` på errandet men frontend-kontraktets Errand-typ saknar det, så typerna
@@ -107,93 +110,34 @@ export interface FinancialAssistanceData {
   attestation?: boolean;
 }
 
-const MONTHS = [
-  'januari',
-  'februari',
-  'mars',
-  'april',
-  'maj',
-  'juni',
-  'juli',
-  'augusti',
-  'september',
-  'oktober',
-  'november',
-  'december',
-];
+/** The enum groups whose code labels live under `application:labels.<group>.<code>`. */
+type FinancialAssistanceLabelGroup =
+  | 'applicationType'
+  | 'maritalStatus'
+  | 'normType'
+  | 'periodChoice'
+  | 'housingForm'
+  | 'costType'
+  | 'costOtherSubType'
+  | 'incomeType'
+  | 'assetCategory'
+  | 'propertyType'
+  | 'vehicleType'
+  | 'planningType'
+  | 'paymentMethod';
 
-export const swedishMonth = (month?: number): string =>
-  month && month >= 1 && month <= 12 ? (MONTHS[month - 1] ?? '') : '';
+/** The translated label for an enum code; falls back to the code itself when there's no translation. */
+export const faLabel = (t: TFunction, group: FinancialAssistanceLabelGroup, value?: string): string =>
+  value ? t(`application:labels.${group}.${value}`, { defaultValue: value }) : '';
 
-const LABELS: Record<string, Record<string, string>> = {
-  applicationType: { NEW: 'Nyansökan', RENEWAL: 'Återansökan', SUPPLEMENTARY: 'Tilläggsansökan' },
-  maritalStatus: { SINGLE: 'Ensamstående', COHABITING: 'Gift eller sambo' },
-  normType: { NATIONAL_NORM: 'Riksnorm', OTHER_NORM: 'Annan norm' },
-  periodChoice: { CURRENT_MONTH: 'Denna månad', NEXT_MONTH: 'Nästa månad', OTHER_BENEFIT: 'Annat bistånd' },
-  housingForm: {
-    NO_HOUSING_OR_INSTITUTION: 'Utan bostad eller bor på stödboende/institution',
-    RENTAL: 'Hyresrätt',
-    SUBLET: 'Andrahand',
-    LODGER: 'Inneboende',
-    CONDOMINIUM: 'Bostadsrätt',
-    OWNED_HOUSE: 'Äger villa eller radhus',
-    RENTED_HOUSE: 'Hyr villa eller radhus',
-    LIVING_WITH_PARENTS: 'Bor hos föräldrar',
-  },
-  costType: {
-    RENT: 'Hyra (inte parkering/garage)',
-    ELECTRICITY: 'Elkostnad (totalsumma)',
-    HOME_INSURANCE: 'Hemförsäkring (månadskostnad)',
-    INTERNET: 'Internet',
-    UNEMPLOYMENT_FUND: 'A-kassa',
-    UNION_FEE: 'Fackföreningsavgift',
-    TRAVEL_APPROVED: 'Resor till godkänd planering/aktivitet',
-    TRAVEL_MEDICAL_TRANSPORT: 'Resor med sjukresor/färdtjänst till godkänd planering/aktivitet (egenavgift)',
-    MEDICAL_CARE: 'Läkarvård (inom högkostnadsskydd)',
-    MEDICINE: 'Medicin (inom högkostnadsskydd/förmån/egenavgift)',
-    OTHER: 'Övrigt bistånd',
-  },
-  costOtherSubType: {
-    OTHER: 'Annat',
-    MUNICIPAL_FEES: 'Kommunala avgifter (förskola/hemtjänst)',
-    ACUTE_DENTAL: 'Akut tandvård/basundersökning',
-  },
-  incomeType: {
-    SALARY: 'Lön',
-    SWISH_DEPOSITS: 'Swish/kontoinsättningar',
-    OCCUPATIONAL_PENSION_INSURANCE: 'Tjänstepension/försäkringar (AFA, AMF, KPA, SPV etc)',
-    CHILD_SUPPORT: 'Underhållsbidrag från den andra föräldern',
-    RENT_SHARE_FROM_CHILD: 'Hyresdel från barn/inneboende',
-    FINANCIAL_AID_OTHER_MUNICIPALITY: 'Ekonomiskt bistånd från annan kommun',
-    OTHER_INCOME: 'Annan inkomst (lån, spelvinst, försörjning av tillgång, gåva, kontanter)',
-  },
-  assetCategory: {
-    BANK_SAVINGS: 'Banktillgodohavande / sparande',
-    REAL_ESTATE: 'Fastighet',
-    COMPANY: 'Företag',
-    VEHICLE: 'Fordon',
-    OTHER: 'Konst, smycken eller andra övriga tillgångar',
-  },
-  propertyType: { CONDOMINIUM: 'Bostadsrätt', HOUSE: 'Villa', PROPERTY: 'Fastighet', HOLIDAY_HOME: 'Fritidshus' },
-  vehicleType: {
-    CAR: 'Bil',
-    BOAT: 'Båt',
-    MOTORCYCLE: 'MC',
-    CARAVAN: 'Husvagn',
-    MOPED: 'Moped',
-    SNOWMOBILE: 'Snöskoter',
-    OTHER: 'Annat',
-  },
-  planningType: {
-    WORK: 'Arbete',
-    JOBSEEKING: 'Arbetssökande',
-    SICK_LEAVE: 'Sjukskriven',
-    SFI: 'SFI-studerande',
-    OTHER: 'Annan planering',
-  },
-  paymentMethod: { BANK_ACCOUNT: 'Bankkonto', OTHER: 'Annat' },
-  person: { APPLICANT: 'Sökande', CO_APPLICANT: 'Medsökande' },
-};
+/** The translated label for a person role (APPLICANT/CO_APPLICANT); falls back to the code itself. */
+export const faPersonLabel = (t: TFunction, role?: string): string =>
+  role ? t(`common:role.${role}`, { defaultValue: role }) : '';
 
-/** Slår upp svensk etikett för ett enum-värde; faller tillbaka på koden om den saknas. */
-export const faLabel = (group: string, value?: string): string => (value ? (LABELS[group]?.[value] ?? value) : '');
+/** The application period as month name + year in the UI language, e.g. "januari 2026" / "January 2026". */
+export const formatPeriodMonth = (month: number | undefined, year: number | undefined, language: string): string =>
+  month && year && month >= 1 && month <= 12 ?
+    dayjs(new Date(year, month - 1, 1))
+      .locale(language === 'en' ? 'en' : 'sv')
+      .format('MMMM YYYY')
+  : '';

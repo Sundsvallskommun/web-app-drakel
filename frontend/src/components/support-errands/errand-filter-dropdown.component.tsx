@@ -3,6 +3,7 @@
 import { Checkbox, PopupMenu, SearchField } from '@sk-web-gui/react';
 import { ChevronDown } from 'lucide-react';
 import { FC, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface FilterOption {
   value: string;
@@ -22,10 +23,13 @@ export const ErrandFilterDropdown: FC<{
   /** Show a search field above the options (for long lists such as statuses). */
   searchable?: boolean;
 }> = ({ label, options, selected, onChange, searchable = false }) => {
+  const { t } = useTranslation('overview');
   const [query, setQuery] = useState<string>('');
 
   const visibleOptions =
-    searchable && query ? options.filter((option) => option.label.toLowerCase().includes(query.toLowerCase())) : options;
+    searchable && query ?
+      options.filter((option) => option.label.toLowerCase().includes(query.toLowerCase()))
+    : options;
 
   const toggle = (value: string, checked: boolean) => {
     onChange(checked ? [...selected, value] : selected.filter((item) => item !== value));
@@ -46,35 +50,35 @@ export const ErrandFilterDropdown: FC<{
           {label}
         </PopupMenu.Button>
         <PopupMenu.Panel className="max-md:w-full max-h-[70vh] overflow-y-auto">
-        {searchable && (
-          <SearchField
-            size="md"
-            value={query}
-            placeholder="Skriv för att söka"
-            onChange={(event) => {
-              setQuery(event.target.value);
-            }}
-            onReset={() => {
-              setQuery('');
-            }}
-          />
-        )}
-        <PopupMenu.Items autoFocus={false}>
-          {visibleOptions.map((option) => (
-            <PopupMenu.Item key={option.value}>
-              <Checkbox
-                labelPosition="left"
-                checked={selected.includes(option.value)}
-                onChange={(event) => {
-                  toggle(option.value, event.target.checked);
-                }}
-              >
-                {option.label}
-              </Checkbox>
-            </PopupMenu.Item>
-          ))}
-        </PopupMenu.Items>
-      </PopupMenu.Panel>
+          {searchable && (
+            <SearchField
+              size="md"
+              value={query}
+              placeholder={t('filter.dropdownSearchPlaceholder')}
+              onChange={(event) => {
+                setQuery(event.target.value);
+              }}
+              onReset={() => {
+                setQuery('');
+              }}
+            />
+          )}
+          <PopupMenu.Items autoFocus={false}>
+            {visibleOptions.map((option) => (
+              <PopupMenu.Item key={option.value}>
+                <Checkbox
+                  labelPosition="left"
+                  checked={selected.includes(option.value)}
+                  onChange={(event) => {
+                    toggle(option.value, event.target.checked);
+                  }}
+                >
+                  {option.label}
+                </Checkbox>
+              </PopupMenu.Item>
+            ))}
+          </PopupMenu.Items>
+        </PopupMenu.Panel>
       </PopupMenu>
     </div>
   );

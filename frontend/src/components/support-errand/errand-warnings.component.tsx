@@ -1,12 +1,11 @@
 'use client';
 
 import { AsyncContent } from '@components/common/async-content.component';
-import { acknowledgeWarning, reopenWarning, Warning, warningTypeLabel } from '@services/warning-service';
+import { acknowledgeWarning, reopenWarning, Warning } from '@services/warning-service';
 import { Button, Checkbox, cx } from '@sk-web-gui/react';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
 import { FC, useState } from 'react';
-
-const STATUS_LABELS: Record<string, string> = { ACKNOWLEDGED: 'Kvitterad', CLOSED: 'Stängd' };
+import { useTranslation } from 'react-i18next';
 
 interface ErrandWarningsProps {
   errandId: string;
@@ -18,6 +17,7 @@ interface ErrandWarningsProps {
 }
 
 export const ErrandWarnings: FC<ErrandWarningsProps> = ({ errandId, warnings, isLoading, loadError, refresh }) => {
+  const { t } = useTranslation('sidebar');
   const [busyId, setBusyId] = useState<string>();
   const [actionError, setActionError] = useState<string>();
   // "Visa aktuella" — when checked (default) only OPEN warnings show; unchecked shows all (incl. kvitterade).
@@ -34,7 +34,7 @@ export const ErrandWarnings: FC<ErrandWarningsProps> = ({ errandId, warnings, is
     const result = await action();
     setBusyId(undefined);
     if (result.error) {
-      setActionError('Det gick inte att uppdatera varningen');
+      setActionError(t('warnings.updateError'));
       return;
     }
     refresh();
@@ -49,7 +49,7 @@ export const ErrandWarnings: FC<ErrandWarningsProps> = ({ errandId, warnings, is
             setShowCurrentOnly(event.target.checked);
           }}
         >
-          Visa aktuella
+          {t('warnings.showCurrent')}
         </Checkbox>
       </div>
 
@@ -58,9 +58,9 @@ export const ErrandWarnings: FC<ErrandWarningsProps> = ({ errandId, warnings, is
       <AsyncContent
         isLoading={isLoading}
         error={loadError}
-        errorText="Det gick inte att hämta varningar"
+        errorText={t('warnings.loadError')}
         isEmpty={visibleWarnings.length === 0}
-        emptyText={showCurrentOnly ? 'Inga aktuella varningar' : 'Inga varningar'}
+        emptyText={showCurrentOnly ? t('warnings.emptyCurrent') : t('warnings.empty')}
       >
         <ul className="flex flex-col gap-12 m-0 p-0 list-none">
           {visibleWarnings.map((warning, index) => {
@@ -81,8 +81,10 @@ export const ErrandWarnings: FC<ErrandWarningsProps> = ({ errandId, warnings, is
                   <div className={cx('flex flex-col gap-2', !open && 'text-gray-600')}>
                     {warning.type ?
                       <span className="font-bold text-small">
-                        {warningTypeLabel(warning.type)}
-                        {!open && warning.status ? ` · ${STATUS_LABELS[warning.status] ?? warning.status}` : ''}
+                        {t(`warnings.types.${warning.type}`, { defaultValue: warning.type })}
+                        {!open && warning.status ?
+                          ` · ${t(`warnings.status.${warning.status}`, { defaultValue: warning.status })}`
+                        : ''}
                       </span>
                     : null}
                     <span className="text-small break-words">{warning.message}</span>
@@ -95,12 +97,12 @@ export const ErrandWarnings: FC<ErrandWarningsProps> = ({ errandId, warnings, is
                     variant="secondary"
                     color="vattjom"
                     loading={busyId === warning.id}
-                    loadingText="Kvitterar…"
+                    loadingText={t('warnings.acknowledging')}
                     onClick={() =>
                       void runStatusChange(warning.id, () => acknowledgeWarning(errandId, warning.id ?? ''))
                     }
                   >
-                    Kvittera
+                    {t('warnings.acknowledge')}
                   </Button>
                 : warning.autoResolved ?
                   null
@@ -109,10 +111,10 @@ export const ErrandWarnings: FC<ErrandWarningsProps> = ({ errandId, warnings, is
                     variant="tertiary"
                     leftIcon={<RotateCcw />}
                     loading={busyId === warning.id}
-                    loadingText="Återöppnar…"
+                    loadingText={t('warnings.reopening')}
                     onClick={() => void runStatusChange(warning.id, () => reopenWarning(errandId, warning.id ?? ''))}
                   >
-                    Återöppna
+                    {t('warnings.reopen')}
                   </Button>
                 }
               </li>
