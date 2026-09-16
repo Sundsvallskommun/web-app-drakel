@@ -591,6 +591,16 @@ export interface Planning {
   workDescription?: string;
   /** Level of sick leave (percent) */
   sickLeaveLevel?: PlanningSickLeaveLevelEnum;
+  /**
+   * First day of the sick-leave period stated on the medical certificate
+   * @format date
+   */
+  sickLeaveFrom?: string;
+  /**
+   * Last day of the sick-leave period stated on the medical certificate
+   * @format date
+   */
+  sickLeaveTo?: string;
   /** SFI study path */
   sfiStudyPath?: PlanningSfiStudyPathEnum;
   /** SFI course */
@@ -940,6 +950,10 @@ export interface JournalEntry {
   id?: string;
   /** Errand id this journal entry belongs to */
   errandId?: string;
+  /** Provenance — CASEWORKER for a journal entry authored in Draken, LIFECARE for one read out of Lifecare by RPA and mirrored onto the errand */
+  source?: string;
+  /** The journal entry's id in Lifecare's document list — set on LIFECARE-sourced mirrors (the RPA upsert key) */
+  lifecareId?: string;
   /** Journal entry type (Lifecare 'Typ'/Journaltyp). A municipality-configured value; see the metadata catalogue for a provisional set. */
   type?: string;
   /** Heading (Lifecare 'Rubrik') */
@@ -1023,6 +1037,10 @@ export interface Document {
   id?: string;
   /** Errand id this document belongs to */
   errandId?: string;
+  /** Provenance — CASEWORKER for a document authored in Draken, LIFECARE for one read out of Lifecare by RPA and mirrored onto the errand */
+  source?: string;
+  /** The document's id in Lifecare's document list — set on LIFECARE-sourced mirrors (the RPA upsert key) */
+  lifecareId?: string;
   /** Document type (Lifecare 'Typ'/Dokumenttyp). A municipality-configured value; see the metadata catalogue for a provisional set. */
   type?: string;
   /** Heading (Lifecare 'Rubrik') */
@@ -1165,6 +1183,116 @@ export interface Warning {
    * @format date-time
    */
   updated?: string;
+}
+
+/** One row from Lifecare's document list — journal notes (documentType 3) and regular documents (documentType 0) share this shape. */
+export interface LifecareDocumentRow {
+  /** The row's id in Lifecare's document list — the upsert key together with documentType. Rows without it are skipped. */
+  id?: string;
+  /** Title (Lifecare 'Rubrik'); becomes the mirrored heading */
+  title?: string;
+  /** Documented date (yyyy-MM-dd). Required — rows without a parseable date are reported FAILED. */
+  date?: string;
+  /** Documented time (HH:mm); optional, midnight when absent */
+  time?: string;
+  /** Type display text (Lifecare 'Typ'); becomes the mirrored type, falling back to typeCode */
+  type?: string;
+  /** Type code (Lifecare notes: 1 Journalanteckning; documents: e.g. 13 BE Brev, 14 BE Dokument) */
+  typeCode?: string;
+  /** Row discriminator: 3 = journal note, 0 = regular document. Other values are reported SKIPPED. */
+  documentType?: string;
+  /** Body as Lifecare returns it — HTML with entities. Decoded and stripped to plain text before storage. */
+  content?: string;
+  /** The signature of the last writer in Lifecare; becomes the mirrored author */
+  updateSignature?: string;
+  /** Lifecare's last-update date (yyyy-MM-dd, day precision only); informational */
+  updateDate?: string;
+  /** Lifecare's textual name for documentType; informational */
+  documentType_Name?: string;
+}
+
+/** The jobbstimulans periods from Lifecare's GetJobStimulusForService — the applicant's and, when present, the co-applicant's. */
+export interface LifecareJobStimulus {
+  /** The applicant's period set */
+  applicant?: LifecareJobStimulusParty;
+  /** The co-applicant's period set; null or an empty object when there is no co-applicant */
+  coApplicant?: LifecareJobStimulusParty;
+}
+
+/** One party's jobbstimulans periods. */
+export interface LifecareJobStimulusParty {
+  /** The party's periods */
+  periods?: LifecareJobStimulusPeriod[];
+}
+
+/** One jobbstimulans period. Lifecare's unstable jobStimulusId is intentionally absent. */
+export interface LifecareJobStimulusPeriod {
+  /** Period start (yyyy-MM-dd). Required — periods without a parseable date are reported FAILED. */
+  fromDate?: string;
+  /** Period end (yyyy-MM-dd); optional */
+  toDate?: string;
+  /** Lifecare's removal flag — a period marked for removal is dropped on ingest */
+  markedForRemoval?: boolean;
+}
+
+/** One bevakning row as Lifecare's ListRemindersByServiceId returns it. The stable reminderId is the upsert key. */
+export interface LifecareReminder {
+  /** Lifecare's stable reminder id — the idempotency key. Rows without it are skipped. */
+  reminderId?: string;
+  /** The monitoring date (yyyy-MM-dd). Required — rows without a parseable date are reported FAILED. */
+  reminderDate?: string;
+  /** Status code (Lifecare: 1 Pågår, 2 Klar, 3 Ej påbörjad, 4 Väntar — a snapshot, not a definition) */
+  status?: string;
+  /** Status display text; may be null */
+  statusText?: string;
+  /** Priority code (Lifecare: 1 Hög, 2 Normal, 3 Låg) */
+  priority?: string;
+  /** Priority display text; may be null */
+  priorityText?: string;
+  /** Reminder type code */
+  type?: string;
+  /** Reminder type display text; may be null */
+  typeText?: string;
+  /** The caseworker's free text */
+  text?: string;
+  /** The caseworker id in Lifecare */
+  caseworkerId?: string;
+  /** The caseworker's display name */
+  caseworkerName?: string;
+  /** What the reminder sits on (Lifecare: 7083 IFO.Insats, 7040 IFO.Aktualisering) */
+  objectType?: string;
+  /** Object type display name */
+  objectTypeName?: string;
+}
+
+/** RPA supplements delivery envelope — a near-raw dump of the Lifecare Professional Web responses for the errand's client. An omitted section means 'not fetched this run'; an empty section means 'fetched, nothing there'. Unknown fields are ignored. */
+export interface LifecareSupplements {
+  /** The robot's capture date (day precision — Lifecare's own timestamps carry no more) */
+  capturedAt?: string;
+  /** Rows from Lifecare's ListRemindersByServiceId (bevakningar). Upserted as LIFECARE-sourced monitorings on the errand, keyed per reminderId. */
+  reminders?: LifecareReminder[];
+  /** Rows from Lifecare's document list — journal notes (documentType 3) and regular documents (documentType 0) alike. CareManagement routes each row on documentType; the robot does not need to tell them apart. */
+  documents?: LifecareDocumentRow[];
+  /** The response from Lifecare's GetJobStimulusForService. Replaces the errand's full jobbstimulans period set — Lifecare regenerates all period ids on every save, so ids are never used as keys. */
+  jobStimulus?: LifecareJobStimulus;
+}
+
+/** Receipt for one delivered item in a supplements ingest. */
+export interface SupplementsIngestOutcome {
+  /** The envelope section the item came from */
+  section?: SupplementsIngestOutcomeSectionEnum;
+  /** The item's Lifecare id, when it has one */
+  lifecareId?: string;
+  /** What happened to the item */
+  outcome?: SupplementsIngestOutcomeOutcomeEnum;
+  /** Human-readable detail — the skip/failure reason, or a summary for REPLACED */
+  detail?: string;
+}
+
+/** Receipt for a supplements ingest — one outcome per delivered item. */
+export interface SupplementsIngestResult {
+  /** One outcome per delivered item, in delivery order */
+  results?: SupplementsIngestOutcome[];
 }
 
 /** What a caseworker sends to add or patch a person row (identity + caseworker-writable fields only). */
@@ -1466,12 +1594,12 @@ export interface ApplicationSuggestion {
   /** The application type the slug maps to */
   applicationType?: ApplicationSuggestionApplicationTypeEnum;
   /**
-   * Month (1-12) the suggested application concerns. Null for a new application (new application), which has no prior period.
+   * Month (1-12) the suggested application concerns. Null for a new application, which has no prior period.
    * @format int32
    */
   periodMonth?: number;
   /**
-   * Year the suggested application concerns. Null for a new application (new application).
+   * Year the suggested application concerns. Null for a new application.
    * @format int32
    */
   periodYear?: number;
@@ -1479,6 +1607,8 @@ export interface ApplicationSuggestion {
   recommended?: boolean;
   /** Human-readable Swedish label for the suggestion */
   label?: string;
+  /** Swedish explanation of when this application type applies, shown to the citizen next to the label. Null when no wording has been agreed for the type. */
+  description?: string;
 }
 
 /** Eligibility result: which application(s) the citizen should be offered, plus the supporting facts. */
@@ -1489,23 +1619,31 @@ export interface EligibilityResponse {
   reasonCode?: EligibilityResponseReasonCodeEnum;
   /** Human-readable Swedish explanation of the suggestion */
   message?: string;
+  /** Swedish introduction shown to the citizen above the suggestion list, phrased for one or two applicants. Null when no application can be offered. */
+  introText?: string;
   /** True when the applicant already has a financial assistance errand in caremanagement */
   existsInCm?: boolean;
   /** True when the applicant has a financial assistance footprint in Lifecare (actualisation/decision/calculation) */
   existsInLc?: boolean;
+  /** True when Lifecare shows an actualisation with an open status, false when the statuses were readable but none is open, null when no actualisation carried a readable status (or Lifecare was not reached). */
+  hasOpenCase?: boolean;
   /** Whether the requested marital status (alone vs with a partner) matches the previous application. Null when not evaluated (no existing case). */
   maritalStatusMatches?: boolean;
   /**
-   * The duplicate-application window in days that was applied to the per-month check
+   * The staleness bound in days applied to ongoing caremanagement applications in the per-month check
    * @format int32
    */
   windowDays?: number;
-  /** True when an application/decision already exists for the current month */
+  /** True when the current month is already taken — an ongoing application in caremanagement, or a decision in Lifecare */
   applicationExistsThisMonth?: boolean;
-  /** True when an application/decision already exists for next month */
+  /** True when next month is already taken — an ongoing application in caremanagement, or a decision in Lifecare */
   applicationExistsNextMonth?: boolean;
   /** True when Lifecare shows a decision for the current month (the current month is decided/closed) */
   currentMonthDecided?: boolean;
+  /** True when Lifecare shows a decision for the previous month */
+  previousMonthDecided?: boolean;
+  /** True when Lifecare shows a decision for the month before the previous one */
+  monthBeforePreviousDecided?: boolean;
   /**
    * Month (1-12) of the most recent Lifecare decision, when one exists
    * @format int32
@@ -2153,6 +2291,16 @@ export interface WarningCount {
   count?: number;
 }
 
+/** The context an RPA robot needs to act on an errand in Lifecare. Fetched per queue item so personal numbers never persist in the Orchestrator queue store; every read is recorded in the errand's event log. */
+export interface RpaContext {
+  /** The errand's human-readable number — what a person searches for in Draken */
+  errandNumber?: string;
+  /** The applicant's personal number (12 characters, may contain letters). Null when it could not be resolved — treat as an error on the robot side. */
+  applicantPersonId?: string;
+  /** The co-applicant's personal number; null when there is no co-applicant or it could not be resolved */
+  coApplicantPersonId?: string;
+}
+
 /** The number of monitorings on the errand */
 export interface MonitoringCount {
   /**
@@ -2160,6 +2308,22 @@ export interface MonitoringCount {
    * @format int64
    */
   count?: number;
+}
+
+/** A jobbstimulans period on the errand, mirrored out of Lifecare. */
+export interface JobStimulusPeriod {
+  /** Whose period it is */
+  role?: JobStimulusPeriodRoleEnum;
+  /**
+   * Period start
+   * @format date
+   */
+  fromDate?: string;
+  /**
+   * Period end; null for an open period
+   * @format date
+   */
+  toDate?: string;
 }
 
 /** Self-describing snapshot of the form as it was rendered and answered. */
@@ -2846,6 +3010,7 @@ export enum WarningTypeEnum {
   HOUSING_COST_CHANGE = "HOUSING_COST_CHANGE",
   EXPENSE_REVIEW = "EXPENSE_REVIEW",
   EXPENSE_CAPPED = "EXPENSE_CAPPED",
+  INCOME_DUPLICATED = "INCOME_DUPLICATED",
 }
 
 /** The warning status (machine code; use statusDisplayName for the label) */
@@ -2853,6 +3018,22 @@ export enum WarningStatusEnum {
   OPEN = "OPEN",
   ACKNOWLEDGED = "ACKNOWLEDGED",
   CLOSED = "CLOSED",
+}
+
+/** The envelope section the item came from */
+export enum SupplementsIngestOutcomeSectionEnum {
+  Reminders = "reminders",
+  Documents = "documents",
+  JobStimulus = "jobStimulus",
+}
+
+/** What happened to the item */
+export enum SupplementsIngestOutcomeOutcomeEnum {
+  CREATED = "CREATED",
+  UPDATED = "UPDATED",
+  REPLACED = "REPLACED",
+  SKIPPED = "SKIPPED",
+  FAILED = "FAILED",
 }
 
 /** The role of the household member */
@@ -2918,6 +3099,8 @@ export enum EligibilityResponseReasonCodeEnum {
   NO_EXISTING_CASE = "NO_EXISTING_CASE",
   MARITAL_STATUS_CHANGED = "MARITAL_STATUS_CHANGED",
   RECENTLY_CLOSED = "RECENTLY_CLOSED",
+  NO_RECENT_DECISION = "NO_RECENT_DECISION",
+  ONGOING_APPLICATION = "ONGOING_APPLICATION",
   EXISTING_CASE = "EXISTING_CASE",
   ALL_TYPES_TEST = "ALL_TYPES_TEST",
 }
@@ -2962,6 +3145,12 @@ export enum AttachmentDocumentTypeEnum {
 export enum AttachmentSenderRoleEnum {
   CLIENT = "CLIENT",
   CASEWORKER = "CASEWORKER",
+}
+
+/** Whose period it is */
+export enum JobStimulusPeriodRoleEnum {
+  APPLICANT = "APPLICANT",
+  CO_APPLICANT = "CO_APPLICANT",
 }
 
 /** The input kind as rendered */

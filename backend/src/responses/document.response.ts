@@ -10,6 +10,14 @@ export class Document {
   @IsString()
   @IsOptional()
   errandId?: string;
+  /** Provenance: CASEWORKER (authored in Draken) or LIFECARE (read out of Lifecare by RPA, arrives LOCKED). */
+  @IsString()
+  @IsOptional()
+  source?: string;
+  /** The document's id in Lifecare — set on LIFECARE-sourced mirrors. */
+  @IsString()
+  @IsOptional()
+  lifecareId?: string;
   /** Document type (Lifecare 'Typ'/Dokumenttyp). */
   @IsString()
   @IsOptional()

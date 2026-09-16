@@ -25,9 +25,7 @@ export class ActualisationController {
   @ResponseSchema(ActualisationsApiResponse)
   @UseBefore(authMiddleware)
   async list(@Param('errandId') errandId: string) {
-    const stakeholders = await this.stakeholderService.readStakeholders(errandId);
-    const applicantPartyId = (stakeholders.data ?? []).find((stakeholder) => stakeholder.role === 'APPLICANT')
-      ?.externalId;
+    const applicantPartyId = await this.readApplicantPartyId(errandId);
     if (!applicantPartyId) {
       return { data: [], message: 'No applicant partyId on errand' };
     }
@@ -40,15 +38,23 @@ export class ActualisationController {
   @OpenAPI({ summary: "Archive the errand's CASE_DATA PDF to a chosen aktualisering (stamps the errand)" })
   @UseBefore(authMiddleware)
   async archive(@Param('errandId') errandId: string, @Param('actualisationId') actualisationId: string) {
+    const applicantPartyId = await this.readApplicantPartyId(errandId);
+    if (!applicantPartyId) {
+      throw new HttpException(404, 'No applicant partyId on errand');
+    }
     const attachments = await this.attachmentService.readAttachments(errandId);
-    const caseData = (attachments.data ?? []).find(
-      (attachment) => attachment.documentType === AttachmentDocumentTypeEnum.CASE_DATA
-    );
+    const caseData = (attachments.data ?? []).find(attachment => attachment.documentType === AttachmentDocumentTypeEnum.CASE_DATA);
     if (!caseData?.id) {
       throw new HttpException(404, 'No application PDF (CASE_DATA) to archive');
     }
     const file = await this.attachmentService.streamAttachmentFile(errandId, caseData.id);
-    await this.actualisationService.archive(actualisationId, file, { errandId });
+    await this.actualisationService.archive(actualisationId, applicantPartyId, file, { errandId });
     return { message: 'success' };
+  }
+
+  /** The applicant's partyId (the APPLICANT stakeholder's externalId); undefined when the errand has none. */
+  private async readApplicantPartyId(errandId: string): Promise<string | undefined> {
+    const stakeholders = await this.stakeholderService.readStakeholders(errandId);
+    return (stakeholders.data ?? []).find(stakeholder => stakeholder.role === 'APPLICANT')?.externalId;
   }
 }

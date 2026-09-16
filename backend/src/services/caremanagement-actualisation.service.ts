@@ -28,13 +28,9 @@ class CaremanagementActualisationService {
   /**
    * Archives a document onto a chosen aktualisering — multipart with the binary `file` part and a JSON
    * `request` part. caremanagement returns 204; `request.errandId` makes it stamp the aktualisering onto
-   * that errand.
+   * that errand. `partyId` is the applicant whose ownership of the aktualisering caremanagement verifies.
    */
-  async archive(
-    actualisationId: string,
-    file: AttachmentFile,
-    request: ArchiveActualisationRequest
-  ): Promise<ApiResponse<null>> {
+  async archive(actualisationId: string, partyId: string, file: AttachmentFile, request: ArchiveActualisationRequest): Promise<ApiResponse<null>> {
     const form = new FormData();
     form.append('file', file.data, {
       filename: file.fileName ?? 'document.pdf',
@@ -43,7 +39,7 @@ class CaremanagementActualisationService {
     form.append('request', JSON.stringify(request), { contentType: 'application/json' });
     const url = caremanagementUrl('errands', 'financial-assistance', 'actualisations', actualisationId, 'archive');
     try {
-      await axios.post(url, form, { headers: { ...form.getHeaders(), ...sentByHeaders() } });
+      await axios.post(url, form, { params: { partyId }, headers: { ...form.getHeaders(), ...sentByHeaders() } });
       return { data: null, message: 'success' };
     } catch (error) {
       throw caremanagementError(error);

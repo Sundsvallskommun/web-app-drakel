@@ -1,11 +1,12 @@
 import { Transform, Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsInt, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsInt, IsOptional, IsString, MaxLength, Min, ValidateNested } from 'class-validator';
 
 import { ExternalTag } from '@/responses/errand.response';
 
 /** Fields a handläggare may change on an existing errand. */
 export class PatchErrandDto {
   @IsString()
+  @MaxLength(255)
   @IsOptional()
   title?: string;
   @IsString()
@@ -15,18 +16,22 @@ export class PatchErrandDto {
   @IsOptional()
   type?: string;
   @IsString()
+  @MaxLength(64)
   @IsOptional()
   status?: string;
   @IsString()
   @IsOptional()
   description?: string;
   @IsString()
+  @MaxLength(16)
   @IsOptional()
   priority?: string;
   @IsString()
+  @MaxLength(64)
   @IsOptional()
   reporterUserId?: string;
   @IsString()
+  @MaxLength(64)
   @IsOptional()
   assignedUserId?: string;
   @IsString()
@@ -48,6 +53,7 @@ export class PatchErrandDto {
  */
 export class CreateErrandDto extends PatchErrandDto {
   @IsString()
+  @MaxLength(64)
   typeSlug!: string;
 }
 

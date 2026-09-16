@@ -10,6 +10,14 @@ export class JournalEntry {
   @IsString()
   @IsOptional()
   errandId?: string;
+  /** Provenance: CASEWORKER (authored in Draken) or LIFECARE (read out of Lifecare by RPA, arrives LOCKED). */
+  @IsString()
+  @IsOptional()
+  source?: string;
+  /** The journal entry's id in Lifecare — set on LIFECARE-sourced mirrors. */
+  @IsString()
+  @IsOptional()
+  lifecareId?: string;
   /** Journal entry type (Lifecare 'Typ'). */
   @IsString()
   @IsOptional()

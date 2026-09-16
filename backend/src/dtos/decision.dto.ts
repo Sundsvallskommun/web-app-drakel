@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
 
 /**
  * The fields a handläggare sends when recording a beslut (decision) on an errand. Maps onto the
@@ -8,11 +8,13 @@ import { IsNumber, IsOptional, IsString } from 'class-validator';
  */
 export class CreateDecisionDto {
   @IsString()
+  @MaxLength(32)
   @IsOptional()
   decisionType?: string;
 
   /** The chosen beslutsalternativ — the DecisionOption code. */
   @IsString()
+  @MaxLength(255)
   value!: string;
 
   @IsNumber()
@@ -36,11 +38,13 @@ export class CreateDecisionDto {
 
   /** The beslutsmeddelande shown to the applicant. */
   @IsString()
+  @MaxLength(8192)
   @IsOptional()
   decisionMessage?: string;
 
   /** Internal motivation, kept separate from the applicant-facing decisionMessage. */
   @IsString()
+  @MaxLength(4096)
   @IsOptional()
   description?: string;
 }

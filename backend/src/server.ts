@@ -15,6 +15,7 @@ import { ErrandController } from './controllers/errand.controller';
 import { EventController } from './controllers/event.controller';
 import { FormSnapshotController } from './controllers/form-snapshot.controller';
 import { HealthController } from './controllers/health.controller';
+import { JobStimulusController } from './controllers/job-stimulus.controller';
 import { JournalController } from './controllers/journal.controller';
 import { MessageController } from './controllers/message.controller';
 import { MetadataController } from './controllers/metadata.controller';
@@ -44,6 +45,7 @@ const app = new App([
   SectionApprovalController,
   BevakningController,
   JournalController,
+  JobStimulusController,
   DocumentController,
   DocumentTemplateController,
   EventController,
