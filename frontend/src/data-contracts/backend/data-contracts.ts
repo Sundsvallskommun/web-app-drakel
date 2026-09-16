@@ -85,13 +85,17 @@ export interface ErrandCountsApiResponse {
 }
 
 export interface CreateDecisionDto {
+  /** @maxLength 32 */
   decisionType?: string;
+  /** @maxLength 255 */
   value: string;
   amount?: number;
   decisionDate?: string;
   periodFrom?: string;
   periodTo?: string;
+  /** @maxLength 8192 */
   decisionMessage?: string;
+  /** @maxLength 4096 */
   description?: string;
 }
 
@@ -151,15 +155,21 @@ export interface DigitalMailboxApiResponse {
 }
 
 export interface CreateDocumentDto {
+  /** @maxLength 255 */
   type: string;
+  /** @maxLength 255 */
   heading: string;
+  /** @maxLength 1048576 */
   text?: string;
   documentDateTime: string;
 }
 
 export interface UpdateDocumentDto {
+  /** @maxLength 255 */
   type: string;
+  /** @maxLength 255 */
   heading: string;
+  /** @maxLength 1048576 */
   text?: string;
   documentDateTime: string;
 }
@@ -167,6 +177,8 @@ export interface UpdateDocumentDto {
 export interface Document {
   id?: string;
   errandId?: string;
+  source?: string;
+  lifecareId?: string;
   type?: string;
   heading?: string;
   text?: string;
@@ -318,13 +330,18 @@ export interface ErrandsApiResponse {
 }
 
 export interface PatchErrandDto {
+  /** @maxLength 255 */
   title?: string;
   category?: string;
   type?: string;
+  /** @maxLength 64 */
   status?: string;
   description?: string;
+  /** @maxLength 16 */
   priority?: string;
+  /** @maxLength 64 */
   reporterUserId?: string;
+  /** @maxLength 64 */
   assignedUserId?: string;
   contactReason?: string;
   contactReasonDescription?: string;
@@ -332,14 +349,20 @@ export interface PatchErrandDto {
 }
 
 export interface CreateErrandDto {
+  /** @maxLength 64 */
   typeSlug: string;
+  /** @maxLength 255 */
   title?: string;
   category?: string;
   type?: string;
+  /** @maxLength 64 */
   status?: string;
   description?: string;
+  /** @maxLength 16 */
   priority?: string;
+  /** @maxLength 64 */
   reporterUserId?: string;
+  /** @maxLength 64 */
   assignedUserId?: string;
   contactReason?: string;
   contactReasonDescription?: string;
@@ -473,16 +496,33 @@ export interface FormSnapshotApiResponse {
   message: string;
 }
 
+export interface JobStimulusPeriod {
+  role?: string;
+  fromDate?: string;
+  toDate?: string;
+}
+
+export interface JobStimulusPeriodsApiResponse {
+  data: JobStimulusPeriod[];
+  message: string;
+}
+
 export interface CreateJournalEntryDto {
+  /** @maxLength 255 */
   type: string;
+  /** @maxLength 255 */
   heading: string;
+  /** @maxLength 1048576 */
   text?: string;
   entryDateTime: string;
 }
 
 export interface UpdateJournalEntryDto {
+  /** @maxLength 255 */
   type: string;
+  /** @maxLength 255 */
   heading: string;
+  /** @maxLength 1048576 */
   text?: string;
   entryDateTime: string;
 }
@@ -490,6 +530,8 @@ export interface UpdateJournalEntryDto {
 export interface JournalEntry {
   id?: string;
   errandId?: string;
+  source?: string;
+  lifecareId?: string;
   type?: string;
   heading?: string;
   text?: string;

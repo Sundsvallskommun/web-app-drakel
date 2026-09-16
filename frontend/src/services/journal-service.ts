@@ -1,3 +1,4 @@
+import { RecordSource } from '@interfaces/record-source';
 import { ServiceResponse } from '@interfaces/services';
 import { ApiResponse, apiService, toServiceError } from '@services/api-service';
 
@@ -5,6 +6,10 @@ import { ApiResponse, apiService, toServiceError } from '@services/api-service';
 export interface JournalEntry {
   id?: string;
   errandId?: string;
+  /** Provenance: CASEWORKER (authored in Draken) or LIFECARE (read out of Lifecare by RPA, arrives LOCKED). */
+  source?: RecordSource;
+  /** The journal entry's id in Lifecare — set on LIFECARE-sourced mirrors. */
+  lifecareId?: string;
   /** Journal entry type (Lifecare 'Typ'). */
   type?: string;
   heading?: string;
@@ -48,7 +53,10 @@ export const getJournalTypes = (): Promise<ServiceResponse<JournalEntryType[]>> 
     .catch(toServiceError);
 
 /** Creates a journalanteckning. */
-export const createJournalEntry = (errandId: string, input: JournalEntryInput): Promise<ServiceResponse<JournalEntry>> =>
+export const createJournalEntry = (
+  errandId: string,
+  input: JournalEntryInput
+): Promise<ServiceResponse<JournalEntry>> =>
   apiService
     .post<ApiResponse<JournalEntry>>(`errands/${errandId}/journal-entries`, input)
     .then((res) => ({ data: res.data.data }))

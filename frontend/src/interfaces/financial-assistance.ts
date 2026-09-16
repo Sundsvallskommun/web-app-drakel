@@ -48,6 +48,10 @@ interface SubmittedPlanning {
   workExtent?: string;
   workDescription?: string;
   sickLeaveLevel?: string;
+  /** First day of the sick-leave period on the medical certificate (yyyy-MM-dd). */
+  sickLeaveFrom?: string;
+  /** Last day of the sick-leave period on the medical certificate (yyyy-MM-dd). */
+  sickLeaveTo?: string;
   sfiStudyPath?: string;
   sfiCourse?: string;
   otherDescription?: string;

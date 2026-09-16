@@ -10,6 +10,7 @@ import { FC, useState } from 'react';
 
 import { JournalEntryCreateModal } from './journal-entry-create-modal.component';
 import { JournalEntryEditModal } from './journal-entry-edit-modal.component';
+import { LifecareSourceBadge } from './lifecare-source-badge.component';
 
 /** WORKING = editable arbetsanteckning, LOCKED = upprättad (read-only) handling. */
 const statusLabel = (status?: string): string => (status === 'LOCKED' ? 'Upprättad' : 'Arbetsanteckning');
@@ -82,17 +83,23 @@ export const ErrandJournal: FC<{ errandId: string }> = ({ errandId }) => {
           {[...entries].sort(byDateDesc).map((entry, index) => {
             const working = entry.status !== 'LOCKED';
             return (
-              <li key={entry.id ?? index} className="rounded-12 border-1 border-divider bg-background-content p-16 flex flex-col gap-8">
+              <li
+                key={entry.id ?? index}
+                className="rounded-12 border-1 border-divider bg-background-content p-16 flex flex-col gap-8"
+              >
                 <div className="flex items-start justify-between gap-12">
                   <span className="font-bold break-words">{entry.heading}</span>
-                  <span
-                    className={
-                      working ?
-                        'shrink-0 text-small rounded-8 px-8 py-2 bg-gray-100 text-gray-600'
-                      : 'shrink-0 text-small rounded-8 px-8 py-2 bg-success-background-100 text-success-surface-primary'
-                    }
-                  >
-                    {statusLabel(entry.status)}
+                  <span className="flex shrink-0 items-center gap-8">
+                    <LifecareSourceBadge source={entry.source} />
+                    <span
+                      className={
+                        working ?
+                          'shrink-0 text-small rounded-8 px-8 py-2 bg-gray-100 text-gray-600'
+                        : 'shrink-0 text-small rounded-8 px-8 py-2 bg-success-background-100 text-success-surface-primary'
+                      }
+                    >
+                      {statusLabel(entry.status)}
+                    </span>
                   </span>
                 </div>
                 <span className="text-small text-dark-secondary">{metaLine(entry)}</span>
@@ -180,8 +187,8 @@ export const ErrandJournal: FC<{ errandId: string }> = ({ errandId }) => {
       >
         <Modal.Content>
           <p className="m-0">
-            Vill du låsa <strong>{lockTarget?.heading}</strong>? Den blir en upprättad handling och kan inte ändras eller
-            tas bort.
+            Vill du låsa <strong>{lockTarget?.heading}</strong>? Den blir en upprättad handling och kan inte ändras
+            eller tas bort.
           </p>
         </Modal.Content>
         <Modal.Footer>

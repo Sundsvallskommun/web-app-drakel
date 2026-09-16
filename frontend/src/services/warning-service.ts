@@ -28,6 +28,7 @@ const WARNING_TYPE_LABELS: Record<string, string> = {
   INCOME_DROPPED: 'Bortfallen inkomst',
   HOUSEHOLD_CHANGE: 'Ändrad hushållssammansättning',
   HOUSING_COST_CHANGE: 'Ändrad boendekostnad',
+  INCOME_DUPLICATED: 'Möjlig dubbelförd inkomst',
   EXPENSE_REVIEW: 'Kräver skälighetsbedömning',
   EXPENSE_CAPPED: 'Utgift över tak',
 };

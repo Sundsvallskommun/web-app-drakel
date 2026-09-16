@@ -2,16 +2,11 @@
 
 import { Bevakning, createBevakning, deleteBevakning } from '@services/bevakning-service';
 import { Button, DatePicker, FormControl, FormLabel, Input, Spinner, Textarea } from '@sk-web-gui/react';
+import { formatDateRange } from '@utils/date-range';
 import { Trash } from 'lucide-react';
 import { FC, useState } from 'react';
 
-/** "Från … – Till …" / "Från …" range label for a bevakning. */
-const formatRange = (bevakning: Bevakning): string => {
-  if (bevakning.startDate && bevakning.endDate) {
-    return `${bevakning.startDate} – ${bevakning.endDate}`;
-  }
-  return bevakning.startDate ? `Från ${bevakning.startDate}` : '—';
-};
+import { LifecareSourceBadge } from './lifecare-source-badge.component';
 
 interface ErrandBevakningarProps {
   errandId: string;
@@ -22,7 +17,13 @@ interface ErrandBevakningarProps {
 }
 
 /** Sidebar section listing an errand's bevakningar (date-bound watches/reminders) with add + delete. */
-export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({ errandId, bevakningar, isLoading, loadError, refresh }) => {
+export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
+  errandId,
+  bevakningar,
+  isLoading,
+  loadError,
+  refresh,
+}) => {
   const [title, setTitle] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
@@ -93,13 +94,11 @@ export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({ errandId, bevakn
               <div className="flex flex-col gap-2 min-w-0">
                 <span className="flex items-center gap-8 min-w-0">
                   <span className="font-bold break-words min-w-0">{bevakning.title}</span>
-                  {bevakning.source === 'LIFECARE' ?
-                    <span className="shrink-0 text-small rounded-8 px-8 py-2 bg-vattjom-background-200 text-vattjom-text-primary">
-                      Från Lifecare
-                    </span>
-                  : null}
+                  <LifecareSourceBadge source={bevakning.source} />
                 </span>
-                <span className="text-small text-dark-secondary">{formatRange(bevakning)}</span>
+                <span className="text-small text-dark-secondary">
+                  {formatDateRange(bevakning.startDate, bevakning.endDate)}
+                </span>
                 {bevakning.description ?
                   <span className="text-small break-words whitespace-pre-wrap">{bevakning.description}</span>
                 : null}

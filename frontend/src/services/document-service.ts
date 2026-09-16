@@ -1,3 +1,4 @@
+import { RecordSource } from '@interfaces/record-source';
 import { ServiceResponse } from '@interfaces/services';
 import { ApiResponse, apiService, toServiceError } from '@services/api-service';
 
@@ -5,6 +6,10 @@ import { ApiResponse, apiService, toServiceError } from '@services/api-service';
 export interface Document {
   id?: string;
   errandId?: string;
+  /** Provenance: CASEWORKER (authored in Draken) or LIFECARE (read out of Lifecare by RPA, arrives LOCKED). */
+  source?: RecordSource;
+  /** The document's id in Lifecare — set on LIFECARE-sourced mirrors. */
+  lifecareId?: string;
   /** Document type (Lifecare 'Typ'/Dokumenttyp). */
   type?: string;
   heading?: string;

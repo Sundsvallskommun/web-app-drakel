@@ -4,15 +4,25 @@ import { Errand } from '@data-contracts/backend/data-contracts';
 import { faLabel, FinancialAssistanceData, SubmittedChild, swedishMonth } from '@interfaces/financial-assistance';
 import { getApplicationData } from '@services/errand-service/errand-service';
 import { Spinner } from '@sk-web-gui/react';
-import { FC, ReactNode, useEffect, useState } from 'react';
+import { formatDateRange } from '@utils/date-range';
+import { FC, Fragment, ReactNode, useEffect, useState } from 'react';
 
+import { ErrandJobStimulus } from './errand-job-stimulus.component';
 import { ErrandStakeholders } from './errand-stakeholders.component';
+
+type SubmittedPlanning = NonNullable<FinancialAssistanceData['plannings']>[number];
 
 const kr = (value?: number): string | undefined => (value == null ? undefined : `${value} kr`);
 const yesNo = (value?: boolean): string | undefined =>
   value == null ? undefined
   : value ? 'Ja'
   : 'Nej';
+/** "100 % · 2026-09-01 – 2026-09-30" — the sick-leave level and the medical certificate's period. */
+const sickLeaveSummary = (planning: SubmittedPlanning): string | undefined => {
+  const level = planning.sickLeaveLevel ? `${planning.sickLeaveLevel} %` : undefined;
+  const period = planning.sickLeaveFrom ? formatDateRange(planning.sickLeaveFrom, planning.sickLeaveTo) : undefined;
+  return [level, period].filter(Boolean).join(' · ') || undefined;
+};
 const childName = (child: SubmittedChild): string =>
   child.name?.trim() ?? [child.firstName, child.lastName].filter(Boolean).join(' ').trim();
 
@@ -135,11 +145,13 @@ const ApplicationSections: FC<{ data: FinancialAssistanceData }> = ({ data }) =>
       {(data.plannings ?? []).length > 0 ?
         <Section heading="Planering">
           {(data.plannings ?? []).map((planning, index) => (
-            <Row
-              key={`planning-${index}`}
-              label={faLabel('person', planning.person) || `Planering ${index + 1}`}
-              value={faLabel('planningType', planning.planningType)}
-            />
+            <Fragment key={`planning-${index}`}>
+              <Row
+                label={faLabel('person', planning.person) || `Planering ${index + 1}`}
+                value={faLabel('planningType', planning.planningType)}
+              />
+              <Row label="Sjukskrivning" value={sickLeaveSummary(planning)} />
+            </Fragment>
           ))}
           {(data.jobApplications ?? []).map((job, index) => (
             <Row
@@ -213,6 +225,8 @@ export const ErrandApplicationData: FC<{ errand: Errand }> = ({ errand }) => {
         <h2 className="text-h2-sm md:text-h2-md m-0">Intressenter</h2>
         <ErrandStakeholders errandId={errand.id ?? ''} />
       </section>
+
+      <ErrandJobStimulus errandId={errand.id ?? ''} />
 
       {isLoading ?
         <Spinner size={3} />

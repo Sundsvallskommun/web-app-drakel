@@ -1,3 +1,4 @@
+import { RecordSource } from '@interfaces/record-source';
 import { ServiceResponse } from '@interfaces/services';
 import { ApiResponse, apiService, toServiceError } from '@services/api-service';
 
@@ -5,7 +6,7 @@ import { ApiResponse, apiService, toServiceError } from '@services/api-service';
 export interface Bevakning {
   id?: string;
   /** Provenance: CASEWORKER (authored in Draken) or LIFECARE (read out of Lifecare by RPA). */
-  source?: 'CASEWORKER' | 'LIFECARE';
+  source?: RecordSource;
   /** The monitoring's id in Lifecare; null until a caseworker row has been mirrored. */
   lifecareId?: string;
   title?: string;
