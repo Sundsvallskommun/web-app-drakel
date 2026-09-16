@@ -387,6 +387,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                 <ErrandTabPanel>
                   <ErrandUtbetalning
                     errandId={apiErrandId}
+                    locked={!!approvals.payment?.approved}
                     headerSlot={
                       <SectionApprovalCheckbox
                         label="Markera utbetalning som komplett"
@@ -406,28 +407,27 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     {
       label: 'Meddelanden',
       counter: counts.unreadMessages,
+      // A single tab: the conversation fills the content card itself and holds its own Meddelanden /
+      // Delade bilagor tabs in the conversation header.
       tabs: [
         {
           label: 'Meddelanden',
           content: (
-            <ErrandTabPanel>
-              <ErrandMessages errandId={apiErrandId} />
-            </ErrandTabPanel>
-          ),
-        },
-        {
-          label: 'Bilagor',
-          counter: conversationAttachments.length,
-          content: (
-            <ErrandTabPanel>
-              <ErrandMessageAttachments
-                errandId={apiErrandId}
-                attachments={conversationAttachments}
-                summaryAttachment={conversationSummaryAttachment}
-                isLoading={attachmentsLoading}
-                loadError={!!attachmentsError}
-              />
-            </ErrandTabPanel>
+            <ErrandMessages
+              errandId={apiErrandId}
+              applicantNames={applicantNames}
+              errandNumber={errand.errandNumber}
+              sharedAttachments={
+                <ErrandMessageAttachments
+                  errandId={apiErrandId}
+                  attachments={conversationAttachments}
+                  summaryAttachment={conversationSummaryAttachment}
+                  isLoading={attachmentsLoading}
+                  loadError={!!attachmentsError}
+                  hideHeading
+                />
+              }
+            />
           ),
         },
       ],

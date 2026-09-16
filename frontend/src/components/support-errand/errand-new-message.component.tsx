@@ -6,14 +6,15 @@ import {
   Button,
   CustomOnChangeEventUploadFile,
   FileUpload,
-  FormControl,
   FormErrorMessage,
   Modal,
-  Textarea,
   UploadFile,
 } from '@sk-web-gui/react';
+import { TextEditorValue } from '@sk-web-gui/text-editor';
+import { ALLOWED_ATTACHMENT_FILE_EXTENSIONS, MAX_ATTACHMENT_FILE_SIZE_MB } from '@utils/attachment-upload-limits';
 import { Eye, Paperclip, Reply, SendHorizontal, X } from 'lucide-react';
-import { FC, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { FC, useRef, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -22,32 +23,19 @@ import { messagePreview, senderLabel } from './errand-message.component';
 
 // Matches the backend MESSAGE_BODY_MAX_LENGTH / caremanagement CreateMessage.body limit.
 const MESSAGE_CHARACTER_LIMIT = 8192;
-// Mirror the backend multer limits (MAX_MESSAGE_ATTACHMENT_FILES / MAX_UPLOAD_FILE_SIZE_BYTES).
+// Mirrors the backend multer limit MAX_MESSAGE_ATTACHMENT_FILES (the per-file size limit is shared).
 const MAX_ATTACHMENT_FILES = 10;
-const MAX_ATTACHMENT_FILE_SIZE_MB = 20;
 
-const ALLOWED_FILE_TYPES = [
-  '.jpeg',
-  '.gif',
-  '.png',
-  '.tiff',
-  '.bmp',
-  '.pdf',
-  '.rtf',
-  '.doc',
-  '.docx',
-  '.txt',
-  '.html',
-  '.xls',
-  '.xlsx',
-  '.odt',
-  '.ods',
-  '.msg',
-];
+const EMPTY_MESSAGE: TextEditorValue = { markup: '', plainText: '' };
+
+// Quill touches `document` on import, so the editor is loaded client-side only.
+const MessageEditor = dynamic(() => import('./message-editor.component'), {
+  ssr: false,
+  loading: () => <div className="h-[9.8rem] w-full animate-pulse rounded-12 bg-background-200" />,
+});
 
 interface NewMessageForm {
   files: UploadFile[];
-  message: string;
 }
 
 const uploadFileName = (file: UploadFile): string => {
@@ -57,7 +45,10 @@ const uploadFileName = (file: UploadFile): string => {
   return file.file.name;
 };
 
-/** Compose + send a new OUTBOUND message (text + optional attachments) to the errand conversation. */
+/**
+ * Compose + send a new OUTBOUND message (formatted text, sent as HTML, + optional attachments) to the errand
+ * conversation. The editor toolbar's image button opens the file picker to attach files.
+ */
 export const ErrandNewMessage: FC<{
   errandId: string;
   onSent: () => void;
@@ -65,27 +56,25 @@ export const ErrandNewMessage: FC<{
   replyTo?: Message;
   onCancelReply: () => void;
 }> = ({ errandId, onSent, replyTo, onCancelReply }) => {
-  const formMethods = useForm<NewMessageForm>({ defaultValues: { files: [], message: '' }, mode: 'onChange' });
+  const formMethods = useForm<NewMessageForm>({ defaultValues: { files: [] }, mode: 'onChange' });
+  const [messageValue, setMessageValue] = useState<TextEditorValue>(EMPTY_MESSAGE);
+  const [emptyMessageError, setEmptyMessageError] = useState<boolean>(false);
+  const fileUploadContainerRef = useRef<HTMLDivElement>(null);
   const [showFileTypes, setShowFileTypes] = useState<boolean>(false);
   const [previewFile, setPreviewFile] = useState<File>();
-  const username = useUserStore(useShallow((state) => state.user.username));
+  const currentUser = useUserStore(useShallow((state) => ({ username: state.user.username, name: state.user.name })));
 
   // useWatch (not formMethods.watch()) so the strict React-Compiler lint rule stays happy.
   const files = useWatch({ control: formMethods.control, name: 'files' });
-  const message = useWatch({ control: formMethods.control, name: 'message' }) ?? '';
-  const isOverLimit = message.length > MESSAGE_CHARACTER_LIMIT;
+  // The body is sent as HTML, so the backend's character limit applies to the markup.
+  const messageMarkup = messageValue.markup ?? '';
+  const hasText = (messageValue.plainText ?? '').trim().length > 0;
+  const isOverLimit = messageMarkup.length > MESSAGE_CHARACTER_LIMIT;
   const isOverFileLimit = files.length > MAX_ATTACHMENT_FILES;
 
-  // Move focus into the textarea when the handläggare picks a message to reply to.
-  useEffect(() => {
-    if (replyTo) {
-      formMethods.setFocus('message');
-    }
-  }, [replyTo, formMethods]);
-
-  const messageRegister = formMethods.register('message', {
-    validate: (value) => value.trim().length > 0 || 'Skriv ett meddelande',
-  });
+  const openFilePicker = () => {
+    fileUploadContainerRef.current?.querySelector<HTMLInputElement>('input[type="file"]')?.click();
+  };
 
   const removeFile = (file: UploadFile) => {
     formMethods.setValue(
@@ -104,12 +93,16 @@ export const ErrandNewMessage: FC<{
   };
 
   const onSubmit: SubmitHandler<NewMessageForm> = async (values) => {
+    if (!hasText) {
+      setEmptyMessageError(true);
+      return;
+    }
     if (isOverLimit || isOverFileLimit) {
       return;
     }
     const result = await postErrandMessage(
       errandId,
-      values.message.trim(),
+      messageMarkup,
       values.files.map((file) => file.file),
       replyTo?.id
     );
@@ -118,19 +111,22 @@ export const ErrandNewMessage: FC<{
       return;
     }
     formMethods.reset();
+    setMessageValue(EMPTY_MESSAGE);
     onSent();
   };
 
   return (
     <>
       <FormProvider {...formMethods}>
-        <form className="flex flex-col gap-14" onSubmit={(event) => void formMethods.handleSubmit(onSubmit)(event)}>
+        <form className="flex flex-col gap-16" onSubmit={(event) => void formMethods.handleSubmit(onSubmit)(event)}>
           {replyTo ?
-            <div className="flex items-start gap-8 rounded-12 border-l-4 border-vattjom-surface-primary bg-background-200 px-12 py-8">
-              <Reply size={16} className="shrink-0 mt-2 text-secondary" />
+            <div className="flex items-start gap-8 rounded-8 border-l-4 border-vattjom-surface-primary bg-background-color-mixin-1 px-12 py-8">
+              <Reply size={16} className="shrink-0 mt-2 text-dark-secondary" />
               <div className="flex flex-col gap-y-2 min-w-0 grow">
-                <span className="text-small font-bold">Svarar på {senderLabel(replyTo, username)}</span>
-                <span className="text-small text-secondary line-clamp-2 break-words">{messagePreview(replyTo)}</span>
+                <span className="text-small font-bold">Svarar på {senderLabel(replyTo, currentUser)}</span>
+                <span className="text-small text-dark-secondary line-clamp-2 break-words">
+                  {messagePreview(replyTo)}
+                </span>
               </div>
               <Button
                 variant="tertiary"
@@ -145,76 +141,105 @@ export const ErrandNewMessage: FC<{
             </div>
           : null}
 
-          <div className="flex flex-col">
-            <FormControl className="w-full" invalid={isOverLimit}>
-              <Textarea
-                {...messageRegister}
-                aria-label="Nytt meddelande"
+          <div className="flex flex-col gap-8">
+            {/* The send button sits inside the editor box, bottom right (the editor reserves room for it). */}
+            <div className="relative">
+              <MessageEditor
+                value={messageValue}
                 placeholder={replyTo ? 'Skriv ett svar' : 'Skriv ett meddelande'}
-                rows={3}
-                className="w-full rounded-12"
                 readOnly={formMethods.formState.isSubmitting}
-              />
-              <div className="flex justify-between gap-12 text-small mt-6">
-                <span className="text-secondary">Max {MESSAGE_CHARACTER_LIMIT} tecken.</span>
-                <span className={isOverLimit ? 'text-error-surface-primary' : 'text-secondary'}>
-                  {message.length} / {MESSAGE_CHARACTER_LIMIT}
-                </span>
-              </div>
-              {formMethods.formState.errors.message ?
-                <FormErrorMessage>{formMethods.formState.errors.message.message}</FormErrorMessage>
-              : null}
-            </FormControl>
-
-            <div className="flex flex-col gap-8 mt-10 md:flex-row md:items-center md:justify-between">
-              <div className="flex flex-wrap items-center gap-8 text-small">
-                <FileUpload.Button
-                  name="files"
-                  appendToContext={false}
-                  maxFileSizeMB={MAX_ATTACHMENT_FILE_SIZE_MB}
-                  onChange={appendSelectedFiles}
-                  onInvalid={(error) => {
-                    formMethods.setError('files', { type: 'manual', message: error });
-                  }}
-                  onValid={() => {
-                    formMethods.clearErrors('files');
-                  }}
-                />
-                <span className="text-secondary">Max {MAX_ATTACHMENT_FILE_SIZE_MB} MB per fil.</span>
-              </div>
-              <Button
-                variant="link"
-                onClick={() => {
-                  setShowFileTypes(true);
+                focusKey={replyTo?.id}
+                onAttachClick={openFilePicker}
+                onChange={(value) => {
+                  setMessageValue(value);
+                  setEmptyMessageError(false);
                 }}
+              />
+              <Button
+                type="submit"
+                color="vattjom"
+                size="sm"
+                className="absolute bottom-12 right-12"
+                rightIcon={<SendHorizontal />}
+                loading={formMethods.formState.isSubmitting}
+                disabled={isOverLimit || isOverFileLimit}
               >
-                Visa tillåtna filtyper
+                {replyTo ? 'Skicka svar' : 'Skicka'}
               </Button>
             </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-x-12 gap-y-4 text-small text-dark-secondary">
+              <span className="flex flex-wrap items-center gap-x-12">
+                Max {MAX_ATTACHMENT_FILE_SIZE_MB} MB per fil.
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={() => {
+                    setShowFileTypes(true);
+                  }}
+                >
+                  Visa tillåtna filtyper
+                </Button>
+              </span>
+              {/* Only surface the counter as the message approaches the limit. */}
+              {messageMarkup.length > MESSAGE_CHARACTER_LIMIT * 0.8 ?
+                <span className={isOverLimit ? 'text-error-surface-primary' : undefined}>
+                  {messageMarkup.length} / {MESSAGE_CHARACTER_LIMIT} tecken
+                </span>
+              : null}
+            </div>
+
+            {emptyMessageError ?
+              <FormErrorMessage>Skriv ett meddelande</FormErrorMessage>
+            : null}
+            {isOverLimit ?
+              <FormErrorMessage>
+                Meddelandet får vara högst {MESSAGE_CHARACTER_LIMIT} tecken inklusive formatering.
+              </FormErrorMessage>
+            : null}
+            {formMethods.formState.errors.root ?
+              <FormErrorMessage>{formMethods.formState.errors.root.message}</FormErrorMessage>
+            : null}
             {formMethods.formState.errors.files ?
               <FormErrorMessage>{formMethods.formState.errors.files.message}</FormErrorMessage>
             : null}
             {isOverFileLimit ?
               <FormErrorMessage>Du kan bifoga max {MAX_ATTACHMENT_FILES} filer.</FormErrorMessage>
             : null}
+
+            {/* The file input is driven by the editor toolbar's image button (see openFilePicker). */}
+            <div ref={fileUploadContainerRef} className="hidden">
+              <FileUpload.Button
+                name="files"
+                appendToContext={false}
+                maxFileSizeMB={MAX_ATTACHMENT_FILE_SIZE_MB}
+                onChange={appendSelectedFiles}
+                onInvalid={(error) => {
+                  formMethods.setError('files', { type: 'manual', message: error });
+                }}
+                onValid={() => {
+                  formMethods.clearErrors('files');
+                }}
+              />
+            </div>
           </div>
 
           {files.length ?
             <section className="flex flex-col gap-8" aria-label="Valda bilagor">
               <div className="flex items-baseline justify-between gap-12">
-                <h3 className="text-small font-bold m-0">Valda bilagor</h3>
-                <span className="text-small text-secondary">
+                <h4 className="text-small font-bold m-0">Valda bilagor</h4>
+                <span className="text-small text-dark-secondary">
                   {files.length} / {MAX_ATTACHMENT_FILES} filer
                 </span>
               </div>
-              <ul className="m-0 w-full rounded-8 border-1 border-divider bg-background-100 p-8 grid grid-cols-1 gap-8 md:grid-cols-2">
+              <ul className="m-0 p-0 w-full flex flex-wrap gap-16">
                 {files.map((file, index) => (
                   <li
                     key={`${file.id ?? file.file.name}-${index}`}
-                    className="min-w-0 rounded-8 border-1 border-divider bg-background-content px-10 py-8 flex items-center gap-8"
+                    className="min-w-0 w-full sm:w-[275px] rounded-8 border-1 border-divider px-12 py-8 flex items-center gap-8"
                   >
-                    <Paperclip size={16} className="shrink-0 text-secondary" />
-                    <span className="min-w-0 flex-1 truncate text-small" title={uploadFileName(file)}>
+                    <Paperclip size={16} className="shrink-0 text-dark-secondary" />
+                    <span className="min-w-0 flex-1 truncate text-dark-secondary" title={uploadFileName(file)}>
                       {uploadFileName(file)}
                     </span>
                     {isPreviewableMimeType(file.file.type) ?
@@ -250,23 +275,6 @@ export const ErrandNewMessage: FC<{
               </ul>
             </section>
           : null}
-
-          <div className="flex flex-col gap-8 items-end">
-            <Button
-              type="submit"
-              color="vattjom"
-              size="md"
-              className="w-full md:w-fit"
-              rightIcon={<SendHorizontal />}
-              loading={formMethods.formState.isSubmitting}
-              disabled={isOverLimit || isOverFileLimit}
-            >
-              {replyTo ? 'Skicka svar' : 'Skicka'}
-            </Button>
-            {formMethods.formState.errors.root ?
-              <FormErrorMessage>{formMethods.formState.errors.root.message}</FormErrorMessage>
-            : null}
-          </div>
         </form>
       </FormProvider>
 
@@ -287,7 +295,7 @@ export const ErrandNewMessage: FC<{
       >
         <Modal.Content>
           <ul className="text-secondary space-y-3">
-            {ALLOWED_FILE_TYPES.map((type) => (
+            {ALLOWED_ATTACHMENT_FILE_EXTENSIONS.map((type) => (
               <li key={type}>{type}</li>
             ))}
           </ul>
