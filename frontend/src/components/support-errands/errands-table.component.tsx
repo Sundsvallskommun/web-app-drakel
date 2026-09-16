@@ -7,13 +7,13 @@ import { ArrowRight, ChevronDown, ChevronsUpDown, ChevronUp } from 'lucide-react
 import { useParams, useRouter } from 'next/navigation';
 import { FC } from 'react';
 
+import { ErrandStatusLabel } from './errand-status-label.component';
+import { PriorityLabel } from './priority-label.component';
+
 export type SortDirection = 'asc' | 'desc';
 
 /** Selectable page sizes for the "rader per sida" control (the first is the default). */
-export const PAGE_SIZE_OPTIONS = [12, 25, 50, 100];
-
-import { ErrandStatusLabel } from './errand-status-label.component';
-import { PriorityLabel } from './priority-label.component';
+const PAGE_SIZE_OPTIONS = [12, 25, 50, 100];
 
 interface ErrandsTableProps {
   errands: Errand[];

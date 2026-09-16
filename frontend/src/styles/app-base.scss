@@ -1,7 +1,5 @@
-// NOTE: sticky footer
 html,
-body,
-.full-page-layout {
+body {
   width: 100%;
   max-width: 100vw;
   min-height: 100vh;
@@ -9,13 +7,4 @@ body,
 
 body {
   overflow-x: hidden;
-}
-
-.full-page-layout {
-  display: flex;
-  flex-direction: column;
-}
-
-.main-container {
-  flex: 1 0 auto;
 }

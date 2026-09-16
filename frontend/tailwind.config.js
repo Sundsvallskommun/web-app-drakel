@@ -18,5 +18,4 @@ module.exports = {
   },
   darkMode: 'class', // or 'media' or 'class'
   presets: [require('@sk-web-gui/core').preset()],
-  // plugins: [require('@tailwindcss/forms'), require('@sk-web-gui/core')],
 };

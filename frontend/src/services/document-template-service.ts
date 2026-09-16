@@ -2,7 +2,7 @@ import { ServiceResponse } from '@interfaces/services';
 import { ApiResponse, apiService, toServiceError } from '@services/api-service';
 
 /** A selectable template (document or phrase) for the new-document editor. */
-export interface DocumentTemplateOption {
+interface DocumentTemplateOption {
   identifier?: string;
   name?: string;
 }

@@ -20,7 +20,6 @@ export default tseslint.config(
       '*.config.js',
       '*.config.mjs',
       'middleware-envs-generator.mjs',
-      'next-i18next.config.js',
       'src/swagger-typescript-api.ts',
     ],
   },

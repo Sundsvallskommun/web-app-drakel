@@ -42,12 +42,7 @@ const AppLayout = ({ children }: ClientApplicationProps) => {
   }, [getMe]);
 
   // Force light mode for now (ignores the stored/system preference).
-  return (
-    <GuiProvider colorScheme={ColorSchemeMode.Light}>
-      {children}
-      {/* <InactivityMonitor /> */}
-    </GuiProvider>
-  );
+  return <GuiProvider colorScheme={ColorSchemeMode.Light}>{children}</GuiProvider>;
 };
 
 export default AppLayout;

@@ -10,7 +10,7 @@ import { FC, useEffect, useRef } from 'react';
  * `registerInsert` callback that hands the parent a "paste this HTML at the cursor" function (used for
  * inserting phrases). Selecting a full document template instead replaces the whole `value` from the parent.
  */
-export const DocumentEditor: FC<{
+const DocumentEditor: FC<{
   value: TextEditorValue;
   onChange: (value: TextEditorValue) => void;
   /** Optional — given a "paste this HTML at the cursor" function (used to insert phrases). */

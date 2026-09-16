@@ -110,9 +110,9 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   // errand's UUID. Gate those fetches on the resolved errand.id so we never call them with a non-UUID.
   const resolvedErrandId = errand?.id ?? '';
 
-  // The tab layout depends on the application type. A new application has no calculation/decision/payment
-  // flow; both new and supplementary applications omit the Dokumentation group. Renewal — and any unknown
-  // or generic type — gets the full set.
+  // The tab layout depends on the application type. New and supplementary applications have no
+  // calculation/decision/payment flow, and a new application also omits the Dokumentation group. Renewal — and
+  // any unknown or generic type — gets the full set.
   const typeSlug = errand?.typeSlug ?? '';
   const isNewApplication = typeSlug === 'financial-assistance-new';
   const isSupplementaryApplication = typeSlug === 'financial-assistance-supplementary';
@@ -189,7 +189,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   const conversationAttachments = attachments.filter(
     (attachment) => attachment.documentType === 'CONVERSATION' && attachment.id !== conversationSummaryAttachment?.id
   );
-  // The generated "ärendeuppgifter" PDF (documentType CASE_DATA) is previewed on the Ärendeuppgifter tab,
+  // The generated "ärendeuppgifter" PDF (documentType CASE_DATA) is opened via "Visa pdf" on the Ansökan tab,
   // so it's excluded from the Bilagor list below to avoid showing it twice.
   const caseDataAttachment = attachments.find((attachment) => attachment.documentType === 'CASE_DATA');
   // The generated beslut PDF (documentType DECISION) is sent/saved by "Besluta och utbetala" but not listed here.
@@ -276,7 +276,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
 
   // Tabs are grouped into top-level sections; a group with several tabs gets a secondary sub-tab row, a
   // single-tab group renders its content directly. "Ärende" holds the whole application/decision flow;
-  // Dokumentation and Händelselogg stay separate (the latter is an audit log).
+  // Meddelanden and Dokumentation are separate groups (Händelselogg lives in the right column).
   const tabGroups: ErrandTabGroup[] = [
     {
       label: 'Ärende',

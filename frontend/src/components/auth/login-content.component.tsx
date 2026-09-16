@@ -6,12 +6,9 @@ import { Button, FormErrorMessage } from '@sk-web-gui/react';
 import { apiURL } from '@utils/api-url';
 import { appURL } from '@utils/app-url';
 import { PATH } from '@utils/constants';
-import { capitalize } from 'lodash';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-
-const autoLogin = false;
 
 const LoginContent: React.FC = () => {
   const router = useRouter();
@@ -59,17 +56,12 @@ const LoginContent: React.FC = () => {
       return;
     }
 
-    if (failMessage === 'NOT_AUTHORIZED' && autoLogin) {
-      onLogin();
-      return;
-    }
-
     if (failMessage) {
       setErrorMessage(t(`login:errors.${failMessage}`));
     }
 
     setIsLoading(false);
-  }, [failMessage, isLoggedOut, onLogin, router, t]);
+  }, [failMessage, isLoggedOut, router, t]);
 
   if (isLoading) {
     return (
@@ -90,7 +82,7 @@ const LoginContent: React.FC = () => {
             </div>
 
             <Button inverted onClick={onLogin} ref={initialFocusRef} data-cy="loginButton">
-              {capitalize(t('common:login'))}
+              {t('common:login')}
             </Button>
 
             {errorMessage && <FormErrorMessage className="mt-lg">{errorMessage}</FormErrorMessage>}

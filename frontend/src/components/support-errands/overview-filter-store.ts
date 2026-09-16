@@ -5,7 +5,7 @@ import { ErrandView } from './errand-views';
 import { emptyFilters, ErrandFilters } from './errands-filter.component';
 import { SortDirection } from './errands-table.component';
 
-export interface OverviewSort {
+interface OverviewSort {
   column: string;
   direction: SortDirection;
 }
