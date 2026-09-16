@@ -8,8 +8,16 @@ import { envs } from '../middleware-envs';
 // navigation or a refresh with an expired session is redirected to the login page.
 const PUBLIC_PATHS = ['/login', '/logout'];
 
-const isPublicPath = (pathname: string): boolean =>
-  PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+/** The path without a leading language segment, e.g. "/en/login" → "/login". */
+const withoutLanguagePrefix = (pathname: string): string => {
+  const [, firstSegment, ...rest] = pathname.split('/');
+  return i18nConfig.locales.includes(firstSegment ?? '') ? `/${rest.join('/')}` : pathname;
+};
+
+const isPublicPath = (pathname: string): boolean => {
+  const path = withoutLanguagePrefix(pathname);
+  return PUBLIC_PATHS.some((publicPath) => path === publicPath || path.startsWith(`${publicPath}/`));
+};
 
 export async function proxy(req: NextRequest) {
   const { pathname, origin } = req.nextUrl;

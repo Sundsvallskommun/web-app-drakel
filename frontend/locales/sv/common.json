@@ -1,3 +1,52 @@
 {
-  "login": "Logga in"
+  "login": "Logga in",
+  "logout": "Logga ut",
+  "save": "Spara",
+  "saving": "Sparar…",
+  "cancel": "Avbryt",
+  "close": "Stäng",
+  "delete": "Ta bort",
+  "edit": "Redigera",
+  "add": "Lägg till",
+  "remove": "Ta bort",
+  "show": "Visa",
+  "download": "Ladda ner",
+  "preview": "Förhandsgranska",
+  "update": "Uppdatera",
+  "lock": "Lås",
+  "send": "Skicka",
+  "yes": "Ja",
+  "no": "Nej",
+  "loading": "Laddar…",
+  "notSet": "Ej satt",
+  "unknown": "Okänd",
+  "none": "—",
+  "language": "Språk",
+  "languages": {
+    "sv": "Svenska",
+    "en": "English"
+  },
+  "status": {
+    "RECEIVED": "Inkommen",
+    "NEEDS_MANUAL_REVIEW": "Kräver manuell granskning",
+    "UNDER_REVIEW": "Under utredning",
+    "SUPPLEMENT_REQUESTED": "Komplettering begärd",
+    "AWAITING_DECISION": "Väntar på beslut",
+    "GRANTED": "Beviljad",
+    "REJECTED": "Avslagen",
+    "PAID": "Utbetald",
+    "WITHDRAWN": "Återtagen",
+    "CLOSED": "Avslutad"
+  },
+  "priority": {
+    "LOW": "Låg",
+    "MEDIUM": "Medel",
+    "HIGH": "Hög"
+  },
+  "role": {
+    "APPLICANT": "Sökande",
+    "CO_APPLICANT": "Medsökande",
+    "CHILD": "Barn",
+    "VISITATION_CHILD": "Umgängesbarn"
+  }
 }

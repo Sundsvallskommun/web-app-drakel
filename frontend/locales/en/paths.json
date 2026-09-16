@@ -1,0 +1,18 @@
+{
+  "/login": {
+    "title": "Login",
+    "description": "Log in to the case management tool for financial assistance"
+  },
+  "/oversikt": {
+    "title": "Overview",
+    "description": "Overview of errands"
+  },
+  "/registrera": {
+    "title": "New errand",
+    "description": "Register a new errand"
+  },
+  "/arende": {
+    "title": "Errand",
+    "description": "Errand handling"
+  }
+}

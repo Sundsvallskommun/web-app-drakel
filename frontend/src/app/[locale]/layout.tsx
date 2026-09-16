@@ -1,3 +1,5 @@
+import { I18N_NAMESPACES } from '@app/i18n-namespaces';
+import i18nConfig from '@app/i18nConfig';
 import LocalizationProvider from '@components/localization-provider/localization-provider';
 import { headers } from 'next/headers';
 import { ReactNode } from 'react';
@@ -9,7 +11,7 @@ interface LocaleLayoutProps {
   params: Promise<{ locale: string }>;
 }
 
-const namespaces = ['common', 'paths', 'login'];
+const namespaces = I18N_NAMESPACES;
 
 const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
   const { locale } = await params;
@@ -21,7 +23,14 @@ const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
 export const generateMetadata = async ({ params }: LocaleLayoutProps) => {
   const { locale } = await params;
   const { t } = await initLocalization(locale, namespaces);
-  const path = (await headers()).get('x-path');
+  const requestPath = (await headers()).get('x-path');
+  // Titles are keyed by the page's first path segment without the language prefix (e.g. "/arende" for
+  // "/en/arende/FINANCIAL_ASSISTANCE-1").
+  const segments = (requestPath ?? '').split('/').filter(Boolean);
+  if (segments[0] && i18nConfig.locales.includes(segments[0])) {
+    segments.shift();
+  }
+  const path = segments[0] ? `/${segments[0]}` : null;
 
   const pathName =
     !path ? null : (

@@ -1,6 +1,18 @@
 {
   "/login": {
     "title": "Inloggningssida",
-    "description": "Beskrivning utav inloggningssidan"
+    "description": "Logga in i handläggarstödet för ekonomiskt bistånd"
+  },
+  "/oversikt": {
+    "title": "Översikt",
+    "description": "Översikt över ärenden"
+  },
+  "/registrera": {
+    "title": "Nytt ärende",
+    "description": "Registrera ett nytt ärende"
+  },
+  "/arende": {
+    "title": "Ärende",
+    "description": "Handläggning av ärende"
   }
 }

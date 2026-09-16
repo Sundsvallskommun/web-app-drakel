@@ -1,0 +1,52 @@
+{
+  "login": "Log in",
+  "logout": "Log out",
+  "save": "Save",
+  "saving": "Saving…",
+  "cancel": "Cancel",
+  "close": "Close",
+  "delete": "Delete",
+  "edit": "Edit",
+  "add": "Add",
+  "remove": "Remove",
+  "show": "View",
+  "download": "Download",
+  "preview": "Preview",
+  "update": "Refresh",
+  "lock": "Lock",
+  "send": "Send",
+  "yes": "Yes",
+  "no": "No",
+  "loading": "Loading…",
+  "notSet": "Not set",
+  "unknown": "Unknown",
+  "none": "—",
+  "language": "Language",
+  "languages": {
+    "sv": "Svenska",
+    "en": "English"
+  },
+  "status": {
+    "RECEIVED": "Received",
+    "NEEDS_MANUAL_REVIEW": "Needs manual review",
+    "UNDER_REVIEW": "Under investigation",
+    "SUPPLEMENT_REQUESTED": "Supplement requested",
+    "AWAITING_DECISION": "Awaiting decision",
+    "GRANTED": "Granted",
+    "REJECTED": "Rejected",
+    "PAID": "Paid",
+    "WITHDRAWN": "Withdrawn",
+    "CLOSED": "Closed"
+  },
+  "priority": {
+    "LOW": "Low",
+    "MEDIUM": "Medium",
+    "HIGH": "High"
+  },
+  "role": {
+    "APPLICANT": "Applicant",
+    "CO_APPLICANT": "Co-applicant",
+    "CHILD": "Child",
+    "VISITATION_CHILD": "Visiting child"
+  }
+}

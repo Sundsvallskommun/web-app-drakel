@@ -9,13 +9,14 @@ import { useParams } from 'next/navigation';
 import { useShallow } from 'zustand/react/shallow';
 
 import { HeaderNotifications } from './header-notifications.component';
-import { userMenuGroups } from './user-menu-groups';
+import { useUserMenuGroups } from './user-menu-groups';
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
 /** Dark top header for the errand/register pages: service logo, "Nytt ärende", notifications and user menu. */
 export const AppHeader = () => {
   const user = useUserStore(useShallow((state) => state.user));
+  const userMenuGroups = useUserMenuGroups();
   const { locale } = useParams<{ locale: string }>();
   const appName = process.env.NEXT_PUBLIC_APP_NAME ?? 'Drakel';
 
