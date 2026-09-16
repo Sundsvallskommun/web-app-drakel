@@ -1,7 +1,8 @@
 'use client';
 
+import { AsyncContent } from '@components/common/async-content.component';
 import { acknowledgeWarning, reopenWarning, Warning, warningTypeLabel } from '@services/warning-service';
-import { Button, Checkbox, cx, Spinner } from '@sk-web-gui/react';
+import { Button, Checkbox, cx } from '@sk-web-gui/react';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
 import { FC, useState } from 'react';
 
@@ -54,13 +55,14 @@ export const ErrandWarnings: FC<ErrandWarningsProps> = ({ errandId, warnings, is
 
       {actionError && <p className="text-error-surface-primary m-0">{actionError}</p>}
 
-      {isLoading ?
-        <Spinner size={3} />
-      : loadError ?
-        <p className="m-0">Det gick inte att hämta varningar</p>
-      : visibleWarnings.length === 0 ?
-        <p className="m-0 text-dark-secondary">{showCurrentOnly ? 'Inga aktuella varningar' : 'Inga varningar'}</p>
-      : <ul className="flex flex-col gap-12 m-0 p-0 list-none">
+      <AsyncContent
+        isLoading={isLoading}
+        error={loadError}
+        errorText="Det gick inte att hämta varningar"
+        isEmpty={visibleWarnings.length === 0}
+        emptyText={showCurrentOnly ? 'Inga aktuella varningar' : 'Inga varningar'}
+      >
+        <ul className="flex flex-col gap-12 m-0 p-0 list-none">
           {visibleWarnings.map((warning, index) => {
             const open = warning.status === 'OPEN';
             return (
@@ -117,7 +119,7 @@ export const ErrandWarnings: FC<ErrandWarningsProps> = ({ errandId, warnings, is
             );
           })}
         </ul>
-      }
+      </AsyncContent>
     </div>
   );
 };

@@ -1,7 +1,8 @@
 'use client';
 
+import { AsyncContent } from '@components/common/async-content.component';
 import { createNote, deleteNote, Note, updateNote } from '@services/note-service';
-import { Avatar, Button, Divider, FormControl, Modal, Spinner, Textarea } from '@sk-web-gui/react';
+import { Avatar, Button, Divider, FormControl, Modal, Textarea } from '@sk-web-gui/react';
 import { prettyTime } from '@utils/pretty-time';
 import { Pencil, Trash } from 'lucide-react';
 import { FC, useState } from 'react';
@@ -63,15 +64,16 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
 
   return (
     <div className="flex flex-col gap-16 h-full">
-      {(error ?? loadError) && (
-        <p className="text-error-surface-primary m-0">{error ?? 'Det gick inte att hämta anteckningarna'}</p>
-      )}
+      {error && <p className="text-error-surface-primary m-0">{error}</p>}
 
-      {isLoading ?
-        <Spinner size={3} />
-      : notes.length === 0 ?
-        <p className="m-0 text-dark-secondary">Det finns inga anteckningar.</p>
-      : <div className="flex flex-col" data-cy="notes-wrapper">
+      <AsyncContent
+        isLoading={isLoading}
+        error={loadError}
+        errorText="Det gick inte att hämta anteckningarna"
+        isEmpty={notes.length === 0}
+        emptyText="Det finns inga anteckningar."
+      >
+        <div className="flex flex-col" data-cy="notes-wrapper">
           {notes.map((note, index) => (
             <div key={note.id ?? index}>
               <div className="py-12 flex justify-between gap-12" data-cy={`note-${index}`}>
@@ -115,7 +117,7 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
             </div>
           ))}
         </div>
-      }
+      </AsyncContent>
 
       <div className="w-full mt-auto flex flex-col items-start gap-12">
         <FormControl id="new-note" className="w-full">

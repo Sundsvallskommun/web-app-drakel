@@ -1,9 +1,9 @@
 'use client';
 
+import { AsyncContent } from '@components/common/async-content.component';
 import { useErrandJobStimulus } from '@hooks/use-errand-job-stimulus';
 import { faLabel } from '@interfaces/financial-assistance';
 import { JobStimulusPeriod } from '@services/job-stimulus-service';
-import { Spinner } from '@sk-web-gui/react';
 import { formatDateRange } from '@utils/date-range';
 import { FC } from 'react';
 
@@ -42,18 +42,19 @@ export const ErrandJobStimulus: FC<{ errandId: string }> = ({ errandId }) => {
 
   return (
     <ContentBox title="Jobbstimulansperioder" action={<LifecareSourceBadge source="LIFECARE" />}>
-      {isLoading ?
-        <Spinner size={3} />
-      : error ?
-        <p className="text-error-surface-primary m-0">Det gick inte att hämta jobbstimulansperioder</p>
-      : periods.length === 0 ?
-        <p className="m-0 text-dark-secondary">Inga jobbstimulansperioder.</p>
-      : <div className="grid grid-cols-1 md:grid-cols-2 gap-x-32 gap-y-24">
+      <AsyncContent
+        isLoading={isLoading}
+        error={error}
+        errorText="Det gick inte att hämta jobbstimulansperioder"
+        isEmpty={periods.length === 0}
+        emptyText="Inga jobbstimulansperioder."
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-32 gap-y-24">
           {ROLES.map((role) => (
             <PartyPeriods key={role} role={role} periods={periods.filter((period) => period.role === role)} />
           ))}
         </div>
-      }
+      </AsyncContent>
     </ContentBox>
   );
 };

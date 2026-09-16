@@ -1,8 +1,8 @@
 'use client';
 
+import { AsyncContent } from '@components/common/async-content.component';
 import { PdfPreview } from '@components/common/pdf-preview.component';
 import { Attachment } from '@data-contracts/backend/data-contracts';
-import { Spinner } from '@sk-web-gui/react';
 import { SUMMARY_PDF } from '@utils/attachment-names';
 import { FC } from 'react';
 
@@ -53,22 +53,17 @@ export const ErrandAttachments: FC<ErrandAttachmentsProps> = ({
         />
       : null}
 
-      {isLoading ?
-        <Spinner size={3} />
-      : loadError ?
-        <p className="m-0">Det gick inte att hämta bilagor</p>
-      : <>
-          <AttachmentList errandId={errandId} attachments={attachments} heading={heading} />
-          {messageAttachments ?
-            <AttachmentList
-              errandId={errandId}
-              attachments={messageAttachments}
-              heading="Bilagor från meddelanden"
-              placeholder="Inga bilagor i meddelanden"
-            />
-          : null}
-        </>
-      }
+      <AsyncContent isLoading={isLoading} error={loadError} errorText="Det gick inte att hämta bilagor">
+        <AttachmentList errandId={errandId} attachments={attachments} heading={heading} />
+        {messageAttachments ?
+          <AttachmentList
+            errandId={errandId}
+            attachments={messageAttachments}
+            heading="Bilagor från meddelanden"
+            placeholder="Inga bilagor i meddelanden"
+          />
+        : null}
+      </AsyncContent>
     </div>
   );
 };

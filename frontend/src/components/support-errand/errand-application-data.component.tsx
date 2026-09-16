@@ -1,9 +1,9 @@
 'use client';
 
+import { AsyncContent } from '@components/common/async-content.component';
 import { Errand } from '@data-contracts/backend/data-contracts';
 import { faLabel, FinancialAssistanceData, SubmittedChild, swedishMonth } from '@interfaces/financial-assistance';
 import { getApplicationData } from '@services/errand-service/errand-service';
-import { Spinner } from '@sk-web-gui/react';
 import { applicationSectionIcon } from '@utils/application-section-icon';
 import { formatDateRange } from '@utils/date-range';
 import { FC, ReactNode, useEffect, useState } from 'react';
@@ -298,11 +298,16 @@ export const ErrandApplicationData: FC<{ errand: Errand }> = ({ errand }) => {
         <ErrandJobStimulus errandId={errand.id ?? ''} />
       </ApplicationAccordion>
 
-      {isLoading ?
-        <Spinner size={3} />
-      : data ?
-        <ApplicationSections data={data} />
-      : <p className="m-0">Inga inskickade uppgifter att visa för det här ärendet.</p>}
+      <AsyncContent
+        isLoading={isLoading}
+        errorText=""
+        isEmpty={!data}
+        emptyText="Inga inskickade uppgifter att visa för det här ärendet."
+      >
+        {data ?
+          <ApplicationSections data={data} />
+        : null}
+      </AsyncContent>
     </div>
   );
 };

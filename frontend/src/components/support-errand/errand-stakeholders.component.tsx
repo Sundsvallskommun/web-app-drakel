@@ -1,8 +1,8 @@
 'use client';
 
+import { AsyncContent } from '@components/common/async-content.component';
 import { Stakeholder } from '@data-contracts/backend/data-contracts';
 import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
-import { Spinner } from '@sk-web-gui/react';
 import { stakeholderDisplayName } from '@utils/stakeholder-name';
 import { compareByRole, stakeholderRoleLabel } from '@utils/stakeholder-role';
 import { FC } from 'react';
@@ -39,14 +39,18 @@ const groupByRoleLabel = (stakeholders: Stakeholder[]): { roleLabel: string; mem
 export const ErrandStakeholders: FC<{ errandId: string }> = ({ errandId }) => {
   const { stakeholders, isLoading, error } = useErrandStakeholders(errandId);
 
-  if (isLoading) {
-    return <Spinner size={3} />;
-  }
-  if (error) {
-    return <p className="m-0">Det gick inte att hämta intressenter ({String(error)})</p>;
-  }
-  if (stakeholders.length === 0) {
-    return <p className="m-0">Inga intressenter</p>;
+  if (isLoading || error || stakeholders.length === 0) {
+    return (
+      <AsyncContent
+        isLoading={isLoading}
+        error={error}
+        errorText="Det gick inte att hämta intressenter"
+        isEmpty
+        emptyText="Inga intressenter"
+      >
+        {null}
+      </AsyncContent>
+    );
   }
 
   // Sökande (applicant) first, then co-applicant etc.

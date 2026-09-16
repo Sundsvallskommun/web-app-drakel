@@ -1,7 +1,8 @@
 'use client';
 
+import { AsyncContent } from '@components/common/async-content.component';
 import { Bevakning, createBevakning, deleteBevakning } from '@services/bevakning-service';
-import { Button, DatePicker, FormControl, FormLabel, Input, Spinner, Textarea } from '@sk-web-gui/react';
+import { Button, DatePicker, FormControl, FormLabel, Input, Textarea } from '@sk-web-gui/react';
 import { formatDateRange } from '@utils/date-range';
 import { Trash } from 'lucide-react';
 import { FC, useState } from 'react';
@@ -75,15 +76,16 @@ export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
 
   return (
     <div className="flex flex-col gap-16 h-full">
-      {(error ?? loadError) && (
-        <p className="text-error-surface-primary m-0">{error ?? 'Det gick inte att hämta bevakningar'}</p>
-      )}
+      {error && <p className="text-error-surface-primary m-0">{error}</p>}
 
-      {isLoading ?
-        <Spinner size={3} />
-      : bevakningar.length === 0 ?
-        <p className="m-0 text-dark-secondary">Inga bevakningar.</p>
-      : <ul className="flex flex-col gap-12 m-0 p-0 list-none">
+      <AsyncContent
+        isLoading={isLoading}
+        error={loadError}
+        errorText="Det gick inte att hämta bevakningar"
+        isEmpty={bevakningar.length === 0}
+        emptyText="Inga bevakningar."
+      >
+        <ul className="flex flex-col gap-12 m-0 p-0 list-none">
           {bevakningar.map((bevakning, index) => (
             <li
               key={bevakning.id ?? index}
@@ -113,7 +115,7 @@ export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
             </li>
           ))}
         </ul>
-      }
+      </AsyncContent>
 
       <div className="mt-auto flex flex-col gap-12 border-t-1 border-divider pt-16">
         <FormControl id="bevakning-titel" className="w-full">

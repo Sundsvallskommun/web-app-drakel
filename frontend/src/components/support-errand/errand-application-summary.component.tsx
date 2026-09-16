@@ -1,8 +1,8 @@
 'use client';
 
+import { AsyncContent } from '@components/common/async-content.component';
 import { Errand, FormSnapshot } from '@data-contracts/backend/data-contracts';
 import { useErrandFormSnapshot } from '@hooks/use-errand-form-snapshot';
-import { Spinner } from '@sk-web-gui/react';
 import dayjs from 'dayjs';
 import { FC, ReactNode } from 'react';
 
@@ -40,13 +40,11 @@ export const ErrandApplicationSummary: FC<{ errandId: string; errand: Errand; ac
   return (
     <>
       <ErrandSectionHeader title="Ansökan" description={description} action={action} />
-      {isLoading ?
-        <div className="flex justify-center my-32">
-          <Spinner size={3} />
-        </div>
-      : snapshot ?
-        <FormSnapshotView snapshot={snapshot} />
-      : <ErrandApplicationData errand={errand} />}
+      <AsyncContent isLoading={isLoading} errorText="" centered>
+        {snapshot ?
+          <FormSnapshotView snapshot={snapshot} />
+        : <ErrandApplicationData errand={errand} />}
+      </AsyncContent>
     </>
   );
 };

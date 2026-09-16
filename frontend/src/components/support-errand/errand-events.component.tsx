@@ -1,8 +1,9 @@
 'use client';
 
+import { AsyncContent } from '@components/common/async-content.component';
 import { useErrandEvents } from '@hooks/use-errand-events';
 import { ErrandEvent } from '@services/event-service';
-import { Button, Select, Spinner } from '@sk-web-gui/react';
+import { Button, Select } from '@sk-web-gui/react';
 import dayjs from 'dayjs';
 import { FC, useState } from 'react';
 
@@ -91,49 +92,46 @@ export const ErrandEvents: FC<{ errandId: string }> = ({ errandId }) => {
         </Select>
       </div>
 
-      {error && (
-        <p className="text-error-surface-primary m-0">Det gick inte att hämta händelseloggen ({String(error)})</p>
-      )}
-
-      {isLoading ?
-        <Spinner size={3} />
-      : events.length === 0 ?
-        <p className="m-0 text-dark-secondary">Inga händelser.</p>
-      : <>
-          <ul className="flex flex-col gap-8 m-0 p-0 list-none">
-            {visible.map((event, index) => (
-              <li key={event.id ?? index} className="rounded-12 border-1 border-divider p-12 flex flex-col gap-4">
-                <div className="flex items-center justify-between gap-8">
-                  <span className={`inline-block text-small rounded-8 px-8 py-2 ${actionChipClass(event.action)}`}>
-                    {actionLabel(event.action)}
-                  </span>
-                  {sourceLabel(event.source) ?
-                    <span className="text-small text-dark-secondary shrink-0">{sourceLabel(event.source)}</span>
-                  : null}
-                </div>
-                {event.target ?
-                  <span className="text-small break-words">{event.target}</span>
-                : null}
-                <span className="text-small text-dark-secondary break-words">
-                  {actorLabel(event)} · {formatWhen(event.created)}
+      <AsyncContent
+        isLoading={isLoading}
+        error={error}
+        errorText="Det gick inte att hämta händelseloggen"
+        isEmpty={events.length === 0}
+        emptyText="Inga händelser."
+      >
+        <ul className="flex flex-col gap-8 m-0 p-0 list-none">
+          {visible.map((event, index) => (
+            <li key={event.id ?? index} className="rounded-12 border-1 border-divider p-12 flex flex-col gap-4">
+              <div className="flex items-center justify-between gap-8">
+                <span className={`inline-block text-small rounded-8 px-8 py-2 ${actionChipClass(event.action)}`}>
+                  {actionLabel(event.action)}
                 </span>
-              </li>
-            ))}
-          </ul>
-          {hasMore ?
-            <Button
-              size="sm"
-              variant="secondary"
-              className="self-center"
-              onClick={() => {
-                setVisibleCount((prev) => prev + PAGE_SIZE);
-              }}
-            >
-              Visa fler
-            </Button>
-          : null}
-        </>
-      }
+                {sourceLabel(event.source) ?
+                  <span className="text-small text-dark-secondary shrink-0">{sourceLabel(event.source)}</span>
+                : null}
+              </div>
+              {event.target ?
+                <span className="text-small break-words">{event.target}</span>
+              : null}
+              <span className="text-small text-dark-secondary break-words">
+                {actorLabel(event)} · {formatWhen(event.created)}
+              </span>
+            </li>
+          ))}
+        </ul>
+        {hasMore ?
+          <Button
+            size="sm"
+            variant="secondary"
+            className="self-center"
+            onClick={() => {
+              setVisibleCount((prev) => prev + PAGE_SIZE);
+            }}
+          >
+            Visa fler
+          </Button>
+        : null}
+      </AsyncContent>
     </div>
   );
 };

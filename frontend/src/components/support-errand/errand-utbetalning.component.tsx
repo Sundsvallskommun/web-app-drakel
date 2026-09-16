@@ -1,9 +1,10 @@
 'use client';
 
+import { AsyncContent } from '@components/common/async-content.component';
 import { useErrandPayment } from '@hooks/use-errand-payment';
 import { PaymentStatus } from '@services/payment-service';
 import { Alert } from '@sk-web-gui/alert';
-import { Button, Spinner } from '@sk-web-gui/react';
+import { Button } from '@sk-web-gui/react';
 import { formatApplicationMonth } from '@utils/application-month';
 import { RotateCcw } from 'lucide-react';
 import { FC, ReactNode } from 'react';
@@ -60,15 +61,17 @@ export const ErrandUtbetalning: FC<{
   const { status, isLoading, error, refresh } = useErrandPayment(errandId);
 
   const renderStatus = (): ReactNode => {
-    if (isLoading) {
+    if (isLoading || error || !status) {
       return (
-        <div className="flex justify-center my-32">
-          <Spinner size={4} />
-        </div>
+        <AsyncContent
+          isLoading={isLoading}
+          error={error ?? !status}
+          errorText="Det gick inte att hämta utbetalningsstatus"
+          centered
+        >
+          {null}
+        </AsyncContent>
       );
-    }
-    if (error || !status) {
-      return <p className="m-0">Det gick inte att hämta utbetalningsstatus ({String(error ?? 'okänt fel')})</p>;
     }
     return (
       <>

@@ -1,7 +1,8 @@
 'use client';
 
+import { AsyncContent } from '@components/common/async-content.component';
 import { ErrandNotification } from '@services/notification-service';
-import { Button, Spinner } from '@sk-web-gui/react';
+import { Button } from '@sk-web-gui/react';
 import dayjs from 'dayjs';
 import { Check, X } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
@@ -61,7 +62,9 @@ export const NotificationsPanel: FC<NotificationsPanelProps> = ({
         }}
       >
         <span className="font-bold text-small">{subTypeLabel(notification.subType)}</span>
-        {notification.description ? <span className="text-small break-words">{notification.description}</span> : null}
+        {notification.description ?
+          <span className="text-small break-words">{notification.description}</span>
+        : null}
         <span className="text-small text-dark-secondary">{formatWhen(notification.created)}</span>
       </button>
       {withAcknowledge ?
@@ -87,13 +90,14 @@ export const NotificationsPanel: FC<NotificationsPanelProps> = ({
         <Button size="sm" variant="tertiary" iconButton aria-label="Stäng notiser" leftIcon={<X />} onClick={onClose} />
       </div>
 
-      {loadError && <p className="text-error-surface-primary m-0 text-small">Det gick inte att hämta notiser</p>}
-
-      {isLoading ?
-        <Spinner size={3} />
-      : notifications.length === 0 ?
-        <p className="m-0 text-small text-dark-secondary">Inga notiser.</p>
-      : <div className="flex flex-col gap-16 overflow-y-auto min-h-0">
+      <AsyncContent
+        isLoading={isLoading}
+        error={loadError}
+        errorText="Det gick inte att hämta notiser"
+        isEmpty={notifications.length === 0}
+        emptyText="Inga notiser."
+      >
+        <div className="flex flex-col gap-16 overflow-y-auto min-h-0">
           {unread.length ?
             <section className="flex flex-col gap-8">
               <h3 className="text-small font-bold m-0">Nya</h3>
@@ -107,7 +111,7 @@ export const NotificationsPanel: FC<NotificationsPanelProps> = ({
             </section>
           : null}
         </div>
-      }
+      </AsyncContent>
     </div>
   );
 };

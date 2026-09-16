@@ -96,9 +96,9 @@ export const ErrandJournal: FC<{ errandId: string }> = ({ errandId }) => {
         }
       />
 
-      {error && <p className="text-error-surface-primary m-0">Det gick inte att hämta journalen ({String(error)})</p>}
-
       <RecordList
+        error={error}
+        errorText="Det gick inte att hämta journalen"
         title="Tillagda journalanteckningar"
         isLoading={isLoading}
         isEmpty={entries.length === 0}
