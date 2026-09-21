@@ -1681,6 +1681,8 @@ export interface FinalizeResponse {
   rpaTasks?: RpaTask[];
   /** The communication channels chosen — the frontend sends the decision through these */
   communication?: CommunicationChannels;
+  /** Warnings about the payees the decision pays to — a payment cannot be registered in Lifecare against a payee that is not there yet. Present when a payment names a manually added payee whose ADD_PAYEE robot task has not reported SYNCED. Empty when every payee is in Lifecare. The finalize itself is not blocked by these; the decision, the payment rows and the queue items are created either way. */
+  payeeWarnings?: string[];
 }
 
 /** One RPA write-back task the finalize step tried to enqueue. */
