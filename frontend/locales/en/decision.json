@@ -50,6 +50,39 @@
     "notPaid": {
       "title": "Not paid yet",
       "description": "No effectuated Lifecare payment for the application month."
+    },
+    "form": {
+      "title": "Register payment",
+      "moneyType": "Funds",
+      "paymentDate": "Payment date",
+      "amount": "Amount",
+      "applicationMonth": "For month",
+      "reportedOn": "Reported on",
+      "accountingDate": "Accounting date",
+      "excludedFromPayment": "Not paid/booked",
+      "recipient": "Payee",
+      "paymentMethod": "Payment method",
+      "paymentMethods": {
+        "BANK_ACCOUNT": "Bank account",
+        "PAYMENT_CARD": "Payment card",
+        "LOCAL_PAYMENT": "Local payment",
+        "INVOICE": "Invoice"
+      },
+      "name": "Name",
+      "address": "Address",
+      "careOf": "C/O address",
+      "zipCode": "Postcode",
+      "city": "City",
+      "clearingNumber": "Clearing",
+      "accountNumber": "Account number",
+      "localPaymentNumber": "Local payment number",
+      "invoiceNumber": "Invoice number",
+      "usesOcr": "OCR",
+      "messageLines": "Message lines",
+      "addMessageLine": "Add message line",
+      "next": "Next",
+      "unknownStakeholder": "Unknown stakeholder",
+      "messageLine": "Message line {{number}}"
     }
   }
 }

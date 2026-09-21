@@ -50,6 +50,39 @@
     "notPaid": {
       "title": "Inte utbetald ännu",
       "description": "Ingen verkställd Lifecare-utbetalning för ansökningsmånaden."
+    },
+    "form": {
+      "title": "Registrera utbetalning",
+      "moneyType": "Pengar",
+      "paymentDate": "Utbetalningsdatum",
+      "amount": "Belopp",
+      "applicationMonth": "Avser månad",
+      "reportedOn": "Redovisas på",
+      "accountingDate": "Bokföringsdatum",
+      "excludedFromPayment": "Utbetalas/bokförs ej",
+      "recipient": "Betalningsmottagare",
+      "paymentMethod": "Betalsätt",
+      "paymentMethods": {
+        "BANK_ACCOUNT": "Bankkonto",
+        "PAYMENT_CARD": "Utbetalningskort",
+        "LOCAL_PAYMENT": "Lokal betalning",
+        "INVOICE": "Räkning"
+      },
+      "name": "Namn",
+      "address": "Adress",
+      "careOf": "C/O adress",
+      "zipCode": "Postnummer",
+      "city": "Ort",
+      "clearingNumber": "Clearing",
+      "accountNumber": "Kontonummer",
+      "localPaymentNumber": "Lokalbetalningsnummer",
+      "invoiceNumber": "Räkningsnummer",
+      "usesOcr": "OCR",
+      "messageLines": "Meddelanderader",
+      "addMessageLine": "Lägg till meddelanderad",
+      "next": "Nästa",
+      "unknownStakeholder": "Okänd intressent",
+      "messageLine": "Meddelanderad {{number}}"
     }
   }
 }

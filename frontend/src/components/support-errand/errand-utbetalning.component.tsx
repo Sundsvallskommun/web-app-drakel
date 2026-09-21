@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 
 import { ContentBox } from './content-box.component';
 import { ErrandSectionHeader } from './errand-section-header.component';
+import { ErrandUtbetalningForm } from './errand-utbetalning-form.component';
 import { LabeledValue } from './labeled-value.component';
 import { LockedBanner } from './lockable-section.component';
 
@@ -104,6 +105,14 @@ export const ErrandUtbetalning: FC<{
         }
       >
         {renderStatus()}
+      </ContentBox>
+
+      <ContentBox title={t('payment.form.title')}>
+        <ErrandUtbetalningForm
+          errandId={errandId}
+          applicationMonth={status?.applicationMonth}
+          disabled={locked || isLoading}
+        />
       </ContentBox>
     </div>
   );
