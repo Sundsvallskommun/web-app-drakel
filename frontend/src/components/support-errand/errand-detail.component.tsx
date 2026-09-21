@@ -330,12 +330,13 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
         },
         {
           label: t('detail.tabs.attachments'),
-          counter: errandAttachments.length,
+          counter: errandAttachments.length + conversationAttachments.length,
           content: (
             <ErrandTabPanel>
               <ErrandAttachments
                 errandId={apiErrandId}
                 attachments={errandAttachments}
+                messageAttachments={conversationAttachments}
                 isLoading={attachmentsLoading}
                 loadError={!!attachmentsError}
                 heading={t('detail.attachmentsFromApplication')}

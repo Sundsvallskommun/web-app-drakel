@@ -1,8 +1,6 @@
 {
   "views": {
-    "all": "Alla ärenden",
-    "new": "Nya ärenden",
-    "open": "Öppna ärenden",
+    "ongoing": "Pågående ärenden",
     "closed": "Avslutade ärenden"
   },
   "sidebar": {

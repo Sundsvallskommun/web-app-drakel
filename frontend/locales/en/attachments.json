@@ -45,9 +45,9 @@
     "summaryTitle": "Summary of attachments from the application"
   },
   "messageAttachments": {
-    "heading": "Attachments from messages",
-    "empty": "No attachments in messages",
     "description": "Files sent in the errand's messages are collected here.",
-    "summaryTitle": "Summary of attachments from messages"
+    "summaryTitle": "Summary of attachments from messages",
+    "heading": "Attachments from messages",
+    "empty": "No attachments in messages"
   }
 }

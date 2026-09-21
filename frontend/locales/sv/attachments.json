@@ -45,9 +45,9 @@
     "summaryTitle": "Sammanställning bilagor från ansökan"
   },
   "messageAttachments": {
-    "heading": "Bilagor från meddelanden",
-    "empty": "Inga bilagor i meddelanden",
     "description": "Här samlas filer som har skickats i ärendets meddelanden.",
-    "summaryTitle": "Sammanställning bilagor från meddelanden"
+    "summaryTitle": "Sammanställning bilagor från meddelanden",
+    "heading": "Bilagor från meddelanden",
+    "empty": "Inga bilagor i meddelanden"
   }
 }

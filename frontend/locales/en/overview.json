@@ -1,8 +1,6 @@
 {
   "views": {
-    "all": "All errands",
-    "new": "New errands",
-    "open": "Open errands",
+    "ongoing": "Ongoing errands",
     "closed": "Closed errands"
   },
   "sidebar": {

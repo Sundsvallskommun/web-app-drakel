@@ -1,17 +1,15 @@
 'use client';
 
 import { Button, cx } from '@sk-web-gui/react';
-import { ChevronsLeft, ChevronsRight, CircleCheckBig, FilePen, Files, Inbox, type LucideIcon } from 'lucide-react';
+import { ChevronsLeft, ChevronsRight, CircleCheckBig, FilePen, LucideIcon } from 'lucide-react';
 import { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ERRAND_VIEWS, ErrandView } from './errand-views';
 
-/** Icon per overview view (Alla / Nya / Öppna / Avslutade). */
+/** Icon per overview view (Pågående / Avslutade). */
 const VIEW_ICON: Record<ErrandView, LucideIcon> = {
-  all: Files,
-  new: Inbox,
-  open: FilePen,
+  ongoing: FilePen,
   closed: CircleCheckBig,
 };
 

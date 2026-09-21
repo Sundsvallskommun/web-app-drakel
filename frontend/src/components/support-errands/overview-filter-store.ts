@@ -38,7 +38,7 @@ interface OverviewFilterActions {
 const DEFAULT_PAGE_SIZE = 12;
 
 const initialState: OverviewFilterState = {
-  selectedView: 'all',
+  selectedView: 'ongoing',
   query: '',
   filters: emptyFilters,
   sort: undefined,
@@ -59,8 +59,9 @@ export const useOverviewFilterStore = create<OverviewFilterState & OverviewFilte
       selectView: (view) => {
         set((state) => ({
           selectedView: view,
-          // The status filter only applies on "Alla ärenden" — clear it when moving to a scoped view.
-          filters: view === 'all' ? state.filters : { ...state.filters, status: [] },
+          // Switching view changes which statuses are in scope, so a status narrowing from the previous
+          // view would silently exclude everything.
+          filters: { ...state.filters, status: [] },
           page: 0,
         }));
       },
@@ -97,6 +98,16 @@ export const useOverviewFilterStore = create<OverviewFilterState & OverviewFilte
     }),
     {
       name: 'drakel-overview-filter',
+      // Bumped when the sidebar views became Pågående/Avslutade: a browser still holding 'all', 'new' or
+      // 'open' would otherwise select a view that no longer exists, leaving nothing highlighted.
+      version: 2,
+      migrate: (persisted) => {
+        const state = persisted as Partial<OverviewFilterState> | undefined;
+        return {
+          ...state,
+          selectedView: state?.selectedView === 'closed' ? 'closed' : 'ongoing',
+        } as OverviewFilterState;
+      },
       // We rehydrate manually (after mount) via a guard in the page so the SSR/first client render uses the
       // default state and there's no hydration mismatch.
       skipHydration: true,

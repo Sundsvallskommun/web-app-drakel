@@ -29,7 +29,6 @@ interface ErrandsFilterProps {
   statuses: Lookup[];
   administrators: Administrator[];
   /** The status filter is only offered on the "Alla ärenden" view (the other views already scope status). */
-  showStatusFilter: boolean;
   onlyMine: boolean;
   onOnlyMineChange: (checked: boolean) => void;
   onlyUnread: boolean;
@@ -49,7 +48,6 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
   onClearFilters,
   statuses,
   administrators,
-  showStatusFilter,
   onlyMine,
   onOnlyMineChange,
   onlyUnread,
@@ -120,17 +118,15 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
             applySearch('');
           }}
         />
-        {showStatusFilter && (
-          <ErrandFilterDropdown
-            label={t('filter.status')}
-            options={statusOptions}
-            selected={filters.status}
-            searchable
-            onChange={(values) => {
-              onFilterChange('status', values);
-            }}
-          />
-        )}
+        <ErrandFilterDropdown
+          label={t('filter.status')}
+          options={statusOptions}
+          selected={filters.status}
+          searchable
+          onChange={(values) => {
+            onFilterChange('status', values);
+          }}
+        />
         <ErrandFilterDropdown
           label={t('filter.assignee')}
           options={assigneeOptions}

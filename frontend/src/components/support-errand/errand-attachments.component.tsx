@@ -15,8 +15,9 @@ interface ErrandAttachmentsProps {
   /** The errand-level attachments (application / generated / errand files; conversation files excluded). */
   attachments: Attachment[];
   /**
-   * Conversation files; when passed they are listed as a second "Bilagor från meddelanden" group
-   * (they also have their own Meddelanden → Bilagor tab).
+   * Conversation files. They are merged into the single list rather than shown as their own group — a
+   * handläggare looking for a file should not have to know which way it arrived. They also keep their
+   * own Meddelanden → Bilagor tab.
    */
   messageAttachments?: Attachment[];
   isLoading: boolean;
@@ -25,7 +26,7 @@ interface ErrandAttachmentsProps {
   heading?: string;
 }
 
-/** The Ärende → Bilagor tab: heading, the application summary PDF and the attachment groups (read-only). */
+/** The Ärende → Bilagor tab: heading, the application summary PDF and one merged attachment list (read-only). */
 export const ErrandAttachments: FC<ErrandAttachmentsProps> = ({
   errandId,
   attachments,
@@ -50,15 +51,11 @@ export const ErrandAttachments: FC<ErrandAttachmentsProps> = ({
       : null}
 
       <AsyncContent isLoading={isLoading} error={loadError} errorText={t('loadError')}>
-        <AttachmentList errandId={errandId} attachments={attachments} heading={heading ?? t('title')} />
-        {messageAttachments ?
-          <AttachmentList
-            errandId={errandId}
-            attachments={messageAttachments}
-            heading={t('messageAttachments.heading')}
-            placeholder={t('messageAttachments.empty')}
-          />
-        : null}
+        <AttachmentList
+          errandId={errandId}
+          attachments={[...attachments, ...(messageAttachments ?? [])]}
+          heading={heading ?? t('title')}
+        />
       </AsyncContent>
     </div>
   );
