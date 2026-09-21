@@ -3518,6 +3518,7 @@ export enum SupplementsIngestOutcomeSectionEnum {
 export enum SupplementsIngestOutcomeOutcomeEnum {
   CREATED = "CREATED",
   UPDATED = "UPDATED",
+  UNCHANGED = "UNCHANGED",
   REPLACED = "REPLACED",
   SKIPPED = "SKIPPED",
   FAILED = "FAILED",
