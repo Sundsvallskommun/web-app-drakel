@@ -1494,7 +1494,7 @@ export interface CommunicationChannels {
 
 /** The caseworker's decision on the application — outcome, period, amount and what is communicated to the applicant. */
 export interface FinalizeDecision {
-  /** Decision outcome code. BIFALL/DELAVSLAG grant an amount (and require payments); AVSLAG/AVVISNING grant nothing. */
+  /** Decision outcome code. BIFALL/DELAVSLAG grant an amount (and require payments); AVSLAG grants nothing. DELAVSLAG is labelled "Delvis bifall" in the dropdown (see the errand type's decision options). AVVISNING was dropped 2026-09-21 and is no longer accepted. */
   outcome: FinalizeDecisionOutcomeEnum;
   /**
    * Internal motivation for the decision — stored as the decision's description, not shown to the applicant
@@ -1558,7 +1558,7 @@ export interface FinalizeRequest {
   decision: FinalizeDecision;
   /** The channels chosen for sending the calculation and decision to the applicant */
   communication: CommunicationChannels;
-  /** The payments to register in Lifecare. Required (at least one) when the outcome carries an amount; must be empty for AVSLAG/AVVISNING. */
+  /** The payments to register in Lifecare. Required (at least one) when the outcome carries an amount; must be empty for AVSLAG. */
   payments?: FinalizePayment[];
   /** Whether the caseworker changed the household size (gemensamma kostnader) in the calculation draft. When true the robot answers 'Ja' to Lifecare's prompt about saving the changed common costs when it writes the normberäkning. Defaults to false. */
   householdSizeChanged?: boolean;
@@ -1673,8 +1673,10 @@ export interface NormPersonRow {
   position?: number;
   /** The party id of the household member */
   partyId?: string;
-  /** The role of the household member */
+  /** The role of the household member (machine code; use roleDisplayName for the label) */
   role?: NormPersonRowRoleEnum;
+  /** Swedish display name for the role */
+  roleDisplayName?: string;
   /** The name of the household member */
   name?: string;
   /**
@@ -1850,8 +1852,10 @@ export interface NormExpenseRow {
   position?: number;
   /** Which Lifecare bucket the expense posts to */
   bucket?: NormExpenseRowBucketEnum;
-  /** The cost type */
+  /** The cost type (machine code; use costTypeDisplayName for the label) */
   costType?: string;
+  /** Swedish display name for the cost type — the Lifecare label from the type catalogue */
+  costTypeDisplayName?: string;
   /** The other sub-type (when the cost type is 'other') */
   otherSubType?: string;
   /** The cost specification */
@@ -2266,8 +2270,10 @@ export interface CalculationDraft {
    * @format int32
    */
   normId?: number;
-  /** The selected norm types */
-  normType?: string[];
+  /** The selected norm types (machine codes; use normTypeDisplayNames for the labels) */
+  normType?: CalculationDraftNormTypeEnum[];
+  /** Swedish display names for the selected norm types, in the same order as normType */
+  normTypeDisplayNames?: string[];
   /**
    * The start date of the calculation period
    * @format date
@@ -2869,8 +2875,10 @@ export interface DecisionProposal {
   explanation?: string;
   /** The proposed orsak: the previous Lifecare decision's reason, or null when there is none */
   reason?: string;
-  /** Every orsak the caseworker can pick instead — Lifecare's orsak-catalogue (försörjningshinder) in Lifecare's order, plus the previous decision's reason when that is not in the catalogue (FamilyCare exposes no reason catalogue over the API) */
+  /** Every orsak the caseworker can pick instead — Lifecare's orsak-catalogue (försörjningshinder) in Lifecare's order, plus the previous decision's reason(s) when those are not in the catalogue (FamilyCare exposes no reason catalogue over the API). The same catalogue applies to the applicant and the co-applicant */
   reasonOptions?: string[];
+  /** The proposed orsak for the co-applicant (medsökande): the previous Lifecare decision's co-applicant reason, or null when there is none. Picked from the same reasonOptions catalogue as the applicant's */
+  coApplicantReason?: string;
   /** The proposed frastext: on BIFALL/DELAVSLAG, "Bifall månad med barn" when children are in the calculation, else "Bifall månad utan barn". Null otherwise */
   phraseText?: string;
   /** The applicant's most recent Lifecare decision, or null when none was found (or Lifecare could not be read) */
@@ -2885,6 +2893,10 @@ export interface PreviousDecision {
   type?: string;
   /** The Lifecare decision reason / orsak (free text) */
   reason?: string;
+  /** The co-applicant (medsökande) the decision also concerned, as Lifecare names them. Null when the decision had none */
+  coApplicant?: string;
+  /** The co-applicant's own reason / orsak on the decision (free text). Null when the decision had no co-applicant */
+  coApplicantReason?: string;
   /** The decision period start (raw Lifecare string) */
   periodFrom?: string;
   /** The decision period end (raw Lifecare string) */
@@ -3537,12 +3549,11 @@ export enum SupplementsIngestOutcomeOutcomeEnum {
   FAILED = "FAILED",
 }
 
-/** Decision outcome code. BIFALL/DELAVSLAG grant an amount (and require payments); AVSLAG/AVVISNING grant nothing. */
+/** Decision outcome code. BIFALL/DELAVSLAG grant an amount (and require payments); AVSLAG grants nothing. DELAVSLAG is labelled "Delvis bifall" in the dropdown (see the errand type's decision options). AVVISNING was dropped 2026-09-21 and is no longer accepted. */
 export enum FinalizeDecisionOutcomeEnum {
   BIFALL = "BIFALL",
   DELAVSLAG = "DELAVSLAG",
   AVSLAG = "AVSLAG",
-  AVVISNING = "AVVISNING",
 }
 
 /** The role of the household member */
@@ -3558,11 +3569,12 @@ export enum NormPersonRowOriginEnum {
   CASEWORKER = "CASEWORKER",
 }
 
-/** The role of the household member */
+/** The role of the household member (machine code; use roleDisplayName for the label) */
 export enum NormPersonRowRoleEnum {
   APPLICANT = "APPLICANT",
   CO_APPLICANT = "CO_APPLICANT",
   CHILD = "CHILD",
+  VISITATION_CHILD = "VISITATION_CHILD",
 }
 
 /** Who created the row: the process or a caseworker */
@@ -3623,6 +3635,11 @@ export enum SectionApprovalSectionEnum {
 
 /** The norm type */
 export enum NormHeaderInputNormTypeEnum {
+  NATIONAL_NORM = "NATIONAL_NORM",
+  OTHER_NORM = "OTHER_NORM",
+}
+
+export enum CalculationDraftNormTypeEnum {
   NATIONAL_NORM = "NATIONAL_NORM",
   OTHER_NORM = "OTHER_NORM",
 }

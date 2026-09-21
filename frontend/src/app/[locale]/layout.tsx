@@ -25,7 +25,7 @@ export const generateMetadata = async ({ params }: LocaleLayoutProps) => {
   const { t } = await initLocalization(locale, namespaces);
   const requestPath = (await headers()).get('x-path');
   // Titles are keyed by the page's first path segment without the language prefix (e.g. "/arende" for
-  // "/en/arende/FINANCIAL_ASSISTANCE-1").
+  // "/en/arende/EB-26090001").
   const segments = (requestPath ?? '').split('/').filter(Boolean);
   if (segments[0] && i18nConfig.locales.includes(segments[0])) {
     segments.shift();
