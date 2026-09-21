@@ -6,6 +6,7 @@ import { Controller, Get, Param, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
 import { PaymentStatusApiResponse } from '@/responses/payment.response';
+import { PaymentProposalApiResponse } from '@/responses/payment-proposal.response';
 
 // The applicant whose Lifecare utbetalning the payment status concerns.
 const APPLICANT_ROLE = 'APPLICANT';
@@ -56,5 +57,14 @@ export class PaymentController {
       // as "unavailable" rather than failing the whole request.
       return { data: { applicationMonth, effectuated: false, unavailable: true }, message: 'success' };
     }
+  }
+
+  @Get('/errands/:errandId/payment-proposal')
+  @OpenAPI({ summary: 'The utbetalningsförslag for an errand (proposed date, amount and payee, plus payee options)' })
+  @ResponseSchema(PaymentProposalApiResponse)
+  @UseBefore(authMiddleware)
+  async getPaymentProposal(@Param('errandId') errandId: string) {
+    const res = await this.paymentService.readPaymentProposal(errandId);
+    return { data: res.data, message: 'success' };
   }
 }

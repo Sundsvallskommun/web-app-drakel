@@ -3,9 +3,11 @@
 import { FormField } from '@components/common/form-field.component';
 import { Stakeholder } from '@data-contracts/backend/data-contracts';
 import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
+import { Payee, PaymentProposal } from '@services/payment-service';
 import { Button, Checkbox, DatePicker, FormControl, FormLabel, Input, Select } from '@sk-web-gui/react';
 import { applicationMonthOptions, formatApplicationMonth } from '@utils/application-month';
-import { getEditableRecipientFields, PAYMENT_METHODS } from '@utils/payment-method';
+import { formatAmount } from '@utils/format-amount';
+import { getEditableRecipientFields } from '@utils/payment-method';
 import { stakeholderListLabel } from '@utils/stakeholder-name';
 import { todayDate } from '@utils/today-date';
 import { Plus } from 'lucide-react';
@@ -23,7 +25,8 @@ export interface UtbetalningFormValues {
   reportedOnStakeholderIds: string[];
   accountingDate: string;
   excludedFromPayment: boolean;
-  recipientStakeholderId: string;
+  /** The index of the chosen payee in the proposal's `payeeOptions`, as a string for the select. */
+  payeeIndex: string;
   paymentMethod: string;
   name: string;
   address: string;
@@ -38,15 +41,15 @@ export interface UtbetalningFormValues {
   messageLines: { text: string }[];
 }
 
-const emptyFormValues = (applicationMonth?: string): UtbetalningFormValues => ({
+const EMPTY_FORM_VALUES: UtbetalningFormValues = {
   moneyType: '',
   paymentDate: todayDate(),
   amount: '',
-  applicationMonth: applicationMonth ?? '',
+  applicationMonth: '',
   reportedOnStakeholderIds: [],
   accountingDate: '',
   excludedFromPayment: false,
-  recipientStakeholderId: '',
+  payeeIndex: '',
   paymentMethod: '',
   name: '',
   address: '',
@@ -59,7 +62,46 @@ const emptyFormValues = (applicationMonth?: string): UtbetalningFormValues => ({
   invoiceNumber: '',
   usesOcr: false,
   messageLines: [{ text: '' }],
-});
+};
+
+/** The form values the proposal prefills; everything it has no opinion on keeps its empty default. */
+const proposedFormValues = (proposal: PaymentProposal, applicationMonth?: string): UtbetalningFormValues => {
+  const proposed = proposal.payments?.[0];
+  const payee = proposed?.payee;
+  // The proposed payee is one of the options; match on its contents so the select lands on the right row.
+  const payeeIndex = (proposal.payeeOptions ?? []).findIndex((option) => isSamePayee(option, payee));
+
+  return {
+    ...EMPTY_FORM_VALUES,
+    paymentDate: proposed?.paymentDate ?? todayDate(),
+    amount: proposed?.amount == null ? '' : formatAmount(proposed.amount),
+    applicationMonth: proposed?.concernedMonth ?? applicationMonth ?? '',
+    payeeIndex: payeeIndex >= 0 ? String(payeeIndex) : '',
+    paymentMethod: payee?.paymentMethod ?? '',
+    name: payee?.name ?? '',
+    clearingNumber: payee?.clearing ?? '',
+    accountNumber: payee?.accountNumber ?? '',
+  };
+};
+
+/** Payees have no id in Lifecare, so identity is the account they pay to. */
+const isSamePayee = (candidate: Payee, payee?: Payee): boolean =>
+  !!payee &&
+  candidate.name === payee.name &&
+  candidate.paymentMethod === payee.paymentMethod &&
+  candidate.clearing === payee.clearing &&
+  candidate.accountNumber === payee.accountNumber;
+
+/** A payee as the dropdown shows it: the name plus the account it pays to. */
+const payeeLabel = (payee: Payee): string =>
+  [payee.name, payee.paymentMethod, [payee.clearing, payee.accountNumber].filter(Boolean).join('-')]
+    .filter(Boolean)
+    .join(' · ');
+
+/** The betalsätt alternatives — every distinct one seen among the payee options. */
+const paymentMethodOptions = (payeeOptions: Payee[]): string[] => [
+  ...new Set(payeeOptions.map((payee) => payee.paymentMethod).filter((method): method is string => !!method)),
+];
 
 /** "Redovisas på" — the stakeholders the utbetalning is booked on, one checkbox each. */
 const ReportedOnField: FC<{
@@ -126,63 +168,79 @@ const MessageLinesField: FC<{
 };
 
 /**
- * The Lifecare utbetalning form ("Utbetalning"), rebuilt with sk-web-gui form components.
+ * The Lifecare utbetalning form ("Utbetalning"), rebuilt with sk-web-gui form components and fed by
+ * caremanagement's utbetalningsförslag: the proposed date, amount, month and payee prefill the form,
+ * and Betalningsmottagare lists the payees seen on the applicant's Lifecare payments (FamilyCare has
+ * no payee register, so that list is the only source).
  *
  * Which recipient fields are editable follows the chosen betalsätt — see `getEditableRecipientFields`.
- * Bokföringsdatum and "Utbetalas/bokförs ej" stay disabled: the Lifecare rule that opens them is not
- * described anywhere in the caremanagement API, so enabling them would be a guess.
+ * Bokföringsdatum, "Utbetalas/bokförs ej", Lokalbetalningsnummer, Räkningsnummer and OCR stay disabled:
+ * the proposal carries no counterpart for them and the Lifecare rules that open them are not described
+ * anywhere in the API, so enabling them would be a guess.
  *
- * TODO: the form is not submitted anywhere yet. caremanagement has no endpoint that takes an
- * utbetalning — the only route into Lifecare is the `REGISTER_PAYMENT` RPA task
- * (`POST /errands/{errandId}/rpa-tasks`), whose `parameters` map is untyped. Wire `onSubmit` up once
- * the RPA team has confirmed the parameter keys the robot expects.
+ * TODO: the form is not submitted anywhere yet. The finalize endpoint takes payments inline today, but
+ * caremanagement has said that payload changes once the `payments` resource lands — wire `onSubmit` up
+ * after that, not before.
  */
 export const ErrandUtbetalningForm: FC<{
   errandId: string;
-  /** The errand's ansökningsmånad (ISO yyyy-MM) — prefills and anchors "Avser månad". */
+  /** The utbetalningsförslag; prefills the form and supplies the payee alternatives. */
+  proposal: PaymentProposal;
+  /** The errand's ansökningsmånad (ISO yyyy-MM), used when the proposal names no month. */
   applicationMonth?: string;
   /** Disables every field, e.g. when the section is approved. */
   disabled?: boolean;
   /** Called by "Nästa". Absent until there is an API to register the utbetalning against. */
   onSubmit?: (values: UtbetalningFormValues) => void;
-}> = ({ errandId, applicationMonth, disabled = false, onSubmit }) => {
+}> = ({ errandId, proposal, applicationMonth, disabled = false, onSubmit }) => {
   const { t } = useTranslation('decision');
   const { stakeholders } = useErrandStakeholders(errandId);
 
   const { register, control, handleSubmit, reset, setValue } = useForm<UtbetalningFormValues>({
-    defaultValues: emptyFormValues(applicationMonth),
+    defaultValues: EMPTY_FORM_VALUES,
     mode: 'onChange',
   });
   const messageLines = useFieldArray({ control, name: 'messageLines' });
 
   // useWatch (not the form's watch()) so the strict React-Compiler lint rule stays happy.
   const paymentMethod = useWatch({ control, name: 'paymentMethod' });
-  const recipientStakeholderId = useWatch({ control, name: 'recipientStakeholderId' });
+  const payeeIndex = useWatch({ control, name: 'payeeIndex' });
   const editableFields = getEditableRecipientFields(paymentMethod);
-  const monthOptions = applicationMonthOptions(applicationMonth);
 
-  // The name and address of a chosen betalningsmottagare are already known from the errand's
-  // stakeholders — prefill them so the handläggare only has to correct what differs.
+  const payeeOptions = proposal.payeeOptions ?? [];
+  const monthOptions = applicationMonthOptions(proposal.payments?.[0]?.concernedMonth ?? applicationMonth);
+  const methodOptions = paymentMethodOptions(payeeOptions);
+
+  // The proposal is derived on every read, so re-prefill whenever a new one arrives. Anything the
+  // handläggare has already typed is replaced — the proposal is the starting point, not a merge.
   useEffect(() => {
-    const recipient = stakeholders.find((stakeholder) => stakeholder.id === recipientStakeholderId);
-    if (!recipient) {
+    reset(proposedFormValues(proposal, applicationMonth));
+  }, [proposal, applicationMonth, reset]);
+
+  // Picking a betalningsmottagare carries its account details across, the way Lifecare ties the two.
+  useEffect(() => {
+    const payee = payeeOptions[Number(payeeIndex)];
+    if (!payeeIndex || !payee) {
       return;
     }
-    setValue('name', stakeholderListLabel(recipient, ''));
-    setValue('address', recipient.address ?? '');
-    setValue('careOf', recipient.careOf ?? '');
-    setValue('zipCode', recipient.zipCode ?? '');
-    setValue('city', recipient.city ?? '');
-  }, [recipientStakeholderId, stakeholders, setValue]);
+    setValue('name', payee.name ?? '');
+    setValue('paymentMethod', payee.paymentMethod ?? '');
+    setValue('clearingNumber', payee.clearing ?? '');
+    setValue('accountNumber', payee.accountNumber ?? '');
+  }, [payeeIndex, payeeOptions, setValue]);
 
   const submit = handleSubmit((values) => onSubmit?.(values));
 
   return (
     <form className="flex flex-col gap-24" onSubmit={(event) => void submit(event)}>
+      {proposal.explanation ?
+        <p className="m-0 text-dark-secondary">{proposal.explanation}</p>
+      : null}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-24 gap-y-16 items-start">
         <FormField label={t('payment.form.moneyType')} required disabled={disabled}>
           {/* TODO: the Lifecare money types ("Ek. Bistånd 3,00" etc.) have no source in the
-              caremanagement API — the options have to come from Lifecare metadata. */}
+              caremanagement API yet — they are coming with the payments resource's metadata. */}
           <Select {...register('moneyType')}>
             <Select.Option value="" />
           </Select>
@@ -223,11 +281,11 @@ export const ErrandUtbetalningForm: FC<{
         </div>
 
         <FormField label={t('payment.form.recipient')} disabled={disabled}>
-          <Select {...register('recipientStakeholderId')}>
+          <Select {...register('payeeIndex')}>
             <Select.Option value="" />
-            {stakeholders.map((stakeholder) => (
-              <Select.Option key={stakeholder.id} value={stakeholder.id ?? ''}>
-                {stakeholderListLabel(stakeholder, t('payment.form.unknownStakeholder'))}
+            {payeeOptions.map((payee, index) => (
+              <Select.Option key={payeeLabel(payee)} value={String(index)}>
+                {payeeLabel(payee)}
               </Select.Option>
             ))}
           </Select>
@@ -236,9 +294,9 @@ export const ErrandUtbetalningForm: FC<{
         <FormField label={t('payment.form.paymentMethod')} required disabled={disabled}>
           <Select {...register('paymentMethod')}>
             <Select.Option value="" />
-            {PAYMENT_METHODS.map((method) => (
+            {methodOptions.map((method) => (
               <Select.Option key={method} value={method}>
-                {t(`payment.form.paymentMethods.${method}`)}
+                {method}
               </Select.Option>
             ))}
           </Select>
@@ -264,25 +322,23 @@ export const ErrandUtbetalningForm: FC<{
         </div>
 
         <div className="grid grid-cols-[10rem_1fr] gap-x-16">
-          <FormField label={t('payment.form.clearingNumber')} disabled={disabled || !editableFields.bankAccount}>
+          <FormField label={t('payment.form.clearingNumber')} disabled={disabled || !editableFields.clearingNumber}>
             <Input {...register('clearingNumber')} />
           </FormField>
-          <FormField label={t('payment.form.accountNumber')} disabled={disabled || !editableFields.bankAccount}>
+          <FormField label={t('payment.form.accountNumber')} disabled={disabled || !editableFields.accountNumber}>
             <Input {...register('accountNumber')} />
           </FormField>
         </div>
-        <FormField
-          label={t('payment.form.localPaymentNumber')}
-          disabled={disabled || !editableFields.localPaymentNumber}
-        >
+        {/* No counterpart in the proposal; kept visible but closed until Lifecare's rule is known. */}
+        <FormField label={t('payment.form.localPaymentNumber')} disabled>
           <Input {...register('localPaymentNumber')} />
         </FormField>
 
         <div className="flex items-end gap-16">
-          <FormField label={t('payment.form.invoiceNumber')} disabled={disabled || !editableFields.invoiceReference}>
+          <FormField label={t('payment.form.invoiceNumber')} disabled>
             <Input {...register('invoiceNumber')} />
           </FormField>
-          <Checkbox {...register('usesOcr')} disabled={disabled || !editableFields.invoiceReference} className="mb-12">
+          <Checkbox {...register('usesOcr')} disabled className="mb-12">
             {t('payment.form.usesOcr')}
           </Checkbox>
         </div>
@@ -304,7 +360,7 @@ export const ErrandUtbetalningForm: FC<{
           variant="secondary"
           disabled={disabled}
           onClick={() => {
-            reset();
+            reset(proposedFormValues(proposal, applicationMonth));
           }}
         >
           {t('common:cancel')}

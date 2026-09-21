@@ -2,7 +2,8 @@
 
 import { AsyncContent } from '@components/common/async-content.component';
 import { useErrandPayment } from '@hooks/use-errand-payment';
-import { PaymentStatus } from '@services/payment-service';
+import { usePaymentProposal } from '@hooks/use-payment-proposal';
+import { PaymentProposalWarning, PaymentStatus } from '@services/payment-service';
 import { Alert } from '@sk-web-gui/alert';
 import { Button } from '@sk-web-gui/react';
 import { formatApplicationMonth } from '@utils/application-month';
@@ -51,6 +52,31 @@ const PaymentStatusAlert: FC<{ status: PaymentStatus }> = ({ status }) => {
   );
 };
 
+/** The PAYMENT-section warnings the utbetalningsförslag raised, shown above the form. */
+const PaymentProposalWarnings: FC<{ warnings: PaymentProposalWarning[] }> = ({ warnings }) => {
+  const openWarnings = warnings.filter((warning) => warning.status === 'OPEN');
+  if (openWarnings.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-col gap-12">
+      {openWarnings.map((warning, index) => (
+        <Alert key={warning.id ?? index} type="warning">
+          <Alert.Icon />
+          <Alert.Content>
+            {/* typeDisplayName is caremanagement's own Swedish label — no local translation table. */}
+            <Alert.Content.Title className="font-bold">{warning.typeDisplayName ?? warning.type}</Alert.Content.Title>
+            {warning.message ?
+              <Alert.Content.Description>{warning.message}</Alert.Content.Description>
+            : null}
+          </Alert.Content>
+        </Alert>
+      ))}
+    </div>
+  );
+};
+
 /**
  * "Utbetalning" tab — reads whether the Lifecare utbetalning for the errand's application month has
  * been effectuated (caremanagement payment-status). Read-only; the actual utbetalning happens in
@@ -65,6 +91,7 @@ export const ErrandUtbetalning: FC<{
 }> = ({ errandId, locked = false, headerSlot }) => {
   const { t, i18n } = useTranslation('decision');
   const { status, isLoading, error, refresh } = useErrandPayment(errandId);
+  const { proposal, isLoading: proposalLoading, error: proposalError } = usePaymentProposal(errandId);
 
   const renderStatus = (): ReactNode => {
     if (isLoading || error || !status) {
@@ -108,11 +135,22 @@ export const ErrandUtbetalning: FC<{
       </ContentBox>
 
       <ContentBox title={t('payment.form.title')}>
-        <ErrandUtbetalningForm
-          errandId={errandId}
-          applicationMonth={status?.applicationMonth}
-          disabled={locked || isLoading}
-        />
+        <AsyncContent
+          isLoading={proposalLoading}
+          error={proposalError}
+          errorText={t('payment.form.proposalLoadError')}
+          centered
+        >
+          <div className="flex flex-col gap-24">
+            <PaymentProposalWarnings warnings={proposal.warnings ?? []} />
+            <ErrandUtbetalningForm
+              errandId={errandId}
+              proposal={proposal}
+              applicationMonth={status?.applicationMonth}
+              disabled={locked}
+            />
+          </div>
+        </AsyncContent>
       </ContentBox>
     </div>
   );

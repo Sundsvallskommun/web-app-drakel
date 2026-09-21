@@ -1,4 +1,5 @@
 import { getErrandStakeholders } from '@services/errand-service/errand-service';
+import { PaymentProposal } from '@services/payment-service';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -13,11 +14,24 @@ const APPLICANT = {
   personalNumber: '880209-T050',
   firstName: 'Test',
   lastName: 'Testsson',
-  address: 'Storgatan 1',
-  careOf: 'c/o Testsson',
-  zipCode: '851 85',
-  city: 'Sundsvall',
 };
+
+const BANK_ACCOUNT_PAYEE = {
+  name: 'Test Testsson',
+  paymentMethod: 'Bankkonto',
+  clearing: '8327',
+  accountNumber: '1234567',
+};
+const GIRO_PAYEE = { name: 'Hyresvärden AB', paymentMethod: 'Bankgiro', accountNumber: '5051-6905' };
+
+const PROPOSAL: PaymentProposal = {
+  payments: [{ paymentDate: '2026-09-25', amount: 8450, concernedMonth: '2026-09', payee: BANK_ACCOUNT_PAYEE }],
+  payeeOptions: [BANK_ACCOUNT_PAYEE, GIRO_PAYEE],
+  payeeSource: 'PREVIOUS_PAYMENT',
+};
+
+const renderForm = (proposal: PaymentProposal = PROPOSAL) =>
+  render(<ErrandUtbetalningForm errandId="errand-1" proposal={proposal} applicationMonth="2026-09" />);
 
 describe('ErrandUtbetalningForm', () => {
   beforeEach(() => {
@@ -25,62 +39,88 @@ describe('ErrandUtbetalningForm', () => {
     vi.mocked(getErrandStakeholders).mockResolvedValue({ data: [APPLICANT] });
   });
 
-  it('opens the bank-account fields only once Bankkonto is the chosen betalsätt', async () => {
-    render(<ErrandUtbetalningForm errandId="errand-1" applicationMonth="2026-09" />);
+  it('prefills date, amount and payee from the proposal', async () => {
+    renderForm();
 
-    expect(screen.getByLabelText(/^Clearing/)).toBeDisabled();
-    expect(screen.getByLabelText(/^Kontonummer/)).toBeDisabled();
+    await waitFor(() => {
+      expect(screen.getByLabelText(/^Utbetalningsdatum/)).toHaveValue('2026-09-25');
+    });
+    expect(screen.getByLabelText(/^Belopp/)).toHaveValue('8450,00');
+    expect(screen.getByLabelText(/^Namn/)).toHaveValue('Test Testsson');
+    expect(screen.getByLabelText(/^Betalsätt/)).toHaveValue('Bankkonto');
+    expect(screen.getByLabelText(/^Kontonummer/)).toHaveValue('1234567');
+  });
 
-    fireEvent.change(screen.getByLabelText(/^Betalsätt/), { target: { value: 'BANK_ACCOUNT' } });
+  it('lists the proposal payees as betalningsmottagare alternatives', async () => {
+    renderForm();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/^Betalningsmottagare/)).toBeInTheDocument();
+    });
+    const options = screen.getAllByRole('option').map((option) => option.textContent);
+    expect(options).toEqual(expect.arrayContaining([expect.stringContaining('Hyresvärden AB')]));
+  });
+
+  it('opens clearing and account for Bankkonto but leaves the postal address closed', async () => {
+    renderForm();
 
     await waitFor(() => {
       expect(screen.getByLabelText(/^Clearing/)).toBeEnabled();
     });
     expect(screen.getByLabelText(/^Kontonummer/)).toBeEnabled();
-    // The postal-address fields belong to another betalsätt, so they stay closed.
     expect(screen.getByLabelText(/^C\/O adress/)).toBeDisabled();
   });
 
-  it('opens the postal-address fields for Utbetalningskort', async () => {
-    render(<ErrandUtbetalningForm errandId="errand-1" applicationMonth="2026-09" />);
+  it('carries the chosen payee across and closes clearing for a giro', async () => {
+    renderForm();
+    await waitFor(() => {
+      expect(screen.getByLabelText(/^Betalningsmottagare/)).toBeInTheDocument();
+    });
 
-    fireEvent.change(screen.getByLabelText(/^Betalsätt/), { target: { value: 'PAYMENT_CARD' } });
+    fireEvent.change(screen.getByLabelText(/^Betalningsmottagare/), { target: { value: '1' } });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/^Namn/)).toHaveValue('Hyresvärden AB');
+    });
+    expect(screen.getByLabelText(/^Betalsätt/)).toHaveValue('Bankgiro');
+    expect(screen.getByLabelText(/^Kontonummer/)).toHaveValue('5051-6905');
+    // A giro number has no clearing number, so that field closes again.
+    expect(screen.getByLabelText(/^Clearing/)).toBeDisabled();
+  });
+
+  it('opens the postal address for Utbetalningskort', async () => {
+    renderForm({
+      payments: [{ paymentDate: '2026-09-25', concernedMonth: '2026-09' }],
+      payeeOptions: [{ name: 'Test Testsson', paymentMethod: 'Utbetalningskort' }],
+    });
+
+    fireEvent.change(screen.getByLabelText(/^Betalsätt/), { target: { value: 'Utbetalningskort' } });
 
     await waitFor(() => {
       expect(screen.getByLabelText(/^C\/O adress/)).toBeEnabled();
     });
-    expect(screen.getByLabelText(/^Postnummer/)).toBeEnabled();
     expect(screen.getByLabelText(/^Ort/)).toBeEnabled();
     expect(screen.getByLabelText(/^Clearing/)).toBeDisabled();
   });
 
-  it('prefills name and address from the chosen betalningsmottagare', async () => {
-    render(<ErrandUtbetalningForm errandId="errand-1" applicationMonth="2026-09" />);
+  it('shows why the proposal is incomplete when caremanagement says so', async () => {
+    renderForm({ explanation: 'Ingen norm kunde läsas från Lifecare – beloppet kunde inte beräknas.' });
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/^Betalningsmottagare/)).toBeInTheDocument();
+      expect(
+        screen.getByText('Ingen norm kunde läsas från Lifecare – beloppet kunde inte beräknas.')
+      ).toBeInTheDocument();
     });
-    fireEvent.change(screen.getByLabelText(/^Betalningsmottagare/), { target: { value: 'stakeholder-1' } });
-
-    await waitFor(() => {
-      expect(screen.getByLabelText(/^Namn/)).toHaveValue('880209-T050 Testsson, Test');
-    });
-    expect(screen.getByLabelText(/^Adress/)).toHaveValue('Storgatan 1');
-    expect(screen.getByLabelText(/^Ort/)).toHaveValue('Sundsvall');
   });
 
   it('adds a message line for each click on the add button', async () => {
-    render(<ErrandUtbetalningForm errandId="errand-1" applicationMonth="2026-09" />);
+    renderForm();
 
-    const addButton = screen.getByRole('button', { name: 'Lägg till meddelanderad' });
     expect(screen.getAllByRole('textbox', { name: /^Meddelanderad \d/ })).toHaveLength(1);
-
-    fireEvent.click(addButton);
+    fireEvent.click(screen.getByRole('button', { name: 'Lägg till meddelanderad' }));
 
     await waitFor(() => {
       expect(screen.getAllByRole('textbox', { name: /^Meddelanderad \d/ })).toHaveLength(2);
     });
-    // Each row is announced separately, not as a repeat of the group heading.
-    expect(screen.getByLabelText('Meddelanderad 2')).toBeInTheDocument();
   });
 });

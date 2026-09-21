@@ -82,7 +82,8 @@
       "addMessageLine": "Add message line",
       "next": "Next",
       "unknownStakeholder": "Unknown stakeholder",
-      "messageLine": "Message line {{number}}"
+      "messageLine": "Message line {{number}}",
+      "proposalLoadError": "Could not load the payment proposal"
     }
   }
 }

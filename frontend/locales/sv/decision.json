@@ -82,7 +82,8 @@
       "addMessageLine": "Lägg till meddelanderad",
       "next": "Nästa",
       "unknownStakeholder": "Okänd intressent",
-      "messageLine": "Meddelanderad {{number}}"
+      "messageLine": "Meddelanderad {{number}}",
+      "proposalLoadError": "Det gick inte att hämta utbetalningsförslaget"
     }
   }
 }

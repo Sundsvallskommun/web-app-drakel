@@ -1,47 +1,45 @@
 /**
- * The Lifecare "Betalsätt" (payment method) of an utbetalning, and which recipient fields each one
- * makes editable.
+ * Which recipient fields a Lifecare "Betalsätt" makes editable.
  *
- * The rule mirrors the Lifecare utbetalningsformulär: until a betalsätt is chosen every
- * recipient-detail field stays disabled, and choosing one opens exactly the fields that betalsätt
- * needs. The caremanagement API does not describe this — it exposes an utbetalning only as the
- * untyped `parameters` map of the `REGISTER_PAYMENT` RPA task — so the grouping below is modelled on
- * the Lifecare form and needs confirming with the RPA/Lifecare team before it drives real
- * registrations.
+ * caremanagement exposes the betalsätt as free text — "the Lifecare payment method, e.g. bank account,
+ * bankgiro, plusgiro or utbetalningskort" — not as an enum, and the payment proposal carries whatever
+ * string Lifecare stored. The grouping below therefore matches on the Swedish words rather than on
+ * fixed codes, and an unrecognised betalsätt deliberately opens nothing instead of guessing.
+ *
+ * Confirm the exact spellings with the RPA/Lifecare team before this drives real registrations.
  */
-export const PAYMENT_METHODS = ['BANK_ACCOUNT', 'PAYMENT_CARD', 'LOCAL_PAYMENT', 'INVOICE'] as const;
-
-export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
-
-/** Which groups of recipient fields the chosen betalsätt makes editable. */
 export interface EditableRecipientFields {
   /** C/O adress, Postnummer and Ort — the postal address an utbetalningskort is sent to. */
   postalAddress: boolean;
-  /** Clearing and Kontonummer. */
-  bankAccount: boolean;
-  /** Lokalbetalningsnummer. */
-  localPaymentNumber: boolean;
-  /** Räkningsnummer and OCR. */
-  invoiceReference: boolean;
+  /** Clearing — only a bank account has one; a giro number does not. */
+  clearingNumber: boolean;
+  /** Kontonummer, which also holds a bankgiro or plusgiro number. */
+  accountNumber: boolean;
 }
 
 const NO_EDITABLE_FIELDS: EditableRecipientFields = {
   postalAddress: false,
-  bankAccount: false,
-  localPaymentNumber: false,
-  invoiceReference: false,
-};
-
-const EDITABLE_FIELDS_BY_PAYMENT_METHOD: Record<PaymentMethod, EditableRecipientFields> = {
-  BANK_ACCOUNT: { ...NO_EDITABLE_FIELDS, bankAccount: true },
-  PAYMENT_CARD: { ...NO_EDITABLE_FIELDS, postalAddress: true },
-  LOCAL_PAYMENT: { ...NO_EDITABLE_FIELDS, localPaymentNumber: true },
-  INVOICE: { ...NO_EDITABLE_FIELDS, postalAddress: true, invoiceReference: true },
+  clearingNumber: false,
+  accountNumber: false,
 };
 
 /**
- * The recipient fields the chosen betalsätt opens up. An unset or unknown betalsätt opens none, which
- * is why the form starts out with every recipient-detail field disabled.
+ * The recipient fields the chosen betalsätt opens up. Nothing is editable until a betalsätt is chosen,
+ * which is why the form starts out with every one of these fields disabled.
  */
-export const getEditableRecipientFields = (paymentMethod: string): EditableRecipientFields =>
-  EDITABLE_FIELDS_BY_PAYMENT_METHOD[paymentMethod as PaymentMethod] ?? NO_EDITABLE_FIELDS;
+export const getEditableRecipientFields = (paymentMethod: string): EditableRecipientFields => {
+  const method = paymentMethod.toLowerCase();
+
+  if (method.includes('kort')) {
+    // Utbetalningskort is posted to an address rather than paid to an account.
+    return { ...NO_EDITABLE_FIELDS, postalAddress: true };
+  }
+  if (method.includes('giro')) {
+    // Bankgiro and plusgiro numbers go in Kontonummer and have no clearing number.
+    return { ...NO_EDITABLE_FIELDS, accountNumber: true };
+  }
+  if (method.includes('konto')) {
+    return { ...NO_EDITABLE_FIELDS, clearingNumber: true, accountNumber: true };
+  }
+  return NO_EDITABLE_FIELDS;
+};
