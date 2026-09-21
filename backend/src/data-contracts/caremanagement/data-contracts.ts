@@ -20,8 +20,8 @@ export interface Problem {
   instance?: string;
   /** @format uri */
   type?: string;
-  detail?: string;
   title?: string;
+  detail?: string;
   /** @format int32 */
   status?: number;
 }
@@ -54,6 +54,183 @@ export interface ThrowableProblem {
 export interface Violation {
   field?: string;
   message?: string;
+}
+
+/** Request to create or replace a financial assistance payment on an errand. */
+export interface PaymentRequest {
+  /** Provenance, defaults to CASEWORKER when omitted. RPA POSTs LIFECARE (with lifecareId) to surface a payment read out of Lifecare onto the errand. */
+  source?: PaymentRequestSourceEnum;
+  /**
+   * The payment's id in Lifecare. Set by RPA when surfacing a LIFECARE-sourced payment (the idempotency key) or when stamping back the id of a registered caseworker payment.
+   * @minLength 0
+   * @maxLength 64
+   */
+  lifecareId?: string;
+  /**
+   * The type of money paid out. Unconstrained — the value set comes from Lifecare and isn't known yet.
+   * @minLength 0
+   * @maxLength 64
+   */
+  moneyType?: string;
+  /**
+   * The date the payment is/was made
+   * @format date
+   */
+  paymentDate?: string;
+  /** The payment amount */
+  amount?: number;
+  /**
+   * The application month the payment concerns
+   * @pattern ^\d{4}-(0[1-9]|1[0-2])$
+   */
+  applicationMonth?: string;
+  /** Stakeholder ids the payment is reported on */
+  reportedOnStakeholderIds?: string[];
+  /**
+   * The accounting date for the payment
+   * @format date
+   */
+  accountingDate?: string;
+  /** Whether the payment is excluded from being paid out */
+  excludedFromPayment?: boolean;
+  /**
+   * The stakeholder id of the payee
+   * @minLength 0
+   * @maxLength 64
+   */
+  payeeStakeholderId?: string;
+  /**
+   * How the payment is made. Unconstrained — the value set comes from Lifecare and isn't known yet.
+   * @minLength 0
+   * @maxLength 64
+   */
+  paymentMethod?: string;
+  /**
+   * The payee's name
+   * @minLength 0
+   * @maxLength 255
+   */
+  payeeName?: string;
+  /**
+   * The payee's address
+   * @minLength 0
+   * @maxLength 255
+   */
+  payeeAddress?: string;
+  /**
+   * The payee's c/o line
+   * @minLength 0
+   * @maxLength 255
+   */
+  payeeCareOf?: string;
+  /**
+   * The payee's zip code
+   * @minLength 0
+   * @maxLength 16
+   */
+  payeeZipCode?: string;
+  /**
+   * The payee's city
+   * @minLength 0
+   * @maxLength 255
+   */
+  payeeCity?: string;
+  /**
+   * The payee's bank clearing number
+   * @minLength 0
+   * @maxLength 64
+   */
+  clearingNumber?: string;
+  /**
+   * The payee's bank account number
+   * @minLength 0
+   * @maxLength 64
+   */
+  accountNumber?: string;
+  /**
+   * The local payment number, when applicable
+   * @minLength 0
+   * @maxLength 64
+   */
+  localPaymentNumber?: string;
+  /**
+   * The invoice number, when applicable
+   * @minLength 0
+   * @maxLength 64
+   */
+  invoiceNumber?: string;
+  /** Whether the payment uses OCR */
+  usesOcr?: boolean;
+  /** Free-text message lines printed on the payment */
+  messageLines?: string[];
+}
+
+/** A financial assistance payment (utbetalning) on an errand. */
+export interface Payment {
+  /** The payment id */
+  id?: string;
+  /** Provenance: CASEWORKER for one authored in Draken, LIFECARE for one read out of Lifecare by RPA and surfaced here on the errand. */
+  source?: PaymentSourceEnum;
+  /** The payment's id in Lifecare once it exists there — null until RPA has registered a caseworker-authored payment; always set for a LIFECARE-sourced one. */
+  lifecareId?: string;
+  /** Server-managed lifecycle status. DRAFT on create; moves to QUEUED / EFFECTUATED / FAILED as the robot processes the REGISTER_PAYMENT RPA task. */
+  status?: PaymentStatusEnum;
+  /** The type of money paid out. Unconstrained — the value set comes from Lifecare and isn't known yet. */
+  moneyType?: string;
+  /**
+   * The date the payment is/was made
+   * @format date
+   */
+  paymentDate?: string;
+  /** The payment amount */
+  amount?: number;
+  /** The application month the payment concerns, yyyy-MM */
+  applicationMonth?: string;
+  /** Stakeholder ids the payment is reported on */
+  reportedOnStakeholderIds?: string[];
+  /**
+   * The accounting date for the payment
+   * @format date
+   */
+  accountingDate?: string;
+  /** Whether the payment is excluded from being paid out */
+  excludedFromPayment?: boolean;
+  /** The stakeholder id of the payee */
+  payeeStakeholderId?: string;
+  /** How the payment is made. Unconstrained — the value set comes from Lifecare and isn't known yet. */
+  paymentMethod?: string;
+  /** The payee's name */
+  payeeName?: string;
+  /** The payee's address */
+  payeeAddress?: string;
+  /** The payee's c/o line */
+  payeeCareOf?: string;
+  /** The payee's zip code */
+  payeeZipCode?: string;
+  /** The payee's city */
+  payeeCity?: string;
+  /** The payee's bank clearing number */
+  clearingNumber?: string;
+  /** The payee's bank account number */
+  accountNumber?: string;
+  /** The local payment number, when applicable */
+  localPaymentNumber?: string;
+  /** The invoice number, when applicable */
+  invoiceNumber?: string;
+  /** Whether the payment uses OCR */
+  usesOcr?: boolean;
+  /** Free-text message lines printed on the payment */
+  messageLines?: string[];
+  /**
+   * When the payment was created
+   * @format date-time
+   */
+  created?: string;
+  /**
+   * When the payment was last modified
+   * @format date-time
+   */
+  modified?: string;
 }
 
 /** Request to create or replace a financial assistance monitoring on an errand. */
@@ -698,7 +875,7 @@ export interface RpaTaskRequest {
    * @minLength 1
    */
   action: RpaTaskRequestActionEnum;
-  /** Optional extra hints for the robot, merged into the queue item SpecificContent */
+  /** Optional extra hints for the robot, merged into the queue item SpecificContent. For REGISTER_PAYMENT, carries only the key 'paymentId' (the payment's id on the errand) — the robot fetches everything else via GET .../payments/{paymentId}, instead of putting payee names, account numbers or other personal data on the Orchestrator queue, the same reason RpaContext is fetched per queue item rather than riding along in it. */
   parameters?: Record<string, string>;
 }
 
@@ -2439,6 +2616,15 @@ export interface RpaContext {
   coApplicantPersonId?: string;
 }
 
+/** The number of payments on the errand */
+export interface PaymentCount {
+  /**
+   * Number of payments on the errand
+   * @format int64
+   */
+  count?: number;
+}
+
 /** The payment proposal (utbetalningsförslag) — derived data, recomputed on every read. */
 export interface PaymentProposal {
   /** The proposed payments — always exactly one entry from the service; the frontend may split it into several before registering */
@@ -2672,7 +2858,7 @@ export interface DecisionProposal {
   explanation?: string;
   /** The proposed orsak: the previous Lifecare decision's reason, or null when there is none */
   reason?: string;
-  /** Every orsak the caseworker can pick instead — a seeded EB list plus the previous decision's reason (FamilyCare has no reason catalogue) */
+  /** Every orsak the caseworker can pick instead — Lifecare's orsak-catalogue (försörjningshinder) in Lifecare's order, plus the previous decision's reason when that is not in the catalogue (FamilyCare exposes no reason catalogue over the API) */
   reasonOptions?: string[];
   /** The proposed frastext: on BIFALL/DELAVSLAG, "Bifall månad med barn" when children are in the calculation, else "Bifall månad utan barn". Null otherwise */
   phraseText?: string;
@@ -2720,6 +2906,10 @@ export interface FinancialAssistanceMetadata {
   incomeTypes?: TypeOption[];
   /** The cost types, grouped by their Mina-sidor form section */
   costTypes?: TypeOption[];
+  /** The payment money types (Payment.moneyType allowed values). Placeholder — the real catalogue comes from Lifecare and isn't known yet. */
+  moneyTypes?: TypeOption[];
+  /** The payment methods (Payment.paymentMethod allowed values). Placeholder — the real catalogue comes from Lifecare and isn't known yet. */
+  paymentMethods?: TypeOption[];
 }
 
 /** A selectable financial assistance income/cost type — the payload code plus its Mina-sidor + Lifecare labels, form group and citizen flag. */
@@ -2984,6 +3174,26 @@ export interface StatusDefinition {
   code?: string;
   /** Human-readable label for the status */
   displayName?: string;
+}
+
+/** Provenance, defaults to CASEWORKER when omitted. RPA POSTs LIFECARE (with lifecareId) to surface a payment read out of Lifecare onto the errand. */
+export enum PaymentRequestSourceEnum {
+  CASEWORKER = "CASEWORKER",
+  LIFECARE = "LIFECARE",
+}
+
+/** Provenance: CASEWORKER for one authored in Draken, LIFECARE for one read out of Lifecare by RPA and surfaced here on the errand. */
+export enum PaymentSourceEnum {
+  CASEWORKER = "CASEWORKER",
+  LIFECARE = "LIFECARE",
+}
+
+/** Server-managed lifecycle status. DRAFT on create; moves to QUEUED / EFFECTUATED / FAILED as the robot processes the REGISTER_PAYMENT RPA task. */
+export enum PaymentStatusEnum {
+  DRAFT = "DRAFT",
+  QUEUED = "QUEUED",
+  EFFECTUATED = "EFFECTUATED",
+  FAILED = "FAILED",
 }
 
 /** Provenance, defaults to CASEWORKER when omitted. RPA POSTs LIFECARE (with lifecareId) to surface a monitoring read out of Lifecare onto the errand. */
