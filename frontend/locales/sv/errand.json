@@ -24,7 +24,8 @@
       "calculation": "Markera normberäkning som komplett",
       "decision": "Markera beslut som komplett",
       "payment": "Markera utbetalning som komplett"
-    }
+    },
+    "ssbtekReadFailed": "SSBTEK kunde inte läsas"
   },
   "administrationBar": {
     "caseWorker": "Handläggare:",

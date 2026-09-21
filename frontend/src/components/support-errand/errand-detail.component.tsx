@@ -28,6 +28,7 @@ import { ErrandBeslut } from './errand-beslut.component';
 import { ErrandBevakningar } from './errand-bevakningar.component';
 import { ErrandDocuments } from './errand-documents.component';
 import { ErrandEvents } from './errand-events.component';
+import { ErrandHeaderBanner } from './errand-header-banner.component';
 import { ErrandJournal } from './errand-journal.component';
 import { ErrandMessageAttachments } from './errand-message-attachments.component';
 import { ErrandMessages } from './errand-messages.component';
@@ -127,15 +128,17 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   const showCalculationSections = !isNewApplication && !isSupplementaryApplication;
   const showDocumentation = !isNewApplication;
 
-  // Lazy-load gating: a section's data is only fetched when its tab/sidebar is actually open, so opening
-  // an errand doesn't log a read of everything. When shown, the Ärende sub-tab order is 0 Ansökan · 1
-  // Bilagor · 2 Normberäkning · 3 Beslut · 4 Utbetalning (the last three carry the approval state).
-  const onArendeGroup = activeTab === 0;
-  const onNormberakningSubTab = showCalculationSections && onArendeGroup && activeSubTab === 2;
+  // Lazy-load gating: most sections' data is only fetched when their tab/sidebar is actually open, so
+  // opening an errand doesn't log a read of everything. When shown, the Ärende sub-tab order is
+  // 0 Ansökan · 1 Bilagor · 2 Normberäkning · 3 Beslut · 4 Utbetalning (the last three carry approval state).
   // Approvals load eagerly (not gated on the active sub-tab) so the per-section "godkänd" checks show on
   // the Normberäkning/Beslut/Utbetalning tabs the moment the errand opens.
   const approvalsEnabled = showCalculationSections;
-  const warningsEnabled = onNormberakningSubTab || openSidebarSections.includes('warnings');
+  // Warnings load with the errand rather than on demand: the SSBTEK read-failure banner has to appear
+  // as soon as the errand opens, and caremanagement exposes no unlogged way to ask whether that warning
+  // exists. The trade-off is accepted — listing warnings is recorded in the errand's event log, unlike
+  // the count endpoints the badges use.
+  const warningsEnabled = true;
   const notesEnabled = openSidebarSections.includes('notes');
   const bevakningarEnabled = openSidebarSections.includes('bevakningar');
 
@@ -184,6 +187,11 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   );
 
   // Only OPEN warnings are actionable — acknowledged/closed ones disappear from the right column.
+  // The SSBTEK read failure is an errand-wide state, not a calculation row: on a failed day the rules
+  // are deliberately not evaluated and nothing in the calculation changes, so the banner is the only
+  // sign of it. caremanagement closes the warning itself once a later read succeeds.
+  const ssbtekFailure = warnings.find((warning) => warning.type === 'SSBTEK_READ_FAILED' && warning.status === 'OPEN');
+
   // The normberäkning tab shows only the warnings caremanagement places there. DECISION and PAYMENT
   // warnings belong to their own tabs (the payment ones ride along on the utbetalningsförslag), and
   // without this filter they would surface beside the calculation tables where they do not belong.
@@ -510,6 +518,12 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           </>
         }
       />
+
+      {ssbtekFailure ?
+        <ErrandHeaderBanner>
+          {ssbtekFailure.message ?? ssbtekFailure.typeDisplayName ?? t('detail.ssbtekReadFailed')}
+        </ErrandHeaderBanner>
+      : null}
 
       <div className="flex grow min-h-0">
         <main className="flex-grow min-w-0 overflow-y-auto px-24 md:px-64 pb-40">

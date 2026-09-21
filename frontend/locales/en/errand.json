@@ -24,7 +24,8 @@
       "calculation": "Mark norm calculation as complete",
       "decision": "Mark decision as complete",
       "payment": "Mark payment as complete"
-    }
+    },
+    "ssbtekReadFailed": "SSBTEK could not be read"
   },
   "administrationBar": {
     "caseWorker": "Case worker:",
