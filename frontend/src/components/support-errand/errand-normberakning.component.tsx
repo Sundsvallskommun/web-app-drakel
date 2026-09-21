@@ -19,6 +19,15 @@ import { NormberakningFamilj } from './normberakning-familj.component';
 import { NormberakningGemensamma } from './normberakning-gemensamma.component';
 import { NormberakningIncomes } from './normberakning-incomes.component';
 import { NormberakningWarnings } from './normberakning-warnings.component';
+import { PreviousNormberakningCheckbox } from './previous-normberakning-box.component';
+import { PreviousNormberakningProvider } from './previous-normberakning-context';
+import {
+  PreviousNormberakningExpensesBucket,
+  PreviousNormberakningFamilj,
+  PreviousNormberakningGemensamma,
+  PreviousNormberakningIncomes,
+  PreviousNormberakningLivingCosts,
+} from './previous-normberakning-sections.component';
 
 // Which normberäkning sub-tab each warning type belongs to.
 const INCOME_WARNING_TYPES = new Set([
@@ -55,16 +64,21 @@ const NormberakningTabPanel: FC<{
   locked: boolean;
   warnings?: Warning[];
   onWarningsChanged: () => void;
+  /** Read-only content below the locked section — the previous normberäkning, when it is shown. */
+  footer?: ReactNode;
   children: ReactNode;
-}> = ({ errandId, locked, warnings = [], onWarningsChanged, children }) => (
-  <LockFieldset locked={locked}>
-    <div className="flex flex-col gap-24">
-      {warnings.length > 0 ?
-        <NormberakningWarnings errandId={errandId} warnings={warnings} onAcknowledged={onWarningsChanged} />
-      : null}
-      {children}
-    </div>
-  </LockFieldset>
+}> = ({ errandId, locked, warnings = [], onWarningsChanged, footer, children }) => (
+  <div className="flex flex-col gap-24">
+    <LockFieldset locked={locked}>
+      <div className="flex flex-col gap-24">
+        {warnings.length > 0 ?
+          <NormberakningWarnings errandId={errandId} warnings={warnings} onAcknowledged={onWarningsChanged} />
+        : null}
+        {children}
+      </div>
+    </LockFieldset>
+    {footer}
+  </div>
 );
 
 /** Builds a code→displayName map for labelling rows in the preview PDF. */
@@ -147,131 +161,163 @@ export const ErrandNormberakning: FC<{
   }
 
   return (
-    <div className="flex flex-col gap-40">
-      {renderHeader(
-        // Wrap so the preview button is one flex item — its fragment (Button + Modal) would otherwise
-        // become two children of the action group.
-        <div>
-          <PdfPreviewButton
-            buildHtml={() =>
-              Promise.resolve(
-                buildNormberakningHtml(draft, {
-                  costTypeLabels: typeLabelMap(types.costTypes),
-                  livingCostTypeLabels: typeLabelMap(types.livingCostTypes),
-                  handlaggare,
-                })
-              )
-            }
-            modalLabel={t('preview.modalLabel')}
-            emptyMessage={t('preview.empty')}
-          />
-        </div>
-      )}
+    <PreviousNormberakningProvider errandId={errandId}>
+      <div className="flex flex-col gap-40">
+        {renderHeader(
+          // Wrap so the preview button is one flex item — its fragment (Button + Modal) would otherwise
+          // become two children of the action group.
+          <div>
+            <PdfPreviewButton
+              buildHtml={() =>
+                Promise.resolve(
+                  buildNormberakningHtml(draft, {
+                    costTypeLabels: typeLabelMap(types.costTypes),
+                    livingCostTypeLabels: typeLabelMap(types.livingCostTypes),
+                    handlaggare,
+                  })
+                )
+              }
+              modalLabel={t('preview.modalLabel')}
+              emptyMessage={t('preview.empty')}
+            />
+          </div>
+        )}
 
-      <ContentBox title={t('details.title')}>
-        <div className="flex flex-wrap items-start gap-x-32 gap-y-16">
-          <FilterField label={t('details.applicationMonth')} className="w-auto">
-            <span className="block py-4">{formatApplicationMonth(draft.applicationMonth, i18n.language)}</span>
-          </FilterField>
-          <FilterField label={t('details.norm')} required className="w-[14rem]">
-            <Input readOnly size="sm" value={draft.normType ?? ''} placeholder="—" />
-          </FilterField>
-          <FilterField label={t('details.calculationDate')} required>
-            <DatePicker type="date" readOnly size="sm" value={draft.calculationDate ?? ''} />
-          </FilterField>
-          <FilterField label={t('details.from')} required>
-            <DatePicker type="date" readOnly size="sm" value={draft.calculationFromDate ?? ''} />
-          </FilterField>
-          <FilterField label={t('details.to')} required>
-            <DatePicker type="date" readOnly size="sm" value={draft.calculationToDate ?? ''} />
-          </FilterField>
-        </div>
-      </ContentBox>
+        <ContentBox title={t('details.title')}>
+          <div className="flex flex-wrap items-start gap-x-32 gap-y-16">
+            <FilterField label={t('details.applicationMonth')} className="w-auto">
+              <span className="block py-4">{formatApplicationMonth(draft.applicationMonth, i18n.language)}</span>
+            </FilterField>
+            <FilterField label={t('details.norm')} required className="w-[14rem]">
+              <Input readOnly size="sm" value={draft.normType ?? ''} placeholder="—" />
+            </FilterField>
+            <FilterField label={t('details.calculationDate')} required>
+              <DatePicker type="date" readOnly size="sm" value={draft.calculationDate ?? ''} />
+            </FilterField>
+            <FilterField label={t('details.from')} required>
+              <DatePicker type="date" readOnly size="sm" value={draft.calculationFromDate ?? ''} />
+            </FilterField>
+            <FilterField label={t('details.to')} required>
+              <DatePicker type="date" readOnly size="sm" value={draft.calculationToDate ?? ''} />
+            </FilterField>
+          </div>
+        </ContentBox>
 
-      <Tabs size="sm" underline current={activeTab} onTabChange={setActiveTab} panelsClassName="pt-32">
-        <Tabs.Item>
-          <Tabs.Button>{t('tabs.family')}</Tabs.Button>
-          <Tabs.Content>
-            <NormberakningTabPanel
-              errandId={errandId}
-              locked={locked}
-              warnings={personWarnings}
-              onWarningsChanged={onWarningsChanged}
+        {/* The toggle sits at the right end of the sub-tab row. Tabs owns both its tab list and its
+            panels, so the two are overlaid in one grid cell rather than laid out side by side; the tab
+            list reserves room on the right so long tab labels never run into the checkbox. */}
+        <div className="grid">
+          <div className="col-start-1 row-start-1">
+            <Tabs
+              size="sm"
+              underline
+              current={activeTab}
+              onTabChange={setActiveTab}
+              panelsClassName="pt-32"
+              tabslistClassName="pr-[26rem]"
             >
-              <NormberakningFamilj persons={draft.persons ?? []} />
-            </NormberakningTabPanel>
-          </Tabs.Content>
-        </Tabs.Item>
-        <Tabs.Item>
-          <Tabs.Button>{t('tabs.incomes')}</Tabs.Button>
-          <Tabs.Content>
-            <NormberakningTabPanel
-              errandId={errandId}
-              locked={locked}
-              warnings={incomeWarnings}
-              onWarningsChanged={onWarningsChanged}
-            >
-              <NormberakningIncomes
-                errandId={errandId}
-                rows={draft.incomes ?? []}
-                incomeSum={draft.incomeSum}
-                incomeTypes={types.incomeTypes}
-                onChanged={refresh}
-              />
-            </NormberakningTabPanel>
-          </Tabs.Content>
-        </Tabs.Item>
-        <Tabs.Item>
-          <Tabs.Button>{t('tabs.expenses')}</Tabs.Button>
-          <Tabs.Content>
-            <NormberakningTabPanel
-              errandId={errandId}
-              locked={locked}
-              warnings={expenseWarnings}
-              onWarningsChanged={onWarningsChanged}
-            >
-              <NormberakningExpenses
-                errandId={errandId}
-                title={t('expenses.title')}
-                rows={draft.expenses ?? []}
-                sum={draft.expenseSum}
-                summaLabel={t('expenses.sum')}
-                bucket="EXPENSE"
-                types={types.costTypes}
-                onChanged={refresh}
-              />
-            </NormberakningTabPanel>
-          </Tabs.Content>
-        </Tabs.Item>
-        <Tabs.Item>
-          <Tabs.Button>{t('tabs.livingCosts')}</Tabs.Button>
-          <Tabs.Content>
-            <NormberakningTabPanel errandId={errandId} locked={locked} onWarningsChanged={onWarningsChanged}>
-              <NormberakningExpenses
-                errandId={errandId}
-                title={t('livingCosts.title')}
-                rows={draft.specialExpenses ?? []}
-                sum={draft.specialExpenseSum}
-                summaLabel={t('livingCosts.sum')}
-                bucket="SPECIAL_EXPENSE"
-                types={types.livingCostTypes}
-                onChanged={refresh}
-              />
-            </NormberakningTabPanel>
-          </Tabs.Content>
-        </Tabs.Item>
-        <Tabs.Item>
-          <Tabs.Button>{t('tabs.sharedCosts')}</Tabs.Button>
-          <Tabs.Content>
-            <NormberakningTabPanel errandId={errandId} locked={locked} onWarningsChanged={onWarningsChanged}>
-              <NormberakningGemensamma
-                hasCustomHouseholdSize={draft.hasCustomHouseholdSize}
-                householdSize={draft.householdSize}
-              />
-            </NormberakningTabPanel>
-          </Tabs.Content>
-        </Tabs.Item>
-      </Tabs>
-    </div>
+              <Tabs.Item>
+                <Tabs.Button>{t('tabs.family')}</Tabs.Button>
+                <Tabs.Content>
+                  <NormberakningTabPanel
+                    errandId={errandId}
+                    locked={locked}
+                    warnings={personWarnings}
+                    onWarningsChanged={onWarningsChanged}
+                    footer={<PreviousNormberakningFamilj />}
+                  >
+                    <NormberakningFamilj persons={draft.persons ?? []} />
+                  </NormberakningTabPanel>
+                </Tabs.Content>
+              </Tabs.Item>
+              <Tabs.Item>
+                <Tabs.Button>{t('tabs.incomes')}</Tabs.Button>
+                <Tabs.Content>
+                  <NormberakningTabPanel
+                    errandId={errandId}
+                    locked={locked}
+                    warnings={incomeWarnings}
+                    onWarningsChanged={onWarningsChanged}
+                    footer={<PreviousNormberakningIncomes />}
+                  >
+                    <NormberakningIncomes
+                      errandId={errandId}
+                      rows={draft.incomes ?? []}
+                      incomeSum={draft.incomeSum}
+                      incomeTypes={types.incomeTypes}
+                      onChanged={refresh}
+                    />
+                  </NormberakningTabPanel>
+                </Tabs.Content>
+              </Tabs.Item>
+              <Tabs.Item>
+                <Tabs.Button>{t('tabs.expenses')}</Tabs.Button>
+                <Tabs.Content>
+                  <NormberakningTabPanel
+                    errandId={errandId}
+                    locked={locked}
+                    warnings={expenseWarnings}
+                    onWarningsChanged={onWarningsChanged}
+                    footer={<PreviousNormberakningExpensesBucket />}
+                  >
+                    <NormberakningExpenses
+                      errandId={errandId}
+                      title={t('expenses.title')}
+                      rows={draft.expenses ?? []}
+                      sum={draft.expenseSum}
+                      summaLabel={t('expenses.sum')}
+                      bucket="EXPENSE"
+                      types={types.costTypes}
+                      onChanged={refresh}
+                    />
+                  </NormberakningTabPanel>
+                </Tabs.Content>
+              </Tabs.Item>
+              <Tabs.Item>
+                <Tabs.Button>{t('tabs.livingCosts')}</Tabs.Button>
+                <Tabs.Content>
+                  <NormberakningTabPanel
+                    errandId={errandId}
+                    locked={locked}
+                    onWarningsChanged={onWarningsChanged}
+                    footer={<PreviousNormberakningLivingCosts />}
+                  >
+                    <NormberakningExpenses
+                      errandId={errandId}
+                      title={t('livingCosts.title')}
+                      rows={draft.specialExpenses ?? []}
+                      sum={draft.specialExpenseSum}
+                      summaLabel={t('livingCosts.sum')}
+                      bucket="SPECIAL_EXPENSE"
+                      types={types.livingCostTypes}
+                      onChanged={refresh}
+                    />
+                  </NormberakningTabPanel>
+                </Tabs.Content>
+              </Tabs.Item>
+              <Tabs.Item>
+                <Tabs.Button>{t('tabs.sharedCosts')}</Tabs.Button>
+                <Tabs.Content>
+                  <NormberakningTabPanel
+                    errandId={errandId}
+                    locked={locked}
+                    onWarningsChanged={onWarningsChanged}
+                    footer={<PreviousNormberakningGemensamma />}
+                  >
+                    <NormberakningGemensamma
+                      hasCustomHouseholdSize={draft.hasCustomHouseholdSize}
+                      householdSize={draft.householdSize}
+                    />
+                  </NormberakningTabPanel>
+                </Tabs.Content>
+              </Tabs.Item>
+            </Tabs>
+          </div>
+          <div className="col-start-1 row-start-1 justify-self-end self-start h-32 flex items-center">
+            <PreviousNormberakningCheckbox />
+          </div>
+        </div>
+      </div>
+    </PreviousNormberakningProvider>
   );
 };

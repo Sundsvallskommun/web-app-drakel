@@ -5,6 +5,7 @@ import { caremanagementUrl } from '@utils/caremanagement-url';
 import {
   CalculationDraft,
   FinancialAssistanceMetadata,
+  LifecareCalculation,
   NormExpenseRow,
   NormIncomeRow,
   NormPersonRow,
@@ -62,6 +63,18 @@ class CaremanagementNormberakningService {
   /** Restores a soft-deleted row. */
   async restoreRow(errandId: string, section: NormSection, rowId: string): Promise<ApiResponse<NormRow>> {
     return this.apiService.post<NormRow>({ url: this.draftUrl(errandId, section, rowId, 'restore') });
+  }
+
+  /**
+   * The applicant's committed Lifecare calculations. Scoped to the person (partyId), not the errand,
+   * so the list spans their earlier errands too. `from`/`to` default in caremanagement to the last 24
+   * months up to today. The order of the returned list is not specified by the API — callers sort.
+   */
+  async listCalculations(partyId: string): Promise<ApiResponse<LifecareCalculation[]>> {
+    return this.apiService.get<LifecareCalculation[]>({
+      url: caremanagementUrl('errands', 'financial-assistance', 'calculations'),
+      params: { partyId },
+    });
   }
 }
 

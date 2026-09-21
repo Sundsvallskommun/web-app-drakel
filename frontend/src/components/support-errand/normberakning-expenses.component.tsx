@@ -9,7 +9,7 @@ import {
   updateNormRow,
 } from '@services/normberakning-service';
 import { Button, FormControl, FormLabel, Input, Select, Spinner, Table } from '@sk-web-gui/react';
-import { formatAmount } from '@utils/format-amount';
+import { displayAmount } from '@utils/format-amount';
 import { RotateCcw, Trash2 } from 'lucide-react';
 import { FC, FocusEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -25,8 +25,6 @@ const parseAmount = (value: string): number | undefined => {
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : undefined;
 };
-
-const displayAmount = (value?: number): string => (value == null ? '—' : formatAmount(value));
 
 const expenseLabel = (row: NormExpenseRow, typeLabels: Record<string, string>): string => {
   if (row.specification?.trim()) {

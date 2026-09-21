@@ -239,3 +239,61 @@ export const updateNormHeader = (
     .patch<ApiResponse<NormberakningDraft>>(`errands/${errandId}/normberakning/draft/header`, input)
     .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);
+
+/**
+ * A committed Lifecare calculation from an earlier period, shown beside the draft for comparison.
+ * Entirely read-only — Lifecare owns these rows and nothing here can be edited from Draken. The shape
+ * differs from the draft's: there are no process/handläggare/effective triplets, only the values
+ * Lifecare settled on.
+ */
+interface PreviousCalculationPerson {
+  personId?: string;
+  name?: string;
+  amount?: number;
+  deviationFromDate?: string;
+  deviationToDate?: string;
+}
+
+interface PreviousCalculationIncome {
+  type?: string;
+  amountApplicant?: number;
+  applicantSearchDate?: string;
+  amountCoApplicant?: number;
+  coApplicantSearchDate?: string;
+}
+
+export interface PreviousCalculationExpense {
+  type?: string;
+  appliedAmount?: number;
+  approvedAmount?: number;
+}
+
+export interface PreviousCalculation {
+  id?: number;
+  norm?: string;
+  fromDate?: string;
+  toDate?: string;
+  incomeSum?: number;
+  expenseSum?: number;
+  specialExpenseSum?: number;
+  normSum?: number;
+  commonHouseholdCost?: number;
+  familyCost?: number;
+  balance?: number;
+  totalSum?: number;
+  isFinal?: boolean;
+  persons?: PreviousCalculationPerson[];
+  incomes?: PreviousCalculationIncome[];
+  expenses?: PreviousCalculationExpense[];
+  specialExpenses?: PreviousCalculationExpense[];
+}
+
+/**
+ * The Lifecare calculation preceding the errand's own period. Resolves to `null` when the applicant has
+ * no earlier calculation, which is a normal state rather than an error.
+ */
+export const getPreviousNormberakning = (errandId: string): Promise<ServiceResponse<PreviousCalculation | null>> =>
+  apiService
+    .get<ApiResponse<PreviousCalculation | null>>(`errands/${errandId}/normberakning/previous`)
+    .then((res) => ({ data: res.data.data }))
+    .catch(toServiceError);

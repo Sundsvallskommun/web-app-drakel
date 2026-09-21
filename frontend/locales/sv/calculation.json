@@ -101,5 +101,31 @@
     "INCOME_DUPLICATED": "Möjlig dubbelförd inkomst",
     "EXPENSE_REVIEW": "Kräver skälighetsbedömning",
     "EXPENSE_CAPPED": "Utgift över tak"
+  },
+  "previous": {
+    "toggle": "Jämför normberäkning med föregående månad",
+    "loadError": "Det gick inte att hämta föregående normberäkning",
+    "empty": "Det finns ingen tidigare normberäkning för den sökande.",
+    "family": {
+      "title": "Föregående: Personer som omfattas",
+      "amount": "Normbelopp"
+    },
+    "incomes": {
+      "title": "Föregående: Inkomster"
+    },
+    "expenses": {
+      "title": "Föregående: Utgifter"
+    },
+    "livingCosts": {
+      "title": "Föregående: Levnadskostnader i övrigt"
+    },
+    "shared": {
+      "title": "Föregående: Gemensamma kostnader",
+      "normSum": "Summa norm",
+      "commonHouseholdCost": "Gemensam hushållskostnad",
+      "familyCost": "Familjekostnad",
+      "balance": "Saldo",
+      "totalSum": "Totalsumma"
+    }
   }
 }

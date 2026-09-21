@@ -101,5 +101,31 @@
     "INCOME_DUPLICATED": "Possibly duplicated income",
     "EXPENSE_REVIEW": "Requires reasonableness assessment",
     "EXPENSE_CAPPED": "Expense above cap"
+  },
+  "previous": {
+    "toggle": "Compare calculation with the previous month",
+    "loadError": "Could not load the previous calculation",
+    "empty": "The applicant has no earlier calculation.",
+    "family": {
+      "title": "Previous: Covered persons",
+      "amount": "Norm amount"
+    },
+    "incomes": {
+      "title": "Previous: Incomes"
+    },
+    "expenses": {
+      "title": "Previous: Expenses"
+    },
+    "livingCosts": {
+      "title": "Previous: Other living costs"
+    },
+    "shared": {
+      "title": "Previous: Shared costs",
+      "normSum": "Norm total",
+      "commonHouseholdCost": "Common household cost",
+      "familyCost": "Family cost",
+      "balance": "Balance",
+      "totalSum": "Total"
+    }
   }
 }

@@ -9,7 +9,7 @@ import {
   updateNormRow,
 } from '@services/normberakning-service';
 import { Button, DatePicker, FormControl, FormLabel, Input, Select, Spinner, Table } from '@sk-web-gui/react';
-import { formatAmount } from '@utils/format-amount';
+import { displayAmount } from '@utils/format-amount';
 import dayjs from 'dayjs';
 import { RotateCcw, Trash2 } from 'lucide-react';
 import { FC, FocusEvent, useState } from 'react';
@@ -26,8 +26,6 @@ const parseAmount = (value: string): number | undefined => {
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : undefined;
 };
-
-const displayAmount = (value?: number): string => (value == null ? '—' : formatAmount(value));
 
 // caremanagement stores the income amount dates as date-time; the field only needs the day (yyyy-MM-dd).
 const toDateInput = (value?: string): string => (value ? dayjs(value).format('YYYY-MM-DD') : '');

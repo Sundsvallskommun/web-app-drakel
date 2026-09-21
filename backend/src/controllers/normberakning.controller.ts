@@ -1,6 +1,8 @@
 import authMiddleware from '@middlewares/auth.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import CaremanagementNormberakningService, { NormSection } from '@services/caremanagement-normberakning.service';
+import CaremanagementStakeholderService from '@services/caremanagement-stakeholder.service';
+import { pickPreviousCalculation } from '@utils/previous-calculation';
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
@@ -8,8 +10,12 @@ import { TypeOption, TypeOptionGroupEnum } from '@/data-contracts/caremanagement
 import { NormHeaderInputDto, NormRowInputDto } from '@/dtos/normberakning.dto';
 import { HttpException } from '@/exceptions/HttpException';
 import { NormberakningDraftApiResponse } from '@/responses/normberakning.response';
+import { PreviousCalculationApiResponse } from '@/responses/previous-calculation.response';
 
 const NORM_SECTIONS: readonly string[] = ['persons', 'incomes', 'expenses'];
+
+// The stakeholder whose Lifecare calculations the "previous normberäkning" concerns.
+const APPLICANT_ROLE = 'APPLICANT';
 
 // caremanagement returns one costTypes list grouped by Mina-sidor section (group = enum code). The
 // HOUSING section is Lifecare's boendekostnader (the Utgifter / EXPENSE bucket); the other sections
@@ -38,6 +44,7 @@ const toSection = (section: string): NormSection => {
 @Controller()
 export class NormberakningController {
   private normberakningService = new CaremanagementNormberakningService();
+  private stakeholderService = new CaremanagementStakeholderService();
 
   @Get('/errands/:errandId/normberakning/draft')
   @OpenAPI({ summary: 'Read the draft normberäkning (persons · incomes · expenses) for an errand' })
@@ -46,6 +53,29 @@ export class NormberakningController {
   async getDraft(@Param('errandId') errandId: string) {
     const res = await this.normberakningService.readDraft(errandId);
     return { data: res.data, message: 'success' };
+  }
+
+  @Get('/errands/:errandId/normberakning/previous')
+  @OpenAPI({ summary: "The applicant's Lifecare calculation preceding the errand's own period (read-only)" })
+  @ResponseSchema(PreviousCalculationApiResponse)
+  @UseBefore(authMiddleware)
+  async getPrevious(@Param('errandId') errandId: string) {
+    // The calculation list is keyed on the person, not the errand, so the APPLICANT stakeholder's
+    // externalId (partyId) has to be resolved first. The draft supplies the period to be "before".
+    const [stakeholdersRes, draftRes] = await Promise.all([
+      this.stakeholderService.readStakeholders(errandId),
+      this.normberakningService.readDraft(errandId).catch(() => undefined),
+    ]);
+
+    const applicant = stakeholdersRes.data?.find(stakeholder => stakeholder.role === APPLICANT_ROLE)?.externalId;
+    if (!applicant) {
+      return { data: null, message: 'success' };
+    }
+
+    const calculationsRes = await this.normberakningService.listCalculations(applicant);
+    const previous = pickPreviousCalculation(calculationsRes.data ?? [], draftRes?.data?.calculationFromDate);
+
+    return { data: previous ?? null, message: 'success' };
   }
 
   @Get('/normberakning/types')
