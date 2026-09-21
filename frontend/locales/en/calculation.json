@@ -45,10 +45,7 @@
     "includedTo": "Included to",
     "days": "Days",
     "normInterval": "Norm interval",
-    "empty": "No persons",
-    "addPerson": "Add new person",
-    "addVisitationChild": "Add new visitation child",
-    "editingInfo": "The family rows come from the calculation. Editing (covered/days/persons) can be added when needed."
+    "empty": "No persons"
   },
   "incomes": {
     "title": "Income",

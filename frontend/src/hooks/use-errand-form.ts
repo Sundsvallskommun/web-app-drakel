@@ -10,7 +10,6 @@ export interface ErrandForm {
   description: string;
   assignedUserId: string;
   status: string;
-  priority: string;
 }
 
 const fromErrand = (errand?: Errand): ErrandForm => ({
@@ -18,7 +17,6 @@ const fromErrand = (errand?: Errand): ErrandForm => ({
   description: errand?.description ?? '',
   assignedUserId: errand?.assignedUserId ?? '',
   status: errand?.status ?? '',
-  priority: errand?.priority ?? '',
 });
 
 /**
@@ -54,7 +52,6 @@ export const useErrandForm = (errand: Errand | undefined, onSaved: () => void) =
       description: form.description || undefined,
       assignedUserId: form.assignedUserId || undefined,
       status: form.status || undefined,
-      priority: form.priority || undefined,
     };
     const result = await updateErrand(errand.id, patch);
     setSaving(false);

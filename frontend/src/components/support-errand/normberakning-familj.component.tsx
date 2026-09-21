@@ -1,8 +1,8 @@
 'use client';
 
 import { NormPersonRow } from '@services/normberakning-service';
-import { Button, Icon, Table } from '@sk-web-gui/react';
-import { Check, Plus } from 'lucide-react';
+import { Icon, Table } from '@sk-web-gui/react';
+import { Check } from 'lucide-react';
 import { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -11,8 +11,8 @@ import { NormberakningTableBox } from './normberakning-table-box.component';
 const days = (value?: number): string => (value == null ? '—' : String(value));
 
 /**
- * FAMILJ section of the draft normberäkning — the persons the norm covers (read-only for now). The
- * "Lägg till"-actions are visual placeholders until per-row person editing is wired.
+ * FAMILJ section of the draft normberäkning — the persons the norm covers. Read-only: adding persons
+ * and umgängesbarn is handled in Lifecare, not here.
  */
 export const NormberakningFamilj: FC<{ persons: NormPersonRow[] }> = ({ persons }) => {
   const { t } = useTranslation('calculation');
@@ -55,17 +55,6 @@ export const NormberakningFamilj: FC<{ persons: NormPersonRow[] }> = ({ persons 
           }
         </Table.Body>
       </Table>
-
-      <div className="flex flex-wrap gap-12">
-        <Button size="sm" variant="secondary" leftIcon={<Plus />} disabled>
-          {t('family.addPerson')}
-        </Button>
-        <Button size="sm" variant="secondary" leftIcon={<Plus />} disabled>
-          {t('family.addVisitationChild')}
-        </Button>
-      </div>
-
-      <p className="text-small text-dark-secondary m-0">{t('family.editingInfo')}</p>
     </NormberakningTableBox>
   );
 };

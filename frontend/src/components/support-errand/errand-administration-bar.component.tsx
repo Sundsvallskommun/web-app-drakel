@@ -5,7 +5,6 @@ import { ErrandForm } from '@hooks/use-errand-form';
 import { useStatuses } from '@hooks/use-statuses';
 import { useUserStore } from '@services/user-service/user-service';
 import { Button, Divider, Select } from '@sk-web-gui/react';
-import { ERRAND_PRIORITIES } from '@utils/errand-priority';
 import { FC, ReactNode, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
@@ -27,7 +26,7 @@ const BarDivider: FC = () => <Divider orientation="vertical" className="self-str
 
 /**
  * The bar under the app header holding the errand's handläggning: assignee ("Ta ärende"/"Tilldela"), the
- * process actions, status and priority, and the single central "Spara" button that saves every edited field
+ * process actions and status, and the single central "Spara" button that saves every edited field
  * across the errand view.
  */
 export const ErrandAdministrationBar: FC<ErrandAdministrationBarProps> = ({
@@ -125,29 +124,6 @@ export const ErrandAdministrationBar: FC<ErrandAdministrationBarProps> = ({
             {statusOptions.map((option) => (
               <Select.Option key={option.name} value={option.name}>
                 {option.label}
-              </Select.Option>
-            ))}
-          </Select>
-        </label>
-
-        <label htmlFor="errand-priority" className="flex items-center gap-8 text-small font-bold">
-          {t('administrationBar.priority')}
-          <Select
-            id="errand-priority"
-            size="sm"
-            value={form.priority}
-            onChange={(event) => {
-              setField('priority', event.target.value);
-            }}
-          >
-            {!form.priority && (
-              <Select.Option value="" disabled>
-                {t('common:notSet')}
-              </Select.Option>
-            )}
-            {ERRAND_PRIORITIES.map((priority) => (
-              <Select.Option key={priority} value={priority}>
-                {t(`common:priority.${priority}`)}
               </Select.Option>
             ))}
           </Select>

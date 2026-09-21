@@ -85,7 +85,9 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   const [activeTab, setActiveTab] = useState<number>(0);
   const [activeSubTab, setActiveSubTab] = useState<number>(0);
   // Keys of the expanded right-column sections; a section's data only loads once it's expanded.
-  const [openSidebarSections, setOpenSidebarSections] = useState<string[]>([]);
+  // Bevakningar are open from the start: they are the section a handläggare is expected to act on, and
+  // a collapsed list hides work rather than saving space.
+  const [openSidebarSections, setOpenSidebarSections] = useState<string[]>(['bevakningar']);
   const toggleSidebarSection = useCallback((key: string) => {
     setOpenSidebarSections((current) =>
       current.includes(key) ? current.filter((openKey) => openKey !== key) : [...current, key]
@@ -271,6 +273,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
       key: 'bevakningar',
       label: t('sidebar:sections.bevakningar'),
       badge: counts.bevakningar,
+      badgeColor: counts.bevakningar > 0 ? 'warning' : 'tertiary',
       component: (
         <ErrandBevakningar
           errandId={errand.id ?? ''}

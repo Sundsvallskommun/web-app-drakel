@@ -30,13 +30,11 @@
     "caseWorker": "Case worker:",
     "notAssigned": "Not assigned",
     "takeErrand": "Take errand",
-    "status": "Status",
-    "priority": "Priority"
+    "status": "Status"
   },
   "metaCard": {
     "status": "Status",
     "errandNumber": "Errand number",
-    "priority": "Priority",
     "received": "Received",
     "applicant": "Applicant",
     "applicantAndCoApplicant": "Applicant and co-applicant"

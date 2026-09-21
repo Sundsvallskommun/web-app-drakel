@@ -10,6 +10,8 @@ export interface SidebarSection {
   label: string;
   /** Optional count shown as a badge next to the section title (e.g. number of notes). */
   badge?: number;
+  /** The badge colour — used to make a count that needs attention stand out. Defaults to tertiary. */
+  badgeColor?: 'tertiary' | 'warning' | 'error';
   component: ReactNode;
 }
 
@@ -32,7 +34,12 @@ const SidebarAccordionItem: FC<{ section: SidebarSection; open: boolean; onToggl
         >
           <h2 className="text-h4-sm m-0 truncate">{section.label}</h2>
           {section.badge !== undefined ?
-            <Badge color="tertiary" inverted size="sm" counter={section.badge > 99 ? '99+' : section.badge} />
+            <Badge
+              color={section.badgeColor ?? 'tertiary'}
+              inverted
+              size="sm"
+              counter={section.badge > 99 ? '99+' : section.badge}
+            />
           : null}
         </button>
         <Button

@@ -38,11 +38,6 @@
     "WITHDRAWN": "Återtagen",
     "CLOSED": "Avslutad"
   },
-  "priority": {
-    "LOW": "Låg",
-    "MEDIUM": "Medel",
-    "HIGH": "Hög"
-  },
   "role": {
     "APPLICANT": "Sökande",
     "CO_APPLICANT": "Medsökande",

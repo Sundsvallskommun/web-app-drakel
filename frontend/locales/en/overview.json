@@ -15,13 +15,10 @@
     "searchLabel": "Filter the list by errand number or applicant",
     "dropdownSearchPlaceholder": "Type to search",
     "status": "Status",
-    "priority": "Priority",
     "assignee": "Case worker",
     "onlyMine": "My errands",
     "onlyUnread": "Unread messages",
-    "priorityChip": "{{priority}} priority",
     "clearStatus": "Clear status {{status}}",
-    "clearPriority": "Clear priority {{priority}}",
     "clearAssignee": "Clear case worker {{assignee}}",
     "clearAll": "Clear all",
     "clearAllLabel": "Clear all filters"
@@ -36,9 +33,7 @@
       "status": "Status",
       "errand": "Errand",
       "applicant": "Applicant",
-      "priority": "Priority",
       "created": "Registered",
-      "updated": "Updated",
       "assignee": "Case worker"
     },
     "untitled": "(untitled)",

@@ -42,13 +42,12 @@ const orGroup = (field: string, values: string[]): string =>
 
 /**
  * Builds the caremanagement filter from the overview controls. The sidebar view's status clause, the
- * status/priority/handläggare filter groups, "Mina ärenden" (the logged-in handläggare, when set) and the
+ * status/handläggare filter groups, "Mina ärenden" (the logged-in handläggare, when set) and the
  * free-text search (a case-insensitive "contains" over errand number and applicant name) are all ANDed together.
  */
 const buildErrandFilter = (
   viewStatusClause: string,
   statusFilter: string[],
-  priorityFilter: string[],
   assigneeFilter: string[],
   mineUsername: string | undefined,
   search: string
@@ -56,7 +55,6 @@ const buildErrandFilter = (
   const clauses: string[] = [
     viewStatusClause,
     orGroup('status', statusFilter),
-    orGroup('priority', priorityFilter),
     orGroup('assignedUserId', assigneeFilter),
     mineUsername ? orGroup('assignedUserId', [mineUsername]) : '',
   ];
@@ -96,7 +94,6 @@ const OversiktPageContent = () => {
   const filter = buildErrandFilter(
     buildStatusClause(selectedView),
     filters.status,
-    filters.priority,
     filters.assignee,
     onlyMine ? username : undefined,
     query

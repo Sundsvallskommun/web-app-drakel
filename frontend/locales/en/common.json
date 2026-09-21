@@ -38,11 +38,6 @@
     "WITHDRAWN": "Withdrawn",
     "CLOSED": "Closed"
   },
-  "priority": {
-    "LOW": "Low",
-    "MEDIUM": "Medium",
-    "HIGH": "High"
-  },
   "role": {
     "APPLICANT": "Applicant",
     "CO_APPLICANT": "Co-applicant",

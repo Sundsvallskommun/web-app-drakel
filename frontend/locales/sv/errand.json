@@ -30,13 +30,11 @@
     "caseWorker": "Handläggare:",
     "notAssigned": "Ej tilldelad",
     "takeErrand": "Ta ärende",
-    "status": "Status",
-    "priority": "Prioritet"
+    "status": "Status"
   },
   "metaCard": {
     "status": "Status",
     "errandNumber": "Ärendenummer",
-    "priority": "Prioritet",
     "received": "Inkom",
     "applicant": "Sökande",
     "applicantAndCoApplicant": "Sökande och medsökande"

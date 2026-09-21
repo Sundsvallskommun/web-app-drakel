@@ -4,7 +4,6 @@ import { Lookup } from '@data-contracts/backend/data-contracts';
 import { useDebouncedValue } from '@hooks/use-debounced-value';
 import { Administrator } from '@services/administrator-service';
 import { Checkbox, Chip, SearchField } from '@sk-web-gui/react';
-import { ERRAND_PRIORITIES } from '@utils/errand-priority';
 import { FC, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -16,11 +15,10 @@ const SEARCH_DEBOUNCE_MS = 400;
 /** Active overview filters; each is multi-select (an OR within each group, AND between groups). */
 export interface ErrandFilters {
   status: string[];
-  priority: string[];
   assignee: string[];
 }
 
-export const emptyFilters: ErrandFilters = { status: [], priority: [], assignee: [] };
+export const emptyFilters: ErrandFilters = { status: [], assignee: [] };
 
 interface ErrandsFilterProps {
   query: string;
@@ -40,7 +38,7 @@ interface ErrandsFilterProps {
 
 /**
  * Overview filter bar: a grey group with "Filtrera i listan" (filters as you type, on errand number and
- * applicant), the status/priority/handläggare dropdowns and the "Mina ärenden" / "Olästa meddelanden"
+ * applicant), the status/handläggare dropdowns and the "Mina ärenden" / "Olästa meddelanden"
  * checkboxes, with the active filter values as removable chips below.
  */
 export const ErrandsFilter: FC<ErrandsFilterProps> = ({
@@ -83,22 +81,16 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
       defaultValue: status.displayName ?? status.name ?? '',
     }),
   }));
-  const priorityOptions: FilterOption[] = ERRAND_PRIORITIES.map((priority) => ({
-    value: priority,
-    label: t(`common:priority.${priority}`),
-  }));
   const assigneeOptions: FilterOption[] = administrators.map((admin) => ({
     value: admin.username,
     label: admin.displayName,
   }));
 
   const statusLabel = (value: string): string => statusOptions.find((option) => option.value === value)?.label ?? value;
-  const priorityLabel = (value: string): string =>
-    priorityOptions.find((option) => option.value === value)?.label ?? value;
   const assigneeLabel = (value: string): string =>
     assigneeOptions.find((option) => option.value === value)?.label ?? value;
 
-  const activeCount = filters.status.length + filters.priority.length + filters.assignee.length;
+  const activeCount = filters.status.length + filters.assignee.length;
 
   const removeValue = (key: keyof ErrandFilters, value: string) => {
     onFilterChange(
@@ -140,14 +132,6 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
           />
         )}
         <ErrandFilterDropdown
-          label={t('filter.priority')}
-          options={priorityOptions}
-          selected={filters.priority}
-          onChange={(values) => {
-            onFilterChange('priority', values);
-          }}
-        />
-        <ErrandFilterDropdown
           label={t('filter.assignee')}
           options={assigneeOptions}
           selected={filters.assignee}
@@ -187,17 +171,6 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
               }}
             >
               {statusLabel(value)}
-            </Chip>
-          ))}
-          {filters.priority.map((value) => (
-            <Chip
-              key={`priority-${value}`}
-              aria-label={t('filter.clearPriority', { priority: priorityLabel(value) })}
-              onClick={() => {
-                removeValue('priority', value);
-              }}
-            >
-              {t('filter.priorityChip', { priority: priorityLabel(value) })}
             </Chip>
           ))}
           {filters.assignee.map((value) => (

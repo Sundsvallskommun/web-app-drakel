@@ -45,10 +45,7 @@
     "includedTo": "Ingår till",
     "days": "Dagar",
     "normInterval": "Normintervall",
-    "empty": "Inga personer",
-    "addPerson": "Lägg till ny person",
-    "addVisitationChild": "Lägg till nytt umgängesbarn",
-    "editingInfo": "Familjeraderna kommer från beräkningen. Redigering (omfattas/dagar/personer) kan kopplas på när det behövs."
+    "empty": "Inga personer"
   },
   "incomes": {
     "title": "Inkomster",

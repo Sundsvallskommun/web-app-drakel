@@ -10,7 +10,6 @@ import { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ErrandStatusLabel } from './errand-status-label.component';
-import { PriorityLabel } from './priority-label.component';
 
 export type SortDirection = 'asc' | 'desc';
 
@@ -62,9 +61,9 @@ const columns: Column[] = [
     labelKey: 'table.columns.errand',
     sortKey: 'errandNumber',
     render: (errand, { t }) => (
-      <div className="max-w-[24rem] desktop:max-w-[40rem] leading-tight">
-        <div className="font-bold truncate">{errand.title ?? t('table.untitled')}</div>
-        <div className="truncate">{errand.errandNumber ?? t('common:none')}</div>
+      <div className="leading-tight">
+        <div className="font-bold break-words">{errand.title ?? t('table.untitled')}</div>
+        <div className="break-words">{errand.errandNumber ?? t('common:none')}</div>
       </div>
     ),
   },
@@ -72,21 +71,16 @@ const columns: Column[] = [
     labelKey: 'table.columns.applicant',
     sortKey: 'applicantName',
     render: (errand, { t }) => (
-      <div className="max-w-[22rem] leading-tight">
-        <div className="truncate">{errand.applicantName ?? t('common:none')}</div>
+      <div className="leading-tight">
+        <div className="break-words">{errand.applicantName ?? t('common:none')}</div>
         {errand.coApplicantName ?
-          <div className="truncate text-small text-dark-secondary" title={errand.coApplicantName}>
+          <div className="break-words text-small text-dark-secondary">
             <span className="sr-only">{t('common:role.CO_APPLICANT')}: </span>
             {errand.coApplicantName}
           </div>
         : null}
       </div>
     ),
-  },
-  {
-    labelKey: 'table.columns.priority',
-    sortKey: 'priority',
-    render: (errand) => <PriorityLabel priority={errand.priority} />,
   },
   {
     labelKey: 'table.columns.created',
@@ -96,18 +90,6 @@ const columns: Column[] = [
         {formatDate(errand.created)}
       </time>
     ),
-  },
-  {
-    labelKey: 'table.columns.updated',
-    sortKey: 'touched',
-    render: (errand) => {
-      const touched = errand.touched ?? errand.modified;
-      return (
-        <time className="whitespace-nowrap" dateTime={touched}>
-          {formatDate(touched)}
-        </time>
-      );
-    },
   },
   {
     labelKey: 'table.columns.assignee',
