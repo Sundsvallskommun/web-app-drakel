@@ -83,7 +83,9 @@
       "next": "Nästa",
       "unknownStakeholder": "Okänd intressent",
       "messageLine": "Meddelanderad {{number}}",
-      "proposalLoadError": "Det gick inte att hämta utbetalningsförslaget"
+      "proposalLoadError": "Det gick inte att hämta utbetalningsförslaget",
+      "saveError": "Det gick inte att registrera utbetalningen",
+      "saving": "Sparar…"
     }
   }
 }

@@ -148,6 +148,7 @@ export const ErrandUtbetalning: FC<{
               proposal={proposal}
               applicationMonth={status?.applicationMonth}
               disabled={locked}
+              onSaved={refresh}
             />
           </div>
         </AsyncContent>

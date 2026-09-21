@@ -83,7 +83,9 @@
       "next": "Next",
       "unknownStakeholder": "Unknown stakeholder",
       "messageLine": "Message line {{number}}",
-      "proposalLoadError": "Could not load the payment proposal"
+      "proposalLoadError": "Could not load the payment proposal",
+      "saveError": "Could not register the payment",
+      "saving": "Saving…"
     }
   }
 }

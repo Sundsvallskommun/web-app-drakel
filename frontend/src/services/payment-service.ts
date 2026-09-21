@@ -68,3 +68,56 @@ export const getPaymentProposal = (errandId: string): Promise<ServiceResponse<Pa
     .get<ApiResponse<PaymentProposal>>(`errands/${errandId}/payment-proposal`)
     .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);
+
+/** A labelled dropdown option from caremanagement's metadata catalogues. */
+interface PaymentTypeOption {
+  code?: string;
+  displayName?: string;
+}
+
+/** The Lifecare-sourced dropdown catalogues for the utbetalning form. */
+export interface PaymentMetadata {
+  moneyTypes: PaymentTypeOption[];
+  paymentMethods: PaymentTypeOption[];
+}
+
+/**
+ * The fields sent when registering an utbetalning. caremanagement stores it as DRAFT and queues
+ * nothing — the robot is started separately, so saving never sets anything in motion.
+ */
+export interface PaymentInput {
+  moneyType?: string;
+  paymentDate?: string;
+  amount?: number;
+  applicationMonth?: string;
+  reportedOnStakeholderIds?: string[];
+  accountingDate?: string;
+  excludedFromPayment?: boolean;
+  payeeStakeholderId?: string;
+  paymentMethod?: string;
+  payeeName?: string;
+  payeeAddress?: string;
+  payeeCareOf?: string;
+  payeeZipCode?: string;
+  payeeCity?: string;
+  clearingNumber?: string;
+  accountNumber?: string;
+  localPaymentNumber?: string;
+  invoiceNumber?: string;
+  usesOcr?: boolean;
+  messageLines?: string[];
+}
+
+/** Registers an utbetalning on an errand. */
+export const createPayment = (errandId: string, input: PaymentInput): Promise<ServiceResponse<null>> =>
+  apiService
+    .post<ApiResponse<null>>(`errands/${errandId}/payments`, input)
+    .then(() => ({ data: null }))
+    .catch(toServiceError);
+
+/** The money types and payment methods behind the utbetalning form's dropdowns. */
+export const getPaymentMetadata = (): Promise<ServiceResponse<PaymentMetadata>> =>
+  apiService
+    .get<ApiResponse<PaymentMetadata>>('payment-metadata')
+    .then((res) => ({ data: res.data.data }))
+    .catch(toServiceError);

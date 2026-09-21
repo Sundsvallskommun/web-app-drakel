@@ -1,12 +1,17 @@
 import authMiddleware from '@middlewares/auth.middleware';
+import { validationMiddleware } from '@middlewares/validation.middleware';
 import CaremanagementErrandService from '@services/caremanagement-errand.service';
+import CaremanagementMetadataService from '@services/caremanagement-metadata.service';
 import CaremanagementPaymentService from '@services/caremanagement-payment.service';
 import CaremanagementStakeholderService from '@services/caremanagement-stakeholder.service';
-import { Controller, Get, Param, UseBefore } from 'routing-controllers';
+import { toDropdownOption } from '@utils/dropdown-option';
+import { Body, Controller, Get, HttpCode, Param, Post, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
+import { PaymentInputDto } from '@/dtos/payment.dto';
 import { PaymentStatusApiResponse } from '@/responses/payment.response';
 import { PaymentProposalApiResponse } from '@/responses/payment-proposal.response';
+import { PaymentApiResponse, PaymentMetadataApiResponse, PaymentsApiResponse } from '@/responses/payment-resource.response';
 
 // The applicant whose Lifecare utbetalning the payment status concerns.
 const APPLICANT_ROLE = 'APPLICANT';
@@ -21,6 +26,7 @@ export class PaymentController {
   private paymentService = new CaremanagementPaymentService();
   private errandService = new CaremanagementErrandService();
   private stakeholderService = new CaremanagementStakeholderService();
+  private metadataService = new CaremanagementMetadataService();
 
   @Get('/errands/:errandId/payment-status')
   @OpenAPI({ summary: 'Whether the Lifecare utbetalning for the application month has been effectuated' })
@@ -66,5 +72,39 @@ export class PaymentController {
   async getPaymentProposal(@Param('errandId') errandId: string) {
     const res = await this.paymentService.readPaymentProposal(errandId);
     return { data: res.data, message: 'success' };
+  }
+
+  @Get('/errands/:errandId/payments')
+  @OpenAPI({ summary: 'List the utbetalningar registered on an errand' })
+  @ResponseSchema(PaymentsApiResponse)
+  @UseBefore(authMiddleware)
+  async listPayments(@Param('errandId') errandId: string) {
+    const res = await this.paymentService.listPayments(errandId);
+    return { data: res.data ?? [], message: 'success' };
+  }
+
+  @Post('/errands/:errandId/payments')
+  @HttpCode(201)
+  @OpenAPI({ summary: 'Register an utbetalning on an errand (stored as DRAFT; queues no RPA task)' })
+  @ResponseSchema(PaymentApiResponse)
+  @UseBefore(authMiddleware, validationMiddleware(PaymentInputDto, 'body'))
+  async createPayment(@Param('errandId') errandId: string, @Body() input: PaymentInputDto) {
+    const res = await this.paymentService.createPayment(errandId, input);
+    return { data: res.data ?? null, message: 'success' };
+  }
+
+  @Get('/payment-metadata')
+  @OpenAPI({ summary: 'The Lifecare money types and payment methods for the utbetalning dropdowns' })
+  @ResponseSchema(PaymentMetadataApiResponse)
+  @UseBefore(authMiddleware)
+  async getPaymentMetadata() {
+    const res = await this.metadataService.readFinancialAssistanceMetadata();
+    return {
+      data: {
+        moneyTypes: (res.data?.moneyTypes ?? []).map(toDropdownOption),
+        paymentMethods: (res.data?.paymentMethods ?? []).map(toDropdownOption),
+      },
+      message: 'success',
+    };
   }
 }

@@ -1,5 +1,5 @@
 import { getErrandStakeholders } from '@services/errand-service/errand-service';
-import { PaymentProposal } from '@services/payment-service';
+import { createPayment, getPaymentMetadata, PaymentProposal } from '@services/payment-service';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -7,6 +7,11 @@ import { ErrandUtbetalningForm } from './errand-utbetalning-form.component';
 
 vi.mock('@services/errand-service/errand-service', () => ({
   getErrandStakeholders: vi.fn(),
+}));
+
+vi.mock('@services/payment-service', () => ({
+  createPayment: vi.fn(),
+  getPaymentMetadata: vi.fn(),
 }));
 
 const APPLICANT = {
@@ -37,6 +42,10 @@ describe('ErrandUtbetalningForm', () => {
   beforeEach(() => {
     vi.mocked(getErrandStakeholders).mockReset();
     vi.mocked(getErrandStakeholders).mockResolvedValue({ data: [APPLICANT] });
+    vi.mocked(getPaymentMetadata).mockReset();
+    vi.mocked(getPaymentMetadata).mockResolvedValue({ data: { moneyTypes: [], paymentMethods: [] } });
+    vi.mocked(createPayment).mockReset();
+    vi.mocked(createPayment).mockResolvedValue({ data: null });
   });
 
   it('prefills date, amount and payee from the proposal', async () => {
@@ -121,6 +130,52 @@ describe('ErrandUtbetalningForm', () => {
 
     await waitFor(() => {
       expect(screen.getAllByRole('textbox', { name: /^Meddelanderad \d/ })).toHaveLength(2);
+    });
+  });
+
+  it('registers the utbetalning with the proposal values mapped to the API shape', async () => {
+    const onSaved = vi.fn();
+    render(
+      <ErrandUtbetalningForm errandId="errand-1" proposal={PROPOSAL} applicationMonth="2026-09" onSaved={onSaved} />
+    );
+    await waitFor(() => {
+      expect(screen.getByLabelText(/^Belopp/)).toHaveValue('8450,00');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nästa' }));
+
+    await waitFor(() => {
+      expect(createPayment).toHaveBeenCalledTimes(1);
+    });
+    // The comma decimal becomes a number, and the payee's name/account travel as their own fields —
+    // Lifecare payees have no stakeholder id.
+    expect(createPayment).toHaveBeenCalledWith(
+      'errand-1',
+      expect.objectContaining({
+        amount: 8450,
+        paymentDate: '2026-09-25',
+        applicationMonth: '2026-09',
+        paymentMethod: 'Bankkonto',
+        payeeName: 'Test Testsson',
+        clearingNumber: '8327',
+        accountNumber: '1234567',
+      })
+    );
+    expect(vi.mocked(createPayment).mock.calls[0]?.[1]).not.toHaveProperty('payeeStakeholderId');
+    expect(onSaved).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports a failed registration instead of silently doing nothing', async () => {
+    vi.mocked(createPayment).mockResolvedValue({ error: 'boom' });
+    renderForm();
+    await waitFor(() => {
+      expect(screen.getByLabelText(/^Belopp/)).toHaveValue('8450,00');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Nästa' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('Det gick inte att registrera utbetalningen');
     });
   });
 });

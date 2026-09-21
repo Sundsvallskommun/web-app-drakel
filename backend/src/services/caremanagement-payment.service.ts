@@ -2,7 +2,8 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 
-import { PaymentProposal, PaymentStatusRequest, PaymentStatusResponse } from '@/data-contracts/caremanagement/data-contracts';
+import { Payment, PaymentProposal, PaymentStatusRequest, PaymentStatusResponse } from '@/data-contracts/caremanagement/data-contracts';
+import { PaymentInputDto } from '@/dtos/payment.dto';
 
 /** Reads the Lifecare utbetalning status and the utbetalningsförslag for a financial-assistance errand. */
 class CaremanagementPaymentService {
@@ -24,6 +25,24 @@ class CaremanagementPaymentService {
     return this.apiService.get<PaymentProposal>({
       url: caremanagementUrl('errands', 'financial-assistance', errandId, 'payment-proposal'),
     });
+  }
+
+  private paymentsUrl(errandId: string, ...rest: string[]): string {
+    return caremanagementUrl('errands', 'financial-assistance', errandId, 'payments', ...rest);
+  }
+
+  /** The utbetalningar stored on an errand. */
+  async listPayments(errandId: string): Promise<ApiResponse<Payment[]>> {
+    return this.apiService.get<Payment[]>({ url: this.paymentsUrl(errandId) });
+  }
+
+  /**
+   * Creates an utbetalning on the errand. caremanagement stores it as DRAFT and queues nothing — the
+   * robot is started separately through the REGISTER_PAYMENT RPA task, so a handläggare can save a
+   * draft without setting anything in motion.
+   */
+  async createPayment(errandId: string, input: PaymentInputDto): Promise<ApiResponse<Payment>> {
+    return this.apiService.post<Payment>({ url: this.paymentsUrl(errandId), data: input });
   }
 }
 

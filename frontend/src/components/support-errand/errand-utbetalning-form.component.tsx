@@ -3,20 +3,21 @@
 import { FormField } from '@components/common/form-field.component';
 import { Stakeholder } from '@data-contracts/backend/data-contracts';
 import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
-import { Payee, PaymentProposal } from '@services/payment-service';
+import { usePaymentMetadata } from '@hooks/use-payment-metadata';
+import { createPayment, Payee, PaymentInput, PaymentProposal } from '@services/payment-service';
 import { Button, Checkbox, DatePicker, FormControl, FormLabel, Input, Select } from '@sk-web-gui/react';
 import { applicationMonthOptions, formatApplicationMonth } from '@utils/application-month';
-import { formatAmount } from '@utils/format-amount';
+import { formatAmount, parseAmount } from '@utils/format-amount';
 import { getEditableRecipientFields } from '@utils/payment-method';
 import { stakeholderListLabel } from '@utils/stakeholder-name';
 import { todayDate } from '@utils/today-date';
 import { Plus } from 'lucide-react';
-import { FC, useEffect } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { FieldArrayWithId, useFieldArray, useForm, UseFormRegister, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
 /** The fields of the Lifecare utbetalning form, in the order they appear in it. */
-export interface UtbetalningFormValues {
+interface UtbetalningFormValues {
   moneyType: string;
   paymentDate: string;
   amount: string;
@@ -103,6 +104,29 @@ const paymentMethodOptions = (payeeOptions: Payee[]): string[] => [
   ...new Set(payeeOptions.map((payee) => payee.paymentMethod).filter((method): method is string => !!method)),
 ];
 
+/**
+ * The form as caremanagement's PaymentRequest. The fields the form keeps closed (bokföringsdatum,
+ * lokalbetalningsnummer, räkningsnummer, OCR) are left out rather than sent empty, and
+ * `payeeStakeholderId` stays unset because the payees come from Lifecare and have no stakeholder id —
+ * the payee is identified by name and account instead.
+ */
+const toPaymentInput = (values: UtbetalningFormValues): PaymentInput => ({
+  moneyType: values.moneyType || undefined,
+  paymentDate: values.paymentDate || undefined,
+  amount: parseAmount(values.amount),
+  applicationMonth: values.applicationMonth || undefined,
+  reportedOnStakeholderIds: values.reportedOnStakeholderIds,
+  paymentMethod: values.paymentMethod || undefined,
+  payeeName: values.name || undefined,
+  payeeAddress: values.address || undefined,
+  payeeCareOf: values.careOf || undefined,
+  payeeZipCode: values.zipCode || undefined,
+  payeeCity: values.city || undefined,
+  clearingNumber: values.clearingNumber || undefined,
+  accountNumber: values.accountNumber || undefined,
+  messageLines: values.messageLines.map((line) => line.text).filter((text) => text.trim() !== ''),
+});
+
 /** "Redovisas på" — the stakeholders the utbetalning is booked on, one checkbox each. */
 const ReportedOnField: FC<{
   stakeholders: Stakeholder[];
@@ -178,9 +202,9 @@ const MessageLinesField: FC<{
  * the proposal carries no counterpart for them and the Lifecare rules that open them are not described
  * anywhere in the API, so enabling them would be a guess.
  *
- * TODO: the form is not submitted anywhere yet. The finalize endpoint takes payments inline today, but
- * caremanagement has said that payload changes once the `payments` resource lands — wire `onSubmit` up
- * after that, not before.
+ * "Nästa" registers the utbetalning through caremanagement's payments resource. It is stored as DRAFT
+ * and queues nothing — the robot is started separately through the REGISTER_PAYMENT RPA task, so
+ * saving never sets anything in motion.
  */
 export const ErrandUtbetalningForm: FC<{
   errandId: string;
@@ -190,11 +214,14 @@ export const ErrandUtbetalningForm: FC<{
   applicationMonth?: string;
   /** Disables every field, e.g. when the section is approved. */
   disabled?: boolean;
-  /** Called by "Nästa". Absent until there is an API to register the utbetalning against. */
-  onSubmit?: (values: UtbetalningFormValues) => void;
-}> = ({ errandId, proposal, applicationMonth, disabled = false, onSubmit }) => {
+  /** Called after the utbetalning has been registered, so the parent can refetch. */
+  onSaved?: () => void;
+}> = ({ errandId, proposal, applicationMonth, disabled = false, onSaved }) => {
   const { t } = useTranslation('decision');
   const { stakeholders } = useErrandStakeholders(errandId);
+  const metadata = usePaymentMetadata();
+  const [saving, setSaving] = useState<boolean>(false);
+  const [saveError, setSaveError] = useState<string>();
 
   const { register, control, handleSubmit, reset, setValue } = useForm<UtbetalningFormValues>({
     defaultValues: EMPTY_FORM_VALUES,
@@ -209,7 +236,14 @@ export const ErrandUtbetalningForm: FC<{
 
   const payeeOptions = proposal.payeeOptions ?? [];
   const monthOptions = applicationMonthOptions(proposal.payments?.[0]?.concernedMonth ?? applicationMonth);
-  const methodOptions = paymentMethodOptions(payeeOptions);
+  // Betalsätt: caremanagement's catalogue when it has one (it is a documented placeholder until the
+  // real Lifecare list is known), plus whatever the applicant's own payees actually use.
+  const methodOptions = [
+    ...new Set([
+      ...metadata.paymentMethods.map((option) => option.displayName ?? option.code ?? ''),
+      ...paymentMethodOptions(payeeOptions),
+    ]),
+  ].filter(Boolean);
 
   // The proposal is derived on every read, so re-prefill whenever a new one arrives. Anything the
   // handläggare has already typed is replaced — the proposal is the starting point, not a merge.
@@ -229,20 +263,37 @@ export const ErrandUtbetalningForm: FC<{
     setValue('accountNumber', payee.accountNumber ?? '');
   }, [payeeIndex, payeeOptions, setValue]);
 
-  const submit = handleSubmit((values) => onSubmit?.(values));
+  const submit = handleSubmit(async (values) => {
+    setSaving(true);
+    setSaveError(undefined);
+    const result = await createPayment(errandId, toPaymentInput(values));
+    setSaving(false);
+    if (result.error) {
+      setSaveError(t('payment.form.saveError'));
+      return;
+    }
+    onSaved?.();
+  });
 
   return (
-    <form className="flex flex-col gap-24" onSubmit={(event) => void submit(event)}>
+    // noValidate: the required markers mirror Lifecare's own form, but the browser must not block a
+    // save on them. caremanagement stores the utbetalning as DRAFT with every field optional, and its
+    // Pengar catalogue is still a documented placeholder — a required select with no options would
+    // otherwise make the form impossible to submit at all. Validation belongs to caremanagement.
+    <form className="flex flex-col gap-24" noValidate onSubmit={(event) => void submit(event)}>
       {proposal.explanation ?
         <p className="m-0 text-dark-secondary">{proposal.explanation}</p>
       : null}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-24 gap-y-16 items-start">
         <FormField label={t('payment.form.moneyType')} required disabled={disabled}>
-          {/* TODO: the Lifecare money types ("Ek. Bistånd 3,00" etc.) have no source in the
-              caremanagement API yet — they are coming with the payments resource's metadata. */}
           <Select {...register('moneyType')}>
             <Select.Option value="" />
+            {metadata.moneyTypes.map((option) => (
+              <Select.Option key={option.code} value={option.code ?? ''}>
+                {option.displayName ?? option.code}
+              </Select.Option>
+            ))}
           </Select>
         </FormField>
 
@@ -365,10 +416,16 @@ export const ErrandUtbetalningForm: FC<{
         >
           {t('common:cancel')}
         </Button>
-        <Button type="submit" variant="primary" color="primary" disabled={disabled}>
-          {t('payment.form.next')}
+        <Button type="submit" variant="primary" color="primary" disabled={disabled || saving}>
+          {saving ? t('payment.form.saving') : t('payment.form.next')}
         </Button>
       </div>
+
+      {saveError ?
+        <p className="m-0 text-error-surface-primary" role="alert">
+          {saveError}
+        </p>
+      : null}
     </form>
   );
 };
