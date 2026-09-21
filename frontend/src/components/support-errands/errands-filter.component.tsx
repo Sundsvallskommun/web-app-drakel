@@ -3,7 +3,8 @@
 import { Lookup } from '@data-contracts/backend/data-contracts';
 import { useDebouncedValue } from '@hooks/use-debounced-value';
 import { Administrator } from '@services/administrator-service';
-import { Checkbox, Chip, SearchField } from '@sk-web-gui/react';
+import { Button, Checkbox, Chip, SearchField } from '@sk-web-gui/react';
+import { Search } from 'lucide-react';
 import { FC, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -28,11 +29,17 @@ interface ErrandsFilterProps {
   onClearFilters: () => void;
   statuses: Lookup[];
   administrators: Administrator[];
-  /** The status filter is only offered on the "Alla ärenden" view (the other views already scope status). */
   onlyMine: boolean;
   onOnlyMineChange: (checked: boolean) => void;
   onlyUnread: boolean;
   onOnlyUnreadChange: (checked: boolean) => void;
+  /**
+   * Whether "Mina ärenden" and "Olästa meddelanden" can be toggled. The list views are the handläggare's
+   * own errands by definition, so a checkbox that cannot change anything would be a lie there.
+   */
+  showOwnershipToggles?: boolean;
+  /** When set, the filter acts as a search form: nothing is fetched until this runs. */
+  onSearch?: () => void;
 }
 
 /**
@@ -52,6 +59,8 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
   onOnlyMineChange,
   onlyUnread,
   onOnlyUnreadChange,
+  showOwnershipToggles = true,
+  onSearch,
 }) => {
   const { t } = useTranslation('overview');
   const [searchInput, setSearchInput] = useState<string>(query);
@@ -112,6 +121,7 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
           }}
           onSearch={() => {
             applySearch(searchInput);
+            onSearch?.();
           }}
           onReset={() => {
             setSearchInput('');
@@ -137,22 +147,31 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
           }}
         />
         <div className="flex flex-1 flex-wrap items-center justify-end gap-x-24 gap-y-8 text-small text-dark-secondary">
-          <Checkbox
-            checked={onlyMine}
-            onChange={(event) => {
-              onOnlyMineChange(event.target.checked);
-            }}
-          >
-            {t('filter.onlyMine')}
-          </Checkbox>
-          <Checkbox
-            checked={onlyUnread}
-            onChange={(event) => {
-              onOnlyUnreadChange(event.target.checked);
-            }}
-          >
-            {t('filter.onlyUnread')}
-          </Checkbox>
+          {showOwnershipToggles ?
+            <>
+              <Checkbox
+                checked={onlyMine}
+                onChange={(event) => {
+                  onOnlyMineChange(event.target.checked);
+                }}
+              >
+                {t('filter.onlyMine')}
+              </Checkbox>
+              <Checkbox
+                checked={onlyUnread}
+                onChange={(event) => {
+                  onOnlyUnreadChange(event.target.checked);
+                }}
+              >
+                {t('filter.onlyUnread')}
+              </Checkbox>
+            </>
+          : null}
+          {onSearch ?
+            <Button size="sm" variant="primary" color="primary" leftIcon={<Search />} onClick={onSearch}>
+              {t('filter.search')}
+            </Button>
+          : null}
         </div>
       </div>
 

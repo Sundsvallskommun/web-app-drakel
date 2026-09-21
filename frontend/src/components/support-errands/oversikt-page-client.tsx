@@ -9,8 +9,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 
-import { CLOSED_ERRAND_STATUS, ErrandView } from './errand-views';
-import { ErrandsFilter } from './errands-filter.component';
+import { CLOSED_ERRAND_STATUS, ErrandView, isOwnErrandsView } from './errand-views';
+import { ErrandFilters, ErrandsFilter } from './errands-filter.component';
 import { ErrandsTable } from './errands-table.component';
 import { useOverviewFilterStore } from './overview-filter-store';
 import { OverviewSidebar } from './overview-sidebar.component';
@@ -19,12 +19,27 @@ import { OverviewSidebar } from './overview-sidebar.component';
 const escapeFilterValue = (value: string): string => value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
 /**
- * The status clause for a sidebar view: Avslutade → CLOSED, Pågående → everything else. Pågående uses
- * negation rather than listing the open statuses, since the STATUS lookups can be empty and a status
- * added later must not fall out of the view.
+ * The status clause for a sidebar view: Avslutade → CLOSED, Pågående → everything else, Alla and Sök →
+ * none. Pågående uses negation rather than listing the open statuses, since the STATUS lookups can be
+ * empty and a status added later must not fall out of the view.
  */
-const buildStatusClause = (view: ErrandView): string =>
-  view === 'closed' ? `status:'${CLOSED_ERRAND_STATUS}'` : `not(status:'${CLOSED_ERRAND_STATUS}')`;
+const buildStatusClause = (view: ErrandView): string => {
+  if (view === 'closed') {
+    return `status:'${CLOSED_ERRAND_STATUS}'`;
+  }
+  if (view === 'ongoing') {
+    return `not(status:'${CLOSED_ERRAND_STATUS}')`;
+  }
+  return '';
+};
+
+/** What a Sök was run with — the fetch uses this rather than the live inputs. */
+interface AppliedSearch {
+  query: string;
+  filters: ErrandFilters;
+  onlyMine: boolean;
+  onlyUnread: boolean;
+}
 
 /** An OR group over one field, e.g. (status:'A' or status:'B'); empty string when no values. */
 const orGroup = (field: string, values: string[]): string =>
@@ -78,15 +93,22 @@ const OversiktPageContent = () => {
   const toggleSort = useOverviewFilterStore((state) => state.toggleSort);
 
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
+  // The Sök view holds what the last Sök was run with; null means nothing has been searched for yet, so
+  // nothing is fetched. The three list views ignore it entirely.
+  const [appliedSearch, setAppliedSearch] = useState<AppliedSearch | null>(null);
+  const isSearchView = !isOwnErrandsView(selectedView);
   const username = useUserStore(useShallow((state) => state.user.username));
   const { statuses } = useStatuses();
   const { administrators } = useAdministrators();
+  // The list views are the handläggare's own errands by definition — "Mina ärenden" is not a choice
+  // there. Looking at anyone else's is what the Sök view is for.
+  const active = isSearchView ? appliedSearch : { query, filters, onlyMine: true, onlyUnread };
   const filter = buildErrandFilter(
     buildStatusClause(selectedView),
-    filters.status,
-    filters.assignee,
-    onlyMine ? username : undefined,
-    query
+    active?.filters.status ?? [],
+    active?.filters.assignee ?? [],
+    active?.onlyMine ? username : undefined,
+    active?.query ?? ''
   );
   // Handläggare are stored as usernames; show their Active Directory display names in the list.
   const assigneeName = useCallback(
@@ -97,13 +119,16 @@ const OversiktPageContent = () => {
 
   // Filtering, sorting and paging are all done server-side (caremanagement); the response's _meta drives
   // the pagination.
-  const { errands, meta, isLoading, error } = useErrands({
-    page,
-    size: pageSize,
-    filter: filter || undefined,
-    sort: sort ? [`${sort.column},${sort.direction}`] : undefined,
-    hasUnacknowledgedNotifications: onlyUnread || undefined,
-  });
+  const { errands, meta, isLoading, error } = useErrands(
+    {
+      page,
+      size: pageSize,
+      filter: filter || undefined,
+      sort: sort ? [`${sort.column},${sort.direction}`] : undefined,
+      hasUnacknowledgedNotifications: active?.onlyUnread ?? undefined,
+    },
+    !isSearchView || appliedSearch !== null
+  );
 
   const totalPages = meta.totalPages ?? 1;
   const totalRecords = meta.totalRecords ?? errands.length;
@@ -134,24 +159,39 @@ const OversiktPageContent = () => {
             onOnlyMineChange={setOnlyMine}
             onlyUnread={onlyUnread}
             onOnlyUnreadChange={setOnlyUnread}
+            showOwnershipToggles={isSearchView}
+            onSearch={
+              isSearchView ?
+                () => {
+                  setPage(0);
+                  setAppliedSearch({ query, filters, onlyMine, onlyUnread });
+                }
+              : undefined
+            }
           />
           <p className="m-0 text-dark-secondary" aria-live="polite">
-            {isLoading ? t('list.fetching') : t('list.showing', { count: totalRecords })}
+            {isSearchView && appliedSearch === null ?
+              t('list.searchPrompt')
+            : isLoading ?
+              t('list.fetching')
+            : t('list.showing', { count: totalRecords })}
           </p>
-          <ErrandsTable
-            errands={errands}
-            isLoading={isLoading}
-            error={error}
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-            pageSize={pageSize}
-            onPageSizeChange={setPageSize}
-            sortColumn={sort?.column}
-            sortDirection={sort?.direction}
-            onSort={toggleSort}
-            assigneeName={assigneeName}
-          />
+          {isSearchView && appliedSearch === null ? null : (
+            <ErrandsTable
+              errands={errands}
+              isLoading={isLoading}
+              error={error}
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+              sortColumn={sort?.column}
+              sortDirection={sort?.direction}
+              onSort={toggleSort}
+              assigneeName={assigneeName}
+            />
+          )}
         </div>
       </main>
     </div>

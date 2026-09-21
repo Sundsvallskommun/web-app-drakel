@@ -1,13 +1,17 @@
 /**
- * The status "views" in the overview sidebar: Pågående (everything not closed) and Avslutade (CLOSED).
+ * The views in the overview sidebar.
  *
- * Pågående is expressed as a negation rather than a list of open statuses, so a status added to the
- * catalogue later still shows up instead of silently falling out of the view.
+ * The three list views are the handläggare's own errands — "Mina ärenden" is always on there, so they
+ * answer "what is on my desk". Looking beyond that is what `search` is for: it starts empty and fetches
+ * only once the handläggare has said what to look for.
  */
-export type ErrandView = 'ongoing' | 'closed';
+export type ErrandView = 'all' | 'ongoing' | 'closed' | 'search';
 
 /** The views in sidebar order; each view's label is the translation key `overview:views.<view>`. */
-export const ERRAND_VIEWS: ErrandView[] = ['ongoing', 'closed'];
+export const ERRAND_VIEWS: ErrandView[] = ['all', 'ongoing', 'closed', 'search'];
+
+/** The views that list the handläggare's own errands straight away. */
+export const isOwnErrandsView = (view: ErrandView): boolean => view !== 'search';
 
 /** The single status that counts as avslutad; everything else is pågående. */
 export const CLOSED_ERRAND_STATUS = 'CLOSED';

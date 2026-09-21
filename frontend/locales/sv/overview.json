@@ -1,7 +1,9 @@
 {
   "views": {
+    "all": "Alla ärenden",
     "ongoing": "Pågående ärenden",
-    "closed": "Avslutade ärenden"
+    "closed": "Avslutade ärenden",
+    "search": "Sök ärenden"
   },
   "sidebar": {
     "heading": "Ärenden",
@@ -19,12 +21,14 @@
     "clearStatus": "Rensa status {{status}}",
     "clearAssignee": "Rensa handläggare {{assignee}}",
     "clearAll": "Rensa alla",
-    "clearAllLabel": "Rensa alla filter"
+    "clearAllLabel": "Rensa alla filter",
+    "search": "Sök"
   },
   "list": {
     "fetching": "Hämtar ärenden…",
     "showing_one": "Visar {{count}} ärende",
-    "showing_other": "Visar {{count}} ärenden"
+    "showing_other": "Visar {{count}} ärenden",
+    "searchPrompt": "Skriv ett sökord eller välj ett filter och tryck på Sök."
   },
   "table": {
     "columns": {

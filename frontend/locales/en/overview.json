@@ -1,7 +1,9 @@
 {
   "views": {
+    "all": "All errands",
     "ongoing": "Ongoing errands",
-    "closed": "Closed errands"
+    "closed": "Closed errands",
+    "search": "Search errands"
   },
   "sidebar": {
     "heading": "Errands",
@@ -19,12 +21,14 @@
     "clearStatus": "Clear status {{status}}",
     "clearAssignee": "Clear case worker {{assignee}}",
     "clearAll": "Clear all",
-    "clearAllLabel": "Clear all filters"
+    "clearAllLabel": "Clear all filters",
+    "search": "Search"
   },
   "list": {
     "fetching": "Fetching errands…",
     "showing_one": "Showing {{count}} errand",
-    "showing_other": "Showing {{count}} errands"
+    "showing_other": "Showing {{count}} errands",
+    "searchPrompt": "Enter a search term or pick a filter, then press Search."
   },
   "table": {
     "columns": {

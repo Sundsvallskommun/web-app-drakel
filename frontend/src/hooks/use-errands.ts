@@ -21,8 +21,11 @@ const NO_META: PagingAndSortingMetaData = {};
 /**
  * Loads a paged list of errands. A light data layer over {@link getErrands} — local state only,
  * no global store. Re-fetches whenever the paging/filter inputs change.
+ *
+ * `enabled` false keeps it idle without reporting loading — the Sök view fetches nothing until the
+ * handläggare has said what to look for.
  */
-export const useErrands = (query: ErrandsQuery): UseErrandsResult => {
+export const useErrands = (query: ErrandsQuery, enabled = true): UseErrandsResult => {
   const { filter, page, size, hasUnacknowledgedNotifications } = query;
   // Stable string for the dependency list. Joined with a newline — NOT a comma — because each sort entry
   // is itself "field,direction"; a comma delimiter would split the direction off into its own (invalid)
@@ -40,6 +43,6 @@ export const useErrands = (query: ErrandsQuery): UseErrandsResult => {
       }),
     [filter, page, size, sortKey, hasUnacknowledgedNotifications]
   );
-  const { data, ...result } = useServiceQuery(fetchErrands, { initialData: NO_RESULT });
+  const { data, ...result } = useServiceQuery(fetchErrands, { initialData: NO_RESULT, enabled });
   return { errands: data.errands ?? NO_ERRANDS, meta: data._meta ?? NO_META, ...result };
 };

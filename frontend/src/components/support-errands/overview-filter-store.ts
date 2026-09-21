@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { ErrandView } from './errand-views';
+import { ERRAND_VIEWS, ErrandView } from './errand-views';
 import { emptyFilters, ErrandFilters } from './errands-filter.component';
 import { SortDirection } from './errands-table.component';
 
@@ -38,7 +38,7 @@ interface OverviewFilterActions {
 const DEFAULT_PAGE_SIZE = 12;
 
 const initialState: OverviewFilterState = {
-  selectedView: 'ongoing',
+  selectedView: 'all',
   query: '',
   filters: emptyFilters,
   sort: undefined,
@@ -98,14 +98,15 @@ export const useOverviewFilterStore = create<OverviewFilterState & OverviewFilte
     }),
     {
       name: 'drakel-overview-filter',
-      // Bumped when the sidebar views became Pågående/Avslutade: a browser still holding 'all', 'new' or
-      // 'open' would otherwise select a view that no longer exists, leaving nothing highlighted.
-      version: 2,
+      // Bumped whenever the set of views changes: a browser holding a view that no longer exists would
+      // otherwise select nothing, leaving the sidebar with no highlight and an unfiltered list.
+      version: 3,
       migrate: (persisted) => {
         const state = persisted as Partial<OverviewFilterState> | undefined;
+        const view = state?.selectedView;
         return {
           ...state,
-          selectedView: state?.selectedView === 'closed' ? 'closed' : 'ongoing',
+          selectedView: view && ERRAND_VIEWS.includes(view) ? view : 'all',
         } as OverviewFilterState;
       },
       // We rehydrate manually (after mount) via a guard in the page so the SSR/first client render uses the
