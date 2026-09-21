@@ -76,7 +76,12 @@ const incomesTable = (incomes: NormIncomeRow[], sum?: number): string => {
     </table>`;
 };
 
-const expensesTable = (expenses: NormExpenseRow[], sum: number | undefined, typeLabels: Record<string, string>, summaLabel: string): string => {
+const expensesTable = (
+  expenses: NormExpenseRow[],
+  sum: number | undefined,
+  typeLabels: Record<string, string>,
+  summaLabel: string
+): string => {
   const rows = visible(expenses);
   const body =
     rows.length === 0 ?
@@ -136,8 +141,7 @@ export const buildNormberakningHtml = (
     .map(([label, value]) => `<tr><th>${label}</th><td>${value}</td></tr>`)
     .join('');
 
-  const section = (title: string, body: string): string =>
-    `<section><h2>${escapeHtml(title)}</h2>${body}</section>`;
+  const section = (title: string, body: string): string => `<section><h2>${escapeHtml(title)}</h2>${body}</section>`;
 
   return `<!DOCTYPE html>
 <html lang="sv">

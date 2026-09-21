@@ -26,10 +26,7 @@ export const getActualisations = (errandId: string): Promise<ServiceResponse<Act
     .catch(toServiceError);
 
 /** Archives the errand's application PDF onto a chosen aktualisering (stamps it onto the errand). */
-export const archiveToActualisation = (
-  errandId: string,
-  actualisationId: number
-): Promise<ServiceResponse<null>> =>
+export const archiveToActualisation = (errandId: string, actualisationId: number): Promise<ServiceResponse<null>> =>
   apiService
     .post<unknown>(`errands/${errandId}/actualisations/${actualisationId}/archive`, {})
     .then(() => ({ data: null }))

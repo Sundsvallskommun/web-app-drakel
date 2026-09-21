@@ -34,7 +34,6 @@ export const resolveBeslutPeriod = (
   recommendation: Decision | null | undefined,
   draft: NormberakningDraft | undefined
 ): BeslutPeriod => ({
-  fromDate:
-    recommendation?.periodFrom ?? draft?.calculationFromDate ?? dayjs().startOf('month').format('YYYY-MM-DD'),
+  fromDate: recommendation?.periodFrom ?? draft?.calculationFromDate ?? dayjs().startOf('month').format('YYYY-MM-DD'),
   toDate: recommendation?.periodTo ?? draft?.calculationToDate ?? dayjs().endOf('month').format('YYYY-MM-DD'),
 });
