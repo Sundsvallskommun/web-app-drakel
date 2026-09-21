@@ -7,8 +7,12 @@
  */
 export type ErrandView = 'all' | 'ongoing' | 'closed' | 'search';
 
-/** The views in sidebar order; each view's label is the translation key `overview:views.<view>`. */
-export const ERRAND_VIEWS: ErrandView[] = ['all', 'ongoing', 'closed', 'search'];
+/**
+ * The views in sidebar order; each view's label is the translation key `overview:views.<view>`. A
+ * divider is drawn before `search`, which is the one view that is not a list of the handläggare's own
+ * errands.
+ */
+export const ERRAND_VIEWS: ErrandView[] = ['ongoing', 'closed', 'all', 'search'];
 
 /** The views that list the handläggare's own errands straight away. */
 export const isOwnErrandsView = (view: ErrandView): boolean => view !== 'search';

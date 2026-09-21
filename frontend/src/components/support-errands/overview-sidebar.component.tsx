@@ -47,7 +47,9 @@ export const OverviewSidebar: FC<OverviewSidebarProps> = ({ selectedView, onSele
             const isActive = selectedView === view;
             const label = t(`views.${view}`);
             return (
-              <li key={view}>
+              // Sök is not a list of the handläggare's own errands, so it is set apart from the three
+              // that are.
+              <li key={view} className={view === 'search' ? 'pt-8 mt-8 border-t-1 border-divider' : undefined}>
                 <button
                   type="button"
                   aria-current={isActive ? 'page' : undefined}

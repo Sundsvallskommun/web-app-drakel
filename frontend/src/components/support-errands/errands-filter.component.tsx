@@ -29,15 +29,13 @@ interface ErrandsFilterProps {
   onClearFilters: () => void;
   statuses: Lookup[];
   administrators: Administrator[];
-  onlyMine: boolean;
-  onOnlyMineChange: (checked: boolean) => void;
   onlyUnread: boolean;
   onOnlyUnreadChange: (checked: boolean) => void;
   /**
-   * Whether "Mina ärenden" and "Olästa meddelanden" can be toggled. The list views are the handläggare's
-   * own errands by definition, so a checkbox that cannot change anything would be a lie there.
+   * Whether the handläggare filter is offered. On the list views everything is already the handläggare's
+   * own, so narrowing by handläggare could only ever empty the list.
    */
-  showOwnershipToggles?: boolean;
+  showAssigneeFilter?: boolean;
   /** When set, the filter acts as a search form: nothing is fetched until this runs. */
   onSearch?: () => void;
 }
@@ -55,11 +53,9 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
   onClearFilters,
   statuses,
   administrators,
-  onlyMine,
-  onOnlyMineChange,
   onlyUnread,
   onOnlyUnreadChange,
-  showOwnershipToggles = true,
+  showAssigneeFilter = true,
   onSearch,
 }) => {
   const { t } = useTranslation('overview');
@@ -137,36 +133,26 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
             onFilterChange('status', values);
           }}
         />
-        <ErrandFilterDropdown
-          label={t('filter.assignee')}
-          options={assigneeOptions}
-          selected={filters.assignee}
-          searchable
-          onChange={(values) => {
-            onFilterChange('assignee', values);
-          }}
-        />
+        {showAssigneeFilter ?
+          <ErrandFilterDropdown
+            label={t('filter.assignee')}
+            options={assigneeOptions}
+            selected={filters.assignee}
+            searchable
+            onChange={(values) => {
+              onFilterChange('assignee', values);
+            }}
+          />
+        : null}
         <div className="flex flex-1 flex-wrap items-center justify-end gap-x-24 gap-y-8 text-small text-dark-secondary">
-          {showOwnershipToggles ?
-            <>
-              <Checkbox
-                checked={onlyMine}
-                onChange={(event) => {
-                  onOnlyMineChange(event.target.checked);
-                }}
-              >
-                {t('filter.onlyMine')}
-              </Checkbox>
-              <Checkbox
-                checked={onlyUnread}
-                onChange={(event) => {
-                  onOnlyUnreadChange(event.target.checked);
-                }}
-              >
-                {t('filter.onlyUnread')}
-              </Checkbox>
-            </>
-          : null}
+          <Checkbox
+            checked={onlyUnread}
+            onChange={(event) => {
+              onOnlyUnreadChange(event.target.checked);
+            }}
+          >
+            {t('filter.onlyUnread')}
+          </Checkbox>
           {onSearch ?
             <Button size="sm" variant="primary" color="primary" leftIcon={<Search />} onClick={onSearch}>
               {t('filter.search')}

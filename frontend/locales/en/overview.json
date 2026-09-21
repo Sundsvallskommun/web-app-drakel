@@ -16,7 +16,6 @@
     "dropdownSearchPlaceholder": "Type to search",
     "status": "Status",
     "assignee": "Case worker",
-    "onlyMine": "My errands",
     "onlyUnread": "Unread messages",
     "clearStatus": "Clear status {{status}}",
     "clearAssignee": "Clear case worker {{assignee}}",

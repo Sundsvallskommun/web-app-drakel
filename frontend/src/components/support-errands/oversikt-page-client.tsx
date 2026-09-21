@@ -37,7 +37,6 @@ const buildStatusClause = (view: ErrandView): string => {
 interface AppliedSearch {
   query: string;
   filters: ErrandFilters;
-  onlyMine: boolean;
   onlyUnread: boolean;
 }
 
@@ -78,7 +77,6 @@ const OversiktPageContent = () => {
   const query = useOverviewFilterStore((state) => state.query);
   const filters = useOverviewFilterStore((state) => state.filters);
   const sort = useOverviewFilterStore((state) => state.sort);
-  const onlyMine = useOverviewFilterStore((state) => state.onlyMine);
   const onlyUnread = useOverviewFilterStore((state) => state.onlyUnread);
   const page = useOverviewFilterStore((state) => state.page);
   const pageSize = useOverviewFilterStore((state) => state.pageSize);
@@ -86,7 +84,6 @@ const OversiktPageContent = () => {
   const setQuery = useOverviewFilterStore((state) => state.setQuery);
   const setFilter = useOverviewFilterStore((state) => state.setFilter);
   const clearFilters = useOverviewFilterStore((state) => state.clearFilters);
-  const setOnlyMine = useOverviewFilterStore((state) => state.setOnlyMine);
   const setOnlyUnread = useOverviewFilterStore((state) => state.setOnlyUnread);
   const setPage = useOverviewFilterStore((state) => state.setPage);
   const setPageSize = useOverviewFilterStore((state) => state.setPageSize);
@@ -100,14 +97,14 @@ const OversiktPageContent = () => {
   const username = useUserStore(useShallow((state) => state.user.username));
   const { statuses } = useStatuses();
   const { administrators } = useAdministrators();
-  // The list views are the handläggare's own errands by definition — "Mina ärenden" is not a choice
-  // there. Looking at anyone else's is what the Sök view is for.
-  const active = isSearchView ? appliedSearch : { query, filters, onlyMine: true, onlyUnread };
+  // Ownership is a property of the view, not a filter: the three list views are the handläggare's own
+  // errands by definition, and Sök deliberately searches across everyone's.
+  const active = isSearchView ? appliedSearch : { query, filters, onlyUnread };
   const filter = buildErrandFilter(
     buildStatusClause(selectedView),
     active?.filters.status ?? [],
     active?.filters.assignee ?? [],
-    active?.onlyMine ? username : undefined,
+    isSearchView ? undefined : username,
     active?.query ?? ''
   );
   // Handläggare are stored as usernames; show their Active Directory display names in the list.
@@ -155,16 +152,14 @@ const OversiktPageContent = () => {
             onClearFilters={clearFilters}
             statuses={statuses}
             administrators={administrators}
-            onlyMine={onlyMine}
-            onOnlyMineChange={setOnlyMine}
             onlyUnread={onlyUnread}
             onOnlyUnreadChange={setOnlyUnread}
-            showOwnershipToggles={isSearchView}
+            showAssigneeFilter={isSearchView}
             onSearch={
               isSearchView ?
                 () => {
                   setPage(0);
-                  setAppliedSearch({ query, filters, onlyMine, onlyUnread });
+                  setAppliedSearch({ query, filters, onlyUnread });
                 }
               : undefined
             }

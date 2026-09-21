@@ -16,8 +16,7 @@ interface OverviewFilterState {
   query: string;
   filters: ErrandFilters;
   sort: OverviewSort | undefined;
-  /** Only errands assigned to the logged-in handläggare. */
-  onlyMine: boolean;
+  /** Only errands with unacknowledged notifications. */
   onlyUnread: boolean;
   page: number;
   pageSize: number;
@@ -28,7 +27,6 @@ interface OverviewFilterActions {
   setQuery: (query: string) => void;
   setFilter: (key: keyof ErrandFilters, value: string[]) => void;
   clearFilters: () => void;
-  setOnlyMine: (onlyMine: boolean) => void;
   setOnlyUnread: (onlyUnread: boolean) => void;
   setPage: (page: number) => void;
   setPageSize: (pageSize: number) => void;
@@ -42,7 +40,6 @@ const initialState: OverviewFilterState = {
   query: '',
   filters: emptyFilters,
   sort: undefined,
-  onlyMine: false,
   onlyUnread: false,
   page: 0,
   pageSize: DEFAULT_PAGE_SIZE,
@@ -59,9 +56,11 @@ export const useOverviewFilterStore = create<OverviewFilterState & OverviewFilte
       selectView: (view) => {
         set((state) => ({
           selectedView: view,
-          // Switching view changes which statuses are in scope, so a status narrowing from the previous
-          // view would silently exclude everything.
-          filters: { ...state.filters, status: [] },
+          // Switching view changes what is in scope, so narrowings carried over from the previous view
+          // would silently exclude everything. The handläggare filter is cleared on the way into a list
+          // view in particular: it cannot be set there, so a stale one would empty the list with no way
+          // to see why.
+          filters: view === 'search' ? { ...state.filters, status: [] } : emptyFilters,
           page: 0,
         }));
       },
@@ -73,9 +72,6 @@ export const useOverviewFilterStore = create<OverviewFilterState & OverviewFilte
       },
       clearFilters: () => {
         set({ filters: emptyFilters, page: 0 });
-      },
-      setOnlyMine: (onlyMine) => {
-        set({ onlyMine, page: 0 });
       },
       setOnlyUnread: (onlyUnread) => {
         set({ onlyUnread, page: 0 });
@@ -118,7 +114,6 @@ export const useOverviewFilterStore = create<OverviewFilterState & OverviewFilte
         query: state.query,
         filters: state.filters,
         sort: state.sort,
-        onlyMine: state.onlyMine,
         onlyUnread: state.onlyUnread,
         pageSize: state.pageSize,
       }),

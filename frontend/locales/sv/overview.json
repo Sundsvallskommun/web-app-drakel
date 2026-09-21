@@ -16,7 +16,6 @@
     "dropdownSearchPlaceholder": "Skriv för att söka",
     "status": "Status",
     "assignee": "Handläggare",
-    "onlyMine": "Mina ärenden",
     "onlyUnread": "Olästa meddelanden",
     "clearStatus": "Rensa status {{status}}",
     "clearAssignee": "Rensa handläggare {{assignee}}",
