@@ -30,6 +30,41 @@ const EMPTY_MESSAGE: TextEditorValue = { markup: '', plainText: '' };
 const FULLFOLJD_TEMPLATE_IDENTIFIER = 'drakel.fa.beslut.fullfoljdshanvisning';
 
 /**
+ * En orsaksrullista. Sökandes och medsökandes orsak plockas ur samma katalog, så de renderas
+ * identiskt; en orsak utanför katalogen (från ett äldre beslut) läggs till sist av caremanagement och
+ * följer därför med i listan.
+ */
+const ReasonField: FC<{
+  id: string;
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+}> = ({ id, label, value, options, onChange }) => {
+  const { t } = useTranslation('decision');
+
+  return (
+    <FormControl id={id} className="w-full">
+      <FormLabel>{label}</FormLabel>
+      <Select
+        className="w-full"
+        value={value}
+        onChange={(event) => {
+          onChange(event.target.value);
+        }}
+      >
+        <Select.Option value="">{t('details.selectReason')}</Select.Option>
+        {options.map((option) => (
+          <Select.Option key={option} value={option}>
+            {option}
+          </Select.Option>
+        ))}
+      </Select>
+    </FormControl>
+  );
+};
+
+/**
  * "Beslut" tab — the Nytt beslut form (mirroring Lifecare's BESLUT / BESLUTSMEDDELANDE view). Datum,
  * Beslut and Från/Till are prefilled from the automated recommendation (falling back to today and the
  * normberäkning month); Belopp is 0 for an avslag, otherwise the recommended amount. Beslutsfattare and
@@ -55,6 +90,11 @@ export const ErrandBeslut: FC<{
   const [beslutCode, setBeslutCode] = useState<string>('');
   const [fromDate, setFromDate] = useState<string>(period.fromDate);
   const [toDate, setToDate] = useState<string>(period.toDate);
+  // The orsak fields are inputs to finalize, not to the decision the form saves — a Decision carries
+  // no reason. They are prefilled and pickable so the choice is visible and reviewable; persisting
+  // them waits for "Besluta och utbetala".
+  const [reason, setReason] = useState<string>('');
+  const [coApplicantReason, setCoApplicantReason] = useState<string>('');
   const [saveError, setSaveError] = useState<string>();
   const [saved, setSaved] = useState<boolean>(false);
   // The beslutsmeddelande (composed below the divider) is saved as the decision's decisionMessage.
@@ -84,6 +124,10 @@ export const ErrandBeslut: FC<{
     setDate(prefillDate);
     setBeslutCode(prefillBeslutCode);
   }, [prefillDate, prefillBeslutCode]);
+  useEffect(() => {
+    setReason(proposal.reason ?? '');
+    setCoApplicantReason(proposal.coApplicantReason ?? '');
+  }, [proposal.reason, proposal.coApplicantReason]);
   useEffect(() => {
     setFromDate(prefillFrom);
     setToDate(prefillTo);
@@ -246,6 +290,25 @@ export const ErrandBeslut: FC<{
                   }}
                 />
               </FormControl>
+
+              <ReasonField
+                id="beslut-orsak"
+                label={t('details.reason')}
+                value={reason}
+                options={proposal.reasonOptions ?? []}
+                onChange={setReason}
+              />
+
+              {/* Medsökandes orsak visas bara när det finns en medsökande att föreslå för. */}
+              {proposal.coApplicantReason || proposal.previousDecision?.coApplicant ?
+                <ReasonField
+                  id="beslut-orsak-medsokande"
+                  label={t('details.coApplicantReason')}
+                  value={coApplicantReason}
+                  options={proposal.reasonOptions ?? []}
+                  onChange={setCoApplicantReason}
+                />
+              : null}
 
               <FormControl id="beslut-till" className="w-full">
                 <FormLabel>{t('details.to')}</FormLabel>

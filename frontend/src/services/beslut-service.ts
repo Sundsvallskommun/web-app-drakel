@@ -85,6 +85,8 @@ export const createBeslut = (errandId: string, input: CreateBeslutInput): Promis
 interface PreviousDecision {
   type?: string;
   reason?: string;
+  coApplicant?: string;
+  coApplicantReason?: string;
   periodFrom?: string;
   periodTo?: string;
   amount?: number;
@@ -104,8 +106,9 @@ interface DecisionProposalWarning {
  * The beslutsförslag for an errand — derived by caremanagement on every read from the calculation draft
  * and the previous Lifecare decision, never stored.
  *
- * `reason`, `reasonOptions` and `phraseText` belong to the finalize payload ("Besluta och utbetala"),
- * not to the plain decision POST, so they are read here but not yet editable in the form.
+ * The orsak fields belong to the finalize payload ("Besluta och utbetala"), not to the plain decision
+ * POST — a Decision carries no reason. The form lets a handläggare pick them so the choice is visible
+ * and reviewable, but nothing persists them until finalize is wired.
  */
 export interface DecisionProposal {
   outcome?: string;
@@ -121,6 +124,8 @@ export interface DecisionProposal {
   /** Why the proposal is incomplete (Swedish); absent when it is complete. */
   explanation?: string;
   reason?: string;
+  /** The co-applicant's proposed orsak, from the same catalogue as the applicant's. */
+  coApplicantReason?: string;
   reasonOptions?: string[];
   phraseText?: string;
   previousDecision?: PreviousDecision;

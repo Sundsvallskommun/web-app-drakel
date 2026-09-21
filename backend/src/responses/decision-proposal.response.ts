@@ -10,6 +10,8 @@ import { IsArray, IsNumber, IsOptional, IsString, ValidateNested } from 'class-v
 export class PreviousDecisionView {
   @IsString() @IsOptional() type?: string;
   @IsString() @IsOptional() reason?: string;
+  @IsString() @IsOptional() coApplicant?: string;
+  @IsString() @IsOptional() coApplicantReason?: string;
   @IsString() @IsOptional() periodFrom?: string;
   @IsString() @IsOptional() periodTo?: string;
   @IsNumber() @IsOptional() amount?: number;
@@ -42,6 +44,8 @@ export class DecisionProposalView {
   @IsString() @IsOptional() explanation?: string;
   /** The proposed orsak and Lifecare's catalogue — inputs to finalize, not to the plain decision POST. */
   @IsString() @IsOptional() reason?: string;
+  /** The co-applicant's proposed orsak, from the same catalogue as the applicant's. */
+  @IsString() @IsOptional() coApplicantReason?: string;
   @IsArray() @IsString({ each: true }) @IsOptional() reasonOptions?: string[];
   @IsString() @IsOptional() phraseText?: string;
   @ValidateNested() @Type(() => PreviousDecisionView) @IsOptional() previousDecision?: PreviousDecisionView;

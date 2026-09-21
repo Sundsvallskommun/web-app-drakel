@@ -14,7 +14,10 @@
     "to": "To",
     "amount": "Amount to grant",
     "saveError": "Could not save the decision",
-    "saved": "The decision was saved."
+    "saved": "The decision was saved.",
+    "reason": "Reason",
+    "coApplicantReason": "Co-applicant reason",
+    "selectReason": "Select a reason"
   },
   "message": {
     "title": "Decision message",
@@ -53,7 +56,6 @@
     },
     "form": {
       "title": "Register payment",
-      "moneyType": "Funds",
       "paymentDate": "Payment date",
       "amount": "Amount",
       "applicationMonth": "For month",
@@ -97,6 +99,12 @@
         "EFFECTUATED": "Effectuated",
         "FAILED": "Failed"
       }
+    },
+    "disposal": {
+      "title": "Available to disburse",
+      "decided": "Decided amount",
+      "committed": "Registered",
+      "remaining": "Remaining"
     }
   },
   "proposal": {
