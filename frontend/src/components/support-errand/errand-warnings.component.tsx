@@ -81,10 +81,10 @@ export const ErrandWarnings: FC<ErrandWarningsProps> = ({ errandId, warnings, is
                   <div className={cx('flex flex-col gap-2', !open && 'text-gray-600')}>
                     {warning.type ?
                       <span className="font-bold text-small">
-                        {t(`warnings.types.${warning.type}`, { defaultValue: warning.type })}
-                        {!open && warning.status ?
-                          ` · ${t(`warnings.status.${warning.status}`, { defaultValue: warning.status })}`
-                        : ''}
+                        {/* caremanagement owns the labels for all 33 warning types and every status,
+                            so they are shown as they come rather than translated locally. */}
+                        {warning.typeDisplayName ?? warning.type}
+                        {!open && warning.status ? ` · ${warning.statusDisplayName ?? warning.status}` : ''}
                       </span>
                     : null}
                     <span className="text-small break-words">{warning.message}</span>

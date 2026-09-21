@@ -18,25 +18,7 @@
     "acknowledge": "Acknowledge",
     "acknowledging": "Acknowledging…",
     "reopen": "Reopen",
-    "reopening": "Reopening…",
-    "status": {
-      "ACKNOWLEDGED": "Acknowledged",
-      "CLOSED": "Closed"
-    },
-    "types": {
-      "UNHANDLED_INCOME": "Unhandled income",
-      "INCOME_CHANGE": "Income change",
-      "MISSING_SSBTEK": "Missing in SSBTEK",
-      "NEW_INCOME": "New income",
-      "NEW_EXPENSE": "New expense",
-      "NEW_PERSON": "New person",
-      "INCOME_DROPPED": "Discontinued income",
-      "HOUSEHOLD_CHANGE": "Changed household composition",
-      "HOUSING_COST_CHANGE": "Changed housing cost",
-      "INCOME_DUPLICATED": "Possibly duplicated income",
-      "EXPENSE_REVIEW": "Requires reasonableness assessment",
-      "EXPENSE_CAPPED": "Expense above cap"
-    }
+    "reopening": "Reopening…"
   },
   "notes": {
     "saveError": "Could not save the note",

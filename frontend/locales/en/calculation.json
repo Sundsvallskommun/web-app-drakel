@@ -88,20 +88,6 @@
     "acknowledging": "Acknowledging…",
     "acknowledgeError": "Could not acknowledge the warning"
   },
-  "warningType": {
-    "UNHANDLED_INCOME": "Unhandled income",
-    "INCOME_CHANGE": "Income change",
-    "MISSING_SSBTEK": "Missing in SSBTEK",
-    "NEW_INCOME": "New income",
-    "NEW_EXPENSE": "New expense",
-    "NEW_PERSON": "New person",
-    "INCOME_DROPPED": "Discontinued income",
-    "HOUSEHOLD_CHANGE": "Changed household composition",
-    "HOUSING_COST_CHANGE": "Changed housing cost",
-    "INCOME_DUPLICATED": "Possibly duplicated income",
-    "EXPENSE_REVIEW": "Requires reasonableness assessment",
-    "EXPENSE_CAPPED": "Expense above cap"
-  },
   "previous": {
     "toggle": "Compare calculation with the previous month",
     "loadError": "Could not load the previous calculation",

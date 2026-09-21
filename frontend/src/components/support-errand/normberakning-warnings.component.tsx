@@ -54,7 +54,7 @@ export const NormberakningWarnings: FC<NormberakningWarningsProps> = ({ errandId
               <Alert.Content>
                 {warning.type ?
                   <Alert.Content.Title className="font-bold">
-                    {t(`warningType.${warning.type}`, { defaultValue: warning.type })}
+                    {warning.typeDisplayName ?? warning.type}
                   </Alert.Content.Title>
                 : null}
                 <Alert.Content.Description>{warning.message}</Alert.Content.Description>

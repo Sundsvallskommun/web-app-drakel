@@ -182,7 +182,12 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   );
 
   // Only OPEN warnings are actionable — acknowledged/closed ones disappear from the right column.
-  const openWarnings = warnings.filter((warning) => warning.status === 'OPEN');
+  // The normberäkning tab shows only the warnings caremanagement places there. DECISION and PAYMENT
+  // warnings belong to their own tabs (the payment ones ride along on the utbetalningsförslag), and
+  // without this filter they would surface beside the calculation tables where they do not belong.
+  const openWarnings = warnings.filter(
+    (warning) => warning.status === 'OPEN' && (warning.section ?? 'CALCULATION') === 'CALCULATION'
+  );
 
   // The consolidated client conversation files PDF (documentType CONVERSATION) — previewed atop the
   // message-attachments tab, so it's excluded from that tab's file list below to avoid showing twice.

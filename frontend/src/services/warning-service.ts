@@ -7,11 +7,15 @@ import { ApiResponse, apiService, toServiceError } from '@services/api-service';
  */
 export interface Warning {
   id?: string;
-  /** UNHANDLED_INCOME / INCOME_CHANGE / MISSING_SSBTEK / NEW_INCOME. */
+  /** The machine code; show `typeDisplayName` instead — caremanagement owns the labels for all 33 types. */
   type?: string;
+  typeDisplayName?: string;
+  /** The tab the warning belongs to, derived from the type by caremanagement. */
+  section?: 'CALCULATION' | 'DECISION' | 'PAYMENT';
   sourceKey?: string;
   message?: string;
   status?: 'OPEN' | 'ACKNOWLEDGED' | 'CLOSED';
+  statusDisplayName?: string;
   autoResolved?: boolean;
   created?: string;
   updated?: string;
