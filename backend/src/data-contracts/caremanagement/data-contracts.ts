@@ -883,7 +883,7 @@ export interface RpaTaskRequest {
    * @minLength 1
    */
   action: RpaTaskRequestActionEnum;
-  /** Optional extra hints for the robot, merged into the queue item SpecificContent. For REGISTER_PAYMENT, carries only the key 'paymentId' (the payment's id on the errand) — the robot fetches everything else via GET .../payments/{paymentId}, instead of putting payee names, account numbers or other personal data on the Orchestrator queue, the same reason RpaContext is fetched per queue item rather than riding along in it. */
+  /** Optional extra hints for the robot, merged into the queue item SpecificContent. For REGISTER_PAYMENT, carries only the key 'paymentId' (the payment's id on the errand) — the robot fetches everything else via GET .../payments/{paymentId}, instead of putting payee names, account numbers or other personal data on the Orchestrator queue, the same reason RpaContext is fetched per queue item rather than riding along in it. ADD_PAYEE carries only the key 'payeeId' for the same reason. */
   parameters?: Record<string, string>;
 }
 
@@ -1370,6 +1370,84 @@ export interface Warning {
    * @format date-time
    */
   updated?: string;
+}
+
+/** A betalningsmottagare to add by hand on an errand. */
+export interface PayeeRequest {
+  /**
+   * Name of the payee, as it should read in Lifecare
+   * @minLength 0
+   * @maxLength 255
+   */
+  name: string;
+  /**
+   * The Lifecare payment method
+   * @minLength 0
+   * @maxLength 64
+   */
+  paymentMethod: string;
+  /**
+   * Clearing number, when the payment method needs one
+   * @minLength 0
+   * @maxLength 16
+   */
+  clearing?: string;
+  /**
+   * Account, bankgiro or plusgiro number, when the payment method needs one
+   * @minLength 0
+   * @maxLength 64
+   */
+  accountNumber?: string;
+}
+
+/** A selectable betalningsmottagare — either derived from the applicant's Lifecare payment history or added by hand on the errand. */
+export interface PayeeOption {
+  /** The payee's id on the errand. Null for a LIFECARE-derived option, which is not a stored row */
+  id?: string;
+  /** Name of the payee as registered in Lifecare */
+  name?: string;
+  /** The Lifecare payment method, e.g. bank account, bankgiro, plusgiro or utbetalningskort */
+  paymentMethod?: string;
+  /** Clearing number, when the payment method needs one */
+  clearing?: string;
+  /** Account, bankgiro or plusgiro number, when the payment method needs one */
+  accountNumber?: string;
+  /** Where the option comes from: LIFECARE (seen on a payment in the last 12 months) or MANUAL (added by hand on this errand) */
+  source?: PayeeOptionSourceEnum;
+  /** For a MANUAL option, how far the ADD_PAYEE robot task has got: PENDING until the robot reports back, then SYNCED or FAILED. Null for a LIFECARE option, which is in Lifecare by definition */
+  lifecareStatus?: PayeeOptionLifecareStatusEnum;
+  /** The payee id Lifecare gave the robot, when it reported one */
+  lifecarePayeeId?: string;
+  /** Lifecare's own message when lifecareStatus is FAILED — shown to the caseworker as-is */
+  lifecareDetail?: string;
+  /** For a LIFECARE option, the date of the most recent payment to this payee — passed through as the raw Lifecare string, like every other date read out of Lifecare */
+  lastPaidOn?: string;
+  /**
+   * When the MANUAL option was added
+   * @format date-time
+   */
+  created?: string;
+}
+
+/** The ADD_PAYEE robot's report on adding a payee to Lifecare. */
+export interface PayeeLifecareResult {
+  /**
+   * What the robot ended up doing
+   * @minLength 1
+   */
+  outcome: PayeeLifecareResultOutcomeEnum;
+  /**
+   * The payee id Lifecare gave, when it gave one
+   * @minLength 0
+   * @maxLength 64
+   */
+  lifecarePayeeId?: string;
+  /**
+   * Lifecare's own message. Required when outcome is FAILED — it is shown to the caseworker as-is
+   * @minLength 0
+   * @maxLength 1024
+   */
+  detail?: string;
 }
 
 /** One row from Lifecare's document list — journal notes (documentType 3) and regular documents (documentType 0) share this shape. */
@@ -3411,6 +3489,7 @@ export enum RpaTaskRequestActionEnum {
   WRITE_DOCUMENT = "WRITE_DOCUMENT",
   WRITE_MONITORING = "WRITE_MONITORING",
   REGISTER_PAYMENT = "REGISTER_PAYMENT",
+  ADD_PAYEE = "ADD_PAYEE",
 }
 
 /** Status */
@@ -3530,6 +3609,29 @@ export enum WarningStatusEnum {
   OPEN = "OPEN",
   ACKNOWLEDGED = "ACKNOWLEDGED",
   CLOSED = "CLOSED",
+}
+
+/** Where the option comes from: LIFECARE (seen on a payment in the last 12 months) or MANUAL (added by hand on this errand) */
+export enum PayeeOptionSourceEnum {
+  LIFECARE = "LIFECARE",
+  MANUAL = "MANUAL",
+}
+
+/** For a MANUAL option, how far the ADD_PAYEE robot task has got: PENDING until the robot reports back, then SYNCED or FAILED. Null for a LIFECARE option, which is in Lifecare by definition */
+export enum PayeeOptionLifecareStatusEnum {
+  PENDING = "PENDING",
+  SYNCED = "SYNCED",
+  FAILED = "FAILED",
+}
+
+/**
+ * What the robot ended up doing
+ * @minLength 1
+ */
+export enum PayeeLifecareResultOutcomeEnum {
+  ADDED = "ADDED",
+  ALREADY_EXISTS = "ALREADY_EXISTS",
+  FAILED = "FAILED",
 }
 
 /** The envelope section the item came from */
