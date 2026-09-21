@@ -6,7 +6,6 @@ import {
   CREDENTIALS,
   LOG_FORMAT,
   NODE_ENV,
-  ORIGIN,
   PORT,
   SAML_CALLBACK_URL,
   SAML_ENTRY_SSO,
@@ -49,10 +48,10 @@ import swaggerUi from 'swagger-ui-express';
 import { Profile } from './interfaces/profile.interface';
 import { User } from './interfaces/users.interface';
 import { authorizeGroups, getPermissions, getRole } from './services/authorization.service';
-import { isValidOrigin } from './utils/isValidOrigin';
+import { allowedOrigins, isValidOrigin } from './utils/isValidOrigin';
 import { isValidUrl } from './utils/util';
 
-const corsWhitelist = ORIGIN.split(',');
+const corsWhitelist = allowedOrigins();
 
 // Rate limit the public, unauthenticated SAML endpoints to throttle brute-force/replay
 // attempts and limit the DoS surface of session creation + assertion verification.
@@ -180,6 +179,12 @@ class App {
   }
 
   private initializeMiddlewares() {
+    // Behind the reverse proxy the real client IP arrives in X-Forwarded-For. Without this,
+    // express-rate-limit keys every request on the proxy's own IP, so all users share one quota —
+    // the SAML limiter would lock everyone out together. `1` trusts exactly one proxy hop; raise it
+    // if requests pass through more than one.
+    this.app.set('trust proxy', 1);
+
     this.app.use(morgan(LOG_FORMAT, { stream }));
     this.app.use(hpp());
     this.app.use(helmet());
@@ -208,24 +213,35 @@ class App {
     // caremanagement transport's X-Sent-By header (feeds caremanagement's per-errand event log).
     this.app.use(requestContextMiddleware);
 
-    this.app.use(
-      cors({
-        credentials: CREDENTIALS,
-        origin: function (origin, callback) {
-          if (origin === undefined || corsWhitelist.includes(origin) || corsWhitelist.includes('*')) {
-            console.log('CORS origin allowed:', origin);
-            console.log('CORS whitelist:', corsWhitelist);
-            callback(null, true);
-          } else {
-            if (NODE_ENV == 'development') {
-              callback(null, true);
-            } else {
-              callback(new Error('Not allowed by CORS'));
-            }
-          }
-        },
-      }),
-    );
+    const corsMiddleware = cors({
+      credentials: CREDENTIALS,
+      origin: function (origin, callback) {
+        // `origin` is undefined when the request carries no Origin header at all — a same-origin
+        // call, a top-level navigation, or a server-to-server client. Those are not CORS requests.
+        if (origin === undefined || corsWhitelist.includes(origin) || corsWhitelist.includes('*')) {
+          callback(null, true);
+        } else if (NODE_ENV === 'development') {
+          callback(null, true);
+        } else {
+          logger.warn(`CORS rejected origin '${origin}' (allowed: ${corsWhitelist.join(', ') || 'none'})`);
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
+    });
+
+    // The SAML endpoints are reached by top-level form navigations from the IdP, never by fetch/XHR.
+    // Browsers serialize the Origin of such a cross-site POST as the literal `null`, which no
+    // whitelist can match — and CORS governs whether script may *read* a response, not whether a
+    // navigation may happen, so it protects nothing here. What authenticates the callback is the
+    // signature on the SAML assertion. Running these routes through CORS rejected the IdP's POST
+    // with "Not allowed by CORS" and made login impossible.
+    this.app.use((req, res, next) => {
+      if (req.path.startsWith(`${BASE_URL_PREFIX}/saml/`)) {
+        next();
+        return;
+      }
+      corsMiddleware(req, res, next);
+    });
 
     this.app.get(
       `${BASE_URL_PREFIX}/saml/login`,
