@@ -20,8 +20,8 @@ export interface Problem {
   instance?: string;
   /** @format uri */
   type?: string;
-  title?: string;
   detail?: string;
+  title?: string;
   /** @format int32 */
   status?: number;
 }
@@ -1163,6 +1163,8 @@ export interface Warning {
   type?: WarningTypeEnum;
   /** Swedish display name for the warning type */
   typeDisplayName?: string;
+  /** The Draken view section (tab) the warning belongs to — derived from the type: the decision proposal's types are DECISION, the payment proposal's are PAYMENT, everything else is CALCULATION */
+  section?: WarningSectionEnum;
   /** A stable key for the income the warning concerns (benefit/incomeType) — the dedup key */
   sourceKey?: string;
   /** Human-readable warning text (Swedish) */
@@ -1293,6 +1295,138 @@ export interface SupplementsIngestOutcome {
 export interface SupplementsIngestResult {
   /** One outcome per delivered item, in delivery order */
   results?: SupplementsIngestOutcome[];
+}
+
+/** The channels chosen for communicating the calculation and decision to the applicant. */
+export interface CommunicationChannels {
+  /** Send as a message in Mina sidor */
+  minaSidor: boolean;
+  /** Send to the applicant's digital mailbox (digital brevlåda) */
+  digitalMailbox: boolean;
+  /** Send as a physical letter */
+  letter: boolean;
+}
+
+/** The caseworker's decision on the application — outcome, period, amount and what is communicated to the applicant. */
+export interface FinalizeDecision {
+  /** Decision outcome code. BIFALL/DELAVSLAG grant an amount (and require payments); AVSLAG/AVVISNING grant nothing. */
+  outcome: FinalizeDecisionOutcomeEnum;
+  /**
+   * Internal motivation for the decision — stored as the decision's description, not shown to the applicant
+   * @minLength 0
+   * @maxLength 4096
+   */
+  reason?: string;
+  /**
+   * Start of the period the decision covers (the month applied for)
+   * @format date
+   */
+  periodFrom?: string;
+  /**
+   * End of the period the decision covers
+   * @format date
+   */
+  periodTo?: string;
+  /**
+   * The granted amount in SEK. Required when the outcome carries an amount (BIFALL/DELAVSLAG); ignored and recorded as 0 otherwise.
+   * @min 0
+   */
+  amount?: number;
+  /**
+   * The underrättelse — the free-text decision message communicated to the applicant on the decision letter
+   * @minLength 0
+   * @maxLength 8192
+   */
+  decisionMessage?: string;
+}
+
+/** One payment to register in Lifecare for a granting decision. */
+export interface FinalizePayment {
+  /**
+   * The date the payment is to be made
+   * @format date
+   */
+  paymentDate: string;
+  /**
+   * The payment amount in SEK
+   * @min 0
+   */
+  amount: number;
+  /**
+   * The month the payment concerns (ISO year-month, yyyy-MM) — the month the process polls Lifecare payments for
+   * @pattern ^\d{4}-(0[1-9]|1[0-2])$
+   */
+  concernedMonth: string;
+  /** Who the payment goes to and how */
+  payee: Payee;
+  /**
+   * Optional accounting code (kontering) for the payment
+   * @minLength 0
+   * @maxLength 64
+   */
+  accountingCode?: string;
+}
+
+/** Finalize a financial assistance errand: record the decision, hand the Lifecare write-backs to RPA and resume the process. */
+export interface FinalizeRequest {
+  /** The decision */
+  decision: FinalizeDecision;
+  /** The channels chosen for sending the calculation and decision to the applicant */
+  communication: CommunicationChannels;
+  /** The payments to register in Lifecare. Required (at least one) when the outcome carries an amount; must be empty for AVSLAG/AVVISNING. */
+  payments?: FinalizePayment[];
+  /** Whether the caseworker changed the household size (gemensamma kostnader) in the calculation draft. When true the robot answers 'Ja' to Lifecare's prompt about saving the changed common costs when it writes the normberäkning. Defaults to false. */
+  householdSizeChanged?: boolean;
+}
+
+/** The recipient of a payment and the payment method. */
+export interface Payee {
+  /**
+   * Name of the payee as registered in Lifecare
+   * @minLength 0
+   * @maxLength 255
+   */
+  name: string;
+  /**
+   * The Lifecare payment method, e.g. bank account, bankgiro, plusgiro or utbetalningskort
+   * @minLength 0
+   * @maxLength 64
+   */
+  paymentMethod: string;
+  /**
+   * Clearing number, when the payment method needs one
+   * @minLength 0
+   * @maxLength 16
+   */
+  clearing?: string;
+  /**
+   * Account, bankgiro or plusgiro number, when the payment method needs one
+   * @minLength 0
+   * @maxLength 64
+   */
+  accountNumber?: string;
+}
+
+/** The receipt of a finalize — decision id, process correlation, RPA tasks and the communication channels to act on. */
+export interface FinalizeResponse {
+  /** Id of the PAYMENT decision recorded on the errand */
+  decisionId?: string;
+  /** Whether the PaymentDecisionReceived message reached the process. False means the engine could not be reached — the errand stays AWAITING_DECISION and the message must be re-sent via the process-messages endpoint. */
+  processMessageCorrelated?: boolean;
+  /** The RPA write-back tasks the finalize step tried to enqueue, one per Lifecare step */
+  rpaTasks?: RpaTask[];
+  /** The communication channels chosen — the frontend sends the decision through these */
+  communication?: CommunicationChannels;
+}
+
+/** One RPA write-back task the finalize step tried to enqueue. */
+export interface RpaTask {
+  /** The RPA action */
+  action?: string;
+  /** The queue item reference the Orchestrator knows the task by */
+  reference?: string;
+  /** Whether the task is on the queue (false when RPA is disabled or the enqueue failed) */
+  enqueued?: boolean;
 }
 
 /** What a caseworker sends to add or patch a person row (identity + caseworker-writable fields only). */
@@ -2270,6 +2404,10 @@ export interface FinancialAssistanceView {
   recommendation?: Decision;
   /** The caseworker approval state of the three financial assistance view sections (calculation, payment, decision) — whether each has been verified as approved. Always present with all three sections. */
   sectionApprovals?: SectionApprovals;
+  /** The communication channels the caseworker chose when finalizing the errand (Besluta och utbetala), or null until then. The Draken BFF sends the decision through these; caremanagement only records the choice. */
+  communication?: CommunicationChannels;
+  /** Whether the caseworker changed the household size (gemensamma kostnader) when finalizing — forwarded to the RPA normberäkning write. Null until the errand has been finalized. */
+  householdSizeChanged?: boolean;
 }
 
 /** The caseworker approval state of the three financial assistance view sections (calculation, payment, decision). */
@@ -2299,6 +2437,59 @@ export interface RpaContext {
   applicantPersonId?: string;
   /** The co-applicant's personal number; null when there is no co-applicant or it could not be resolved */
   coApplicantPersonId?: string;
+}
+
+/** The payment proposal (utbetalningsförslag) — derived data, recomputed on every read. */
+export interface PaymentProposal {
+  /** The proposed payments — always exactly one entry from the service; the frontend may split it into several before registering */
+  payments?: ProposedPayment[];
+  /** Every distinct payee seen on the applicant's Lifecare payments in the last 12 months — the dropdown alternatives. FamilyCare has no payee register, so this is the only source */
+  payeeOptions?: Payee[];
+  /** Where the proposed payee came from: PREVIOUS_PAYMENT (the most recent Lifecare payment) or APPLICATION (the applicant stated a new account in the application, paymentSameAsPrevious=false). Null when no payee could be proposed */
+  payeeSource?: PaymentProposalPayeeSourceEnum;
+  /** The applicant's most recent Lifecare payment, or null when none was found (or Lifecare could not be read) */
+  previousPayment?: PreviousPayment;
+  /** Why the proposal is incomplete (Swedish), e.g. no norm is known so no amount could be estimated. Null when the proposal is complete */
+  explanation?: string;
+  /** The PAYMENT-section warnings this proposal raised (reconciled on every read) */
+  warnings?: Warning[];
+}
+
+/** The applicant's most recent Lifecare payment. */
+export interface PreviousPayment {
+  /** The Lifecare pay date (raw Lifecare string) */
+  payDate?: string;
+  /** The paid amount */
+  amount?: number;
+  /** The month the payment concerned (raw Lifecare string) */
+  concernedMonth?: string;
+  /** The payment method as Lifecare names it */
+  paymentMethod?: string;
+  /** The payee name */
+  name?: string;
+  /** The clearing number, when a bank account */
+  clearing?: string;
+  /** The account number, when a bank account */
+  accountNumber?: string;
+  /** The payment message */
+  message?: string;
+}
+
+/** One proposed payment (a proposal always starts with a single entry; the frontend may split it). */
+export interface ProposedPayment {
+  /**
+   * The proposed payment date: the 27th of the concerned month, moved to the Friday before when the 27th is a Saturday (→ 26th) or Sunday (→ 25th). Swedish public holidays (röda dagar) are not considered — an open question with verksamheten
+   * @format date
+   */
+  paymentDate?: string;
+  /** The proposed amount — the whole estimated bistånd (see DecisionProposal.estimatedAmount). Null when no norm is known */
+  amount?: number;
+  /** The month the payment concerns (YYYY-MM) — the calculation's application month */
+  concernedMonth?: string;
+  /** The proposed payee, or null when neither a previous payment nor the application names one */
+  payee?: Payee;
+  /** Kontering. Always null for now: the FamilyCare API exposes no accounting code, so the caseworker fills it in. The field exists so the frontend can render and post it */
+  accountingCode?: string | null;
 }
 
 /** The number of monitorings on the errand */
@@ -2437,6 +2628,74 @@ export interface FormSnapshotSection {
   visible?: boolean;
   /** The fields in the section, in render order */
   fields?: FormSnapshotField[];
+}
+
+/** An allowed decision outcome (decision alternatives) for an errand type. */
+export interface DecisionOption {
+  /** The decision outcome code, stored on the Decision row's value */
+  code?: string;
+  /** Human-readable label for the outcome */
+  displayName?: string;
+  /** Whether the outcome carries an amount — true for outcomes that grant an amount, false for ones that imply 0 (e.g. a rejection) */
+  carriesAmount?: boolean;
+}
+
+/** The decision proposal (beslutsförslag) — derived data, recomputed on every read. */
+export interface DecisionProposal {
+  /** The proposed decision outcome. Rule: estimatedAmount <= 0 → AVSLAG; estimatedAmount > 0 and every expense fully approved → BIFALL; estimatedAmount > 0 and any expense approved below the applied amount → DELAVSLAG. Null when no amount could be estimated (see explanation) */
+  outcome?: DecisionProposalOutcomeEnum;
+  /** Every outcome the caseworker can pick instead — the errand type's decision catalogue */
+  outcomeOptions?: DecisionOption[];
+  /**
+   * The proposed decision period start — the calculation's period
+   * @format date
+   */
+  periodFrom?: string;
+  /**
+   * The proposed decision period end — the calculation's period
+   * @format date
+   */
+  periodTo?: string;
+  /** The calculation's application month (YYYY-MM) */
+  concernedMonth?: string;
+  /** The estimated bistånd: normSum + expenseSum + specialExpenseSum − incomeSum, all from the calculation draft except the norm. The draft carries no norm sum, so it is taken from the applicant's most recent Lifecare calculation before the application month (previous household norm); the final amount is what Lifecare computes when the calculation is committed. Null when no previous norm is known (see explanation) */
+  estimatedAmount?: number;
+  /** The norm sum the estimate is based on (the previous Lifecare calculation's norm). Null when unknown */
+  normSum?: number;
+  /** The draft's income sum (effective amounts) */
+  incomeSum?: number;
+  /** The draft's expense sum (effective = approved amounts) */
+  expenseSum?: number;
+  /** The draft's special-expense sum (effective = approved amounts) */
+  specialExpenseSum?: number;
+  /** Why the proposal is incomplete (Swedish) — e.g. no previous norm could be read so no amount/outcome was proposed. Null when the proposal is complete */
+  explanation?: string;
+  /** The proposed orsak: the previous Lifecare decision's reason, or null when there is none */
+  reason?: string;
+  /** Every orsak the caseworker can pick instead — a seeded EB list plus the previous decision's reason (FamilyCare has no reason catalogue) */
+  reasonOptions?: string[];
+  /** The proposed frastext: on BIFALL/DELAVSLAG, "Bifall månad med barn" when children are in the calculation, else "Bifall månad utan barn". Null otherwise */
+  phraseText?: string;
+  /** The applicant's most recent Lifecare decision, or null when none was found (or Lifecare could not be read) */
+  previousDecision?: PreviousDecision;
+  /** The DECISION-section warnings this proposal raised (reconciled on every read) */
+  warnings?: Warning[];
+}
+
+/** The applicant's most recent Lifecare decision. */
+export interface PreviousDecision {
+  /** The Lifecare decision type (free text as Lifecare names it) */
+  type?: string;
+  /** The Lifecare decision reason / orsak (free text) */
+  reason?: string;
+  /** The decision period start (raw Lifecare string) */
+  periodFrom?: string;
+  /** The decision period end (raw Lifecare string) */
+  periodTo?: string;
+  /** The decided amount */
+  amount?: number;
+  /** The decision date (raw Lifecare string) */
+  date?: string;
 }
 
 /** A child pre-filled from Lifecare for a financial assistance renewal. Carries only what Lifecare provides — personnummer and name; the citizen completes residence, school etc. on the form. */
@@ -2671,16 +2930,6 @@ export interface CountResponse {
    * @format int64
    */
   count?: number;
-}
-
-/** An allowed decision outcome (decision alternatives) for an errand type. */
-export interface DecisionOption {
-  /** The decision outcome code, stored on the Decision row's value */
-  code?: string;
-  /** Human-readable label for the outcome */
-  displayName?: string;
-  /** Whether the outcome carries an amount — true for outcomes that grant an amount, false for ones that imply 0 (e.g. a rejection) */
-  carriesAmount?: boolean;
 }
 
 /** Form descriptor for an errand type slug — statuses, roles and the fields its data payload should carry. */
@@ -3011,6 +3260,34 @@ export enum WarningTypeEnum {
   EXPENSE_REVIEW = "EXPENSE_REVIEW",
   EXPENSE_CAPPED = "EXPENSE_CAPPED",
   INCOME_DUPLICATED = "INCOME_DUPLICATED",
+  CHILD_NOT_FULL_TIME = "CHILD_NOT_FULL_TIME",
+  CHILDREN_RESIDENCE_CHANGED = "CHILDREN_RESIDENCE_CHANGED",
+  HOUSING_SITUATION_CHANGED = "HOUSING_SITUATION_CHANGED",
+  SALARY_JOB_STIMULUS = "SALARY_JOB_STIMULUS",
+  PENDING_BENEFIT = "PENDING_BENEFIT",
+  NEW_ASSETS = "NEW_ASSETS",
+  PLANNING_REVIEW = "PLANNING_REVIEW",
+  PAYMENT_METHOD_CHANGED = "PAYMENT_METHOD_CHANGED",
+  ATTACHMENTS_PRESENT = "ATTACHMENTS_PRESENT",
+  STAY_OUTSIDE_MUNICIPALITY = "STAY_OUTSIDE_MUNICIPALITY",
+  APPLICATION_REVIEW = "APPLICATION_REVIEW",
+  INCOME_MISSING_VS_PREVIOUS_CALCULATION = "INCOME_MISSING_VS_PREVIOUS_CALCULATION",
+  INCOME_AMOUNT_MISMATCH_PREVIOUS_CALCULATION = "INCOME_AMOUNT_MISMATCH_PREVIOUS_CALCULATION",
+  CHILDREN_MISMATCH_PREVIOUS_CALCULATION = "CHILDREN_MISMATCH_PREVIOUS_CALCULATION",
+  HOUSEHOLD_COUNT_MISMATCH_PREVIOUS_CALCULATION = "HOUSEHOLD_COUNT_MISMATCH_PREVIOUS_CALCULATION",
+  NORM_MISMATCH_PREVIOUS_CALCULATION = "NORM_MISMATCH_PREVIOUS_CALCULATION",
+  SSBTEK_DAY_CHECK = "SSBTEK_DAY_CHECK",
+  PARENTAL_BENEFIT_PERIOD_CHECK = "PARENTAL_BENEFIT_PERIOD_CHECK",
+  PREVIOUS_DECISION_ADVANCE_ON_BENEFIT = "PREVIOUS_DECISION_ADVANCE_ON_BENEFIT",
+  EXPENSE_PARTIALLY_REJECTED = "EXPENSE_PARTIALLY_REJECTED",
+  CO_APPLICANT_SPLIT_PAYMENT = "CO_APPLICANT_SPLIT_PAYMENT",
+}
+
+/** The Draken view section (tab) the warning belongs to — derived from the type: the decision proposal's types are DECISION, the payment proposal's are PAYMENT, everything else is CALCULATION */
+export enum WarningSectionEnum {
+  CALCULATION = "CALCULATION",
+  DECISION = "DECISION",
+  PAYMENT = "PAYMENT",
 }
 
 /** The warning status (machine code; use statusDisplayName for the label) */
@@ -3034,6 +3311,14 @@ export enum SupplementsIngestOutcomeOutcomeEnum {
   REPLACED = "REPLACED",
   SKIPPED = "SKIPPED",
   FAILED = "FAILED",
+}
+
+/** Decision outcome code. BIFALL/DELAVSLAG grant an amount (and require payments); AVSLAG/AVVISNING grant nothing. */
+export enum FinalizeDecisionOutcomeEnum {
+  BIFALL = "BIFALL",
+  DELAVSLAG = "DELAVSLAG",
+  AVSLAG = "AVSLAG",
+  AVVISNING = "AVVISNING",
 }
 
 /** The role of the household member */
@@ -3147,6 +3432,12 @@ export enum AttachmentSenderRoleEnum {
   CASEWORKER = "CASEWORKER",
 }
 
+/** Where the proposed payee came from: PREVIOUS_PAYMENT (the most recent Lifecare payment) or APPLICATION (the applicant stated a new account in the application, paymentSameAsPrevious=false). Null when no payee could be proposed */
+export enum PaymentProposalPayeeSourceEnum {
+  PREVIOUS_PAYMENT = "PREVIOUS_PAYMENT",
+  APPLICATION = "APPLICATION",
+}
+
 /** Whose period it is */
 export enum JobStimulusPeriodRoleEnum {
   APPLICANT = "APPLICANT",
@@ -3172,6 +3463,13 @@ export enum FormSnapshotNoticeLevelEnum {
   INFO = "INFO",
   WARNING = "WARNING",
   ERROR = "ERROR",
+}
+
+/** The proposed decision outcome. Rule: estimatedAmount <= 0 → AVSLAG; estimatedAmount > 0 and every expense fully approved → BIFALL; estimatedAmount > 0 and any expense approved below the applied amount → DELAVSLAG. Null when no amount could be estimated (see explanation) */
+export enum DecisionProposalOutcomeEnum {
+  BIFALL = "BIFALL",
+  DELAVSLAG = "DELAVSLAG",
+  AVSLAG = "AVSLAG",
 }
 
 /** Stable code for the Mina-sidor form section the type is shown under; null for income */
