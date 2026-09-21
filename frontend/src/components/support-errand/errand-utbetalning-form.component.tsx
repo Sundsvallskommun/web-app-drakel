@@ -18,7 +18,6 @@ import { useTranslation } from 'react-i18next';
 
 /** The fields of the Lifecare utbetalning form, in the order they appear in it. */
 interface UtbetalningFormValues {
-  moneyType: string;
   paymentDate: string;
   amount: string;
   applicationMonth: string;
@@ -44,7 +43,6 @@ interface UtbetalningFormValues {
 }
 
 const EMPTY_FORM_VALUES: UtbetalningFormValues = {
-  moneyType: '',
   paymentDate: todayDate(),
   amount: '',
   applicationMonth: '',
@@ -114,7 +112,6 @@ const paymentMethodOptions = (payeeOptions: Payee[]): string[] => [
  * the payee is identified by name and account instead.
  */
 const toPaymentInput = (values: UtbetalningFormValues): PaymentInput => ({
-  moneyType: values.moneyType || undefined,
   paymentDate: values.paymentDate || undefined,
   amount: parseAmount(values.amount),
   applicationMonth: values.applicationMonth || undefined,
@@ -281,26 +278,14 @@ export const ErrandUtbetalningForm: FC<{
 
   return (
     // noValidate: the required markers mirror Lifecare's own form, but the browser must not block a
-    // save on them. caremanagement stores the utbetalning as DRAFT with every field optional, and its
-    // Pengar catalogue is still a documented placeholder — a required select with no options would
-    // otherwise make the form impossible to submit at all. Validation belongs to caremanagement.
+    // save on them. caremanagement stores the utbetalning as DRAFT with every field optional, so a
+    // handläggare is meant to be able to save an incomplete one. Validation belongs to caremanagement.
     <form className="flex flex-col gap-24" noValidate onSubmit={(event) => void submit(event)}>
       {proposal.explanation ?
         <p className="m-0 text-dark-secondary">{proposal.explanation}</p>
       : null}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-24 gap-y-16 items-start">
-        <FormField label={t('payment.form.moneyType')} required disabled={disabled}>
-          <Select {...register('moneyType')}>
-            <Select.Option value="" />
-            {metadata.moneyTypes.map((option) => (
-              <Select.Option key={option.code} value={option.code ?? ''}>
-                {option.displayName ?? option.code}
-              </Select.Option>
-            ))}
-          </Select>
-        </FormField>
-
         <div className="grid grid-cols-[1fr_16rem] gap-x-16">
           <FormField label={t('payment.form.paymentDate')} required disabled={disabled}>
             <DatePicker {...register('paymentDate')} />

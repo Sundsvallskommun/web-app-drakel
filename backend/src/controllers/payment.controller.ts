@@ -94,14 +94,13 @@ export class PaymentController {
   }
 
   @Get('/payment-metadata')
-  @OpenAPI({ summary: 'The Lifecare money types and payment methods for the utbetalning dropdowns' })
+  @OpenAPI({ summary: 'The Lifecare payment methods for the utbetalning betalsätt dropdown' })
   @ResponseSchema(PaymentMetadataApiResponse)
   @UseBefore(authMiddleware)
   async getPaymentMetadata() {
     const res = await this.metadataService.readFinancialAssistanceMetadata();
     return {
       data: {
-        moneyTypes: (res.data?.moneyTypes ?? []).map(toDropdownOption),
         paymentMethods: (res.data?.paymentMethods ?? []).map(toDropdownOption),
       },
       message: 'success',

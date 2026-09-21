@@ -75,9 +75,8 @@ interface PaymentTypeOption {
   displayName?: string;
 }
 
-/** The Lifecare-sourced dropdown catalogues for the utbetalning form. */
+/** The Lifecare-sourced dropdown catalogue for the utbetalning form's Betalsätt. */
 export interface PaymentMetadata {
-  moneyTypes: PaymentTypeOption[];
   paymentMethods: PaymentTypeOption[];
 }
 
@@ -86,7 +85,6 @@ export interface PaymentMetadata {
  * nothing — the robot is started separately, so saving never sets anything in motion.
  */
 export interface PaymentInput {
-  moneyType?: string;
   paymentDate?: string;
   amount?: number;
   applicationMonth?: string;

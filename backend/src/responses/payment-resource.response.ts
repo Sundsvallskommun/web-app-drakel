@@ -12,7 +12,6 @@ export class PaymentView {
   @IsString() @IsOptional() source?: string;
   @IsString() @IsOptional() lifecareId?: string;
   @IsString() @IsOptional() status?: string;
-  @IsString() @IsOptional() moneyType?: string;
   @IsString() @IsOptional() paymentDate?: string;
   @IsNumber() @IsOptional() amount?: number;
   @IsString() @IsOptional() applicationMonth?: string;
@@ -47,9 +46,8 @@ export class PaymentApiResponse implements ApiResponse<PaymentView | null> {
   @IsString() message!: string;
 }
 
-/** The Lifecare-sourced dropdown catalogues for the utbetalning form. */
+/** The Lifecare-sourced dropdown catalogue for the utbetalning form's Betalsätt. */
 export class PaymentMetadataView {
-  @IsArray() @IsOptional() moneyTypes?: { code?: string; displayName?: string }[];
   @IsArray() @IsOptional() paymentMethods?: { code?: string; displayName?: string }[];
 }
 

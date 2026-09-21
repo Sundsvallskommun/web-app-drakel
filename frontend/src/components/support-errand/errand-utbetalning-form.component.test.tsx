@@ -43,7 +43,7 @@ describe('ErrandUtbetalningForm', () => {
     vi.mocked(getErrandStakeholders).mockReset();
     vi.mocked(getErrandStakeholders).mockResolvedValue({ data: [APPLICANT] });
     vi.mocked(getPaymentMetadata).mockReset();
-    vi.mocked(getPaymentMetadata).mockResolvedValue({ data: { moneyTypes: [], paymentMethods: [] } });
+    vi.mocked(getPaymentMetadata).mockResolvedValue({ data: { paymentMethods: [] } });
     vi.mocked(createPayment).mockReset();
     vi.mocked(createPayment).mockResolvedValue({ data: null });
   });

@@ -5,11 +5,10 @@ import { IsArray, IsBoolean, IsNumber, IsOptional, IsString } from 'class-valida
  * `status`, `id` and the timestamps are server-owned — a handläggare only sends the form's own values,
  * and caremanagement creates the payment as DRAFT without queueing anything for the robot.
  *
- * `moneyType` and `paymentMethod` are deliberately unconstrained strings: the value sets come from
- * Lifecare and are served through the metadata endpoint rather than fixed in the API.
+ * `paymentMethod` is deliberately an unconstrained string: the value set comes from Lifecare and is
+ * served through the metadata endpoint rather than fixed in the API.
  */
 export class PaymentInputDto {
-  @IsString() @IsOptional() moneyType?: string;
   @IsString() @IsOptional() paymentDate?: string;
   @IsNumber() @IsOptional() amount?: number;
   @IsString() @IsOptional() applicationMonth?: string;

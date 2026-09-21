@@ -3,11 +3,14 @@
 import { AsyncContent } from '@components/common/async-content.component';
 import { useErrandPayment } from '@hooks/use-errand-payment';
 import { useErrandPayments } from '@hooks/use-errand-payments';
+import { useLatestBeslut } from '@hooks/use-latest-beslut';
 import { usePaymentProposal } from '@hooks/use-payment-proposal';
 import { PaymentProposalWarning, PaymentStatus } from '@services/payment-service';
 import { Alert } from '@sk-web-gui/alert';
-import { Button } from '@sk-web-gui/react';
+import { Button, cx } from '@sk-web-gui/react';
 import { formatApplicationMonth } from '@utils/application-month';
+import { displayAmount } from '@utils/format-amount';
+import { paymentDisposal } from '@utils/payment-disposal';
 import { RotateCcw } from 'lucide-react';
 import { FC, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -97,6 +100,8 @@ export const ErrandUtbetalning: FC<{
   const { status, isLoading, error, refresh } = useErrandPayment(errandId);
   const { proposal, isLoading: proposalLoading, error: proposalError } = usePaymentProposal(errandId);
   const { payments, refresh: refreshPayments } = useErrandPayments(errandId);
+  const savedBeslut = useLatestBeslut(errandId);
+  const disposal = paymentDisposal(savedBeslut?.amount, payments);
 
   const renderStatus = (): ReactNode => {
     if (isLoading || error || !status) {
@@ -137,6 +142,23 @@ export const ErrandUtbetalning: FC<{
         }
       >
         {renderStatus()}
+      </ContentBox>
+
+      <ContentBox title={t('payment.disposal.title')}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-24">
+          <LabeledValue label={t('payment.disposal.decided')}>
+            <span className="tabular-nums">{displayAmount(disposal.decided)}</span>
+          </LabeledValue>
+          <LabeledValue label={t('payment.disposal.committed')}>
+            <span className="tabular-nums">{displayAmount(disposal.committed)}</span>
+          </LabeledValue>
+          <LabeledValue label={t('payment.disposal.remaining')}>
+            {/* Negative means more has been registered than the beslut allows — worth seeing, not hiding. */}
+            <span className={cx('tabular-nums font-bold', disposal.remaining < 0 && 'text-error-surface-primary')}>
+              {displayAmount(disposal.remaining)}
+            </span>
+          </LabeledValue>
+        </div>
       </ContentBox>
 
       <ErrandUtbetalningList payments={payments} />

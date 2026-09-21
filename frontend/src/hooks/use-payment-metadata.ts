@@ -5,12 +5,12 @@ import { useCallback } from 'react';
 
 import { useServiceQuery } from './use-service-query';
 
-const NO_METADATA: PaymentMetadata = { moneyTypes: [], paymentMethods: [] };
+const NO_METADATA: PaymentMetadata = { paymentMethods: [] };
 
 /**
- * The Lifecare catalogues behind the utbetalning form's Pengar and Betalsätt dropdowns. Both are
- * documented as placeholders in caremanagement until the real Lifecare catalogue is known, so an empty
- * list is a normal state rather than an error.
+ * The Lifecare catalogue behind the utbetalning form's Betalsätt dropdown. caremanagement documents it
+ * as a placeholder until the real Lifecare catalogue is known, so an empty list is a normal state
+ * rather than an error — the form falls back on the betalsätt the applicant's own payees use.
  */
 export const usePaymentMetadata = (): PaymentMetadata => {
   const fetchMetadata = useCallback(() => getPaymentMetadata(), []);
