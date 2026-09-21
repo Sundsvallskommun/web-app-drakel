@@ -175,17 +175,6 @@ export const getUnifiedAttachmentBlob = (errandId: string, attachment: Attachmen
     getMessageAttachmentBlob(errandId, attachment.messageId, attachment.id ?? '')
   : getAttachmentBlob(errandId, attachment.id ?? '');
 
-/** Uploads a file as a new attachment on an errand (multipart). */
-export const uploadAttachment = (errandId: string, file: File): Promise<ServiceResponse<null>> => {
-  const form = new FormData();
-  form.append('file', file);
-  // Empty headers let axios set the multipart boundary instead of the default JSON content-type.
-  return apiService
-    .post<ApiResponse<null>>(`errands/${errandId}/attachments`, form, { headers: {} })
-    .then(() => ({ data: null }))
-    .catch(toServiceError);
-};
-
 /** Fetches an errand's conversation messages (returned chronologically by the backend). */
 export const getErrandMessages = (errandId: string): Promise<ServiceResponse<Message[]>> => {
   return apiService

@@ -40,13 +40,6 @@
     },
     "conversation": "message"
   },
-  "upload": {
-    "label": "Upload attachment",
-    "restrictions": "Allowed file types: {{extensions}}. Max file size: {{maxSizeMb}} MB.",
-    "unsupportedFileType": "The file type is not supported. Allowed file types: {{extensions}}",
-    "uploading": "Uploading {{fileName}}…",
-    "uploadError": "Could not upload {{fileName}}"
-  },
   "errandAttachments": {
     "description": "Attachments linked to the errand are collected here.",
     "summaryTitle": "Summary of attachments from the application"

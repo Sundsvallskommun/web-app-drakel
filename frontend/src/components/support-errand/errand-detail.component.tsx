@@ -330,7 +330,6 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                 attachments={errandAttachments}
                 isLoading={attachmentsLoading}
                 loadError={!!attachmentsError}
-                refresh={refreshAttachments}
                 heading={t('detail.attachmentsFromApplication')}
               />
               {/* The message-attachments summary PDF is mirrored here so it's also reachable under the

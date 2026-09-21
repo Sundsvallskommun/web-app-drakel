@@ -8,7 +8,6 @@ import { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AttachmentList } from './attachment-list.component';
-import { AttachmentUploadField } from './attachment-upload-field.component';
 import { ErrandSectionHeader } from './errand-section-header.component';
 
 interface ErrandAttachmentsProps {
@@ -22,20 +21,17 @@ interface ErrandAttachmentsProps {
   messageAttachments?: Attachment[];
   isLoading: boolean;
   loadError: boolean;
-  /** Re-fetches the attachment list; called after an upload so the new file shows up. */
-  refresh: () => void;
   /** Heading of the errand attachment group. */
   heading?: string;
 }
 
-/** The Ärende → Bilagor tab: heading, upload field, the application summary PDF and the attachment groups. */
+/** The Ärende → Bilagor tab: heading, the application summary PDF and the attachment groups (read-only). */
 export const ErrandAttachments: FC<ErrandAttachmentsProps> = ({
   errandId,
   attachments,
   messageAttachments,
   isLoading,
   loadError,
-  refresh,
   heading,
 }) => {
   const { t } = useTranslation('attachments');
@@ -44,8 +40,6 @@ export const ErrandAttachments: FC<ErrandAttachmentsProps> = ({
   return (
     <div className="flex flex-col gap-40">
       <ErrandSectionHeader title={t('title')} description={t('errandAttachments.description')} />
-
-      <AttachmentUploadField errandId={errandId} onUploaded={refresh} />
 
       {summaryAttachment?.id ?
         <PdfPreview

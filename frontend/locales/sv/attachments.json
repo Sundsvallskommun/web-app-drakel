@@ -40,13 +40,6 @@
     },
     "conversation": "meddelande"
   },
-  "upload": {
-    "label": "Ladda upp bilaga",
-    "restrictions": "Tillåtna filtyper: {{extensions}}. Max filstorlek: {{maxSizeMb}} MB.",
-    "unsupportedFileType": "Filtypen stöds inte. Tillåtna filtyper: {{extensions}}",
-    "uploading": "Laddar upp {{fileName}}…",
-    "uploadError": "Det gick inte att ladda upp {{fileName}}"
-  },
   "errandAttachments": {
     "description": "Här samlas bilagor som är kopplade till ärendet.",
     "summaryTitle": "Sammanställning bilagor från ansökan"

@@ -4,14 +4,12 @@ import authMiddleware from '@middlewares/auth.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import ApplicantNameService from '@services/applicant-name.service';
 import CaremanagementAttachmentService from '@services/caremanagement-attachment.service';
-import { UploadedFileLike } from '@services/caremanagement-attachment.service';
 import CaremanagementErrandService from '@services/caremanagement-errand.service';
 import CaremanagementStakeholderService from '@services/caremanagement-stakeholder.service';
 import { Response } from 'express';
-import { Body, Controller, Get, HttpCode, Param, Patch, Post, QueryParams, Req, Res, UploadedFile, UseBefore } from 'routing-controllers';
+import { Body, Controller, Get, HttpCode, Param, Patch, Post, QueryParams, Req, Res, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
-import { MAX_UPLOAD_FILE_SIZE_BYTES } from '@/constants/upload';
 import { CreateErrandDto, FindErrandsQueryDto, PatchErrandDto } from '@/dtos/errand.dto';
 import { AttachmentsApiResponse } from '@/responses/attachment.response';
 import { ErrandApiResponse, ErrandsApiResponse } from '@/responses/errand.response';
@@ -20,15 +18,6 @@ import { StakeholdersApiResponse } from '@/responses/stakeholder.response';
 // caremanagement requires a typeSlug on every errand. Until per-type modules are configured this is
 // a single configured value (env override, with a sensible default).
 const DEFAULT_TYPE_SLUG = 'financial-assistance';
-
-const singleAttachmentUploadOptions = {
-  options: {
-    limits: {
-      files: 1,
-      fileSize: MAX_UPLOAD_FILE_SIZE_BYTES,
-    },
-  },
-};
 
 @Controller()
 export class ErrandController {
@@ -111,15 +100,6 @@ export class ErrandController {
     }
     response.setHeader('Content-Disposition', `attachment; filename="${file.fileName ?? attachmentId}"`);
     return response.send(file.data);
-  }
-
-  @Post('/errands/:errandId/attachments')
-  @HttpCode(201)
-  @OpenAPI({ summary: 'Upload a new attachment' })
-  @UseBefore(authMiddleware)
-  async createAttachment(@Param('errandId') errandId: string, @UploadedFile('file', singleAttachmentUploadOptions) file: UploadedFileLike) {
-    const res = await this.attachmentService.createAttachment(errandId, file);
-    return { data: res.data, message: 'success' };
   }
 
   @Get('/errands/:errandId/stakeholders')
