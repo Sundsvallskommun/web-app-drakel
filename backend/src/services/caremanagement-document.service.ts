@@ -2,13 +2,7 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 
-import {
-  CreateDocument,
-  Document,
-  DocumentMetadata,
-  LockDocument,
-  UpdateDocument,
-} from '@/data-contracts/caremanagement/data-contracts';
+import { CreateDocument, Document, DocumentMetadata, LockDocument, UpdateDocument } from '@/data-contracts/caremanagement/data-contracts';
 
 /** Owns the Dokument (formal case document) sub-resource of an errand. */
 class CaremanagementDocumentService {

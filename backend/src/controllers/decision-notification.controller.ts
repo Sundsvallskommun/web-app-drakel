@@ -37,7 +37,7 @@ export class DecisionNotificationController {
 
   private async resolveApplicantPartyId(errandId: string): Promise<string | undefined> {
     const stakeholders = await this.stakeholderService.readStakeholders(errandId);
-    return (stakeholders.data ?? []).find((stakeholder) => stakeholder.role === 'APPLICANT')?.externalId;
+    return (stakeholders.data ?? []).find(stakeholder => stakeholder.role === 'APPLICANT')?.externalId;
   }
 
   @Get('/errands/:errandId/digital-mailbox')
@@ -65,7 +65,7 @@ export class DecisionNotificationController {
     const decisions = await this.decisionService.readDecisions(errandId);
     const decisionMessage = [...(decisions.data ?? [])]
       .reverse()
-      .find((decision) => (decision.decisionMessage ?? '').trim().length > 0)?.decisionMessage;
+      .find(decision => (decision.decisionMessage ?? '').trim().length > 0)?.decisionMessage;
     if (!decisionMessage) {
       throw new HttpException(400, 'No decision message to send');
     }
@@ -92,11 +92,7 @@ export class DecisionNotificationController {
         selected: !!input.minaSidor,
         label: 'Mina sidor',
         send: async () => {
-          await this.messageService.createMessage(
-            errandId,
-            { direction: 'OUTBOUND', body: DECISION_BODY, author: req.user.username },
-            [pdfFile]
-          );
+          await this.messageService.createMessage(errandId, { direction: 'OUTBOUND', body: DECISION_BODY, author: req.user.username }, [pdfFile]);
         },
       },
       {
@@ -110,16 +106,16 @@ export class DecisionNotificationController {
         send: () => this.messagingService.sendLetter(partyId, DECISION_SUBJECT, DECISION_BODY, pdfBase64),
       },
     ];
-    const selected = channels.filter((channel) => channel.selected);
+    const selected = channels.filter(channel => channel.selected);
     const failedChannels: string[] = [];
     await Promise.all(
-      selected.map(async (channel) => {
+      selected.map(async channel => {
         try {
           await channel.send();
         } catch {
           failedChannels.push(channel.label);
         }
-      })
+      }),
     );
     // Only treat it as an outright failure when every requested channel failed.
     if (selected.length > 0 && failedChannels.length === selected.length) {

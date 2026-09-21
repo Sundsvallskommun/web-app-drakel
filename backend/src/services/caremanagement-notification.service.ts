@@ -20,11 +20,7 @@ class CaremanagementNotificationService {
   }
 
   /** Sets the acknowledged state of a single notification. */
-  async acknowledge(
-    errandId: string,
-    notificationId: string,
-    acknowledged: boolean
-  ): Promise<ApiResponse<Notification>> {
+  async acknowledge(errandId: string, notificationId: string, acknowledged: boolean): Promise<ApiResponse<Notification>> {
     return this.apiService.patch<Notification>({
       url: caremanagementUrl('errands', errandId, 'notifications', notificationId),
       data: { acknowledged },

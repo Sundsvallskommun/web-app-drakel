@@ -11,8 +11,7 @@ export interface RequestContext {
 const storage = new AsyncLocalStorage<RequestContext>();
 
 /** Runs `callback` with the given request context active for the rest of the request. */
-export const runWithRequestContext = <T>(context: RequestContext, callback: () => T): T =>
-  storage.run(context, callback);
+export const runWithRequestContext = <T>(context: RequestContext, callback: () => T): T => storage.run(context, callback);
 
 /** The authenticated username for the current request, if any. */
 const getRequestUsername = (): string | undefined => storage.getStore()?.username;

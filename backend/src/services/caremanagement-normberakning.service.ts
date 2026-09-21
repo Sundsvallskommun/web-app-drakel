@@ -50,12 +50,7 @@ class CaremanagementNormberakningService {
   }
 
   /** Sets the handläggare value/note on a row. */
-  async updateRow(
-    errandId: string,
-    section: NormSection,
-    rowId: string,
-    input: NormRowInputDto
-  ): Promise<ApiResponse<NormRow>> {
+  async updateRow(errandId: string, section: NormSection, rowId: string, input: NormRowInputDto): Promise<ApiResponse<NormRow>> {
     return this.apiService.patch<NormRow>({ url: this.draftUrl(errandId, section, rowId), data: input });
   }
 

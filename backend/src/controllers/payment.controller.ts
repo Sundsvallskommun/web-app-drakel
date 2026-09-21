@@ -33,7 +33,7 @@ export class PaymentController {
       this.errandService.getFinancialAssistanceView(errandId),
     ]);
 
-    const applicant = stakeholdersRes.data?.find((stakeholder) => stakeholder.role === APPLICANT_ROLE)?.externalId;
+    const applicant = stakeholdersRes.data?.find(stakeholder => stakeholder.role === APPLICANT_ROLE)?.externalId;
     const applicationMonth = toApplicationMonth(viewRes.data?.data?.periodMonth, viewRes.data?.data?.periodYear);
 
     if (!applicant || !applicationMonth) {

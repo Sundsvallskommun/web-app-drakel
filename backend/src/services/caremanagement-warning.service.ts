@@ -25,11 +25,7 @@ class CaremanagementWarningService {
   }
 
   /** Acknowledges or closes a warning. The status is passed as a query param (caremanagement takes no body). */
-  async updateWarningStatus(
-    errandId: string,
-    warningId: string,
-    status: WarningStatusUpdate,
-  ): Promise<ApiResponse<Warning>> {
+  async updateWarningStatus(errandId: string, warningId: string, status: WarningStatusUpdate): Promise<ApiResponse<Warning>> {
     return this.apiService.patch<Warning>({
       url: caremanagementUrl('errands', 'financial-assistance', errandId, 'warnings', warningId),
       params: { status },

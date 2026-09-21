@@ -26,11 +26,7 @@ export class NotificationController {
   @OpenAPI({ summary: 'Acknowledge (mark as read) or withdraw a notification' })
   @ResponseSchema(ErrandNotificationApiResponse)
   @UseBefore(authMiddleware, validationMiddleware(AcknowledgeNotificationDto, 'body'))
-  async acknowledge(
-    @Param('errandId') errandId: string,
-    @Param('notificationId') notificationId: string,
-    @Body() input: AcknowledgeNotificationDto,
-  ) {
+  async acknowledge(@Param('errandId') errandId: string, @Param('notificationId') notificationId: string, @Body() input: AcknowledgeNotificationDto) {
     const res = await this.notificationService.acknowledge(errandId, notificationId, input.acknowledged);
     return { data: res.data, message: 'success' };
   }

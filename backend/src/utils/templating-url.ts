@@ -9,5 +9,5 @@ import { MUNICIPALITY_ID, TEMPLATING_BASE_URL } from '@config';
  */
 export const templatingUrl = (...parts: string[]): string => {
   const segments = [TEMPLATING_BASE_URL, MUNICIPALITY_ID, ...parts];
-  return segments.map((segment) => segment.replace(/^\/+|\/+$/g, '')).join('/');
+  return segments.map(segment => segment.replace(/^\/+|\/+$/g, '')).join('/');
 };

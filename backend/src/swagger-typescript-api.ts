@@ -72,7 +72,7 @@ const main = async () => {
   await generateContract('caremanagement', caremanagementOpenApiUrl);
 };
 
-void main().catch((error) => {
+void main().catch(error => {
   console.error(`contract generation failed: ${error instanceof Error ? error.message : String(error)}`);
   process.exitCode = 1;
 });

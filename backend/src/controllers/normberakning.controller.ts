@@ -58,8 +58,8 @@ export class NormberakningController {
     return {
       data: {
         incomeTypes: (res.data?.incomeTypes ?? []).map(toDropdownOption),
-        costTypes: costTypes.filter((type) => type.group === HOUSING_GROUP).map(toDropdownOption),
-        livingCostTypes: costTypes.filter((type) => type.group !== HOUSING_GROUP).map(toDropdownOption),
+        costTypes: costTypes.filter(type => type.group === HOUSING_GROUP).map(toDropdownOption),
+        livingCostTypes: costTypes.filter(type => type.group !== HOUSING_GROUP).map(toDropdownOption),
       },
       message: 'success',
     };
@@ -77,11 +77,7 @@ export class NormberakningController {
   @Post('/errands/:errandId/normberakning/draft/:section')
   @OpenAPI({ summary: 'Add a handläggare row to a draft normberäkning section' })
   @UseBefore(authMiddleware, validationMiddleware(NormRowInputDto, 'body'))
-  async addRow(
-    @Param('errandId') errandId: string,
-    @Param('section') section: string,
-    @Body() input: NormRowInputDto
-  ) {
+  async addRow(@Param('errandId') errandId: string, @Param('section') section: string, @Body() input: NormRowInputDto) {
     const res = await this.normberakningService.addRow(errandId, toSection(section), input);
     return { data: res.data, message: 'success' };
   }
@@ -93,7 +89,7 @@ export class NormberakningController {
     @Param('errandId') errandId: string,
     @Param('section') section: string,
     @Param('rowId') rowId: string,
-    @Body() input: NormRowInputDto
+    @Body() input: NormRowInputDto,
   ) {
     const res = await this.normberakningService.updateRow(errandId, toSection(section), rowId, input);
     return { data: res.data, message: 'success' };
@@ -102,11 +98,7 @@ export class NormberakningController {
   @Delete('/errands/:errandId/normberakning/draft/:section/:rowId')
   @OpenAPI({ summary: 'Soft-delete a draft normberäkning row' })
   @UseBefore(authMiddleware)
-  async deleteRow(
-    @Param('errandId') errandId: string,
-    @Param('section') section: string,
-    @Param('rowId') rowId: string
-  ) {
+  async deleteRow(@Param('errandId') errandId: string, @Param('section') section: string, @Param('rowId') rowId: string) {
     const res = await this.normberakningService.deleteRow(errandId, toSection(section), rowId);
     return { data: res.data, message: 'success' };
   }
@@ -114,11 +106,7 @@ export class NormberakningController {
   @Post('/errands/:errandId/normberakning/draft/:section/:rowId/restore')
   @OpenAPI({ summary: 'Restore a soft-deleted draft normberäkning row' })
   @UseBefore(authMiddleware)
-  async restoreRow(
-    @Param('errandId') errandId: string,
-    @Param('section') section: string,
-    @Param('rowId') rowId: string
-  ) {
+  async restoreRow(@Param('errandId') errandId: string, @Param('section') section: string, @Param('rowId') rowId: string) {
     const res = await this.normberakningService.restoreRow(errandId, toSection(section), rowId);
     return { data: res.data, message: 'success' };
   }

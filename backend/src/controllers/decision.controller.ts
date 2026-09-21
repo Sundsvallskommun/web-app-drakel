@@ -7,12 +7,7 @@ import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
 import { Decision } from '@/data-contracts/caremanagement/data-contracts';
 import { CreateDecisionDto } from '@/dtos/decision.dto';
-import {
-  DecisionApiResponse,
-  DecisionOptionsApiResponse,
-  DecisionsApiResponse,
-  RecommendationApiResponse,
-} from '@/responses/decision.response';
+import { DecisionApiResponse, DecisionOptionsApiResponse, DecisionsApiResponse, RecommendationApiResponse } from '@/responses/decision.response';
 
 // The beslutsalternativ catalog lives on the errand-type schema, keyed by the registry typeSlug
 // (e.g. financial-assistance-new). Fall back to the NEW variant when an errand has no typeSlug.

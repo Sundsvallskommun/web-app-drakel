@@ -30,19 +30,19 @@ export class CountsController {
     const [notes, warnings, bevakningar, unreadMessages] = await Promise.all([
       this.noteService
         .readCount(errandId)
-        .then((res) => res.data?.count ?? 0)
+        .then(res => res.data?.count ?? 0)
         .catch(() => 0),
       this.warningService
         .readCount(errandId)
-        .then((res) => res.data?.count ?? 0)
+        .then(res => res.data?.count ?? 0)
         .catch(() => 0),
       this.bevakningService
         .readCount(errandId)
-        .then((res) => res.data?.count ?? 0)
+        .then(res => res.data?.count ?? 0)
         .catch(() => 0),
       this.messageService
         .readUnreadCount(errandId)
-        .then((res) => res.data?.unreadCount ?? 0)
+        .then(res => res.data?.unreadCount ?? 0)
         .catch(() => 0),
     ]);
     return { data: { notes, warnings, bevakningar, unreadMessages }, message: 'success' };

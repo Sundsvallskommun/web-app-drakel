@@ -18,8 +18,8 @@ export class AdministratorController {
     try {
       const users = await this.activeDirectoryService.searchUsers();
       const administrators = users
-        .filter((user) => user.name)
-        .map((user) => ({ username: user.name, displayName: user.displayName ?? user.name, description: user.description }));
+        .filter(user => user.name)
+        .map(user => ({ username: user.name, displayName: user.displayName ?? user.name, description: user.description }));
       return { data: administrators, message: 'success' };
     } catch {
       // AD is optional/mocked — never fail the request, just return no handläggare.

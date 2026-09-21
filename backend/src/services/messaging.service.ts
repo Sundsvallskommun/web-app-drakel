@@ -50,7 +50,7 @@ class MessagingService {
   async hasDigitalMailbox(partyId: string): Promise<boolean> {
     const url = `${this.base()}/${MESSAGING_ORGANIZATION_NUMBER}/mailboxes`;
     const res: ApiResponse<Mailbox[]> = await this.apiService.post<Mailbox[]>({ url, data: [partyId] });
-    return (res.data ?? []).some((mailbox) => mailbox.partyId === partyId && mailbox.reachable === true);
+    return (res.data ?? []).some(mailbox => mailbox.partyId === partyId && mailbox.reachable === true);
   }
 
   /** Digital brevlåda — a digital mail with the beslut PDF attached. */
@@ -62,9 +62,7 @@ class MessagingService {
       department: MESSAGING_DEPARTMENT,
       contentType: DigitalMailRequestContentTypeEnum.TextPlain,
       body,
-      attachments: [
-        { content: pdfBase64, filename: PDF_FILENAME, contentType: DigitalMailAttachmentContentTypeEnum.ApplicationPdf },
-      ],
+      attachments: [{ content: pdfBase64, filename: PDF_FILENAME, contentType: DigitalMailAttachmentContentTypeEnum.ApplicationPdf }],
     };
     await this.apiService.post({ url: `${this.base()}/digital-mail`, data: request });
   }

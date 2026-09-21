@@ -7,11 +7,7 @@ import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
 import { CreateJournalEntry, UpdateJournalEntry } from '@/data-contracts/caremanagement/data-contracts';
 import { CreateJournalEntryDto, UpdateJournalEntryDto } from '@/dtos/journal.dto';
-import {
-  JournalEntriesApiResponse,
-  JournalEntryApiResponse,
-  JournalEntryTypesApiResponse,
-} from '@/responses/journal.response';
+import { JournalEntriesApiResponse, JournalEntryApiResponse, JournalEntryTypesApiResponse } from '@/responses/journal.response';
 
 /** Owns the journalanteckning (case-journal) sub-resource of an errand. */
 @Controller()

@@ -14,11 +14,7 @@ class CaremanagementSectionApprovalService {
     });
   }
 
-  async setApproval(
-    errandId: string,
-    section: string,
-    body: SectionApprovalRequest,
-  ): Promise<ApiResponse<SectionApproval>> {
+  async setApproval(errandId: string, section: string, body: SectionApprovalRequest): Promise<ApiResponse<SectionApproval>> {
     return this.apiService.patch<SectionApproval>({
       url: caremanagementUrl('errands', 'financial-assistance', errandId, 'sections', section, 'approval'),
       data: body,

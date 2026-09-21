@@ -24,11 +24,7 @@ export class WarningController {
   @Patch('/errands/:errandId/warnings/:warningId')
   @OpenAPI({ summary: 'Acknowledge or close a warning on an errand' })
   @UseBefore(authMiddleware, validationMiddleware(UpdateWarningStatusDto, 'body'))
-  async updateWarning(
-    @Param('errandId') errandId: string,
-    @Param('warningId') warningId: string,
-    @Body() update: UpdateWarningStatusDto,
-  ) {
+  async updateWarning(@Param('errandId') errandId: string, @Param('warningId') warningId: string, @Body() update: UpdateWarningStatusDto) {
     await this.warningService.updateWarningStatus(errandId, warningId, update.status);
     return { data: null, message: 'success' };
   }
