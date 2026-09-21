@@ -1,12 +1,14 @@
 import authMiddleware from '@middlewares/auth.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
+import CaremanagementMetadataService from '@services/caremanagement-metadata.service';
 import CaremanagementNormberakningService, { NormSection } from '@services/caremanagement-normberakning.service';
 import CaremanagementStakeholderService from '@services/caremanagement-stakeholder.service';
+import { toDropdownOption } from '@utils/dropdown-option';
 import { pickPreviousCalculation } from '@utils/previous-calculation';
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
-import { TypeOption, TypeOptionGroupEnum } from '@/data-contracts/caremanagement/data-contracts';
+import { TypeOptionGroupEnum } from '@/data-contracts/caremanagement/data-contracts';
 import { NormHeaderInputDto, NormRowInputDto } from '@/dtos/normberakning.dto';
 import { HttpException } from '@/exceptions/HttpException';
 import { NormberakningDraftApiResponse } from '@/responses/normberakning.response';
@@ -21,12 +23,6 @@ const APPLICANT_ROLE = 'APPLICANT';
 // HOUSING section is Lifecare's boendekostnader (the Utgifter / EXPENSE bucket); the other sections
 // (WORK_AND_STUDIES / HEALTH / OTHER) are levnadskostnader i övrigt (the SPECIAL_EXPENSE bucket).
 const HOUSING_GROUP = TypeOptionGroupEnum.HOUSING;
-
-/** Maps an API type to the frontend dropdown shape, using the Lifecare handläggare label. */
-const toDropdownOption = (type: TypeOption): { code?: string; displayName?: string } => ({
-  code: type.code,
-  displayName: type.internalDisplayName ?? type.externalDisplayName ?? type.code,
-});
 
 /** Validates the section path segment so we never forward an unknown section to caremanagement. */
 const toSection = (section: string): NormSection => {
@@ -45,6 +41,7 @@ const toSection = (section: string): NormSection => {
 export class NormberakningController {
   private normberakningService = new CaremanagementNormberakningService();
   private stakeholderService = new CaremanagementStakeholderService();
+  private metadataService = new CaremanagementMetadataService();
 
   @Get('/errands/:errandId/normberakning/draft')
   @OpenAPI({ summary: 'Read the draft normberäkning (persons · incomes · expenses) for an errand' })
@@ -82,7 +79,7 @@ export class NormberakningController {
   @OpenAPI({ summary: 'Labelled income/cost type catalogues for the add-row dropdowns' })
   @UseBefore(authMiddleware)
   async getTypes() {
-    const res = await this.normberakningService.readTypes();
+    const res = await this.metadataService.readFinancialAssistanceMetadata();
     const costTypes = res.data?.costTypes ?? [];
     // Split the single costTypes list into the two normberäkning buckets via the Mina-sidor group.
     return {

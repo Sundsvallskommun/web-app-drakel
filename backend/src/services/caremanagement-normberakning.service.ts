@@ -2,14 +2,7 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 
-import {
-  CalculationDraft,
-  FinancialAssistanceMetadata,
-  LifecareCalculation,
-  NormExpenseRow,
-  NormIncomeRow,
-  NormPersonRow,
-} from '@/data-contracts/caremanagement/data-contracts';
+import { CalculationDraft, LifecareCalculation, NormExpenseRow, NormIncomeRow, NormPersonRow } from '@/data-contracts/caremanagement/data-contracts';
 import { NormHeaderInputDto, NormRowInputDto } from '@/dtos/normberakning.dto';
 
 /** The three editable sections of the draft normberäkning. */
@@ -31,13 +24,6 @@ class CaremanagementNormberakningService {
 
   async readDraft(errandId: string): Promise<ApiResponse<CalculationDraft>> {
     return this.apiService.get<CalculationDraft>({ url: this.draftUrl(errandId) });
-  }
-
-  /** The labelled income/cost type catalogues for the add-row dropdowns. */
-  async readTypes(): Promise<ApiResponse<FinancialAssistanceMetadata>> {
-    return this.apiService.get<FinancialAssistanceMetadata>({
-      url: caremanagementUrl('errands', 'financial-assistance', 'metadata'),
-    });
   }
 
   /** Updates the draft header (norm, calculation dates, household size). */
