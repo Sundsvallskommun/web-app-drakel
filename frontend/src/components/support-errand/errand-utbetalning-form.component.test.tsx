@@ -1,5 +1,5 @@
 import { getErrandStakeholders } from '@services/errand-service/errand-service';
-import { createPayment, getPaymentMetadata, PaymentProposal } from '@services/payment-service';
+import { createPayment, getPayees, getPaymentMetadata, PaymentProposal } from '@services/payment-service';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -11,6 +11,8 @@ vi.mock('@services/errand-service/errand-service', () => ({
 
 vi.mock('@services/payment-service', () => ({
   createPayment: vi.fn(),
+  createPayee: vi.fn(),
+  getPayees: vi.fn(),
   getPaymentMetadata: vi.fn(),
 }));
 
@@ -46,17 +48,21 @@ describe('ErrandUtbetalningForm', () => {
     vi.mocked(getPaymentMetadata).mockResolvedValue({ data: { paymentMethods: [] } });
     vi.mocked(createPayment).mockReset();
     vi.mocked(createPayment).mockResolvedValue({ data: null });
+    vi.mocked(getPayees).mockReset();
+    // The payee dropdown is fed by caremanagement's payee endpoint, not by the proposal.
+    vi.mocked(getPayees).mockResolvedValue({ data: [BANK_ACCOUNT_PAYEE, GIRO_PAYEE] });
   });
 
   it('prefills date, amount and payee from the proposal', async () => {
     renderForm();
 
+    // The betalsätt options are built from the payee list, so the value only sticks once it has loaded.
     await waitFor(() => {
-      expect(screen.getByLabelText(/^Utbetalningsdatum/)).toHaveValue('2026-09-25');
+      expect(screen.getByLabelText(/^Betalsätt/)).toHaveValue('Bankkonto');
     });
+    expect(screen.getByLabelText(/^Utbetalningsdatum/)).toHaveValue('2026-09-25');
     expect(screen.getByLabelText(/^Belopp/)).toHaveValue('8450,00');
     expect(screen.getByLabelText(/^Namn/)).toHaveValue('Test Testsson');
-    expect(screen.getByLabelText(/^Betalsätt/)).toHaveValue('Bankkonto');
     expect(screen.getByLabelText(/^Kontonummer/)).toHaveValue('1234567');
   });
 
@@ -82,8 +88,9 @@ describe('ErrandUtbetalningForm', () => {
 
   it('carries the chosen payee across and closes clearing for a giro', async () => {
     renderForm();
+    // Wait for the payee list, since the dropdown's options come from it.
     await waitFor(() => {
-      expect(screen.getByLabelText(/^Betalningsmottagare/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Betalsätt/)).toHaveValue('Bankkonto');
     });
 
     fireEvent.change(screen.getByLabelText(/^Betalningsmottagare/), { target: { value: '1' } });
@@ -98,11 +105,14 @@ describe('ErrandUtbetalningForm', () => {
   });
 
   it('opens the postal address for Utbetalningskort', async () => {
+    vi.mocked(getPayees).mockResolvedValue({ data: [{ name: 'Test Testsson', paymentMethod: 'Utbetalningskort' }] });
     renderForm({
       payments: [{ paymentDate: '2026-09-25', concernedMonth: '2026-09' }],
       payeeOptions: [{ name: 'Test Testsson', paymentMethod: 'Utbetalningskort' }],
     });
 
+    // The betalsätt option only exists once the payee it comes from has loaded.
+    await screen.findAllByRole('option', { name: /Utbetalningskort/ });
     fireEvent.change(screen.getByLabelText(/^Betalsätt/), { target: { value: 'Utbetalningskort' } });
 
     await waitFor(() => {

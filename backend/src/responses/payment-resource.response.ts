@@ -55,3 +55,35 @@ export class PaymentMetadataApiResponse implements ApiResponse<PaymentMetadataVi
   @ValidateNested() @Type(() => PaymentMetadataView) data!: PaymentMetadataView;
   @IsString() message!: string;
 }
+
+/**
+ * A selectable betalningsmottagare. A LIFECARE option comes from the applicant's payment history and has
+ * no id; a MANUAL one was added on the errand and carries how far the robot has got writing it into
+ * Lifecare. `lifecareDetail` is Lifecare's own message on a failure and is shown to the handläggare as
+ * it came.
+ */
+export class PayeeOptionView {
+  @IsString() @IsOptional() id?: string;
+  @IsString() @IsOptional() name?: string;
+  @IsString() @IsOptional() paymentMethod?: string;
+  @IsString() @IsOptional() clearing?: string;
+  @IsString() @IsOptional() accountNumber?: string;
+  /** LIFECARE or MANUAL. */
+  @IsString() @IsOptional() source?: string;
+  /** PENDING / SYNCED / FAILED — only on a MANUAL option. */
+  @IsString() @IsOptional() lifecareStatus?: string;
+  @IsString() @IsOptional() lifecarePayeeId?: string;
+  @IsString() @IsOptional() lifecareDetail?: string;
+  @IsString() @IsOptional() lastPaidOn?: string;
+  @IsString() @IsOptional() created?: string;
+}
+
+export class PayeesApiResponse implements ApiResponse<PayeeOptionView[]> {
+  @IsArray() @ValidateNested({ each: true }) @Type(() => PayeeOptionView) data!: PayeeOptionView[];
+  @IsString() message!: string;
+}
+
+export class PayeeApiResponse implements ApiResponse<PayeeOptionView | null> {
+  @ValidateNested() @Type(() => PayeeOptionView) @IsOptional() data!: PayeeOptionView | null;
+  @IsString() message!: string;
+}

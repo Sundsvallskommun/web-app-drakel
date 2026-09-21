@@ -2,8 +2,8 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 
-import { Payment, PaymentProposal, PaymentStatusRequest, PaymentStatusResponse } from '@/data-contracts/caremanagement/data-contracts';
-import { PaymentInputDto } from '@/dtos/payment.dto';
+import { PayeeOption, Payment, PaymentProposal, PaymentStatusRequest, PaymentStatusResponse } from '@/data-contracts/caremanagement/data-contracts';
+import { PayeeInputDto, PaymentInputDto } from '@/dtos/payment.dto';
 
 /** Reads the Lifecare utbetalning status and the utbetalningsförslag for a financial-assistance errand. */
 class CaremanagementPaymentService {
@@ -46,6 +46,33 @@ class CaremanagementPaymentService {
    */
   async createPayment(errandId: string, input: PaymentInputDto): Promise<ApiResponse<Payment>> {
     return this.apiService.post<Payment>({ url: this.paymentsUrl(errandId), data: input });
+  }
+
+  private payeesUrl(errandId: string, ...rest: string[]): string {
+    return caremanagementUrl('errands', 'financial-assistance', errandId, 'payees', ...rest);
+  }
+
+  /**
+   * The selectable betalningsmottagare: the ones seen on the applicant's Lifecare payments the last 12
+   * months, then the ones added by hand on the errand. Unlike the payment proposal this reads nothing
+   * else and needs no calculation, so it is safe to call just to fill a dropdown — and the Lifecare read
+   * is best-effort, so an outage yields the manual rows rather than an error.
+   */
+  async listPayees(errandId: string): Promise<ApiResponse<PayeeOption[]>> {
+    return this.apiService.get<PayeeOption[]>({ url: this.payeesUrl(errandId) });
+  }
+
+  /**
+   * Adds a betalningsmottagare by hand and queues the robot that writes it into Lifecare. An identical
+   * payee is reused rather than duplicated, so a double click is harmless.
+   */
+  async createPayee(errandId: string, input: PayeeInputDto): Promise<ApiResponse<PayeeOption>> {
+    return this.apiService.post<PayeeOption>({ url: this.payeesUrl(errandId), data: input });
+  }
+
+  /** Removes a manually added betalningsmottagare. */
+  async deletePayee(errandId: string, payeeId: string): Promise<ApiResponse<null>> {
+    return this.apiService.delete<null>({ url: this.payeesUrl(errandId, payeeId) });
   }
 }
 

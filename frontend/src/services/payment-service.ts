@@ -151,3 +151,52 @@ export const getPaymentMetadata = (): Promise<ServiceResponse<PaymentMetadata>> 
     .get<ApiResponse<PaymentMetadata>>('payment-metadata')
     .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);
+
+/**
+ * A selectable betalningsmottagare. A LIFECARE option comes from the applicant's Lifecare payment
+ * history and has no id; a MANUAL one was added on the errand and carries how far the robot has got
+ * writing it into Lifecare.
+ */
+export interface PayeeOption {
+  id?: string;
+  name?: string;
+  paymentMethod?: string;
+  clearing?: string;
+  accountNumber?: string;
+  source?: 'LIFECARE' | 'MANUAL';
+  lifecareStatus?: 'PENDING' | 'SYNCED' | 'FAILED';
+  lifecarePayeeId?: string;
+  /** Lifecare's own message when the write failed — shown to the handläggare as it came. */
+  lifecareDetail?: string;
+  lastPaidOn?: string;
+  created?: string;
+}
+
+/** The fields sent when adding a betalningsmottagare by hand. */
+export interface PayeeInput {
+  name: string;
+  paymentMethod: string;
+  clearing?: string;
+  accountNumber?: string;
+}
+
+/** The selectable betalningsmottagare on an errand. */
+export const getPayees = (errandId: string): Promise<ServiceResponse<PayeeOption[]>> =>
+  apiService
+    .get<ApiResponse<PayeeOption[]>>(`errands/${errandId}/payees`)
+    .then((res) => ({ data: res.data.data }))
+    .catch(toServiceError);
+
+/** Adds a betalningsmottagare by hand; an identical one is reused rather than duplicated. */
+export const createPayee = (errandId: string, input: PayeeInput): Promise<ServiceResponse<PayeeOption | null>> =>
+  apiService
+    .post<ApiResponse<PayeeOption | null>>(`errands/${errandId}/payees`, input)
+    .then((res) => ({ data: res.data.data }))
+    .catch(toServiceError);
+
+/** Removes a manually added betalningsmottagare. */
+export const deletePayee = (errandId: string, payeeId: string): Promise<ServiceResponse<null>> =>
+  apiService
+    .delete<ApiResponse<null>>(`errands/${errandId}/payees/${payeeId}`)
+    .then(() => ({ data: null }))
+    .catch(toServiceError);

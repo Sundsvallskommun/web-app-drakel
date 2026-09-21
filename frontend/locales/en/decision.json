@@ -105,6 +105,18 @@
       "decided": "Decided amount",
       "committed": "Registered",
       "remaining": "Remaining"
+    },
+    "payee": {
+      "add": "Add payee",
+      "adding": "Adding…",
+      "addError": "Could not add the payee",
+      "name": "Name",
+      "paymentMethod": "Payment method",
+      "clearing": "Clearing",
+      "accountNumber": "Account number",
+      "pending": "The robot is writing the payee into Lifecare — it becomes selectable there once done.",
+      "failed": "The payee could not be written into Lifecare",
+      "remove": "Remove payee"
     }
   },
   "proposal": {

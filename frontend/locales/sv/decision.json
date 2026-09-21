@@ -105,6 +105,18 @@
       "decided": "Beslutat belopp",
       "committed": "Registrerat",
       "remaining": "Kvar att disponera"
+    },
+    "payee": {
+      "add": "Lägg till mottagare",
+      "adding": "Lägger till…",
+      "addError": "Det gick inte att lägga till mottagaren",
+      "name": "Namn",
+      "paymentMethod": "Betalsätt",
+      "clearing": "Clearing",
+      "accountNumber": "Kontonummer",
+      "pending": "Mottagaren skrivs in i Lifecare av roboten — den blir valbar där när det är klart.",
+      "failed": "Mottagaren kunde inte skrivas in i Lifecare",
+      "remove": "Ta bort mottagare"
     }
   },
   "proposal": {

@@ -2,9 +2,10 @@
 
 import { FormField } from '@components/common/form-field.component';
 import { Stakeholder } from '@data-contracts/backend/data-contracts';
+import { useErrandPayees } from '@hooks/use-errand-payees';
 import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
 import { usePaymentMetadata } from '@hooks/use-payment-metadata';
-import { createPayment, Payee, PaymentInput, PaymentProposal } from '@services/payment-service';
+import { createPayment, Payee, PayeeOption, PaymentInput, PaymentProposal } from '@services/payment-service';
 import { Button, Checkbox, DatePicker, FormControl, FormLabel, Input, Select } from '@sk-web-gui/react';
 import { applicationMonthOptions, formatApplicationMonth } from '@utils/application-month';
 import { formatAmount, parseAmount } from '@utils/format-amount';
@@ -15,6 +16,8 @@ import { Plus } from 'lucide-react';
 import { FC, useEffect, useState } from 'react';
 import { FieldArrayWithId, useFieldArray, useForm, UseFormRegister, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+
+import { PayeePicker } from './payee-picker.component';
 
 /** The fields of the Lifecare utbetalning form, in the order they appear in it. */
 interface UtbetalningFormValues {
@@ -69,15 +72,12 @@ const EMPTY_FORM_VALUES: UtbetalningFormValues = {
 const proposedFormValues = (proposal: PaymentProposal, applicationMonth?: string): UtbetalningFormValues => {
   const proposed = proposal.payments?.[0];
   const payee = proposed?.payee;
-  // The proposed payee is one of the options; match on its contents so the select lands on the right row.
-  const payeeIndex = (proposal.payeeOptions ?? []).findIndex((option) => isSamePayee(option, payee));
 
   return {
     ...EMPTY_FORM_VALUES,
     paymentDate: proposed?.paymentDate ?? todayDate(),
     amount: proposed?.amount == null ? '' : formatAmount(proposed.amount),
     applicationMonth: proposed?.concernedMonth ?? applicationMonth ?? '',
-    payeeIndex: payeeIndex >= 0 ? String(payeeIndex) : '',
     paymentMethod: payee?.paymentMethod ?? '',
     name: payee?.name ?? '',
     clearingNumber: payee?.clearing ?? '',
@@ -87,21 +87,15 @@ const proposedFormValues = (proposal: PaymentProposal, applicationMonth?: string
 };
 
 /** Payees have no id in Lifecare, so identity is the account they pay to. */
-const isSamePayee = (candidate: Payee, payee?: Payee): boolean =>
+const isSamePayee = (candidate: PayeeOption, payee?: Payee): boolean =>
   !!payee &&
   candidate.name === payee.name &&
   candidate.paymentMethod === payee.paymentMethod &&
   candidate.clearing === payee.clearing &&
   candidate.accountNumber === payee.accountNumber;
 
-/** A payee as the dropdown shows it: the name plus the account it pays to. */
-const payeeLabel = (payee: Payee): string =>
-  [payee.name, payee.paymentMethod, [payee.clearing, payee.accountNumber].filter(Boolean).join('-')]
-    .filter(Boolean)
-    .join(' · ');
-
 /** The betalsätt alternatives — every distinct one seen among the payee options. */
-const paymentMethodOptions = (payeeOptions: Payee[]): string[] => [
+const paymentMethodOptions = (payeeOptions: PayeeOption[]): string[] => [
   ...new Set(payeeOptions.map((payee) => payee.paymentMethod).filter((method): method is string => !!method)),
 ];
 
@@ -221,6 +215,7 @@ export const ErrandUtbetalningForm: FC<{
   const { t } = useTranslation('decision');
   const { stakeholders } = useErrandStakeholders(errandId);
   const metadata = usePaymentMetadata();
+  const { payees, refresh: refreshPayees } = useErrandPayees(errandId);
   const [saving, setSaving] = useState<boolean>(false);
   const [saveError, setSaveError] = useState<string>();
 
@@ -235,7 +230,9 @@ export const ErrandUtbetalningForm: FC<{
   const payeeIndex = useWatch({ control, name: 'payeeIndex' });
   const editableFields = getEditableRecipientFields(paymentMethod);
 
-  const payeeOptions = proposal.payeeOptions ?? [];
+  // The payee list comes from caremanagement's own endpoint rather than the proposal: it reads nothing
+  // else and needs no calculation, so the dropdown fills even when no proposal can be computed.
+  const payeeOptions = payees;
   const monthOptions = applicationMonthOptions(proposal.payments?.[0]?.concernedMonth ?? applicationMonth);
   // Betalsätt: caremanagement's catalogue when it has one (it is a documented placeholder until the
   // real Lifecare list is known), plus whatever the applicant's own payees actually use.
@@ -251,6 +248,16 @@ export const ErrandUtbetalningForm: FC<{
   useEffect(() => {
     reset(proposedFormValues(proposal, applicationMonth));
   }, [proposal, applicationMonth, reset]);
+
+  // The payee list loads separately from the proposal, so the proposed payee is selected once it
+  // arrives — with setValue rather than a reset, which would throw away anything already typed.
+  useEffect(() => {
+    const proposedPayee = proposal.payments?.[0]?.payee;
+    const index = payees.findIndex((option) => isSamePayee(option, proposedPayee));
+    if (index >= 0) {
+      setValue('payeeIndex', String(index));
+    }
+  }, [payees, proposal, setValue]);
 
   // Picking a betalningsmottagare carries its account details across, the way Lifecare ties the two.
   useEffect(() => {
@@ -320,16 +327,16 @@ export const ErrandUtbetalningForm: FC<{
           </Checkbox>
         </div>
 
-        <FormField label={t('payment.form.recipient')} disabled={disabled}>
-          <Select {...register('payeeIndex')}>
-            <Select.Option value="" />
-            {payeeOptions.map((payee, index) => (
-              <Select.Option key={payeeLabel(payee)} value={String(index)}>
-                {payeeLabel(payee)}
-              </Select.Option>
-            ))}
-          </Select>
-        </FormField>
+        <PayeePicker
+          errandId={errandId}
+          payees={payees}
+          value={payeeIndex}
+          onChange={(index) => {
+            setValue('payeeIndex', index);
+          }}
+          onPayeesChanged={refreshPayees}
+          disabled={disabled}
+        />
 
         <FormField label={t('payment.form.paymentMethod')} required disabled={disabled}>
           <Select {...register('paymentMethod')}>
