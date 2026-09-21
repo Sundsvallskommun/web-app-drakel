@@ -213,6 +213,8 @@ class App {
         credentials: CREDENTIALS,
         origin: function (origin, callback) {
           if (origin === undefined || corsWhitelist.includes(origin) || corsWhitelist.includes('*')) {
+            console.log('CORS origin allowed:', origin);
+            console.log('CORS whitelist:', corsWhitelist);
             callback(null, true);
           } else {
             if (NODE_ENV == 'development') {
