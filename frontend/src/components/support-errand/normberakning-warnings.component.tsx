@@ -2,6 +2,7 @@
 
 import { acknowledgeWarning, Warning } from '@services/warning-service';
 import { Alert } from '@sk-web-gui/alert';
+import { isAcknowledgeable } from '@utils/warning-acknowledgement';
 import { FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -15,7 +16,8 @@ interface NormberakningWarningsProps {
 
 /**
  * The OPEN warnings relevant to a normberäkning sub-tab (e.g. income warnings on the Inkomster tab), each
- * rendered as a warning Alert with a "Kvittera" action — the same acknowledge flow as the sidebar
+ * rendered as a warning Alert with a "Kvittera" action, except for the types caremanagement closes
+ * itself — the same acknowledge flow as the sidebar
  * "Varningar" panel.
  */
 export const NormberakningWarnings: FC<NormberakningWarningsProps> = ({ errandId, warnings, onAcknowledged }) => {
@@ -59,16 +61,18 @@ export const NormberakningWarnings: FC<NormberakningWarningsProps> = ({ errandId
                 : null}
                 <Alert.Content.Description>{warning.message}</Alert.Content.Description>
               </Alert.Content>
-              <Alert.Button
-                size="sm"
-                variant="secondary"
-                color="vattjom"
-                loading={acknowledgingId === warning.id}
-                loadingText={t('warnings.acknowledging')}
-                onClick={() => void acknowledge(warning.id)}
-              >
-                {t('warnings.acknowledge')}
-              </Alert.Button>
+              {isAcknowledgeable(warning) ?
+                <Alert.Button
+                  size="sm"
+                  variant="secondary"
+                  color="vattjom"
+                  loading={acknowledgingId === warning.id}
+                  loadingText={t('warnings.acknowledging')}
+                  onClick={() => void acknowledge(warning.id)}
+                >
+                  {t('warnings.acknowledge')}
+                </Alert.Button>
+              : null}
             </Alert>
           </li>
         ))}

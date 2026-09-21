@@ -3,6 +3,7 @@
 import { AsyncContent } from '@components/common/async-content.component';
 import { acknowledgeWarning, reopenWarning, Warning } from '@services/warning-service';
 import { Button, Checkbox, cx } from '@sk-web-gui/react';
+import { isAcknowledgeable } from '@utils/warning-acknowledgement';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
 import { FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -91,7 +92,7 @@ export const ErrandWarnings: FC<ErrandWarningsProps> = ({ errandId, warnings, is
                   </div>
                 </div>
 
-                {open ?
+                {open && isAcknowledgeable(warning) ?
                   <Button
                     size="sm"
                     variant="secondary"
