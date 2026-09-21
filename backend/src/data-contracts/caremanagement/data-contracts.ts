@@ -3494,6 +3494,7 @@ export enum WarningTypeEnum {
   EXPENSE_PARTIALLY_REJECTED = "EXPENSE_PARTIALLY_REJECTED",
   CO_APPLICANT_SPLIT_PAYMENT = "CO_APPLICANT_SPLIT_PAYMENT",
   SSBTEK_READ_FAILED = "SSBTEK_READ_FAILED",
+  INCOME_MISSING_PREVIOUS_PERIOD = "INCOME_MISSING_PREVIOUS_PERIOD",
 }
 
 /** The Draken view section (tab) the warning belongs to — derived from the type: the decision proposal's types are DECISION, the payment proposal's are PAYMENT, everything else is CALCULATION */
