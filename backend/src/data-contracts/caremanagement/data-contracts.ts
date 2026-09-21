@@ -1999,6 +1999,8 @@ export interface CalculationRequest {
   unhandledIncomes?: string[];
   /** The period-over-period change warnings from the operaton rules, recorded on the errand recommendation */
   changeWarnings?: string[];
+  /** Whether SSBTEK could not be read for this run. True means the rules were deliberately not evaluated: the calculation is left exactly as it stands and the errand carries the read-failure warning until a later run succeeds. Absent is read as false, so a caller that does not know about the flag behaves as before. */
+  ssbtekError?: boolean;
 }
 
 /** The created Lifecare calculation id plus the income warnings to review. */
@@ -3491,6 +3493,7 @@ export enum WarningTypeEnum {
   PREVIOUS_DECISION_ADVANCE_ON_BENEFIT = "PREVIOUS_DECISION_ADVANCE_ON_BENEFIT",
   EXPENSE_PARTIALLY_REJECTED = "EXPENSE_PARTIALLY_REJECTED",
   CO_APPLICANT_SPLIT_PAYMENT = "CO_APPLICANT_SPLIT_PAYMENT",
+  SSBTEK_READ_FAILED = "SSBTEK_READ_FAILED",
 }
 
 /** The Draken view section (tab) the warning belongs to — derived from the type: the decision proposal's types are DECISION, the payment proposal's are PAYMENT, everything else is CALCULATION */
