@@ -11,7 +11,7 @@ import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 import { PaymentInputDto } from '@/dtos/payment.dto';
 import { PaymentStatusApiResponse } from '@/responses/payment.response';
 import { PaymentProposalApiResponse } from '@/responses/payment-proposal.response';
-import { PaymentApiResponse, PaymentMetadataApiResponse, PaymentsApiResponse } from '@/responses/payment-resource.response';
+import { PaymentApiResponse, PaymentMetadataApiResponse } from '@/responses/payment-resource.response';
 
 // The applicant whose Lifecare utbetalning the payment status concerns.
 const APPLICANT_ROLE = 'APPLICANT';
@@ -72,15 +72,6 @@ export class PaymentController {
   async getPaymentProposal(@Param('errandId') errandId: string) {
     const res = await this.paymentService.readPaymentProposal(errandId);
     return { data: res.data, message: 'success' };
-  }
-
-  @Get('/errands/:errandId/payments')
-  @OpenAPI({ summary: 'List the utbetalningar registered on an errand' })
-  @ResponseSchema(PaymentsApiResponse)
-  @UseBefore(authMiddleware)
-  async listPayments(@Param('errandId') errandId: string) {
-    const res = await this.paymentService.listPayments(errandId);
-    return { data: res.data ?? [], message: 'success' };
   }
 
   @Post('/errands/:errandId/payments')

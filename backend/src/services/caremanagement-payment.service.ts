@@ -31,11 +31,6 @@ class CaremanagementPaymentService {
     return caremanagementUrl('errands', 'financial-assistance', errandId, 'payments', ...rest);
   }
 
-  /** The utbetalningar stored on an errand. */
-  async listPayments(errandId: string): Promise<ApiResponse<Payment[]>> {
-    return this.apiService.get<Payment[]>({ url: this.paymentsUrl(errandId) });
-  }
-
   /**
    * Creates an utbetalning on the errand. caremanagement stores it as DRAFT and queues nothing — the
    * robot is started separately through the REGISTER_PAYMENT RPA task, so a handläggare can save a

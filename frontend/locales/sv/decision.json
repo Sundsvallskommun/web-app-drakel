@@ -62,12 +62,6 @@
       "excludedFromPayment": "Utbetalas/bokförs ej",
       "recipient": "Betalningsmottagare",
       "paymentMethod": "Betalsätt",
-      "paymentMethods": {
-        "BANK_ACCOUNT": "Bankkonto",
-        "PAYMENT_CARD": "Utbetalningskort",
-        "LOCAL_PAYMENT": "Lokal betalning",
-        "INVOICE": "Räkning"
-      },
       "name": "Namn",
       "address": "Adress",
       "careOf": "C/O adress",

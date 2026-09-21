@@ -62,12 +62,6 @@
       "excludedFromPayment": "Not paid/booked",
       "recipient": "Payee",
       "paymentMethod": "Payment method",
-      "paymentMethods": {
-        "BANK_ACCOUNT": "Bank account",
-        "PAYMENT_CARD": "Payment card",
-        "LOCAL_PAYMENT": "Local payment",
-        "INVOICE": "Invoice"
-      },
       "name": "Name",
       "address": "Address",
       "careOf": "C/O address",

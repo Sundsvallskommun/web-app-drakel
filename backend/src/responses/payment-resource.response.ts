@@ -41,11 +41,6 @@ export class PaymentApiResponse implements ApiResponse<PaymentView | null> {
   @IsString() message!: string;
 }
 
-export class PaymentsApiResponse implements ApiResponse<PaymentView[]> {
-  @IsArray() @ValidateNested({ each: true }) @Type(() => PaymentView) data!: PaymentView[];
-  @IsString() message!: string;
-}
-
 /** The Lifecare-sourced dropdown catalogues for the utbetalning form. */
 export class PaymentMetadataView {
   @IsArray() @IsOptional() moneyTypes?: { code?: string; displayName?: string }[];
