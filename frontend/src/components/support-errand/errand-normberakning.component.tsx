@@ -189,7 +189,12 @@ export const ErrandNormberakning: FC<{
               <span className="block py-4">{formatApplicationMonth(draft.applicationMonth, i18n.language)}</span>
             </FilterField>
             <FilterField label={t('details.norm')} required className="w-[14rem]">
-              <Input readOnly size="sm" value={draft.normType ?? ''} placeholder="—" />
+              <Input
+                readOnly
+                size="sm"
+                value={(draft.normTypeDisplayNames ?? draft.normType ?? []).join(', ')}
+                placeholder="—"
+              />
             </FilterField>
             <FilterField label={t('details.calculationDate')} required>
               <DatePicker type="date" readOnly size="sm" value={draft.calculationDate ?? ''} />

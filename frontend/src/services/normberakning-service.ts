@@ -15,7 +15,9 @@ export interface NormPersonRow {
   position?: number;
   origin?: string;
   partyId?: string;
+  /** The machine code; show `roleDisplayName` instead — caremanagement owns the label. */
   role?: 'APPLICANT' | 'CO_APPLICANT' | 'CHILD' | 'VISITATION_CHILD';
+  roleDisplayName?: string;
   name?: string;
   processDays?: number;
   caseworkerDays?: number;
@@ -57,6 +59,8 @@ export interface NormExpenseRow {
   origin?: string;
   bucket?: 'EXPENSE' | 'SPECIAL_EXPENSE';
   costType?: string;
+  /** The Lifecare label for the cost type — the same text a warning about the row uses. */
+  costTypeDisplayName?: string;
   otherSubType?: string;
   specification?: string;
   appliedAmount?: number;
@@ -71,7 +75,9 @@ export interface NormberakningDraft {
   errandId?: string;
   applicationMonth?: string;
   normId?: number;
-  normType?: string;
+  /** The selected norm types as machine codes; show `normTypeDisplayNames` instead. */
+  normType?: string[];
+  normTypeDisplayNames?: string[];
   calculationFromDate?: string;
   calculationToDate?: string;
   calculationDate?: string;
@@ -121,7 +127,7 @@ export interface NormRowInput {
  */
 export interface NormHeaderInput {
   normId?: number;
-  normType?: string;
+  normType?: string[];
   calculationFromDate?: string;
   calculationToDate?: string;
   calculationDate?: string;

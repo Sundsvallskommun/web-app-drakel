@@ -14,7 +14,10 @@ export class NormPersonRow {
   @IsInt() @IsOptional() position?: number;
   @IsString() @IsOptional() origin?: string;
   @IsString() @IsOptional() partyId?: string;
+  /** The role as a machine code; `roleDisplayName` carries the label to show. */
   @IsString() @IsOptional() role?: string;
+  /** caremanagement's own Swedish label for the role, e.g. "Medsökande". */
+  @IsString() @IsOptional() roleDisplayName?: string;
   @IsString() @IsOptional() name?: string;
   @IsInt() @IsOptional() processDays?: number;
   @IsInt() @IsOptional() caseworkerDays?: number;
@@ -55,6 +58,8 @@ export class NormExpenseRow {
   /** EXPENSE or SPECIAL_EXPENSE (set by the DMN). */
   @IsString() @IsOptional() bucket?: string;
   @IsString() @IsOptional() costType?: string;
+  /** caremanagement's Lifecare label for the cost type — the same text a warning about the row uses. */
+  @IsString() @IsOptional() costTypeDisplayName?: string;
   @IsString() @IsOptional() otherSubType?: string;
   @IsString() @IsOptional() specification?: string;
   @IsNumber() @IsOptional() appliedAmount?: number;
@@ -69,7 +74,9 @@ export class NormberakningDraft {
   @IsString() @IsOptional() errandId?: string;
   @IsString() @IsOptional() applicationMonth?: string;
   @IsInt() @IsOptional() normId?: number;
-  @IsString() @IsOptional() normType?: string;
+  /** The selected norm types as machine codes; `normTypeDisplayNames` carries the labels. */
+  @IsArray() @IsString({ each: true }) @IsOptional() normType?: string[];
+  @IsArray() @IsString({ each: true }) @IsOptional() normTypeDisplayNames?: string[];
   @IsString() @IsOptional() calculationFromDate?: string;
   @IsString() @IsOptional() calculationToDate?: string;
   @IsString() @IsOptional() calculationDate?: string;

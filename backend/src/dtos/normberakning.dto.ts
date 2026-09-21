@@ -1,4 +1,4 @@
-import { IsBoolean, IsInt, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsInt, IsNumber, IsOptional, IsString } from 'class-validator';
 
 /**
  * Fields accepted when adding (POST) or editing (PATCH) a draft normberäkning row — the union of the
@@ -38,7 +38,7 @@ export class NormRowInputDto {
 /** Body for editing the draft normberäkning header (norm, calculation dates, household size). */
 export class NormHeaderInputDto {
   @IsInt() @IsOptional() normId?: number;
-  @IsString() @IsOptional() normType?: string;
+  @IsArray() @IsString({ each: true }) @IsOptional() normType?: string[];
   @IsString() @IsOptional() calculationFromDate?: string;
   @IsString() @IsOptional() calculationToDate?: string;
   @IsString() @IsOptional() calculationDate?: string;

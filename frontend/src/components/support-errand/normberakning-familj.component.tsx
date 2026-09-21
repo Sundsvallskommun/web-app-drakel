@@ -43,9 +43,7 @@ export const NormberakningFamilj: FC<{ persons: NormPersonRow[] }> = ({ persons 
                   : <span className="sr-only">{t('family.notIncluded')}</span>}
                 </Table.Column>
                 <Table.Column>{person.name ?? '—'}</Table.Column>
-                <Table.Column>
-                  {person.role ? t(`common:role.${person.role}`, { defaultValue: person.role }) : '—'}
-                </Table.Column>
+                <Table.Column>{person.roleDisplayName ?? person.role ?? '—'}</Table.Column>
                 <Table.Column>{person.deviationFromDate ?? '—'}</Table.Column>
                 <Table.Column>{person.deviationToDate ?? '—'}</Table.Column>
                 <Table.Column className="tabular-nums">{days(person.effectiveDays)}</Table.Column>

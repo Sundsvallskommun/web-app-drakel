@@ -133,7 +133,7 @@ export const buildNormberakningHtml = (
 
   const meta = [
     ['Avser ansökan', escapeHtml(formatApplicationMonth(draft.applicationMonth) || '—')],
-    ['Norm', text(draft.normType)],
+    ['Norm', text((draft.normTypeDisplayNames ?? draft.normType ?? []).join(', '))],
     ['Period', escapeHtml(period)],
     ['Beräkningsdatum', text(draft.calculationDate)],
     ['Handläggare', text(options.handlaggare)],

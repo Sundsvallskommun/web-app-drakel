@@ -26,12 +26,12 @@ const parseAmount = (value: string): number | undefined => {
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
-const expenseLabel = (row: NormExpenseRow, typeLabels: Record<string, string>): string => {
+const expenseLabel = (row: NormExpenseRow): string => {
   if (row.specification?.trim()) {
     return row.specification;
   }
-  const code = row.costType ?? '';
-  return typeLabels[code] ?? (code || '—');
+  // costTypeDisplayName is caremanagement's Lifecare label, the same text a warning about the row uses.
+  return row.costTypeDisplayName ?? row.costType ?? '—';
 };
 
 interface NormberakningExpensesProps {
@@ -123,7 +123,6 @@ export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
                 key={row.id ?? index}
                 errandId={errandId}
                 row={row}
-                typeLabels={typeLabels}
                 onAction={(action) => void runRowAction(action)}
               />
             ))
@@ -177,9 +176,8 @@ export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
 const ExpenseRow: FC<{
   errandId: string;
   row: NormExpenseRow;
-  typeLabels: Record<string, string>;
   onAction: (action: () => Promise<{ error?: unknown }>) => void;
-}> = ({ errandId, row, typeLabels, onAction }) => {
+}> = ({ errandId, row, onAction }) => {
   const { t } = useTranslation('calculation');
   const [applied, setApplied] = useState<string>(row.appliedAmount?.toString() ?? '');
   const [amount, setAmount] = useState<string>(row.caseworkerAmount?.toString() ?? '');
@@ -190,7 +188,7 @@ const ExpenseRow: FC<{
     return (
       <Table.Row className="opacity-50">
         <Table.Column>
-          <span className="line-through">{expenseLabel(row, typeLabels)}</span>
+          <span className="line-through">{expenseLabel(row)}</span>
         </Table.Column>
         <Table.Column>—</Table.Column>
         <Table.Column>—</Table.Column>
@@ -236,7 +234,7 @@ const ExpenseRow: FC<{
   return (
     <Table.Row>
       <Table.Column>
-        <span className="font-bold">{expenseLabel(row, typeLabels)}</span>
+        <span className="font-bold">{expenseLabel(row)}</span>
       </Table.Column>
       <Table.Column>
         <Input
