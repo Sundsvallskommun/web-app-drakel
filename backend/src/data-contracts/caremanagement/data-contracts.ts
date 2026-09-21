@@ -84,6 +84,12 @@ export interface PaymentRequest {
    * @pattern ^\d{4}-(0[1-9]|1[0-2])$
    */
   applicationMonth?: string;
+  /**
+   * The accounting code (kontering) the bistånd is booked against. Free text: FamilyCare exposes no catalogue of accounting codes over the API.
+   * @minLength 0
+   * @maxLength 64
+   */
+  accountingCode?: string;
   /** Stakeholder ids the payment is reported on */
   reportedOnStakeholderIds?: string[];
   /**
@@ -186,6 +192,8 @@ export interface Payment {
   amount?: number;
   /** The application month the payment concerns, yyyy-MM */
   applicationMonth?: string;
+  /** The accounting code (kontering) the bistånd is booked against. Free text: FamilyCare exposes no catalogue of accounting codes over the API. */
+  accountingCode?: string;
   /** Stakeholder ids the payment is reported on */
   reportedOnStakeholderIds?: string[];
   /**
@@ -1588,7 +1596,8 @@ export interface Payee {
 export interface FinalizeResponse {
   /** Id of the PAYMENT decision recorded on the errand */
   decisionId?: string;
-  /** Whether the PaymentDecisionReceived message reached the process. False means the engine could not be reached — the errand stays AWAITING_DECISION and the message must be re-sent via the process-messages endpoint. */
+  /** The ids of the Payment rows the finalize created, in request order. The REGISTER_PAYMENT queue items carry these and nothing else - the robot reads each payment through GET .../payments/{paymentId}. */
+  paymentIds?: string[];
   processMessageCorrelated?: boolean;
   /** The RPA write-back tasks the finalize step tried to enqueue, one per Lifecare step */
   rpaTasks?: RpaTask[];
