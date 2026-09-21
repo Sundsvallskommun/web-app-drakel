@@ -8,6 +8,7 @@ import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 import { Decision } from '@/data-contracts/caremanagement/data-contracts';
 import { CreateDecisionDto } from '@/dtos/decision.dto';
 import { DecisionApiResponse, DecisionOptionsApiResponse, DecisionsApiResponse, RecommendationApiResponse } from '@/responses/decision.response';
+import { DecisionProposalApiResponse } from '@/responses/decision-proposal.response';
 
 // The beslutsalternativ catalog lives on the errand-type schema, keyed by the registry typeSlug
 // (e.g. financial-assistance-new). Fall back to the NEW variant when an errand has no typeSlug.
@@ -66,6 +67,15 @@ export class DecisionController {
       description: input.description,
     };
     const res = await this.decisionService.createDecision(errandId, decision);
+    return { data: res.data, message: 'success' };
+  }
+
+  @Get('/errands/:errandId/decision-proposal')
+  @OpenAPI({ summary: 'The beslutsförslag for an errand (proposed outcome, period, amount and orsak)' })
+  @ResponseSchema(DecisionProposalApiResponse)
+  @UseBefore(authMiddleware)
+  async getDecisionProposal(@Param('errandId') errandId: string) {
+    const res = await this.decisionService.readDecisionProposal(errandId);
     return { data: res.data, message: 'success' };
   }
 }

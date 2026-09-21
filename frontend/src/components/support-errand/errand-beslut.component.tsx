@@ -1,6 +1,7 @@
 'use client';
 
 import { PdfPreviewButton } from '@components/common/pdf-preview-button.component';
+import { useDecisionProposal } from '@hooks/use-decision-proposal';
 import { useErrandBeslut } from '@hooks/use-errand-beslut';
 import { useErrandNormberakning } from '@hooks/use-errand-normberakning';
 import { createBeslut } from '@services/beslut-service';
@@ -14,6 +15,7 @@ import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { BeslutMeddelande } from './beslut-meddelande.component';
+import { BeslutProposalBox } from './beslut-proposal-box.component';
 import { ContentBox } from './content-box.component';
 import { ErrandSectionHeader } from './errand-section-header.component';
 import { LabeledValue } from './labeled-value.component';
@@ -44,6 +46,7 @@ export const ErrandBeslut: FC<{
   const { t } = useTranslation('decision');
   const { draft, isLoading: draftLoading } = useErrandNormberakning(errandId);
   const { options, recommendation, savedBeslut, isLoading: beslutLoading, refresh } = useErrandBeslut(errandId);
+  const { proposal } = useDecisionProposal(errandId);
 
   const period = useMemo(() => resolveBeslutPeriod(recommendation, draft), [recommendation, draft]);
   const today = useMemo(() => todayDate(), []);
@@ -63,10 +66,13 @@ export const ErrandBeslut: FC<{
 
   // The form is read back from the handläggare's saved beslut when there is one, otherwise from the
   // automated recommendation/period. This is also the baseline the dirty-check compares against.
+  // The beslutsförslag sits between the saved beslut and the older recommendation: caremanagement
+  // derives it from the current draft, so it is a better answer than the stored recommendation, but a
+  // handläggare's own saved beslut still wins.
   const prefillDate = savedBeslut?.decisionDate ?? recommendation?.decisionDate ?? today;
-  const prefillBeslutCode = savedBeslut?.value ?? recommendation?.value ?? '';
-  const prefillFrom = savedBeslut?.periodFrom ?? period.fromDate;
-  const prefillTo = savedBeslut?.periodTo ?? period.toDate;
+  const prefillBeslutCode = savedBeslut?.value ?? proposal.outcome ?? recommendation?.value ?? '';
+  const prefillFrom = savedBeslut?.periodFrom ?? proposal.periodFrom ?? period.fromDate;
+  const prefillTo = savedBeslut?.periodTo ?? proposal.periodTo ?? period.toDate;
   const prefillMessage = savedBeslut?.decisionMessage ?? '';
   // A saved beslut's message already includes the fullföljdshänvisning (it was appended on save), so don't
   // default to appending it again; a fresh beslut defaults to adding it.
@@ -91,7 +97,10 @@ export const ErrandBeslut: FC<{
 
   const selectedOption = options.find((option) => option.code === beslutCode);
   const recommendedOption = options.find((option) => option.code === recommendation?.value);
-  const amount = resolveBeslutAmount(selectedOption, savedBeslut?.amount ?? recommendation?.amount);
+  const amount = resolveBeslutAmount(
+    selectedOption,
+    savedBeslut?.amount ?? proposal.estimatedAmount ?? recommendation?.amount
+  );
 
   const recommendationLabel = recommendedOption?.displayName ?? recommendation?.value ?? t('details.noRecommendation');
 
@@ -186,6 +195,10 @@ export const ErrandBeslut: FC<{
   return (
     <div className="flex flex-col gap-24">
       {header}
+
+      {/* The proposal is read-only, so it sits outside the LockFieldset and stays legible when the
+          section is approved. */}
+      <BeslutProposalBox proposal={proposal} />
 
       <ContentBox title={t('details.title')}>
         <LockFieldset locked={locked}>

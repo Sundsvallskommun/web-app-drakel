@@ -2,7 +2,7 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 
-import { Decision, DecisionOption, ErrandTypeSchema } from '@/data-contracts/caremanagement/data-contracts';
+import { Decision, DecisionOption, DecisionProposal, ErrandTypeSchema } from '@/data-contracts/caremanagement/data-contracts';
 
 /** Extracts the decision id (last path segment) from a caremanagement Location header. */
 const decisionIdFromLocation = (location?: string): string | undefined => location?.split('/').filter(Boolean).pop();
@@ -39,6 +39,16 @@ class CaremanagementDecisionService {
   async readDecisionOptions(typeSlug: string): Promise<ApiResponse<DecisionOption[]>> {
     const res = await this.apiService.get<ErrandTypeSchema>({ url: caremanagementUrl('errand-types', typeSlug) });
     return { data: res.data?.decisionOptions ?? [], message: res.message };
+  }
+
+  /**
+   * The beslutsförslag for an errand: proposed outcome, period and estimated amount, the previous
+   * Lifecare decision and the DECISION-section warnings. Derived on every read, never stored.
+   */
+  async readDecisionProposal(errandId: string): Promise<ApiResponse<DecisionProposal>> {
+    return this.apiService.get<DecisionProposal>({
+      url: caremanagementUrl('errands', 'financial-assistance', errandId, 'decision-proposal'),
+    });
   }
 }
 

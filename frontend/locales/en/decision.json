@@ -81,5 +81,19 @@
       "saveError": "Could not register the payment",
       "saving": "Saving…"
     }
+  },
+  "proposal": {
+    "title": "Decision proposal",
+    "normSum": "Norm",
+    "expenseSum": "Expenses",
+    "specialExpenseSum": "Special costs",
+    "incomeSum": "Incomes",
+    "estimatedAmount": "Estimated assistance",
+    "previousTitle": "Previous decision",
+    "previousType": "Type",
+    "previousReason": "Reason",
+    "previousPeriod": "Period",
+    "previousAmount": "Amount",
+    "noPreviousDecision": "No earlier Lifecare decision was found for the applicant."
   }
 }

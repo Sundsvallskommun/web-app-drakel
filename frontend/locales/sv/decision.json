@@ -81,5 +81,19 @@
       "saveError": "Det gick inte att registrera utbetalningen",
       "saving": "Sparar…"
     }
+  },
+  "proposal": {
+    "title": "Beslutsförslag",
+    "normSum": "Norm",
+    "expenseSum": "Utgifter",
+    "specialExpenseSum": "Särskilda kostnader",
+    "incomeSum": "Inkomster",
+    "estimatedAmount": "Beräknat bistånd",
+    "previousTitle": "Föregående beslut",
+    "previousType": "Typ",
+    "previousReason": "Orsak",
+    "previousPeriod": "Period",
+    "previousAmount": "Belopp",
+    "noPreviousDecision": "Inget tidigare Lifecare-beslut hittades för den sökande."
   }
 }
