@@ -10,7 +10,8 @@
   "preview": {
     "title": "Förhandsgranskning",
     "loading": "Laddar förhandsgranskning...",
-    "error": "Kunde inte visa förhandsgranskningen"
+    "error": "Kunde inte visa förhandsgranskningen",
+    "openInNewTab": "Öppna bilaga i ny flik"
   },
   "pdfButton": {
     "label": "Visa pdf",
