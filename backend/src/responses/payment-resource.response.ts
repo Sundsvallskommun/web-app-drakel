@@ -28,12 +28,18 @@ export class PaymentView {
   @IsString() @IsOptional() payeeCity?: string;
   @IsString() @IsOptional() clearingNumber?: string;
   @IsString() @IsOptional() accountNumber?: string;
+  @IsString() @IsOptional() accountingCode?: string;
   @IsString() @IsOptional() localPaymentNumber?: string;
   @IsString() @IsOptional() invoiceNumber?: string;
   @IsBoolean() @IsOptional() usesOcr?: boolean;
   @IsArray() @IsString({ each: true }) @IsOptional() messageLines?: string[];
   @IsString() @IsOptional() created?: string;
   @IsString() @IsOptional() modified?: string;
+}
+
+export class PaymentsApiResponse implements ApiResponse<PaymentView[]> {
+  @IsArray() @ValidateNested({ each: true }) @Type(() => PaymentView) data!: PaymentView[];
+  @IsString() message!: string;
 }
 
 export class PaymentApiResponse implements ApiResponse<PaymentView | null> {

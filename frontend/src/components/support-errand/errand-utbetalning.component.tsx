@@ -2,6 +2,7 @@
 
 import { AsyncContent } from '@components/common/async-content.component';
 import { useErrandPayment } from '@hooks/use-errand-payment';
+import { useErrandPayments } from '@hooks/use-errand-payments';
 import { usePaymentProposal } from '@hooks/use-payment-proposal';
 import { PaymentProposalWarning, PaymentStatus } from '@services/payment-service';
 import { Alert } from '@sk-web-gui/alert';
@@ -14,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { ContentBox } from './content-box.component';
 import { ErrandSectionHeader } from './errand-section-header.component';
 import { ErrandUtbetalningForm } from './errand-utbetalning-form.component';
+import { ErrandUtbetalningList } from './errand-utbetalning-list.component';
 import { LabeledValue } from './labeled-value.component';
 import { LockedBanner } from './lockable-section.component';
 
@@ -78,9 +80,11 @@ const PaymentProposalWarnings: FC<{ warnings: PaymentProposalWarning[] }> = ({ w
 };
 
 /**
- * "Utbetalning" tab — reads whether the Lifecare utbetalning for the errand's application month has
- * been effectuated (caremanagement payment-status). Read-only; the actual utbetalning happens in
- * Lifecare.
+ * "Utbetalning" tab: the Lifecare payment status for the application month, the utbetalningar already
+ * registered on the errand, and the form for registering a new one from caremanagement's proposal.
+ *
+ * The list holds rows from two places — drafts saved here and rows "Besluta och utbetala" created —
+ * so it must stay readable for payments Draken did not author.
  */
 export const ErrandUtbetalning: FC<{
   errandId: string;
@@ -92,6 +96,7 @@ export const ErrandUtbetalning: FC<{
   const { t, i18n } = useTranslation('decision');
   const { status, isLoading, error, refresh } = useErrandPayment(errandId);
   const { proposal, isLoading: proposalLoading, error: proposalError } = usePaymentProposal(errandId);
+  const { payments, refresh: refreshPayments } = useErrandPayments(errandId);
 
   const renderStatus = (): ReactNode => {
     if (isLoading || error || !status) {
@@ -134,6 +139,8 @@ export const ErrandUtbetalning: FC<{
         {renderStatus()}
       </ContentBox>
 
+      <ErrandUtbetalningList payments={payments} />
+
       <ContentBox title={t('payment.form.title')}>
         <AsyncContent
           isLoading={proposalLoading}
@@ -148,7 +155,10 @@ export const ErrandUtbetalning: FC<{
               proposal={proposal}
               applicationMonth={status?.applicationMonth}
               disabled={locked}
-              onSaved={refresh}
+              onSaved={() => {
+                refresh();
+                refreshPayments();
+              }}
             />
           </div>
         </AsyncContent>

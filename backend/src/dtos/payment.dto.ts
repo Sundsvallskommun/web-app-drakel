@@ -25,6 +25,8 @@ export class PaymentInputDto {
   @IsString() @IsOptional() payeeCity?: string;
   @IsString() @IsOptional() clearingNumber?: string;
   @IsString() @IsOptional() accountNumber?: string;
+  /** Kontering — free text; FamilyCare exposes no catalogue of accounting codes. */
+  @IsString() @IsOptional() accountingCode?: string;
   @IsString() @IsOptional() localPaymentNumber?: string;
   @IsString() @IsOptional() invoiceNumber?: string;
   @IsBoolean() @IsOptional() usesOcr?: boolean;

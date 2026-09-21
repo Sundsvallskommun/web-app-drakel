@@ -79,7 +79,24 @@
       "messageLine": "Message line {{number}}",
       "proposalLoadError": "Could not load the payment proposal",
       "saveError": "Could not register the payment",
-      "saving": "Saving…"
+      "saving": "Saving…",
+      "accountingCode": "Accounting code"
+    },
+    "list": {
+      "title": "Registered payments",
+      "paymentDate": "Payment date",
+      "applicationMonth": "For month",
+      "amount": "Amount",
+      "payee": "Payee",
+      "paymentMethod": "Payment method",
+      "statusHeading": "Status",
+      "empty": "No payments registered",
+      "status": {
+        "DRAFT": "Draft",
+        "QUEUED": "Queued for robot",
+        "EFFECTUATED": "Effectuated",
+        "FAILED": "Failed"
+      }
     }
   },
   "proposal": {

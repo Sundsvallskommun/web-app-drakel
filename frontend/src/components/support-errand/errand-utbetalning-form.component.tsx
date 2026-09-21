@@ -36,6 +36,7 @@ interface UtbetalningFormValues {
   city: string;
   clearingNumber: string;
   accountNumber: string;
+  accountingCode: string;
   localPaymentNumber: string;
   invoiceNumber: string;
   usesOcr: boolean;
@@ -59,6 +60,7 @@ const EMPTY_FORM_VALUES: UtbetalningFormValues = {
   city: '',
   clearingNumber: '',
   accountNumber: '',
+  accountingCode: '',
   localPaymentNumber: '',
   invoiceNumber: '',
   usesOcr: false,
@@ -82,6 +84,7 @@ const proposedFormValues = (proposal: PaymentProposal, applicationMonth?: string
     name: payee?.name ?? '',
     clearingNumber: payee?.clearing ?? '',
     accountNumber: payee?.accountNumber ?? '',
+    accountingCode: proposed?.accountingCode ?? '',
   };
 };
 
@@ -124,6 +127,7 @@ const toPaymentInput = (values: UtbetalningFormValues): PaymentInput => ({
   payeeCity: values.city || undefined,
   clearingNumber: values.clearingNumber || undefined,
   accountNumber: values.accountNumber || undefined,
+  accountingCode: values.accountingCode || undefined,
   messageLines: values.messageLines.map((line) => line.text).filter((text) => text.trim() !== ''),
 });
 
@@ -380,6 +384,11 @@ export const ErrandUtbetalningForm: FC<{
             <Input {...register('accountNumber')} />
           </FormField>
         </div>
+        {/* Kontering is free text — FamilyCare exposes no catalogue of accounting codes. */}
+        <FormField label={t('payment.form.accountingCode')} disabled={disabled}>
+          <Input {...register('accountingCode')} />
+        </FormField>
+
         {/* No counterpart in the proposal; kept visible but closed until Lifecare's rule is known. */}
         <FormField label={t('payment.form.localPaymentNumber')} disabled>
           <Input {...register('localPaymentNumber')} />

@@ -102,11 +102,43 @@ export interface PaymentInput {
   payeeCity?: string;
   clearingNumber?: string;
   accountNumber?: string;
+  /** Kontering — free text; FamilyCare exposes no catalogue of accounting codes. */
+  accountingCode?: string;
   localPaymentNumber?: string;
   invoiceNumber?: string;
   usesOcr?: boolean;
   messageLines?: string[];
 }
+
+/**
+ * An utbetalning stored on the errand. Rows come from two places: the ones a handläggare saved in the
+ * form (`source` CASEWORKER, status DRAFT) and the ones "Besluta och utbetala" created, which arrive
+ * already handed to the robot. `status` is server-managed.
+ */
+export interface Payment {
+  id?: string;
+  source?: string;
+  lifecareId?: string;
+  status?: string;
+  moneyType?: string;
+  paymentDate?: string;
+  amount?: number;
+  applicationMonth?: string;
+  paymentMethod?: string;
+  payeeName?: string;
+  clearingNumber?: string;
+  accountNumber?: string;
+  accountingCode?: string;
+  messageLines?: string[];
+  created?: string;
+}
+
+/** The utbetalningar registered on an errand. */
+export const getPayments = (errandId: string): Promise<ServiceResponse<Payment[]>> =>
+  apiService
+    .get<ApiResponse<Payment[]>>(`errands/${errandId}/payments`)
+    .then((res) => ({ data: res.data.data }))
+    .catch(toServiceError);
 
 /** Registers an utbetalning on an errand. */
 export const createPayment = (errandId: string, input: PaymentInput): Promise<ServiceResponse<null>> =>

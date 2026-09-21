@@ -79,7 +79,24 @@
       "messageLine": "Meddelanderad {{number}}",
       "proposalLoadError": "Det gick inte att hämta utbetalningsförslaget",
       "saveError": "Det gick inte att registrera utbetalningen",
-      "saving": "Sparar…"
+      "saving": "Sparar…",
+      "accountingCode": "Kontering"
+    },
+    "list": {
+      "title": "Registrerade utbetalningar",
+      "paymentDate": "Utbetalningsdatum",
+      "applicationMonth": "Avser månad",
+      "amount": "Belopp",
+      "payee": "Mottagare",
+      "paymentMethod": "Betalsätt",
+      "statusHeading": "Status",
+      "empty": "Inga utbetalningar registrerade",
+      "status": {
+        "DRAFT": "Utkast",
+        "QUEUED": "Köad till robot",
+        "EFFECTUATED": "Verkställd",
+        "FAILED": "Misslyckades"
+      }
     }
   },
   "proposal": {

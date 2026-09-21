@@ -32,6 +32,14 @@ class CaremanagementPaymentService {
   }
 
   /**
+   * The utbetalningar stored on the errand — both the ones a handläggare saved here and the ones
+   * finalize created, which arrive already handed to the robot.
+   */
+  async listPayments(errandId: string): Promise<ApiResponse<Payment[]>> {
+    return this.apiService.get<Payment[]>({ url: this.paymentsUrl(errandId) });
+  }
+
+  /**
    * Creates an utbetalning on the errand. caremanagement stores it as DRAFT and queues nothing — the
    * robot is started separately through the REGISTER_PAYMENT RPA task, so a handläggare can save a
    * draft without setting anything in motion.
