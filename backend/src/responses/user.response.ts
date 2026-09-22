@@ -8,7 +8,7 @@ export class PermissionsResponse implements Permissions {
   @IsBoolean()
   canEditErrands!: boolean;
   @IsBoolean()
-  canManageTemplates!: boolean;
+  canAdminister!: boolean;
 }
 
 export class User implements ClientUser {

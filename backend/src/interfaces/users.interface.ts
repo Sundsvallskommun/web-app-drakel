@@ -1,8 +1,8 @@
 /** Permissions granted to a user, derived from their AD groups */
 export interface Permissions {
   canEditErrands: boolean;
-  /** Create, edit and delete the mallar and frastexter under /admin */
-  canManageTemplates: boolean;
+  /** Reach the /admin section: mallhantering and logguppföljning */
+  canAdminister: boolean;
 }
 
 /** Internal roles, ordered from least to most privileged */

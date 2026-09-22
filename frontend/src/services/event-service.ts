@@ -21,12 +21,46 @@ export interface ErrandEvent {
   created?: string;
 }
 
+/**
+ * One handläggare's activity across every errand. `total` counts everything matching the filters, while
+ * `events` is caremanagement's capped listing — the two differ when the period holds more than it returns.
+ */
+export interface ActorEventLog {
+  events: ErrandEvent[];
+  total: number;
+}
+
+/** What a logguppföljning is searched on. The actor (AD account) is the only required part. */
+export interface ActorEventFilters {
+  actor: string;
+  action?: string;
+  source?: string;
+  /** ISO date-time bounds; narrowing the period is how a capped listing is read in full. */
+  from?: string;
+  to?: string;
+}
+
 /** Optional server-side filters for the event log. */
 export interface ErrandEventFilters {
   action?: string;
   /** HTTP (access log) or EVENT (change log). */
   source?: string;
 }
+
+/** Looks up one handläggare's activity across every errand (logguppföljning). */
+export const getActorEvents = (filters: ActorEventFilters): Promise<ServiceResponse<ActorEventLog>> => {
+  const params = new URLSearchParams({ actor: filters.actor });
+  (['action', 'source', 'from', 'to'] as const).forEach((key) => {
+    const value = filters[key];
+    if (value) {
+      params.set(key, value);
+    }
+  });
+  return apiService
+    .get<ApiResponse<ActorEventLog>>(`admin/event-log?${params.toString()}`)
+    .then((res) => ({ data: res.data.data }))
+    .catch(toServiceError);
+};
 
 /** Fetches the activity log (event log) for an errand, optionally filtered by action and/or source. */
 export const getErrandEvents = (

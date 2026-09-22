@@ -21,13 +21,13 @@ export function authorizeGroups(groups: string): boolean {
 
 const defaultPermissions = (): Permissions => ({
   canEditErrands: false,
-  canManageTemplates: false,
+  canAdminister: false,
 });
 
 const permissionsByRole = new Map<InternalRole, Partial<Permissions>>([
   ['app_read', {}],
   ['app_admin', { canEditErrands: true }],
-  ['app_superadmin', { canEditErrands: true, canManageTemplates: true }],
+  ['app_superadmin', { canEditErrands: true, canAdminister: true }],
 ]);
 
 /**

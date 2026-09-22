@@ -93,7 +93,7 @@ const LogoutMenuItem = () => {
  */
 export const useUserMenuGroups = () => {
   const { t } = useTranslation();
-  const canManageTemplates = useUserStore((state) => state.user.permissions.canManageTemplates);
+  const canAdminister = useUserStore((state) => state.user.permissions.canAdminister);
   return [
     {
       label: t('header:userMenu.label'),
@@ -101,7 +101,7 @@ export const useUserMenuGroups = () => {
       showOnDesktop: true,
       showOnMobile: true,
       elements: [
-        ...(canManageTemplates ? [{ label: t('admin:title'), element: () => <AdminMenuItem /> }] : []),
+        ...(canAdminister ? [{ label: t('admin:title'), element: () => <AdminMenuItem /> }] : []),
         { label: t('common:language'), element: () => <LanguageMenuItem /> },
         { label: t('common:logout'), element: () => <LogoutMenuItem /> },
       ],

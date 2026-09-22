@@ -1,7 +1,7 @@
 {
-  "title": "Mallar och frastexter",
+  "title": "Administration",
   "intro": "Här skapar och ändrar du de mallar och frastexter som handläggarna väljer bland när de skriver en journalanteckning eller ett dokument. Ändringarna gäller alla handläggare.",
-  "noAccess": "Du har inte behörighet att hantera mallar och frastexter.",
+  "noAccess": "Du har inte behörighet till administrationen.",
   "loadError": "Det gick inte att hämta mallarna",
   "empty": "Det finns inga mallar av den här sorten än.",
   "categories": {
@@ -41,5 +41,32 @@
     "confirm": "Vill du ta bort {{name}}? Den försvinner för alla handläggare och går inte att återskapa.",
     "confirmButton": "Ta bort",
     "error": "Det gick inte att ta bort mallen"
+  },
+  "nav": {
+    "label": "Administration",
+    "templates": "Mallar och frastexter",
+    "logs": "Logguppföljning"
+  },
+  "logs": {
+    "intro": "Sök fram vad en handläggare har läst och ändrat, över alla ärenden. Välj handläggare och tryck på Sök.",
+    "actor": "Handläggare",
+    "selectActor": "Välj handläggare",
+    "action": "Händelse",
+    "source": "Källa",
+    "from": "Från och med",
+    "to": "Till och med",
+    "search": "Sök",
+    "showing": "Visar {{shown}} av {{total}} händelser för {{actor}}.",
+    "truncated": "Fler händelser matchar än som kunde visas. Snäva in perioden med Från och med och Till och med för att se resten.",
+    "empty": "Inga händelser matchar sökningen.",
+    "error": "Det gick inte att hämta logguppföljningen",
+    "openErrand": "Öppna ärende",
+    "columns": {
+      "time": "Tidpunkt",
+      "action": "Händelse",
+      "source": "Källa",
+      "target": "Vad det gäller",
+      "errand": "Ärende"
+    }
   }
 }

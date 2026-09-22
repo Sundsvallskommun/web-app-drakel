@@ -31,19 +31,11 @@ export interface ActualisationsApiResponse {
   message: string;
 }
 
-export interface Administrator {
-  username?: string;
-  displayName?: string;
-  description?: string;
-}
-
-export interface AdministratorsApiResponse {
-  data: Administrator[];
-  message: string;
-}
-
 export interface SaveTemplateDto {
-  /** @maxLength 255 */
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
   identifier?: string;
   /** @maxLength 255 */
   name: string;
@@ -82,6 +74,17 @@ export interface AdminTemplatesApiResponse {
 
 export interface AdminTemplateApiResponse {
   data: AdminTemplateDetail;
+  message: string;
+}
+
+export interface Administrator {
+  username?: string;
+  displayName?: string;
+  description?: string;
+}
+
+export interface AdministratorsApiResponse {
+  data: Administrator[];
   message: string;
 }
 
@@ -504,6 +507,16 @@ export interface ErrandEvent {
   created?: string;
 }
 
+export interface ActorEventLog {
+  events: ErrandEvent[];
+  total: number;
+}
+
+export interface ActorEventLogApiResponse {
+  data: ActorEventLog;
+  message: string;
+}
+
 export interface ErrandEventsApiResponse {
   data: ErrandEvent[];
   message: string;
@@ -892,6 +905,7 @@ export interface PaymentInputDto {
   reportedOnStakeholderIds?: string[];
   accountingDate?: string;
   excludedFromPayment?: boolean;
+  payeeId?: string;
   payeeStakeholderId?: string;
   paymentMethod?: string;
   payeeName?: string;
@@ -981,6 +995,7 @@ export interface PaymentView {
   source?: string;
   lifecareId?: string;
   status?: string;
+  lifecareDetail?: string;
   paymentDate?: string;
   amount?: number;
   applicationMonth?: string;
@@ -1082,7 +1097,7 @@ export interface SectionApprovalApiResponse {
 
 export interface PermissionsResponse {
   canEditErrands: boolean;
-  canManageTemplates: boolean;
+  canAdminister: boolean;
 }
 
 export interface User {

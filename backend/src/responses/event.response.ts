@@ -47,6 +47,26 @@ export class ErrandEvent {
   created?: string;
 }
 
+/**
+ * One actor's activity across every errand. `total` is how many events match the filters in all, while
+ * `events` is the capped listing — they differ when the period holds more than caremanagement returns.
+ */
+export class ActorEventLog {
+  @ValidateNested({ each: true })
+  @Type(() => ErrandEvent)
+  events!: ErrandEvent[];
+  @IsNumber()
+  total!: number;
+}
+
+export class ActorEventLogApiResponse implements ApiResponse<ActorEventLog> {
+  @ValidateNested()
+  @Type(() => ActorEventLog)
+  data!: ActorEventLog;
+  @IsString()
+  message!: string;
+}
+
 export class ErrandEventsApiResponse implements ApiResponse<ErrandEvent[]> {
   @ValidateNested({ each: true })
   @Type(() => ErrandEvent)

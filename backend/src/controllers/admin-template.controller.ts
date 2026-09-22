@@ -31,7 +31,7 @@ const toAdminTemplate = (template: TemplateSummary) =>
  * part of ordinary handläggning.
  */
 @Controller()
-@UseBefore(authMiddleware, requirePermission('canManageTemplates'))
+@UseBefore(authMiddleware, requirePermission('canAdminister'))
 export class AdminTemplateController {
   private templatingService = new TemplatingService();
 

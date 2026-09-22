@@ -8,29 +8,25 @@ import {
   deleteAdminTemplate,
   getAdminTemplate,
 } from '@services/admin-template-service';
-import { useUserStore } from '@services/user-service/user-service';
 import { Button, Modal, Tabs } from '@sk-web-gui/react';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useShallow } from 'zustand/react/shallow';
 
 import { belongsToCategory, TEMPLATE_CATEGORIES } from './template-categories';
 import { TemplateEditorModal, TemplateTypeOption } from './template-editor-modal.component';
 import { TemplateList } from './template-list.component';
 
 /**
- * "Mallar och frastexter" — the superadmin page for the texts handläggare pick from when writing a
- * journalanteckning or a dokument. One button per category (mall or frastext, for journalanteckning or
- * for dokument); picking one lists its templates and opens the rich-text editor for a new or existing one.
+ * "Mallar och frastexter" — the texts handläggare pick from when writing a journalanteckning or a
+ * dokument. One tab per category (mall or frastext, for journalanteckning or for dokument); each lists
+ * its templates and opens the rich-text editor for a new or existing one.
  *
- * The page is gated on `canManageTemplates`: a mall is shared by everyone in the municipality, so changing
- * one is not part of ordinary handläggning. The backend enforces the same permission — this only keeps the
- * page from rendering controls that would be refused.
+ * A mall is shared by everyone in the municipality, so changing one is not part of ordinary handläggning.
+ * The permission gate around the whole section lives in AdminSection.
  */
-export const AdminPageClient = () => {
+export const TemplatePageClient = () => {
   const { t } = useTranslation('admin');
-  const user = useUserStore(useShallow((state) => state.user));
   const { templates, journalTypes, documentTypes, isLoading, error, refresh } = useAdminTemplates();
 
   const [activeTab, setActiveTab] = useState<number>(0);
@@ -76,15 +72,6 @@ export const AdminPageClient = () => {
     refresh();
   };
 
-  if (!user.permissions.canManageTemplates) {
-    return (
-      <main className="mx-auto w-full max-w-[120rem] p-24">
-        <h1 className="text-h2-md">{t('title')}</h1>
-        <p className="text-dark-secondary">{t('noAccess')}</p>
-      </main>
-    );
-  }
-
   const categoryPanel = (
     <div className="flex flex-col gap-16 pt-16">
       <div className="flex flex-wrap items-center justify-end gap-12">
@@ -126,11 +113,8 @@ export const AdminPageClient = () => {
   );
 
   return (
-    <main className="mx-auto flex w-full max-w-[120rem] flex-col gap-24 overflow-y-auto p-24">
-      <div className="flex flex-col gap-8">
-        <h1 className="m-0 text-h2-md">{t('title')}</h1>
-        <p className="m-0 text-dark-secondary">{t('intro')}</p>
-      </div>
+    <div className="flex flex-col gap-24">
+      <p className="m-0 text-dark-secondary">{t('intro')}</p>
 
       <div className="rounded-16 bg-background-content p-24">
         <Tabs current={activeTab} onTabChange={setActiveTab}>
@@ -186,6 +170,6 @@ export const AdminPageClient = () => {
           </Button>
         </Modal.Footer>
       </Modal>
-    </main>
+    </div>
   );
 };

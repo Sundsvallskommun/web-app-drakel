@@ -1,7 +1,7 @@
 {
-  "title": "Templates and phrases",
+  "title": "Administration",
   "intro": "Create and edit the templates and phrases caseworkers choose from when writing a journal note or a document. Changes apply to every caseworker.",
-  "noAccess": "You do not have permission to manage templates and phrases.",
+  "noAccess": "You do not have permission to administer.",
   "loadError": "The templates could not be loaded",
   "empty": "There are no templates of this kind yet.",
   "categories": {
@@ -41,5 +41,32 @@
     "confirm": "Delete {{name}}? It disappears for every caseworker and cannot be restored.",
     "confirmButton": "Delete",
     "error": "The template could not be deleted"
+  },
+  "nav": {
+    "label": "Administration",
+    "templates": "Templates and phrases",
+    "logs": "Access log"
+  },
+  "logs": {
+    "intro": "Look up what a caseworker has read and changed, across every errand. Pick a caseworker and press Search.",
+    "actor": "Caseworker",
+    "selectActor": "Select caseworker",
+    "action": "Action",
+    "source": "Source",
+    "from": "From",
+    "to": "To",
+    "search": "Search",
+    "showing": "Showing {{shown}} of {{total}} events for {{actor}}.",
+    "truncated": "More events match than could be shown. Narrow the period with From and To to see the rest.",
+    "empty": "No events match the search.",
+    "error": "The access log could not be loaded",
+    "openErrand": "Open errand",
+    "columns": {
+      "time": "Time",
+      "action": "Action",
+      "source": "Source",
+      "target": "Concerns",
+      "errand": "Errand"
+    }
   }
 }
