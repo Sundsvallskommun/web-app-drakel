@@ -9,13 +9,13 @@ import {
   getAdminTemplate,
 } from '@services/admin-template-service';
 import { useUserStore } from '@services/user-service/user-service';
-import { Button, Modal } from '@sk-web-gui/react';
+import { Button, Modal, Tabs } from '@sk-web-gui/react';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 
-import { belongsToCategory, TEMPLATE_CATEGORIES, TemplateCategory } from './template-categories';
+import { belongsToCategory, TEMPLATE_CATEGORIES } from './template-categories';
 import { TemplateEditorModal, TemplateTypeOption } from './template-editor-modal.component';
 import { TemplateList } from './template-list.component';
 
@@ -33,7 +33,7 @@ export const AdminPageClient = () => {
   const user = useUserStore(useShallow((state) => state.user));
   const { templates, journalTypes, documentTypes, isLoading, error, refresh } = useAdminTemplates();
 
-  const [selectedCategory, setSelectedCategory] = useState<TemplateCategory>(TEMPLATE_CATEGORIES[0]);
+  const [activeTab, setActiveTab] = useState<number>(0);
   const [editing, setEditing] = useState<AdminTemplateDetail>();
   const [creating, setCreating] = useState<boolean>(false);
   const [openingIdentifier, setOpeningIdentifier] = useState<string>();
@@ -41,6 +41,7 @@ export const AdminPageClient = () => {
   const [deleting, setDeleting] = useState<boolean>(false);
   const [actionError, setActionError] = useState<string>();
 
+  const selectedCategory = TEMPLATE_CATEGORIES[activeTab] ?? TEMPLATE_CATEGORIES[0];
   const typesForTarget: TemplateTypeOption[] = selectedCategory.target === 'journal' ? journalTypes : documentTypes;
   const codesForTarget = typesForTarget.map((type) => type.code ?? '');
   const visibleTemplates = templates.filter((template) =>
@@ -84,6 +85,46 @@ export const AdminPageClient = () => {
     );
   }
 
+  const categoryPanel = (
+    <div className="flex flex-col gap-16 pt-16">
+      <div className="flex flex-wrap items-center justify-end gap-12">
+        <Button
+          color="vattjom"
+          variant="primary"
+          leftIcon={<Plus />}
+          onClick={() => {
+            setCreating(true);
+          }}
+        >
+          {t(`create.${selectedCategory.kind === 'DOCUMENT' ? 'template' : 'phrase'}`)}
+        </Button>
+      </div>
+
+      <AsyncContent
+        isLoading={isLoading}
+        error={error}
+        errorText={t('loadError')}
+        isEmpty={visibleTemplates.length === 0}
+        emptyText={t('empty')}
+        centered
+      >
+        <TemplateList
+          templates={visibleTemplates}
+          types={typesForTarget}
+          openingIdentifier={openingIdentifier}
+          onEdit={(template) => void openForEdit(template)}
+          onDelete={setDeleteTarget}
+        />
+      </AsyncContent>
+
+      {actionError ?
+        <p className="m-0 text-error-surface-primary" role="alert">
+          {actionError}
+        </p>
+      : null}
+    </div>
+  );
+
   return (
     <main className="mx-auto flex w-full max-w-[120rem] flex-col gap-24 overflow-y-auto p-24">
       <div className="flex flex-col gap-8">
@@ -91,60 +132,17 @@ export const AdminPageClient = () => {
         <p className="m-0 text-dark-secondary">{t('intro')}</p>
       </div>
 
-      <div className="flex flex-wrap gap-12">
-        {TEMPLATE_CATEGORIES.map((category) => (
-          <Button
-            key={category.id}
-            variant={category.id === selectedCategory.id ? 'primary' : 'tertiary'}
-            color="vattjom"
-            showBackground
-            aria-current={category.id === selectedCategory.id ? 'true' : undefined}
-            onClick={() => {
-              setSelectedCategory(category);
-            }}
-          >
-            {t(`categories.${category.id}`)}
-          </Button>
-        ))}
-      </div>
-
-      <div className="flex flex-col gap-16 rounded-16 bg-background-content p-24">
-        <div className="flex flex-wrap items-center justify-between gap-12">
-          <h2 className="m-0 text-h3-md">{t(`categories.${selectedCategory.id}`)}</h2>
-          <Button
-            color="vattjom"
-            variant="primary"
-            leftIcon={<Plus />}
-            onClick={() => {
-              setCreating(true);
-            }}
-          >
-            {t(`create.${selectedCategory.kind === 'DOCUMENT' ? 'template' : 'phrase'}`)}
-          </Button>
-        </div>
-
-        <AsyncContent
-          isLoading={isLoading}
-          error={error}
-          errorText={t('loadError')}
-          isEmpty={visibleTemplates.length === 0}
-          emptyText={t('empty')}
-          centered
-        >
-          <TemplateList
-            templates={visibleTemplates}
-            types={typesForTarget}
-            openingIdentifier={openingIdentifier}
-            onEdit={(template) => void openForEdit(template)}
-            onDelete={setDeleteTarget}
-          />
-        </AsyncContent>
-
-        {actionError ?
-          <p className="m-0 text-error-surface-primary" role="alert">
-            {actionError}
-          </p>
-        : null}
+      <div className="rounded-16 bg-background-content p-24">
+        <Tabs current={activeTab} onTabChange={setActiveTab}>
+          {TEMPLATE_CATEGORIES.map((category, index) => (
+            <Tabs.Item key={category.id}>
+              <Tabs.Button>{t(`categories.${category.id}`)}</Tabs.Button>
+              {/* Only the open tab renders its panel — the others hold the same list for another category
+                  and would each mount their own copy of it. */}
+              <Tabs.Content>{index === activeTab ? categoryPanel : null}</Tabs.Content>
+            </Tabs.Item>
+          ))}
+        </Tabs>
       </div>
 
       {creating || editing ?
