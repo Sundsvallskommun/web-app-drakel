@@ -1,7 +1,9 @@
 import i18nConfig from '@app/i18nConfig';
 import { useChangeLanguage } from '@hooks/use-change-language';
+import { useUserStore } from '@services/user-service/user-service';
 import { Button, PopupMenu } from '@sk-web-gui/react';
-import { Check, ChevronRight, Languages, LogOut } from 'lucide-react';
+import { Check, ChevronRight, FileText, Languages, LogOut } from 'lucide-react';
+import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
@@ -48,6 +50,26 @@ const LanguageMenuItem = () => {
   );
 };
 
+/** Takes a superadmin to the page where the shared mallar and frastexter are managed. */
+const AdminMenuItem = () => {
+  const { t } = useTranslation('admin');
+  const { locale } = useParams<{ locale: string }>();
+  return (
+    <PopupMenu.Item>
+      <Button
+        type="button"
+        className="usermenu-item w-full text-left inline-flex items-center gap-2"
+        onClick={() => {
+          window.location.assign(`${basePath}/${locale}/admin`);
+        }}
+      >
+        <FileText />
+        <span>{t('admin:title')}</span>
+      </Button>
+    </PopupMenu.Item>
+  );
+};
+
 const LogoutMenuItem = () => {
   const { t } = useTranslation();
   return (
@@ -66,9 +88,12 @@ const LogoutMenuItem = () => {
   );
 };
 
-/** Menu groups for the header UserMenu: language and logout. */
+/**
+ * Menu groups for the header UserMenu: mallhantering (superadmin only), language and logout.
+ */
 export const useUserMenuGroups = () => {
   const { t } = useTranslation();
+  const canManageTemplates = useUserStore((state) => state.user.permissions.canManageTemplates);
   return [
     {
       label: t('header:userMenu.label'),
@@ -76,6 +101,7 @@ export const useUserMenuGroups = () => {
       showOnDesktop: true,
       showOnMobile: true,
       elements: [
+        ...(canManageTemplates ? [{ label: t('admin:title'), element: () => <AdminMenuItem /> }] : []),
         { label: t('common:language'), element: () => <LanguageMenuItem /> },
         { label: t('common:logout'), element: () => <LogoutMenuItem /> },
       ],

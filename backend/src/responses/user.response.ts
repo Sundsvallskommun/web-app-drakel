@@ -7,6 +7,8 @@ import { ClientUser, InternalRole, Permissions } from '@/interfaces/users.interf
 export class PermissionsResponse implements Permissions {
   @IsBoolean()
   canEditErrands!: boolean;
+  @IsBoolean()
+  canManageTemplates!: boolean;
 }
 
 export class User implements ClientUser {
@@ -14,7 +16,7 @@ export class User implements ClientUser {
   name!: string;
   @IsString()
   username!: string;
-  @IsIn(['app_read', 'app_admin'])
+  @IsIn(['app_read', 'app_admin', 'app_superadmin'])
   role!: InternalRole;
   @ValidateNested()
   @Type(() => PermissionsResponse)

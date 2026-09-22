@@ -16,4 +16,5 @@ export const I18N_NAMESPACES = [
   'calculation',
   'decision',
   'documentation',
+  'admin',
 ];

@@ -22,10 +22,6 @@ const isPublicPath = (pathname: string): boolean => {
 export async function proxy(req: NextRequest) {
   const { pathname, origin } = req.nextUrl;
 
-  if (pathname === '/admin') {
-    return NextResponse.redirect(new URL(envs.adminUrl));
-  }
-
   if (!isPublicPath(pathname)) {
     const cookieName = 'drakel.sid';
     const token = req.cookies.get(cookieName)?.value ?? '';

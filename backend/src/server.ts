@@ -4,6 +4,7 @@ import validateEnv from '@utils/validateEnv';
 import App from '@/app';
 
 import { ActualisationController } from './controllers/actualisation.controller';
+import { AdminTemplateController } from './controllers/admin-template.controller';
 import { AdministratorController } from './controllers/administrator.controller';
 import { BevakningController } from './controllers/bevakning.controller';
 import { CountsController } from './controllers/counts.controller';
@@ -55,6 +56,7 @@ const app = new App([
   ActualisationController,
   DecisionNotificationController,
   AdministratorController,
+  AdminTemplateController,
   PdfController,
 ]);
 

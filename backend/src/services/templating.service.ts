@@ -11,6 +11,7 @@ interface TemplateMetadata {
 /** A template as returned by the list/search endpoints — content excluded. */
 export interface TemplateSummary {
   identifier?: string;
+  version?: string;
   name?: string;
   description?: string;
   metadata?: TemplateMetadata[];
@@ -21,9 +22,20 @@ interface DetailedTemplate extends TemplateSummary {
   content?: string;
 }
 
+/** What is sent when storing a template. Content is BASE64-encoded; metadata carries the app/code/kind tags. */
+interface TemplateInput {
+  identifier: string;
+  name: string;
+  description?: string;
+  /** Decoded HTML — the service encodes it before sending. */
+  content: string;
+  metadata: TemplateMetadata[];
+}
+
 /**
- * Reads document/phrase templates from the Sundsvall Templating service. Templating is reached directly
- * (no gateway, no auth); templates are tagged with metadata (app/code/kind) that the controller filters on.
+ * Reads and writes document/phrase templates in the Sundsvall Templating service. Templating is reached
+ * directly (no gateway, no auth); templates are tagged with metadata (app/code/kind) that the controllers
+ * filter on.
  */
 class TemplatingService {
   /** All templates for the municipality (content excluded). */
@@ -41,6 +53,34 @@ class TemplatingService {
     try {
       const res = await axios.get<DetailedTemplate>(templatingUrl('templates', identifier));
       return res.data;
+    } catch (error) {
+      throw caremanagementError(error);
+    }
+  }
+
+  /**
+   * Stores a template. The endpoint is an upsert keyed on the identifier: storing one that already exists
+   * adds a new version rather than replacing it, which is what makes "spara" on an existing mall work.
+   */
+  async storeTemplate(input: TemplateInput): Promise<void> {
+    try {
+      await axios.post(templatingUrl('templates'), {
+        identifier: input.identifier,
+        name: input.name,
+        description: input.description,
+        content: Buffer.from(input.content, 'utf-8').toString('base64'),
+        metadata: input.metadata,
+        versionIncrement: 'MINOR',
+      });
+    } catch (error) {
+      throw caremanagementError(error);
+    }
+  }
+
+  /** Deletes a template and every one of its versions. */
+  async deleteTemplate(identifier: string): Promise<void> {
+    try {
+      await axios.delete(templatingUrl('templates', identifier));
     } catch (error) {
       throw caremanagementError(error);
     }

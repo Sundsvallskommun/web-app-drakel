@@ -15,6 +15,10 @@ export const APIS = [
     name: 'messaging',
     version: '7.0',
   },
+  {
+    name: 'templating',
+    version: '2.1',
+  },
 ] as const;
 
 // NOTE: caremanagement is intentionally NOT in APIS. Runtime calls are built by caremanagementUrl,

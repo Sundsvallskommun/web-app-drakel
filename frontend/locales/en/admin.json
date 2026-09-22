@@ -1,0 +1,45 @@
+{
+  "title": "Templates and phrases",
+  "intro": "Create and edit the templates and phrases caseworkers choose from when writing a journal note or a document. Changes apply to every caseworker.",
+  "noAccess": "You do not have permission to manage templates and phrases.",
+  "loadError": "The templates could not be loaded",
+  "empty": "There are no templates of this kind yet.",
+  "categories": {
+    "journalDocument": "Journal note templates",
+    "journalPhrase": "Journal note phrases",
+    "documentDocument": "Document templates",
+    "documentPhrase": "Document phrases"
+  },
+  "create": {
+    "template": "New template",
+    "phrase": "New phrase"
+  },
+  "list": {
+    "name": "Name",
+    "type": "Type",
+    "version": "Version",
+    "actions": "Actions",
+    "edit": "Edit",
+    "delete": "Delete",
+    "openError": "The template could not be loaded"
+  },
+  "editor": {
+    "createTitle": "New template",
+    "editTitle": "Edit template",
+    "name": "Name",
+    "type": {
+      "journal": "Journal note type",
+      "document": "Document type"
+    },
+    "selectType": "Select type",
+    "content": "Text",
+    "save": "Save",
+    "saveError": "The template could not be saved"
+  },
+  "delete": {
+    "title": "Delete template",
+    "confirm": "Delete {{name}}? It disappears for every caseworker and cannot be restored.",
+    "confirmButton": "Delete",
+    "error": "The template could not be deleted"
+  }
+}

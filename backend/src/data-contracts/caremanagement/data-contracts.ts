@@ -20,8 +20,8 @@ export interface Problem {
   instance?: string;
   /** @format uri */
   type?: string;
-  detail?: string;
   title?: string;
+  detail?: string;
   /** @format int32 */
   status?: number;
 }
@@ -3025,7 +3025,7 @@ export interface TypeOption {
   internalDisplayName?: string;
   /** Stable code for the Mina-sidor form section the type is shown under; null for income */
   group?: TypeOptionGroupEnum;
-  /** Whether the type is offered on the citizen Mina-sidor form */
+  /** Whether an applicant may report the type, i.e. whether the code is accepted on the citizen payload. Does not control what the Mina-sidor form renders — that list is maintained in the frontend. */
   citizenReportable?: boolean;
 }
 

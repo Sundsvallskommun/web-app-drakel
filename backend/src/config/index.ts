@@ -49,6 +49,9 @@ export const MESSAGING_SUPPORT_URL = env.MESSAGING_SUPPORT_URL ?? '';
 export const CAREMANAGEMENT_TYPE_SLUG = env.CAREMANAGEMENT_TYPE_SLUG;
 export const AUTHORIZED_GROUPS = env.AUTHORIZED_GROUPS ?? '';
 export const ADMIN_GROUP = env.ADMIN_GROUP ?? '';
+// Grants the superadmin role (mallhantering under /admin). Optional — when unset nobody is superadmin,
+// which only closes the admin page rather than blocking startup.
+export const SUPERADMIN_GROUP = env.SUPERADMIN_GROUP ?? '';
 export const SAML_CALLBACK_URL = env.SAML_CALLBACK_URL ?? '';
 export const SAML_LOGOUT_CALLBACK_URL = env.SAML_LOGOUT_CALLBACK_URL ?? '';
 export const SAML_SUCCESS_REDIRECT = env.SAML_SUCCESS_REDIRECT ?? '';

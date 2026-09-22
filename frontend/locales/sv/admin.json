@@ -1,0 +1,45 @@
+{
+  "title": "Mallar och frastexter",
+  "intro": "Här skapar och ändrar du de mallar och frastexter som handläggarna väljer bland när de skriver en journalanteckning eller ett dokument. Ändringarna gäller alla handläggare.",
+  "noAccess": "Du har inte behörighet att hantera mallar och frastexter.",
+  "loadError": "Det gick inte att hämta mallarna",
+  "empty": "Det finns inga mallar av den här sorten än.",
+  "categories": {
+    "journalDocument": "Mallar för journalanteckning",
+    "journalPhrase": "Frastexter för journalanteckning",
+    "documentDocument": "Mallar för dokument",
+    "documentPhrase": "Frastexter för dokument"
+  },
+  "create": {
+    "template": "Ny mall",
+    "phrase": "Ny frastext"
+  },
+  "list": {
+    "name": "Namn",
+    "type": "Typ",
+    "version": "Version",
+    "actions": "Åtgärder",
+    "edit": "Redigera",
+    "delete": "Ta bort",
+    "openError": "Det gick inte att hämta mallen"
+  },
+  "editor": {
+    "createTitle": "Ny mall",
+    "editTitle": "Redigera mall",
+    "name": "Namn",
+    "type": {
+      "journal": "Typ av journalanteckning",
+      "document": "Typ av dokument"
+    },
+    "selectType": "Välj typ",
+    "content": "Text",
+    "save": "Spara",
+    "saveError": "Det gick inte att spara mallen"
+  },
+  "delete": {
+    "title": "Ta bort mall",
+    "confirm": "Vill du ta bort {{name}}? Den försvinner för alla handläggare och går inte att återskapa.",
+    "confirmButton": "Ta bort",
+    "error": "Det gick inte att ta bort mallen"
+  }
+}

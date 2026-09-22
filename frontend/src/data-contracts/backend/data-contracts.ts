@@ -42,6 +42,49 @@ export interface AdministratorsApiResponse {
   message: string;
 }
 
+export interface SaveTemplateDto {
+  /** @maxLength 255 */
+  identifier?: string;
+  /** @maxLength 255 */
+  name: string;
+  /** @maxLength 1000 */
+  description?: string;
+  /** @maxLength 255 */
+  code: string;
+  kind: SaveTemplateDtoKindEnum;
+  /** @maxLength 1048576 */
+  content: string;
+}
+
+export interface AdminTemplate {
+  identifier: string;
+  version?: string;
+  name: string;
+  description?: string;
+  code: string;
+  kind: string;
+}
+
+export interface AdminTemplateDetail {
+  content: string;
+  identifier: string;
+  version?: string;
+  name: string;
+  description?: string;
+  code: string;
+  kind: string;
+}
+
+export interface AdminTemplatesApiResponse {
+  data: AdminTemplate[];
+  message: string;
+}
+
+export interface AdminTemplateApiResponse {
+  data: AdminTemplateDetail;
+  message: string;
+}
+
 export interface BevakningInputDto {
   title: string;
   description?: string;
@@ -136,6 +179,50 @@ export interface DecisionOptionsApiResponse {
 
 export interface RecommendationApiResponse {
   data?: Decision;
+  message: string;
+}
+
+export interface PreviousDecisionView {
+  type?: string;
+  reason?: string;
+  coApplicant?: string;
+  coApplicantReason?: string;
+  periodFrom?: string;
+  periodTo?: string;
+  amount?: number;
+  date?: string;
+}
+
+export interface DecisionProposalWarningView {
+  id?: string;
+  type?: string;
+  typeDisplayName?: string;
+  message?: string;
+  status?: string;
+}
+
+export interface DecisionProposalView {
+  outcome?: string;
+  outcomeOptions?: string[];
+  periodFrom?: string;
+  periodTo?: string;
+  concernedMonth?: string;
+  estimatedAmount?: number;
+  normSum?: number;
+  incomeSum?: number;
+  expenseSum?: number;
+  specialExpenseSum?: number;
+  explanation?: string;
+  reason?: string;
+  coApplicantReason?: string;
+  reasonOptions?: string[];
+  phraseText?: string;
+  previousDecision?: PreviousDecisionView;
+  warnings?: DecisionProposalWarningView[];
+}
+
+export interface DecisionProposalApiResponse {
+  data: DecisionProposalView;
   message: string;
 }
 
@@ -380,16 +467,6 @@ export interface FindErrandsQueryDto {
   hasUnacknowledgedNotifications?: boolean;
 }
 
-export interface CreateStakeholderDto {
-  role?: string;
-  firstName?: string;
-  lastName?: string;
-  organizationName?: string;
-  externalId?: string;
-  externalIdType?: string;
-  contactChannels?: ContactChannel[];
-}
-
 export interface Attachment {
   id?: string;
   fileName?: string;
@@ -627,7 +704,7 @@ export interface NormRowInputDto {
 
 export interface NormHeaderInputDto {
   normId?: number;
-  normType?: string;
+  normType?: string[];
   calculationFromDate?: string;
   calculationToDate?: string;
   calculationDate?: string;
@@ -641,6 +718,7 @@ export interface NormPersonRow {
   origin?: string;
   partyId?: string;
   role?: string;
+  roleDisplayName?: string;
   name?: string;
   processDays?: number;
   caseworkerDays?: number;
@@ -678,6 +756,7 @@ export interface NormExpenseRow {
   origin?: string;
   bucket?: string;
   costType?: string;
+  costTypeDisplayName?: string;
   otherSubType?: string;
   specification?: string;
   appliedAmount?: number;
@@ -692,7 +771,8 @@ export interface NormberakningDraft {
   errandId?: string;
   applicationMonth?: string;
   normId?: number;
-  normType?: string;
+  normType?: string[];
+  normTypeDisplayNames?: string[];
   calculationFromDate?: string;
   calculationToDate?: string;
   calculationDate?: string;
@@ -711,6 +791,53 @@ export interface NormberakningDraft {
 
 export interface NormberakningDraftApiResponse {
   data: NormberakningDraft;
+  message: string;
+}
+
+export interface PreviousCalculationPerson {
+  personId?: string;
+  name?: string;
+  amount?: number;
+  deviationFromDate?: string;
+  deviationToDate?: string;
+}
+
+export interface PreviousCalculationIncome {
+  type?: string;
+  amountApplicant?: number;
+  applicantSearchDate?: string;
+  amountCoApplicant?: number;
+  coApplicantSearchDate?: string;
+}
+
+export interface PreviousCalculationExpense {
+  type?: string;
+  appliedAmount?: number;
+  approvedAmount?: number;
+}
+
+export interface PreviousCalculationView {
+  id?: number;
+  norm?: string;
+  fromDate?: string;
+  toDate?: string;
+  incomeSum?: number;
+  expenseSum?: number;
+  specialExpenseSum?: number;
+  normSum?: number;
+  commonHouseholdCost?: number;
+  familyCost?: number;
+  balance?: number;
+  totalSum?: number;
+  isFinal?: boolean;
+  persons?: PreviousCalculationPerson[];
+  incomes?: PreviousCalculationIncome[];
+  expenses?: PreviousCalculationExpense[];
+  specialExpenses?: PreviousCalculationExpense[];
+}
+
+export interface PreviousCalculationApiResponse {
+  data?: PreviousCalculationView;
   message: string;
 }
 
@@ -758,6 +885,36 @@ export interface ErrandNotificationApiResponse {
   message: string;
 }
 
+export interface PaymentInputDto {
+  paymentDate?: string;
+  amount?: number;
+  applicationMonth?: string;
+  reportedOnStakeholderIds?: string[];
+  accountingDate?: string;
+  excludedFromPayment?: boolean;
+  payeeStakeholderId?: string;
+  paymentMethod?: string;
+  payeeName?: string;
+  payeeAddress?: string;
+  payeeCareOf?: string;
+  payeeZipCode?: string;
+  payeeCity?: string;
+  clearingNumber?: string;
+  accountNumber?: string;
+  accountingCode?: string;
+  localPaymentNumber?: string;
+  invoiceNumber?: string;
+  usesOcr?: boolean;
+  messageLines?: string[];
+}
+
+export interface PayeeInputDto {
+  name: string;
+  paymentMethod: string;
+  clearing?: string;
+  accountNumber?: string;
+}
+
 export interface PaymentStatusView {
   applicationMonth?: string;
   effectuated: boolean;
@@ -767,6 +924,127 @@ export interface PaymentStatusView {
 
 export interface PaymentStatusApiResponse {
   data: PaymentStatusView;
+  message: string;
+}
+
+export interface PayeeView {
+  name?: string;
+  paymentMethod?: string;
+  clearing?: string;
+  accountNumber?: string;
+}
+
+export interface ProposedPaymentView {
+  paymentDate?: string;
+  amount?: number;
+  concernedMonth?: string;
+  payee?: PayeeView;
+  accountingCode?: string;
+}
+
+export interface PreviousPaymentView {
+  payDate?: string;
+  amount?: number;
+  concernedMonth?: string;
+  paymentMethod?: string;
+  name?: string;
+  clearing?: string;
+  accountNumber?: string;
+  message?: string;
+}
+
+export interface PaymentProposalWarningView {
+  id?: string;
+  type?: string;
+  typeDisplayName?: string;
+  message?: string;
+  status?: string;
+  statusDisplayName?: string;
+}
+
+export interface PaymentProposalView {
+  payments?: ProposedPaymentView[];
+  payeeOptions?: PayeeView[];
+  payeeSource?: string;
+  previousPayment?: PreviousPaymentView;
+  explanation?: string;
+  warnings?: PaymentProposalWarningView[];
+}
+
+export interface PaymentProposalApiResponse {
+  data: PaymentProposalView;
+  message: string;
+}
+
+export interface PaymentView {
+  id?: string;
+  source?: string;
+  lifecareId?: string;
+  status?: string;
+  paymentDate?: string;
+  amount?: number;
+  applicationMonth?: string;
+  reportedOnStakeholderIds?: string[];
+  accountingDate?: string;
+  excludedFromPayment?: boolean;
+  payeeStakeholderId?: string;
+  paymentMethod?: string;
+  payeeName?: string;
+  payeeAddress?: string;
+  payeeCareOf?: string;
+  payeeZipCode?: string;
+  payeeCity?: string;
+  clearingNumber?: string;
+  accountNumber?: string;
+  accountingCode?: string;
+  localPaymentNumber?: string;
+  invoiceNumber?: string;
+  usesOcr?: boolean;
+  messageLines?: string[];
+  created?: string;
+  modified?: string;
+}
+
+export interface PaymentsApiResponse {
+  data: PaymentView[];
+  message: string;
+}
+
+export interface PaymentApiResponse {
+  data?: PaymentView;
+  message: string;
+}
+
+export interface PaymentMetadataView {
+  paymentMethods?: any[];
+}
+
+export interface PaymentMetadataApiResponse {
+  data: PaymentMetadataView;
+  message: string;
+}
+
+export interface PayeeOptionView {
+  id?: string;
+  name?: string;
+  paymentMethod?: string;
+  clearing?: string;
+  accountNumber?: string;
+  source?: string;
+  lifecareStatus?: string;
+  lifecarePayeeId?: string;
+  lifecareDetail?: string;
+  lastPaidOn?: string;
+  created?: string;
+}
+
+export interface PayeesApiResponse {
+  data: PayeeOptionView[];
+  message: string;
+}
+
+export interface PayeeApiResponse {
+  data?: PayeeOptionView;
   message: string;
 }
 
@@ -804,6 +1082,7 @@ export interface SectionApprovalApiResponse {
 
 export interface PermissionsResponse {
   canEditErrands: boolean;
+  canManageTemplates: boolean;
 }
 
 export interface User {
@@ -825,9 +1104,12 @@ export interface UpdateWarningStatusDto {
 export interface Warning {
   id?: string;
   type?: string;
+  typeDisplayName?: string;
+  section?: string;
   sourceKey?: string;
   message?: string;
   status?: string;
+  statusDisplayName?: string;
   autoResolved?: boolean;
   created?: string;
   updated?: string;
@@ -838,9 +1120,15 @@ export interface WarningsApiResponse {
   message: string;
 }
 
+export enum SaveTemplateDtoKindEnum {
+  DOCUMENT = "DOCUMENT",
+  PHRASE = "PHRASE",
+}
+
 export enum UserRoleEnum {
   AppRead = "app_read",
   AppAdmin = "app_admin",
+  AppSuperadmin = "app_superadmin",
 }
 
 export enum UpdateWarningStatusDtoStatusEnum {
