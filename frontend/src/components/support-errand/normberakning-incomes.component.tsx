@@ -295,6 +295,7 @@ const IncomeRow: FC<{
           variant="tertiary"
           iconButton
           aria-label={t('table.deleteRow')}
+          data-lock-hides
           leftIcon={<Trash2 />}
           onClick={() => {
             onAction(() => deleteNormRow(errandId, 'incomes', rowId));
@@ -427,6 +428,7 @@ const DraftIncomeRow: FC<{
             variant="tertiary"
             iconButton
             aria-label={t('table.deleteRow')}
+            data-lock-hides
             leftIcon={<Trash2 />}
             onClick={onRemove}
           />
