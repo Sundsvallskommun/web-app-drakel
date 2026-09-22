@@ -48,11 +48,17 @@ describe('ErrandUtbetalningList', () => {
     expect(screen.getByText('Verkställd')).toBeInTheDocument();
   });
 
-  it('shows an unknown status as it came instead of hiding it', () => {
-    // caremanagement can add a status before Draken knows about it — the row must stay readable.
+  it('labels the status finalize sets, which the OpenAPI enum still omits', () => {
     render(<ErrandUtbetalningList payments={[{ ...DRAFT, status: 'PENDING_REGISTRATION' }]} />);
 
-    expect(screen.getByText('PENDING_REGISTRATION')).toBeInTheDocument();
+    expect(screen.getByText('Väntar på registrering')).toBeInTheDocument();
+  });
+
+  it('shows an unknown status as it came instead of hiding it', () => {
+    // caremanagement can add a status before Draken knows about it — the row must stay readable.
+    render(<ErrandUtbetalningList payments={[{ ...DRAFT, status: 'SOMETHING_NEW' }]} />);
+
+    expect(screen.getByText('SOMETHING_NEW')).toBeInTheDocument();
   });
 
   it('says when nothing is registered yet', () => {

@@ -97,7 +97,8 @@
         "DRAFT": "Utkast",
         "QUEUED": "Köad till robot",
         "EFFECTUATED": "Verkställd",
-        "FAILED": "Misslyckades"
+        "FAILED": "Misslyckades",
+        "PENDING_REGISTRATION": "Väntar på registrering"
       }
     },
     "disposal": {

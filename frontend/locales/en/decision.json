@@ -97,7 +97,8 @@
         "DRAFT": "Draft",
         "QUEUED": "Queued for robot",
         "EFFECTUATED": "Effectuated",
-        "FAILED": "Failed"
+        "FAILED": "Failed",
+        "PENDING_REGISTRATION": "Pending registration"
       }
     },
     "disposal": {
