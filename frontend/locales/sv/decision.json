@@ -98,7 +98,8 @@
         "QUEUED": "Köad till robot",
         "EFFECTUATED": "Verkställd",
         "FAILED": "Misslyckades",
-        "PENDING_REGISTRATION": "Väntar på registrering"
+        "PENDING_REGISTRATION": "Väntar på registrering",
+        "REGISTERED": "Registrerad i Lifecare"
       }
     },
     "disposal": {

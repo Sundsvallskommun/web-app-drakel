@@ -16,16 +16,27 @@ const byDateDesc = (first: Payment, second: Payment): number =>
   (second.paymentDate ?? second.created ?? '').localeCompare(first.paymentDate ?? first.created ?? '');
 
 /**
- * The status as a label. caremanagement documents DRAFT and PENDING_REGISTRATION, but an unknown code is
+ * The status as a label, with Lifecare's own reason underneath when the robot could not register the
+ * utbetalning. The reason is shown word for word — it is Lifecare's message about the handläggare's
+ * payment, and rewording it would only put our guess between them and the system that refused it.
+ *
+ * caremanagement documents DRAFT, PENDING_REGISTRATION, REGISTERED and FAILED, but an unknown code is
  * shown as it came rather than hidden or mislabelled — the list has to stay readable when caremanagement
  * adds a status before Draken knows about it, which is what happened to PENDING_REGISTRATION itself.
  */
-const StatusLabel: FC<{ status?: string }> = ({ status }) => {
+const StatusLabel: FC<{ status?: string; lifecareDetail?: string }> = ({ status, lifecareDetail }) => {
   const { t } = useTranslation('decision');
   if (!status) {
     return <span>—</span>;
   }
-  return <span>{t(`payment.list.status.${status}`, { defaultValue: status })}</span>;
+  return (
+    <span className="flex flex-col gap-2">
+      <span>{t(`payment.list.status.${status}`, { defaultValue: status })}</span>
+      {lifecareDetail ?
+        <span className="text-small text-error-surface-primary">{lifecareDetail}</span>
+      : null}
+    </span>
+  );
 };
 
 /**
@@ -68,7 +79,7 @@ export const ErrandUtbetalningList: FC<{ payments: Payment[] }> = ({ payments })
                 </Table.Column>
                 <Table.Column>{payment.paymentMethod ?? '—'}</Table.Column>
                 <Table.Column>
-                  <StatusLabel status={payment.status} />
+                  <StatusLabel status={payment.status} lifecareDetail={payment.lifecareDetail} />
                 </Table.Column>
               </Table.Row>
             ))

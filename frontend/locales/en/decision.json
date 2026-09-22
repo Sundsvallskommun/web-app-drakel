@@ -98,7 +98,8 @@
         "QUEUED": "Queued for robot",
         "EFFECTUATED": "Effectuated",
         "FAILED": "Failed",
-        "PENDING_REGISTRATION": "Pending registration"
+        "PENDING_REGISTRATION": "Pending registration",
+        "REGISTERED": "Registered in Lifecare"
       }
     },
     "disposal": {

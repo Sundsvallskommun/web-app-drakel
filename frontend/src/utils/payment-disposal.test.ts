@@ -16,9 +16,17 @@ describe('paymentDisposal', () => {
     expect(paymentDisposal(10000, [{ amount: 2500, status: 'DRAFT' }]).remaining).toBe(7500);
   });
 
+  it('frees the amount of an utbetalning the robot could not register', () => {
+    expect(paymentDisposal(10000, [{ amount: 2500, status: 'FAILED' }]).remaining).toBe(10000);
+  });
+
+  it('counts a registered utbetalning — it exists in Lifecare, so the money is spoken for', () => {
+    expect(paymentDisposal(10000, [{ amount: 2500, status: 'REGISTERED' }]).remaining).toBe(7500);
+  });
+
   it('counts a status it does not know rather than quietly freeing the amount', () => {
-    // Nothing moves a row out of PENDING_REGISTRATION yet, so any new status is more likely to be money
-    // still committed than money released — and over-counting can only hold a payment back, not duplicate it.
+    // Over-counting can only hold a payment back; freeing an amount that is in fact committed invites
+    // paying it twice.
     expect(paymentDisposal(10000, [{ amount: 2500, status: 'SOMETHING_NEW' }]).remaining).toBe(7500);
   });
 

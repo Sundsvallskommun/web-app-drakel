@@ -5,13 +5,19 @@ import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, ValidateNested } fr
 /**
  * An utbetalning stored on the errand. `source` and `lifecareId` carry provenance the same way
  * `Monitoring` does: CASEWORKER for one authored in Draken, LIFECARE for one RPA read out of Lifecare,
- * with `lifecareId` as the idempotency key. `status` is server-managed — DRAFT on create.
+ * with `lifecareId` as the idempotency key.
+ *
+ * `status` is server-managed: DRAFT on create, PENDING_REGISTRATION once a decision handed it to the
+ * robot, then REGISTERED or FAILED when the robot reports back. REGISTERED means the utbetalning exists
+ * in Lifecare, not that it has been paid out — whether it was effectuated is a separate question.
  */
 export class PaymentView {
   @IsString() @IsOptional() id?: string;
   @IsString() @IsOptional() source?: string;
   @IsString() @IsOptional() lifecareId?: string;
   @IsString() @IsOptional() status?: string;
+  /** Lifecare's own message when the robot reported FAILED — shown to the handläggare as it came. */
+  @IsString() @IsOptional() lifecareDetail?: string;
   @IsString() @IsOptional() paymentDate?: string;
   @IsNumber() @IsOptional() amount?: number;
   @IsString() @IsOptional() applicationMonth?: string;

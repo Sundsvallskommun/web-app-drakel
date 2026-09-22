@@ -48,6 +48,25 @@ describe('ErrandUtbetalningList', () => {
     expect(screen.getByText('Väntar på registrering')).toBeInTheDocument();
   });
 
+  it('names an utbetalning the robot got into Lifecare without calling it paid out', () => {
+    // REGISTERED means it exists in Lifecare; whether it was effectuated is a separate question, so the
+    // label must not read as "Verkställd".
+    render(<ErrandUtbetalningList payments={[{ ...DRAFT, status: 'REGISTERED' }]} />);
+
+    expect(screen.getByText('Registrerad i Lifecare')).toBeInTheDocument();
+  });
+
+  it('shows Lifecare’s own reason when the robot could not register the utbetalning', () => {
+    render(
+      <ErrandUtbetalningList
+        payments={[{ ...DRAFT, status: 'FAILED', lifecareDetail: 'Kontot är spärrat i Lifecare' }]}
+      />
+    );
+
+    expect(screen.getByText('Misslyckades')).toBeInTheDocument();
+    expect(screen.getByText('Kontot är spärrat i Lifecare')).toBeInTheDocument();
+  });
+
   it('still names the statuses the corrected enum dropped', () => {
     // QUEUED, EFFECTUATED and FAILED were removed from the published enum, but a row written before that
     // would still carry one — and an unnamed status shows as a raw uppercase code.

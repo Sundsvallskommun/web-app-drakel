@@ -116,13 +116,19 @@ export interface PaymentInput {
 /**
  * An utbetalning stored on the errand. Rows come from two places: the ones a handläggare saved in the
  * form (`source` CASEWORKER, status DRAFT) and the ones "Besluta och utbetala" created, which arrive
- * already handed to the robot. `status` is server-managed.
+ * already handed to the robot.
+ *
+ * `status` is server-managed: DRAFT, PENDING_REGISTRATION while the robot has it, then REGISTERED or
+ * FAILED once it reports back. REGISTERED means the utbetalning exists in Lifecare, not that it has been
+ * paid out — whether it was effectuated is asked separately.
  */
 export interface Payment {
   id?: string;
   source?: string;
   lifecareId?: string;
   status?: string;
+  /** Lifecare's own message when the robot reported FAILED — shown to the handläggare as it came. */
+  lifecareDetail?: string;
   moneyType?: string;
   paymentDate?: string;
   amount?: number;

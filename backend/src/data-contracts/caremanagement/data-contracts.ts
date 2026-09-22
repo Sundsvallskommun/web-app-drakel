@@ -181,7 +181,9 @@ export interface Payment {
   source?: PaymentSourceEnum;
   /** The payment's id in Lifecare once it exists there — null until RPA has registered a caseworker-authored payment; always set for a LIFECARE-sourced one. */
   lifecareId?: string;
-  /** Server-managed lifecycle status. DRAFT for a caseworker's saved draft; PENDING_REGISTRATION for one a decision created, waiting for the robot to register it in Lifecare. Nothing moves a row out of PENDING_REGISTRATION yet — the REGISTER_PAYMENT robot has no result endpoint to report back on, so treat it as 'decided, Lifecare state unknown' rather than as a terminal outcome. */
+  /** Lifecare's own message when the REGISTER_PAYMENT robot reported FAILED — shown to the caseworker as-is */
+  lifecareDetail?: string;
+  /** Server-managed lifecycle status. DRAFT for a caseworker's saved draft; PENDING_REGISTRATION for one a decision created, waiting for the robot; REGISTERED once the REGISTER_PAYMENT robot has reported it into Lifecare (REGISTERED means it exists there, not that it has been paid out — whether it was effectuated is a separate question, asked through POST .../financial-assistance/payment-status); FAILED when the robot could not register it, with Lifecare's reason in lifecareDetail. */
   status?: PaymentStatusEnum;
   /** The type of money paid out. Unconstrained — the value set comes from Lifecare and isn't known yet. */
   moneyType?: string;
@@ -1376,6 +1378,27 @@ export interface Warning {
    * @format date-time
    */
   updated?: string;
+}
+
+/** The REGISTER_PAYMENT robot's report on registering a payment in Lifecare. */
+export interface PaymentLifecareResult {
+  /**
+   * What the robot ended up doing
+   * @minLength 1
+   */
+  outcome: PaymentLifecareResultOutcomeEnum;
+  /**
+   * The payment id Lifecare gave, when it gave one — what CreatePaymentForService returns. Stored as the payment's lifecareId
+   * @minLength 0
+   * @maxLength 64
+   */
+  lifecarePaymentId?: string;
+  /**
+   * Lifecare's own message. Required when outcome is FAILED — it is shown to the caseworker as-is
+   * @minLength 0
+   * @maxLength 1024
+   */
+  detail?: string;
 }
 
 /** A betalningsmottagare to add by hand on an errand. */
@@ -3299,10 +3322,12 @@ export enum PaymentSourceEnum {
   LIFECARE = "LIFECARE",
 }
 
-/** Server-managed lifecycle status. DRAFT for a caseworker's saved draft; PENDING_REGISTRATION for one a decision created, waiting for the robot to register it in Lifecare. Nothing moves a row out of PENDING_REGISTRATION yet — the REGISTER_PAYMENT robot has no result endpoint to report back on, so treat it as 'decided, Lifecare state unknown' rather than as a terminal outcome. */
+/** Server-managed lifecycle status. DRAFT for a caseworker's saved draft; PENDING_REGISTRATION for one a decision created, waiting for the robot; REGISTERED once the REGISTER_PAYMENT robot has reported it into Lifecare (REGISTERED means it exists there, not that it has been paid out — whether it was effectuated is a separate question, asked through POST .../financial-assistance/payment-status); FAILED when the robot could not register it, with Lifecare's reason in lifecareDetail. */
 export enum PaymentStatusEnum {
   DRAFT = "DRAFT",
   PENDING_REGISTRATION = "PENDING_REGISTRATION",
+  REGISTERED = "REGISTERED",
+  FAILED = "FAILED",
 }
 
 /** Provenance, defaults to CASEWORKER when omitted. RPA POSTs LIFECARE (with lifecareId) to surface a monitoring read out of Lifecare onto the errand. */
@@ -3616,6 +3641,16 @@ export enum WarningStatusEnum {
   OPEN = "OPEN",
   ACKNOWLEDGED = "ACKNOWLEDGED",
   CLOSED = "CLOSED",
+}
+
+/**
+ * What the robot ended up doing
+ * @minLength 1
+ */
+export enum PaymentLifecareResultOutcomeEnum {
+  REGISTERED = "REGISTERED",
+  ALREADY_EXISTS = "ALREADY_EXISTS",
+  FAILED = "FAILED",
 }
 
 /** Where the option comes from: LIFECARE (seen on a payment in the last 12 months) or MANUAL (added by hand on this errand) */
