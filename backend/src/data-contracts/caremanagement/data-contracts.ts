@@ -20,8 +20,8 @@ export interface Problem {
   instance?: string;
   /** @format uri */
   type?: string;
-  title?: string;
   detail?: string;
+  title?: string;
   /** @format int32 */
   status?: number;
 }
@@ -3351,7 +3351,6 @@ export enum CostCostTypeEnum {
   RENT = "RENT",
   ELECTRICITY = "ELECTRICITY",
   HOME_INSURANCE = "HOME_INSURANCE",
-  INTERNET = "INTERNET",
   UNEMPLOYMENT_FUND = "UNEMPLOYMENT_FUND",
   UNION_FEE = "UNION_FEE",
   TRAVEL_APPROVED = "TRAVEL_APPROVED",
