@@ -23,8 +23,8 @@ interface OverviewSidebarProps {
 }
 
 /**
- * The overview's left navigation: the "Ärenden" section with one item per status view, and a collapse toggle
- * that shrinks it to an icon rail.
+ * The overview's left navigation: the "Mina ärenden" section with one item per status view, and a collapse
+ * toggle that shrinks it to an icon rail.
  */
 export const OverviewSidebar: FC<OverviewSidebarProps> = ({ selectedView, onSelectView, open, onOpenChange }) => {
   const { t } = useTranslation('overview');
