@@ -22,8 +22,10 @@ export const AppHeader = () => {
   const { locale } = useParams<{ locale: string }>();
   const appName = process.env.NEXT_PUBLIC_APP_NAME ?? 'Drakel';
 
+  // relative z-20 keeps the header above the errand view's administration bar (z-10), so the user menu and
+  // notification panels open over it rather than behind it.
   return (
-    <header className="shrink-0 bg-gray-600 border-b-1 border-divider px-24 py-12 flex items-center justify-between gap-40">
+    <header className="shrink-0 relative z-20 bg-gray-600 border-b-1 border-divider px-24 py-12 flex items-center justify-between gap-40">
       <NextLink href={`/${locale}/oversikt`} className="no-underline min-w-0" aria-label={t('logoLink')}>
         <Logo variant="service" inverted title="Drakel" subtitle={appName} />
       </NextLink>
