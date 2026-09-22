@@ -60,13 +60,16 @@
     "channels": {
       "minaSidor": "Mina sidor",
       "digitalMailbox": "Digital brevlåda",
-      "letter": "Brev"
+      "letter": "Brev",
+      "message": "Meddelande"
     },
     "sections": {
       "CALCULATION": "Normberäkning",
       "PAYMENT": "Utbetalning",
       "DECISION": "Beslut"
-    }
+    },
+    "messageLabel": "Meddelande till sökande",
+    "messageRequired": "Skriv ett meddelande innan du beslutar"
   },
   "actualisation": {
     "button": "Arkivera till aktualisering",

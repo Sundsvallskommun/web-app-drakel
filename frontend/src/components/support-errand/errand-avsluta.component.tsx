@@ -1,14 +1,18 @@
 'use client';
 
+import TextEditor from '@components/common/text-editor.component';
 import { getDigitalMailbox, sendDecisionNotification } from '@services/decision-notification-service';
 import { updateErrand } from '@services/errand-service/errand-service';
 import { getSectionApprovals, SectionKey } from '@services/section-approval-service';
-import { Button, Checkbox, Modal } from '@sk-web-gui/react';
+import { Button, Checkbox, FormControl, FormLabel, Modal } from '@sk-web-gui/react';
+import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { FC, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
 // The status an errand gets when avslutat.
 const CLOSED_STATUS = 'CLOSED';
+
+const EMPTY_MESSAGE: TextEditorValue = { markup: '', plainText: '' };
 
 /**
  * "Besluta och utbetala" action for the administration bar. On confirm it sends the beslut to the applicant through
@@ -33,12 +37,18 @@ export const ErrandAvsluta: FC<{ errandId: string; onClosed: () => void; checkAp
   const [digitalBrevlada, setDigitalBrevlada] = useState<boolean>(true);
   const [brev, setBrev] = useState<boolean>(true);
   const [mailboxAvailable, setMailboxAvailable] = useState<boolean>(false);
+  // The message channel starts off: the other channels send the beslut that already exists, while this
+  // one sends something the handläggare has to write, and defaulting it on would press them to write it.
+  const [sendMessage, setSendMessage] = useState<boolean>(false);
+  const [message, setMessage] = useState<TextEditorValue>(EMPTY_MESSAGE);
 
   const openConfirm = async (): Promise<void> => {
     setChecking(true);
     setError(undefined);
     setMinaSidor(true);
     setBrev(true);
+    setSendMessage(false);
+    setMessage(EMPTY_MESSAGE);
 
     const mailboxRes = await getDigitalMailbox(errandId);
     const available = !mailboxRes.error && mailboxRes.data === true;
@@ -64,9 +74,16 @@ export const ErrandAvsluta: FC<{ errandId: string; onClosed: () => void; checkAp
     setConfirmOpen(true);
   };
 
+  // Ticking the box is a statement of intent to send something, so an empty editor is a slip rather than
+  // a choice — holding the button is kinder than closing the errand with an empty message attached.
+  const messageMissing = sendMessage && (message.plainText ?? '').trim() === '';
+
   const confirmAndSend = async (): Promise<void> => {
     setWorking(true);
     setError(undefined);
+    // The written message is not carried anywhere yet: the decision-notification payload has no field
+    // for it, and neither caremanagement nor Messaging has been asked to take one. The control is here
+    // so verksamheten can judge the placement and the wording before it is wired.
     const sendRes = await sendDecisionNotification(errandId, {
       minaSidor,
       digitalBrevlada: digitalBrevlada && mailboxAvailable,
@@ -117,6 +134,7 @@ export const ErrandAvsluta: FC<{ errandId: string; onClosed: () => void; checkAp
           setConfirmOpen(false);
         }}
         label={t('decideAndPay.button')}
+        className={sendMessage ? 'w-[72rem] max-w-[90vw]' : undefined}
       >
         <Modal.Content className="flex flex-col gap-16">
           {unapproved.length > 0 ?
@@ -159,7 +177,31 @@ export const ErrandAvsluta: FC<{ errandId: string; onClosed: () => void; checkAp
             >
               {t('decideAndPay.channels.letter')}
             </Checkbox>
+            <Checkbox
+              checked={sendMessage}
+              onChange={(event) => {
+                setSendMessage(event.target.checked);
+              }}
+            >
+              {t('decideAndPay.channels.message')}
+            </Checkbox>
           </div>
+
+          {sendMessage ?
+            <FormControl id="decide-and-pay-message" className="w-full">
+              <FormLabel>{t('decideAndPay.messageLabel')}</FormLabel>
+              <TextEditor
+                className="text-editor-with-toolbar w-full"
+                value={message}
+                onChange={(event) => {
+                  setMessage(event.target.value);
+                }}
+              />
+              {messageMissing ?
+                <p className="m-0 mt-8 text-small text-dark-secondary">{t('decideAndPay.messageRequired')}</p>
+              : null}
+            </FormControl>
+          : null}
         </Modal.Content>
         <Modal.Footer>
           <Button
@@ -175,6 +217,7 @@ export const ErrandAvsluta: FC<{ errandId: string; onClosed: () => void; checkAp
             variant="primary"
             loading={working}
             loadingText={t('decideAndPay.executing')}
+            disabled={messageMissing}
             onClick={() => void confirmAndSend()}
           >
             {t('decideAndPay.button')}

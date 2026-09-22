@@ -60,13 +60,16 @@
     "channels": {
       "minaSidor": "Mina sidor",
       "digitalMailbox": "Digital mailbox",
-      "letter": "Letter"
+      "letter": "Letter",
+      "message": "Message"
     },
     "sections": {
       "CALCULATION": "Norm calculation",
       "PAYMENT": "Payment",
       "DECISION": "Decision"
-    }
+    },
+    "messageLabel": "Message to the applicant",
+    "messageRequired": "Write a message before deciding"
   },
   "actualisation": {
     "button": "Archive to actualisation",
