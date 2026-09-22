@@ -1819,6 +1819,8 @@ export interface NormPersonRow {
   deviationToDate?: string;
   /** The norm interval applied to the member */
   normInterval?: string;
+  /** The member's own share of the norm (the Belopp column of Lifecare's Beräkning view); carried over from the previous calculation, the norm itself is computed in Lifecare */
+  amount?: number;
   /** The job stimulus amount applied to the member */
   jobStimulusAmount?: number;
   /** Whether the row is soft-deleted (excluded from the calculation, not resurrected by the daily refresh) */

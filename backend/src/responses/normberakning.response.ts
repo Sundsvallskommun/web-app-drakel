@@ -14,6 +14,8 @@ export class NormPersonRow {
   @IsInt() @IsOptional() position?: number;
   @IsString() @IsOptional() origin?: string;
   @IsString() @IsOptional() partyId?: string;
+  /** Personnummer resolved from partyId via the Citizen API; best-effort, so it can be absent. */
+  @IsString() @IsOptional() personalNumber?: string;
   /** The role as a machine code; `roleDisplayName` carries the label to show. */
   @IsString() @IsOptional() role?: string;
   /** caremanagement's own Swedish label for the role, e.g. "Medsökande". */
@@ -26,6 +28,8 @@ export class NormPersonRow {
   @IsString() @IsOptional() deviationFromDate?: string;
   @IsString() @IsOptional() deviationToDate?: string;
   @IsString() @IsOptional() normInterval?: string;
+  /** The member's own share of the norm — the Belopp column; carried over from the previous Lifecare calculation. */
+  @IsNumber() @IsOptional() amount?: number;
   @IsNumber() @IsOptional() jobStimulusAmount?: number;
   @IsBoolean() @IsOptional() deleted?: boolean;
   @IsString() @IsOptional() note?: string;

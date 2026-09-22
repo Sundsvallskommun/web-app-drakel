@@ -38,13 +38,14 @@
   "family": {
     "title": "Persons covered",
     "included": "Covered",
+    "personalNumber": "Personal identity number",
     "notIncluded": "Not covered",
     "name": "Name",
-    "role": "Role",
+    "amount": "Amount",
     "includedFrom": "Included from",
     "includedTo": "Included to",
     "days": "Days",
-    "normInterval": "Norm interval",
+    "normInterval": "Norm interval / amount",
     "empty": "No persons"
   },
   "incomes": {

@@ -15,6 +15,8 @@ export interface NormPersonRow {
   position?: number;
   origin?: string;
   partyId?: string;
+  /** Personnummer resolved from partyId by the BFF; best-effort, so it can be absent. */
+  personalNumber?: string;
   /** The machine code; show `roleDisplayName` instead — caremanagement owns the label. */
   role?: 'APPLICANT' | 'CO_APPLICANT' | 'CHILD' | 'VISITATION_CHILD';
   roleDisplayName?: string;
@@ -26,6 +28,8 @@ export interface NormPersonRow {
   deviationFromDate?: string;
   deviationToDate?: string;
   normInterval?: string;
+  /** The member's own share of the norm — the Belopp column; carried over from the previous Lifecare calculation. */
+  amount?: number;
   jobStimulusAmount?: number;
   deleted?: boolean;
   note?: string;
