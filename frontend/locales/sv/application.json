@@ -153,6 +153,7 @@
       "RENT": "Hyra (inte parkering/garage)",
       "ELECTRICITY": "Elkostnad (totalsumma)",
       "HOME_INSURANCE": "Hemförsäkring (månadskostnad)",
+      "INTERNET": "Internet",
       "UNEMPLOYMENT_FUND": "A-kassa",
       "UNION_FEE": "Fackföreningsavgift",
       "TRAVEL_APPROVED": "Resor till godkänd planering/aktivitet",
