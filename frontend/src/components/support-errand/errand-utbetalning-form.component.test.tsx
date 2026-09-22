@@ -23,13 +23,14 @@ const APPLICANT = {
   lastName: 'Testsson',
 };
 
+// The betalsätt values are Lifecare's own, as caremanagement's metadata serves them.
 const BANK_ACCOUNT_PAYEE = {
   name: 'Test Testsson',
-  paymentMethod: 'Bankkonto',
+  paymentMethod: 'Personkonto',
   clearing: '8327',
   accountNumber: '1234567',
 };
-const GIRO_PAYEE = { name: 'Hyresvärden AB', paymentMethod: 'Bankgiro', accountNumber: '5051-6905' };
+const GIRO_PAYEE = { name: 'Hyresvärden AB', paymentMethod: 'Plusgiro', accountNumber: '5051-6905' };
 
 const PROPOSAL: PaymentProposal = {
   payments: [{ paymentDate: '2026-09-25', amount: 8450, concernedMonth: '2026-09', payee: BANK_ACCOUNT_PAYEE }],
@@ -58,7 +59,7 @@ describe('ErrandUtbetalningForm', () => {
 
     // The betalsätt options are built from the payee list, so the value only sticks once it has loaded.
     await waitFor(() => {
-      expect(screen.getByLabelText(/^Betalsätt/)).toHaveValue('Bankkonto');
+      expect(screen.getByLabelText(/^Betalsätt/)).toHaveValue('Personkonto');
     });
     expect(screen.getByLabelText(/^Utbetalningsdatum/)).toHaveValue('2026-09-25');
     expect(screen.getByLabelText(/^Belopp/)).toHaveValue('8450,00');
@@ -76,7 +77,7 @@ describe('ErrandUtbetalningForm', () => {
     expect(options).toEqual(expect.arrayContaining([expect.stringContaining('Hyresvärden AB')]));
   });
 
-  it('opens clearing and account for Bankkonto but leaves the postal address closed', async () => {
+  it('opens clearing and account for a personkonto but leaves the postal address closed', async () => {
     renderForm();
 
     await waitFor(() => {
@@ -90,7 +91,7 @@ describe('ErrandUtbetalningForm', () => {
     renderForm();
     // Wait for the payee list, since the dropdown's options come from it.
     await waitFor(() => {
-      expect(screen.getByLabelText(/^Betalsätt/)).toHaveValue('Bankkonto');
+      expect(screen.getByLabelText(/^Betalsätt/)).toHaveValue('Personkonto');
     });
 
     fireEvent.change(screen.getByLabelText(/^Betalningsmottagare/), { target: { value: '1' } });
@@ -98,27 +99,9 @@ describe('ErrandUtbetalningForm', () => {
     await waitFor(() => {
       expect(screen.getByLabelText(/^Namn/)).toHaveValue('Hyresvärden AB');
     });
-    expect(screen.getByLabelText(/^Betalsätt/)).toHaveValue('Bankgiro');
+    expect(screen.getByLabelText(/^Betalsätt/)).toHaveValue('Plusgiro');
     expect(screen.getByLabelText(/^Kontonummer/)).toHaveValue('5051-6905');
     // A giro number has no clearing number, so that field closes again.
-    expect(screen.getByLabelText(/^Clearing/)).toBeDisabled();
-  });
-
-  it('opens the postal address for Utbetalningskort', async () => {
-    vi.mocked(getPayees).mockResolvedValue({ data: [{ name: 'Test Testsson', paymentMethod: 'Utbetalningskort' }] });
-    renderForm({
-      payments: [{ paymentDate: '2026-09-25', concernedMonth: '2026-09' }],
-      payeeOptions: [{ name: 'Test Testsson', paymentMethod: 'Utbetalningskort' }],
-    });
-
-    // The betalsätt option only exists once the payee it comes from has loaded.
-    await screen.findAllByRole('option', { name: /Utbetalningskort/ });
-    fireEvent.change(screen.getByLabelText(/^Betalsätt/), { target: { value: 'Utbetalningskort' } });
-
-    await waitFor(() => {
-      expect(screen.getByLabelText(/^C\/O adress/)).toBeEnabled();
-    });
-    expect(screen.getByLabelText(/^Ort/)).toBeEnabled();
     expect(screen.getByLabelText(/^Clearing/)).toBeDisabled();
   });
 
@@ -165,7 +148,7 @@ describe('ErrandUtbetalningForm', () => {
         amount: 8450,
         paymentDate: '2026-09-25',
         applicationMonth: '2026-09',
-        paymentMethod: 'Bankkonto',
+        paymentMethod: 'Personkonto',
         payeeName: 'Test Testsson',
         clearingNumber: '8327',
         accountNumber: '1234567',
