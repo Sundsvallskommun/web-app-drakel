@@ -2163,7 +2163,7 @@ export interface ActualisationRequest {
   /** The applicant's partyId (personId GUID) */
   applicant: string;
   /**
-   * The application month (ISO year-month, yyyy-MM); the actualisation's intake date is the first day of this month
+   * The application month (ISO year-month, yyyy-MM). The actualisation's intake date (Ansökningsdatum) is the day the application was submitted, read from the errand's created stamp; when no errandId is given, or the errand is unknown, it falls back to the first day of this month.
    * @pattern ^\d{4}-(0[1-9]|1[0-2])$
    */
   applicationMonth: string;
@@ -2473,6 +2473,37 @@ export interface StatusCount {
   count?: number;
 }
 
+/** One actor's activity across every errand in the namespace, newest first. The listing is capped; compare 'events' against 'total' to see whether it was truncated, and narrow with from/to to see the rest. */
+export interface ActorEventLog {
+  /** The matching events, newest first, up to the listing cap */
+  events?: ErrandEventEntry[];
+  /**
+   * How many events match the filters in total, ignoring the cap
+   * @format int64
+   */
+  total?: number;
+}
+
+export interface ErrandEventEntry {
+  id?: string;
+  errandId?: string;
+  municipalityId?: string;
+  namespace?: string;
+  source?: string;
+  action?: string;
+  target?: string;
+  description?: string;
+  httpMethod?: string;
+  requestPath?: string;
+  actor?: string;
+  actorType?: string;
+  requestId?: string;
+  /** @format int32 */
+  statusCode?: number;
+  /** @format date-time */
+  created?: string;
+}
+
 /** Paged errand response */
 export interface FindErrandsResponse {
   errands?: Errand[];
@@ -2583,26 +2614,6 @@ export interface UnreadCount {
    * @format int64
    */
   unreadCount?: number;
-}
-
-export interface ErrandEventEntry {
-  id?: string;
-  errandId?: string;
-  municipalityId?: string;
-  namespace?: string;
-  source?: string;
-  action?: string;
-  target?: string;
-  description?: string;
-  httpMethod?: string;
-  requestPath?: string;
-  actor?: string;
-  actorType?: string;
-  requestId?: string;
-  /** @format int32 */
-  statusCode?: number;
-  /** @format date-time */
-  created?: string;
 }
 
 /** The number of activity events on the errand matching the given filters */
@@ -3016,6 +3027,22 @@ export interface PreviousDecision {
   amount?: number;
   /** The decision date (raw Lifecare string) */
   date?: string;
+}
+
+/** A person's SSBTEK basis for a period, as the composite service answered it. */
+export interface SsbtekBasis {
+  /**
+   * Inclusive start of the period the basis covers
+   * @format date
+   */
+  from?: string;
+  /**
+   * Inclusive end of the period the basis covers
+   * @format date
+   */
+  to?: string;
+  /** The answer per responding agency (af, csn, fk, skv, so, tns, miv), forwarded verbatim from SSBTEK. Shapes differ per agency and are not modelled; an agency that did not answer may be absent or empty. */
+  agencies?: Record<string, Record<string, any>>;
 }
 
 /** A child pre-filled from Lifecare for a financial assistance renewal. Carries only what Lifecare provides — personnummer and name; the citizen completes residence, school etc. on the form. */
@@ -3627,6 +3654,7 @@ export enum WarningTypeEnum {
   CO_APPLICANT_SPLIT_PAYMENT = "CO_APPLICANT_SPLIT_PAYMENT",
   SSBTEK_READ_FAILED = "SSBTEK_READ_FAILED",
   INCOME_MISSING_PREVIOUS_PERIOD = "INCOME_MISSING_PREVIOUS_PERIOD",
+  INCOME_TRANSFERRED_LATE = "INCOME_TRANSFERRED_LATE",
 }
 
 /** The Draken view section (tab) the warning belongs to — derived from the type: the decision proposal's types are DECISION, the payment proposal's are PAYMENT, everything else is CALCULATION */
