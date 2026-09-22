@@ -2,7 +2,7 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 
-import { FinancialAssistanceMetadata, Lookup, ReadLookupsParamsKindEnum } from '@/data-contracts/caremanagement/data-contracts';
+import { ErrandTypeSchema, FinancialAssistanceMetadata, Lookup, ReadLookupsParamsKindEnum } from '@/data-contracts/caremanagement/data-contracts';
 
 class CaremanagementMetadataService {
   private apiService = new CaremanagementApiService();
@@ -22,6 +22,16 @@ class CaremanagementMetadataService {
     return this.apiService.get<FinancialAssistanceMetadata>({
       url: caremanagementUrl('errands', 'financial-assistance', 'metadata'),
     });
+  }
+
+  /**
+   * The errand types of the namespace, each carrying the statuses allowed for it in lifecycle order.
+   *
+   * The generic STATUS lookups are empty — the status catalogue lives on the errand type, not in the
+   * lookup table — so this is where the overview's status filter gets its options.
+   */
+  async readErrandTypes(): Promise<ApiResponse<ErrandTypeSchema[]>> {
+    return this.apiService.get<ErrandTypeSchema[]>({ url: caremanagementUrl('errand-types') });
   }
 }
 

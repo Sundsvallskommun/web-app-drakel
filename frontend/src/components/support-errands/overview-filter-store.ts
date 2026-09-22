@@ -36,7 +36,7 @@ interface OverviewFilterActions {
 const DEFAULT_PAGE_SIZE = 12;
 
 const initialState: OverviewFilterState = {
-  selectedView: 'all',
+  selectedView: 'ongoing',
   query: '',
   filters: emptyFilters,
   sort: undefined,
@@ -96,13 +96,16 @@ export const useOverviewFilterStore = create<OverviewFilterState & OverviewFilte
       name: 'drakel-overview-filter',
       // Bumped whenever the set of views changes: a browser holding a view that no longer exists would
       // otherwise select nothing, leaving the sidebar with no highlight and an unfiltered list.
-      version: 3,
+      version: 4,
       migrate: (persisted) => {
         const state = persisted as Partial<OverviewFilterState> | undefined;
         const view = state?.selectedView;
         return {
           ...state,
-          selectedView: view && ERRAND_VIEWS.includes(view) ? view : 'all',
+          selectedView: view && ERRAND_VIEWS.includes(view) ? view : 'ongoing',
+          // A persisted filter object predates whichever groups were added since; merging over the
+          // empty set keeps every group present, so reading `.length` on a new one cannot throw.
+          filters: { ...emptyFilters, ...state?.filters },
         } as OverviewFilterState;
       },
       // We rehydrate manually (after mount) via a guard in the page so the SSR/first client render uses the

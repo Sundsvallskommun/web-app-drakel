@@ -21,7 +21,10 @@
     "clearAssignee": "Clear case worker {{assignee}}",
     "clearAll": "Clear all",
     "clearAllLabel": "Clear all filters",
-    "search": "Search"
+    "search": "Search",
+    "type": "Errand type",
+    "clearType": "Remove the {{type}} filter",
+    "typeChip": "Type: {{type}}"
   },
   "list": {
     "fetching": "Fetching errands…",

@@ -2,15 +2,24 @@ import { Lookup } from '@data-contracts/backend/data-contracts';
 import { ServiceResponse } from '@interfaces/services';
 import { ApiResponse, apiService, toServiceError } from '@services/api-service';
 
-type LookupKind = 'CATEGORY' | 'STATUS' | 'TYPE' | 'ROLE' | 'CONTACT_REASON';
-
-/** Fetches metadata lookups of a given kind from the backend proxy. */
-const getLookups = (kind: LookupKind): Promise<ServiceResponse<Lookup[]>> => {
-  return apiService
-    .get<ApiResponse<Lookup[]>>('metadata', { params: { kind } })
+/**
+ * The statuses an errand can have, for the overview's status filter.
+ *
+ * These come from the namespace's errand types rather than the STATUS lookups: the lookup table is
+ * empty, and the catalogue — code, Swedish display name and lifecycle order — lives on the type.
+ */
+export const getStatuses = (): Promise<ServiceResponse<Lookup[]>> =>
+  apiService
+    .get<ApiResponse<Lookup[]>>('errand-statuses')
     .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);
-};
 
-/** Convenience helper for the STATUS lookups used by the overview status filter. */
-export const getStatuses = (): Promise<ServiceResponse<Lookup[]>> => getLookups('STATUS');
+/**
+ * The errand types of the namespace, for the overview's type filter. The value is the type slug, which
+ * is what an errand carries and what the list endpoint filters on.
+ */
+export const getErrandTypes = (): Promise<ServiceResponse<Lookup[]>> =>
+  apiService
+    .get<ApiResponse<Lookup[]>>('errand-types')
+    .then((res) => ({ data: res.data.data }))
+    .catch(toServiceError);

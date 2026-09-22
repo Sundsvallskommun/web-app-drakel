@@ -1,6 +1,7 @@
 'use client';
 
 import { useAdministrators } from '@hooks/use-administrators';
+import { useErrandTypes } from '@hooks/use-errand-types';
 import { useErrands } from '@hooks/use-errands';
 import { useStatuses } from '@hooks/use-statuses';
 import { useUserStore } from '@services/user-service/user-service';
@@ -46,12 +47,13 @@ const orGroup = (field: string, values: string[]): string =>
 
 /**
  * Builds the caremanagement filter from the overview controls. The sidebar view's status clause, the
- * status/handläggare filter groups, "Mina ärenden" (the logged-in handläggare, when set) and the
+ * status/typ/handläggare filter groups, "Mina ärenden" (the logged-in handläggare, when set) and the
  * free-text search (a case-insensitive "contains" over errand number and applicant name) are all ANDed together.
  */
 const buildErrandFilter = (
   viewStatusClause: string,
   statusFilter: string[],
+  typeFilter: string[],
   assigneeFilter: string[],
   mineUsername: string | undefined,
   search: string
@@ -59,6 +61,7 @@ const buildErrandFilter = (
   const clauses: string[] = [
     viewStatusClause,
     orGroup('status', statusFilter),
+    orGroup('typeSlug', typeFilter),
     orGroup('assignedUserId', assigneeFilter),
     mineUsername ? orGroup('assignedUserId', [mineUsername]) : '',
   ];
@@ -97,12 +100,14 @@ const OversiktPageContent = () => {
   const username = useUserStore(useShallow((state) => state.user.username));
   const { statuses } = useStatuses();
   const { administrators } = useAdministrators();
+  const { errandTypes } = useErrandTypes();
   // Ownership is a property of the view, not a filter: the three list views are the handläggare's own
   // errands by definition, and Sök deliberately searches across everyone's.
   const active = isSearchView ? appliedSearch : { query, filters, onlyUnread };
   const filter = buildErrandFilter(
     buildStatusClause(selectedView),
     active?.filters.status ?? [],
+    active?.filters.type ?? [],
     active?.filters.assignee ?? [],
     isSearchView ? undefined : username,
     active?.query ?? ''
@@ -151,15 +156,16 @@ const OversiktPageContent = () => {
             onFilterChange={setFilter}
             onClearFilters={clearFilters}
             statuses={statuses}
+            errandTypes={errandTypes}
             administrators={administrators}
             onlyUnread={onlyUnread}
             onOnlyUnreadChange={setOnlyUnread}
             showAssigneeFilter={isSearchView}
             onSearch={
               isSearchView ?
-                () => {
+                (searchQuery: string) => {
                   setPage(0);
-                  setAppliedSearch({ query, filters, onlyUnread });
+                  setAppliedSearch({ query: searchQuery, filters, onlyUnread });
                 }
               : undefined
             }

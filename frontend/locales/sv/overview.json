@@ -21,7 +21,10 @@
     "clearAssignee": "Rensa handläggare {{assignee}}",
     "clearAll": "Rensa alla",
     "clearAllLabel": "Rensa alla filter",
-    "search": "Sök"
+    "search": "Sök",
+    "type": "Ärendetyp",
+    "clearType": "Ta bort filtret {{type}}",
+    "typeChip": "Typ: {{type}}"
   },
   "list": {
     "fetching": "Hämtar ärenden…",

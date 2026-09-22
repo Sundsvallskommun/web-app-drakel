@@ -16,10 +16,11 @@ const SEARCH_DEBOUNCE_MS = 400;
 /** Active overview filters; each is multi-select (an OR within each group, AND between groups). */
 export interface ErrandFilters {
   status: string[];
+  type: string[];
   assignee: string[];
 }
 
-export const emptyFilters: ErrandFilters = { status: [], assignee: [] };
+export const emptyFilters: ErrandFilters = { status: [], type: [], assignee: [] };
 
 interface ErrandsFilterProps {
   query: string;
@@ -28,6 +29,7 @@ interface ErrandsFilterProps {
   onFilterChange: (key: keyof ErrandFilters, value: string[]) => void;
   onClearFilters: () => void;
   statuses: Lookup[];
+  errandTypes: Lookup[];
   administrators: Administrator[];
   onlyUnread: boolean;
   onOnlyUnreadChange: (checked: boolean) => void;
@@ -36,8 +38,12 @@ interface ErrandsFilterProps {
    * own, so narrowing by handläggare could only ever empty the list.
    */
   showAssigneeFilter?: boolean;
-  /** When set, the filter acts as a search form: nothing is fetched until this runs. */
-  onSearch?: () => void;
+  /**
+   * When set, the filter acts as a search form: nothing is fetched until this runs. It is handed the
+   * search term as typed — the committed `query` lags behind by the debounce, so reading that instead
+   * would search for what was typed a moment ago.
+   */
+  onSearch?: (query: string) => void;
 }
 
 /**
@@ -52,6 +58,7 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
   onFilterChange,
   onClearFilters,
   statuses,
+  errandTypes,
   administrators,
   onlyUnread,
   onOnlyUnreadChange,
@@ -77,12 +84,17 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
     }
   }, [debouncedSearch, onQueryChange]);
 
-  // Known status codes use the UI-language label; unknown ones fall back to the lookup's display name.
+  // caremanagement's own Swedish label from the errand type, falling back to the local table for a
+  // status the catalogue does not name.
   const statusOptions: FilterOption[] = statuses.map((status) => ({
     value: status.name ?? '',
-    label: t(`common:status.${(status.name ?? '').toUpperCase()}`, {
-      defaultValue: status.displayName ?? status.name ?? '',
-    }),
+    label:
+      status.displayName ??
+      t(`common:status.${(status.name ?? '').toUpperCase()}`, { defaultValue: status.name ?? '' }),
+  }));
+  const typeOptions: FilterOption[] = errandTypes.map((type) => ({
+    value: type.name ?? '',
+    label: type.displayName ?? type.name ?? '',
   }));
   const assigneeOptions: FilterOption[] = administrators.map((admin) => ({
     value: admin.username,
@@ -90,10 +102,14 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
   }));
 
   const statusLabel = (value: string): string => statusOptions.find((option) => option.value === value)?.label ?? value;
+  const typeLabel = (value: string): string => typeOptions.find((option) => option.value === value)?.label ?? value;
   const assigneeLabel = (value: string): string =>
     assigneeOptions.find((option) => option.value === value)?.label ?? value;
 
-  const activeCount = filters.status.length + filters.assignee.length;
+  const activeCount = filters.status.length + filters.type.length + filters.assignee.length;
+  // Searching needs something to search for: a term, a chosen status or handläggare, or the unread
+  // narrowing. Without that the Sök view would just list every errand in the municipality.
+  const canSearch = searchInput.trim() !== '' || filters.status.length > 0 || filters.assignee.length > 0 || onlyUnread;
 
   const removeValue = (key: keyof ErrandFilters, value: string) => {
     onFilterChange(
@@ -117,7 +133,9 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
           }}
           onSearch={() => {
             applySearch(searchInput);
-            onSearch?.();
+            if (canSearch) {
+              onSearch?.(searchInput);
+            }
           }}
           onReset={() => {
             setSearchInput('');
@@ -131,6 +149,14 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
           searchable
           onChange={(values) => {
             onFilterChange('status', values);
+          }}
+        />
+        <ErrandFilterDropdown
+          label={t('filter.type')}
+          options={typeOptions}
+          selected={filters.type}
+          onChange={(values) => {
+            onFilterChange('type', values);
           }}
         />
         {showAssigneeFilter ?
@@ -154,7 +180,17 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
             {t('filter.onlyUnread')}
           </Checkbox>
           {onSearch ?
-            <Button size="sm" variant="primary" color="primary" leftIcon={<Search />} onClick={onSearch}>
+            <Button
+              size="sm"
+              variant="primary"
+              color="primary"
+              leftIcon={<Search />}
+              disabled={!canSearch}
+              onClick={() => {
+                applySearch(searchInput);
+                onSearch(searchInput);
+              }}
+            >
               {t('filter.search')}
             </Button>
           : null}
@@ -172,6 +208,17 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
               }}
             >
               {statusLabel(value)}
+            </Chip>
+          ))}
+          {filters.type.map((value) => (
+            <Chip
+              key={`type-${value}`}
+              aria-label={t('filter.clearType', { type: typeLabel(value) })}
+              onClick={() => {
+                removeValue('type', value);
+              }}
+            >
+              {t('filter.typeChip', { type: typeLabel(value) })}
             </Chip>
           ))}
           {filters.assignee.map((value) => (
