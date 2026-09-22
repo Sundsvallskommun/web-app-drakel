@@ -16,9 +16,9 @@ const byDateDesc = (first: Payment, second: Payment): number =>
   (second.paymentDate ?? second.created ?? '').localeCompare(first.paymentDate ?? first.created ?? '');
 
 /**
- * The status as a label. caremanagement documents DRAFT / QUEUED / EFFECTUATED / FAILED, but an unknown
- * code is shown as it came rather than hidden or mislabelled — the list has to stay readable when
- * caremanagement adds a status before Draken knows about it.
+ * The status as a label. caremanagement documents DRAFT and PENDING_REGISTRATION, but an unknown code is
+ * shown as it came rather than hidden or mislabelled — the list has to stay readable when caremanagement
+ * adds a status before Draken knows about it, which is what happened to PENDING_REGISTRATION itself.
  */
 const StatusLabel: FC<{ status?: string }> = ({ status }) => {
   const { t } = useTranslation('decision');

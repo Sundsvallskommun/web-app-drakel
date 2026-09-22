@@ -6,8 +6,8 @@ describe('paymentDisposal', () => {
   it('subtracts the registered payments from the decided amount', () => {
     expect(
       paymentDisposal(10000, [
-        { amount: 4000, status: 'EFFECTUATED' },
-        { amount: 1000, status: 'QUEUED' },
+        { amount: 4000, status: 'PENDING_REGISTRATION' },
+        { amount: 1000, status: 'PENDING_REGISTRATION' },
       ])
     ).toEqual({ decided: 10000, committed: 5000, remaining: 5000 });
   });
@@ -16,8 +16,10 @@ describe('paymentDisposal', () => {
     expect(paymentDisposal(10000, [{ amount: 2500, status: 'DRAFT' }]).remaining).toBe(7500);
   });
 
-  it('frees the amount of a payment that failed', () => {
-    expect(paymentDisposal(10000, [{ amount: 2500, status: 'FAILED' }]).remaining).toBe(10000);
+  it('counts a status it does not know rather than quietly freeing the amount', () => {
+    // Nothing moves a row out of PENDING_REGISTRATION yet, so any new status is more likely to be money
+    // still committed than money released — and over-counting can only hold a payment back, not duplicate it.
+    expect(paymentDisposal(10000, [{ amount: 2500, status: 'SOMETHING_NEW' }]).remaining).toBe(7500);
   });
 
   it('treats a missing decision as nothing decided', () => {

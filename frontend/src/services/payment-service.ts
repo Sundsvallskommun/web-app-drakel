@@ -91,6 +91,11 @@ export interface PaymentInput {
   reportedOnStakeholderIds?: string[];
   accountingDate?: string;
   excludedFromPayment?: boolean;
+  /**
+   * The id of the payee row the recipient was picked from, so the robot gets the payee's Lifecare id
+   * rather than matching on name and account number. Left out for a Lifecare-derived payee (no row id).
+   */
+  payeeId?: string;
   payeeStakeholderId?: string;
   paymentMethod?: string;
   payeeName?: string;

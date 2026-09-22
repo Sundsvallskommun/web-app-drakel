@@ -100,13 +100,36 @@ const paymentMethodOptions = (payeeOptions: PayeeOption[]): string[] => [
 ];
 
 /**
+ * The id of the payee row to send along with the payment, or undefined.
+ *
+ * It is only sent while the recipient fields still hold what the chosen row pays to. The id is what lets
+ * the robot use the payee's Lifecare id instead of matching on name and account number, so sending it
+ * next to an account the handläggare has since typed over would point the robot at the wrong recipient —
+ * and a missing id only costs the robot its shortcut. A payee derived from the Lifecare payment history
+ * has no row and no id.
+ */
+const unchangedPayeeId = (values: UtbetalningFormValues, payees: PayeeOption[]): string | undefined => {
+  const chosen = values.payeeIndex === '' ? undefined : payees[Number(values.payeeIndex)];
+  if (!chosen?.id) {
+    return undefined;
+  }
+  const stillMatches =
+    chosen.name === values.name &&
+    chosen.paymentMethod === values.paymentMethod &&
+    (chosen.clearing ?? '') === values.clearingNumber &&
+    (chosen.accountNumber ?? '') === values.accountNumber;
+  return stillMatches ? chosen.id : undefined;
+};
+
+/**
  * The form as caremanagement's PaymentRequest. The fields the form keeps closed (bokföringsdatum,
  * lokalbetalningsnummer, räkningsnummer, OCR) are left out rather than sent empty, and
  * `payeeStakeholderId` stays unset because the payees come from Lifecare and have no stakeholder id —
  * the payee is identified by name and account instead.
  */
-const toPaymentInput = (values: UtbetalningFormValues): PaymentInput => ({
+const toPaymentInput = (values: UtbetalningFormValues, payees: PayeeOption[]): PaymentInput => ({
   paymentDate: values.paymentDate || undefined,
+  payeeId: unchangedPayeeId(values, payees),
   amount: parseAmount(values.amount),
   applicationMonth: values.applicationMonth || undefined,
   reportedOnStakeholderIds: values.reportedOnStakeholderIds,
@@ -274,7 +297,7 @@ export const ErrandUtbetalningForm: FC<{
   const submit = handleSubmit(async (values) => {
     setSaving(true);
     setSaveError(undefined);
-    const result = await createPayment(errandId, toPaymentInput(values));
+    const result = await createPayment(errandId, toPaymentInput(values, payeeOptions));
     setSaving(false);
     if (result.error) {
       setSaveError(t('payment.form.saveError'));

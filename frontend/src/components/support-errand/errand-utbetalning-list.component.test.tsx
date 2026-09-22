@@ -18,7 +18,7 @@ const DRAFT: Payment = {
 const FROM_LIFECARE: Payment = {
   id: 'p2',
   source: 'LIFECARE',
-  status: 'EFFECTUATED',
+  status: 'PENDING_REGISTRATION',
   paymentDate: '2026-08-27',
   applicationMonth: '2026-08',
   amount: 7900,
@@ -45,13 +45,15 @@ describe('ErrandUtbetalningList', () => {
     render(<ErrandUtbetalningList payments={[DRAFT, FROM_LIFECARE]} />);
 
     expect(screen.getByText('Utkast')).toBeInTheDocument();
-    expect(screen.getByText('Verkställd')).toBeInTheDocument();
+    expect(screen.getByText('Väntar på registrering')).toBeInTheDocument();
   });
 
-  it('labels the status finalize sets, which the OpenAPI enum still omits', () => {
-    render(<ErrandUtbetalningList payments={[{ ...DRAFT, status: 'PENDING_REGISTRATION' }]} />);
+  it('still names the statuses the corrected enum dropped', () => {
+    // QUEUED, EFFECTUATED and FAILED were removed from the published enum, but a row written before that
+    // would still carry one — and an unnamed status shows as a raw uppercase code.
+    render(<ErrandUtbetalningList payments={[{ ...DRAFT, status: 'EFFECTUATED' }]} />);
 
-    expect(screen.getByText('Väntar på registrering')).toBeInTheDocument();
+    expect(screen.getByText('Verkställd')).toBeInTheDocument();
   });
 
   it('shows an unknown status as it came instead of hiding it', () => {

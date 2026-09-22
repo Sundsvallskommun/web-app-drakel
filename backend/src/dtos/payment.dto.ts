@@ -15,6 +15,12 @@ export class PaymentInputDto {
   @IsArray() @IsString({ each: true }) @IsOptional() reportedOnStakeholderIds?: string[];
   @IsString() @IsOptional() accountingDate?: string;
   @IsBoolean() @IsOptional() excludedFromPayment?: boolean;
+  /**
+   * The id of the fa_payee row the recipient was picked from. It is what hands the REGISTER_PAYMENT robot
+   * the payee's Lifecare id instead of leaving it to match on name and account number. Absent for a payee
+   * derived from the Lifecare payment history — those rows have no id.
+   */
+  @IsString() @IsOptional() payeeId?: string;
   @IsString() @IsOptional() payeeStakeholderId?: string;
   @IsString() @IsOptional() paymentMethod?: string;
   @IsString() @IsOptional() payeeName?: string;

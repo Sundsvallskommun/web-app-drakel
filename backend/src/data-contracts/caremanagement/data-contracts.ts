@@ -99,6 +99,8 @@ export interface PaymentRequest {
   accountingDate?: string;
   /** Whether the payment is excluded from being paid out */
   excludedFromPayment?: boolean;
+  /** The id of the payee row on the errand this payment pays to, as GET .../payees returns it. Send it when the caseworker picked an entry from that list — it is what lets the REGISTER_PAYMENT robot be handed the payee's Lifecare id instead of matching on name and account number. Omit it for a payee derived from the Lifecare payment history, which has no local row. */
+  payeeId?: string;
   /**
    * The stakeholder id of the payee
    * @minLength 0
@@ -179,7 +181,7 @@ export interface Payment {
   source?: PaymentSourceEnum;
   /** The payment's id in Lifecare once it exists there — null until RPA has registered a caseworker-authored payment; always set for a LIFECARE-sourced one. */
   lifecareId?: string;
-  /** Server-managed lifecycle status. DRAFT on create; moves to QUEUED / EFFECTUATED / FAILED as the robot processes the REGISTER_PAYMENT RPA task. */
+  /** Server-managed lifecycle status. DRAFT for a caseworker's saved draft; PENDING_REGISTRATION for one a decision created, waiting for the robot to register it in Lifecare. Nothing moves a row out of PENDING_REGISTRATION yet — the REGISTER_PAYMENT robot has no result endpoint to report back on, so treat it as 'decided, Lifecare state unknown' rather than as a terminal outcome. */
   status?: PaymentStatusEnum;
   /** The type of money paid out. Unconstrained — the value set comes from Lifecare and isn't known yet. */
   moneyType?: string;
@@ -203,6 +205,10 @@ export interface Payment {
   accountingDate?: string;
   /** Whether the payment is excluded from being paid out */
   excludedFromPayment?: boolean;
+  /** The id of the payee row on the errand this payment pays to, as GET .../payees returns it. Null for a payee derived from the Lifecare payment history (no local row) and for a manual payee deleted after the decision — the copied payee fields below are owned by the decision and stay either way. */
+  payeeId?: string;
+  /** The payee's id in Lifecare, read from that payee row — set once the ADD_PAYEE robot has reported it back. The REGISTER_PAYMENT robot uses it to pick the payee in Lifecare by id instead of matching on name and account number. Null when the payee has no local row, or when the robot has not reported yet (lifecareStatus PENDING or FAILED on that payee). */
+  lifecarePayeeId?: string;
   /** The stakeholder id of the payee */
   payeeStakeholderId?: string;
   /** How the payment is made. Unconstrained — the value set comes from Lifecare and isn't known yet. */
@@ -1644,6 +1650,8 @@ export interface FinalizeRequest {
 
 /** The recipient of a payment and the payment method. */
 export interface Payee {
+  /** The id of the payee row this came from, as GET .../payees returns it — send it whenever the caseworker picked an entry from that list. It is what lets the REGISTER_PAYMENT robot be handed the payee's Lifecare id instead of matching on name and account number. Omit it for a payee that has no row: one derived from the Lifecare payment history carries a null id in the list. */
+  id?: string;
   /**
    * Name of the payee as registered in Lifecare
    * @minLength 0
@@ -3291,12 +3299,10 @@ export enum PaymentSourceEnum {
   LIFECARE = "LIFECARE",
 }
 
-/** Server-managed lifecycle status. DRAFT on create; moves to QUEUED / EFFECTUATED / FAILED as the robot processes the REGISTER_PAYMENT RPA task. */
+/** Server-managed lifecycle status. DRAFT for a caseworker's saved draft; PENDING_REGISTRATION for one a decision created, waiting for the robot to register it in Lifecare. Nothing moves a row out of PENDING_REGISTRATION yet — the REGISTER_PAYMENT robot has no result endpoint to report back on, so treat it as 'decided, Lifecare state unknown' rather than as a terminal outcome. */
 export enum PaymentStatusEnum {
   DRAFT = "DRAFT",
-  QUEUED = "QUEUED",
-  EFFECTUATED = "EFFECTUATED",
-  FAILED = "FAILED",
+  PENDING_REGISTRATION = "PENDING_REGISTRATION",
 }
 
 /** Provenance, defaults to CASEWORKER when omitted. RPA POSTs LIFECARE (with lifecareId) to surface a monitoring read out of Lifecare onto the errand. */
