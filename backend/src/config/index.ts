@@ -49,9 +49,11 @@ export const MESSAGING_SUPPORT_URL = env.MESSAGING_SUPPORT_URL ?? '';
 export const CAREMANAGEMENT_TYPE_SLUG = env.CAREMANAGEMENT_TYPE_SLUG;
 export const AUTHORIZED_GROUPS = env.AUTHORIZED_GROUPS ?? '';
 export const ADMIN_GROUP = env.ADMIN_GROUP ?? '';
-// Grants the superadmin role (mallhantering under /admin). Optional — when unset nobody is superadmin,
-// which only closes the admin page rather than blocking startup.
-export const SUPERADMIN_GROUP = env.SUPERADMIN_GROUP ?? '';
+// The two halves of /admin are granted separately: managing the shared mallar is a different job from
+// following up who read which errand. Both are optional — an unset group means nobody has that half,
+// which closes the page rather than blocking startup.
+export const TEMPLATE_ADMIN_GROUP = env.TEMPLATE_ADMIN_GROUP ?? '';
+export const LOG_ADMIN_GROUP = env.LOG_ADMIN_GROUP ?? '';
 export const SAML_CALLBACK_URL = env.SAML_CALLBACK_URL ?? '';
 export const SAML_LOGOUT_CALLBACK_URL = env.SAML_LOGOUT_CALLBACK_URL ?? '';
 export const SAML_SUCCESS_REDIRECT = env.SAML_SUCCESS_REDIRECT ?? '';

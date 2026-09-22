@@ -23,7 +23,7 @@ import { TemplateList } from './template-list.component';
  * its templates and opens the rich-text editor for a new or existing one.
  *
  * A mall is shared by everyone in the municipality, so changing one is not part of ordinary handläggning.
- * The permission gate around the whole section lives in AdminSection.
+ * The permission gate lives in AdminSection, which checks the page's own permission.
  */
 export const TemplatePageClient = () => {
   const { t } = useTranslation('admin');

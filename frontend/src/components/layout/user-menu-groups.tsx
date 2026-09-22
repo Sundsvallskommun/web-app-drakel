@@ -1,4 +1,5 @@
 import i18nConfig from '@app/i18nConfig';
+import { permittedAdminPages } from '@components/admin/admin-pages';
 import { useChangeLanguage } from '@hooks/use-change-language';
 import { useUserStore } from '@services/user-service/user-service';
 import { Button, PopupMenu } from '@sk-web-gui/react';
@@ -50,7 +51,7 @@ const LanguageMenuItem = () => {
   );
 };
 
-/** Takes a superadmin to the page where the shared mallar and frastexter are managed. */
+/** Takes an administrator into /admin, which opens on the first page their groups let them reach. */
 const AdminMenuItem = () => {
   const { t } = useTranslation('admin');
   const { locale } = useParams<{ locale: string }>();
@@ -89,11 +90,13 @@ const LogoutMenuItem = () => {
 };
 
 /**
- * Menu groups for the header UserMenu: mallhantering (superadmin only), language and logout.
+ * Menu groups for the header UserMenu: administration (only for those whose AD groups open at least one
+ * of its pages), language and logout.
  */
 export const useUserMenuGroups = () => {
   const { t } = useTranslation();
-  const canAdminister = useUserStore((state) => state.user.permissions.canAdminister);
+  const permissions = useUserStore((state) => state.user.permissions);
+  const canAdminister = permittedAdminPages(permissions).length > 0;
   return [
     {
       label: t('header:userMenu.label'),

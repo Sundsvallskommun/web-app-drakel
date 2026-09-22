@@ -1,4 +1,4 @@
-import { ADMIN_GROUP, AUTHORIZED_GROUPS, SUPERADMIN_GROUP } from '@config';
+import { ADMIN_GROUP, AUTHORIZED_GROUPS, LOG_ADMIN_GROUP, TEMPLATE_ADMIN_GROUP } from '@config';
 import { InternalRole, Permissions } from '@interfaces/users.interface';
 import { logger } from '@utils/logger';
 
@@ -21,28 +21,28 @@ export function authorizeGroups(groups: string): boolean {
 
 const defaultPermissions = (): Permissions => ({
   canEditErrands: false,
-  canAdminister: false,
+  canManageTemplates: false,
+  canViewEventLog: false,
 });
 
-const permissionsByRole = new Map<InternalRole, Partial<Permissions>>([
-  ['app_read', {}],
-  ['app_admin', { canEditErrands: true }],
-  ['app_superadmin', { canEditErrands: true, canAdminister: true }],
-]);
-
 /**
- * Maps configured AD groups to internal roles. The admin group grants the admin role, the superadmin
- * group the superadmin role. The two are configured independently, so a superadmin group does not have
- * to be listed in ADMIN_GROUP as well — the superadmin role carries the admin permissions with it.
+ * What each configured AD group grants. The three are independent and are configured separately:
+ * maintaining the municipality's shared mallar, following up who read which errand, and handläggning
+ * itself are three different jobs, and being trusted with one says nothing about the others.
+ *
+ * A user in several groups gets the union of what they grant.
  */
-const adminGroups = splitGroups(ADMIN_GROUP);
-const superadminGroups = splitGroups(SUPERADMIN_GROUP);
+const grantsByGroup: { groups: string[]; grants: Partial<Permissions> }[] = [
+  { groups: splitGroups(ADMIN_GROUP), grants: { canEditErrands: true } },
+  { groups: splitGroups(TEMPLATE_ADMIN_GROUP), grants: { canManageTemplates: true } },
+  { groups: splitGroups(LOG_ADMIN_GROUP), grants: { canViewEventLog: true } },
+];
 
-const isAdminGroup = (group: string): boolean => adminGroups.includes(group.toLowerCase());
+const isAdminGroup = (group: string): boolean => splitGroups(ADMIN_GROUP).includes(group.toLowerCase());
 
-const isSuperadminGroup = (group: string): boolean => superadminGroups.includes(group.toLowerCase());
-
-const roleForGroup = (group: string): InternalRole => (isSuperadminGroup(group) ? 'app_superadmin' : isAdminGroup(group) ? 'app_admin' : 'app_read');
+/** Whether a group opens either half of /admin. */
+const isAdminSectionGroup = (group: string): boolean =>
+  [...splitGroups(TEMPLATE_ADMIN_GROUP), ...splitGroups(LOG_ADMIN_GROUP)].includes(group.toLowerCase());
 
 /**
  * Collects the permissions granted by all of the user's groups.
@@ -50,13 +50,13 @@ const roleForGroup = (group: string): InternalRole => (isSuperadminGroup(group) 
  */
 export const getPermissions = (groups: string[]): Permissions => {
   const permissions = defaultPermissions();
-  groups.forEach(group => {
-    const rolePermissions = permissionsByRole.get(roleForGroup(group));
-    if (!rolePermissions) {
+  const userGroups = groups.map(group => group.toLowerCase());
+  grantsByGroup.forEach(({ groups: configured, grants }) => {
+    if (!configured.some(group => userGroups.includes(group))) {
       return;
     }
-    (Object.keys(rolePermissions) as (keyof Permissions)[]).forEach(permission => {
-      if (rolePermissions[permission]) {
+    (Object.keys(grants) as (keyof Permissions)[]).forEach(permission => {
+      if (grants[permission]) {
         permissions[permission] = true;
       }
     });
@@ -65,8 +65,9 @@ export const getPermissions = (groups: string[]): Permissions => {
 };
 
 /**
- * Returns the most privileged role for the user's groups.
+ * Returns the most privileged role for the user's groups. The role is a summary for display — what a
+ * user may actually do is the permissions, which the two halves of /admin grant independently.
  * @param groups The user's AD groups
  */
 export const getRole = (groups: string[]): InternalRole =>
-  groups.some(isSuperadminGroup) ? 'app_superadmin' : groups.some(isAdminGroup) ? 'app_admin' : 'app_read';
+  groups.some(isAdminSectionGroup) ? 'app_superadmin' : groups.some(isAdminGroup) ? 'app_admin' : 'app_read';

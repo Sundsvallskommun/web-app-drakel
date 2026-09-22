@@ -2,7 +2,8 @@ import { PermissionsResponse, User, UserRoleEnum } from '@data-contracts/backend
 
 const defaultPermissions: PermissionsResponse = {
   canEditErrands: false,
-  canAdminister: false,
+  canManageTemplates: false,
+  canViewEventLog: false,
 };
 
 export const emptyUser: User = {

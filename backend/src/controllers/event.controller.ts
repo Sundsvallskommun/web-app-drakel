@@ -32,7 +32,7 @@ export class EventController {
   @Get('/admin/event-log')
   @OpenAPI({ summary: 'One actor’s activity across every errand, newest first' })
   @ResponseSchema(ActorEventLogApiResponse)
-  @UseBefore(authMiddleware, requirePermission('canAdminister'))
+  @UseBefore(authMiddleware, requirePermission('canViewEventLog'))
   async listActorEvents(
     @QueryParam('actor', { required: true }) actor: string,
     @QueryParam('action') action?: string,

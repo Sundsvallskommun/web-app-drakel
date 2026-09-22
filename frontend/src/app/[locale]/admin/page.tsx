@@ -1,9 +1,8 @@
-import { redirect } from 'next/navigation';
+import { AdminLanding } from '@components/admin/admin-landing.component';
+import React from 'react';
 
-/** /admin has no page of its own — it opens on mallhanteringen. */
-const AdminPage = async ({ params }: { params: Promise<{ locale: string }> }) => {
-  const { locale } = await params;
-  redirect(`/${locale}/admin/mallar`);
+const AdminPage: React.FC = () => {
+  return <AdminLanding />;
 };
 
 export default AdminPage;

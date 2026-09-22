@@ -1097,7 +1097,8 @@ export interface SectionApprovalApiResponse {
 
 export interface PermissionsResponse {
   canEditErrands: boolean;
-  canAdminister: boolean;
+  canManageTemplates: boolean;
+  canViewEventLog: boolean;
 }
 
 export interface User {
