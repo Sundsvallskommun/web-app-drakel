@@ -82,8 +82,9 @@ export const ErrandWarnings: FC<ErrandWarningsProps> = ({ errandId, warnings, is
                   <div className={cx('flex flex-col gap-2', !open && 'text-gray-600')}>
                     {warning.type ?
                       <span className="font-bold text-small">
-                        {/* caremanagement owns the labels for all 33 warning types and every status,
-                            so they are shown as they come rather than translated locally. */}
+                        {/* caremanagement owns the labels for every warning type and status, so they are
+                            shown as they come rather than translated locally — a count kept here would
+                            go stale each time a type is added. */}
                         {warning.typeDisplayName ?? warning.type}
                         {!open && warning.status ? ` · ${warning.statusDisplayName ?? warning.status}` : ''}
                       </span>
