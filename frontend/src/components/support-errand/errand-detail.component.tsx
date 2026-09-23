@@ -11,6 +11,7 @@ import { useErrandNotes } from '@hooks/use-errand-notes';
 import { useErrandSectionApprovals } from '@hooks/use-errand-section-approvals';
 import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
 import { useErrandWarnings } from '@hooks/use-errand-warnings';
+import { BeslutReasons } from '@services/beslut-service';
 import { Badge, Spinner, Tabs } from '@sk-web-gui/react';
 import { CLIENT_FILES_PDF } from '@utils/attachment-names';
 import { stakeholderDisplayName } from '@utils/stakeholder-name';
@@ -51,6 +52,10 @@ interface ErrandSubTab {
   /** Shows a green check next to the sub-tab label once the section is approved. */
   approved?: boolean;
 }
+// Statuses an errand has once it is decided: finalize sets GRANTED/REJECTED, and CLOSED is the older end
+// state. "Besluta och utbetala" is not offered on any of them — caremanagement would refuse a second finalize.
+const DECIDED_STATUSES = ['GRANTED', 'REJECTED', 'CLOSED'];
+
 /** A top-level tab group (Ärende, Meddelanden, Dokumentation) holding one or more sub-tabs. */
 interface ErrandTabGroup {
   label: string;
@@ -99,6 +104,8 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   // (only while that tab is mounted), and the button runs both. canSaveBeslut keeps the button enabled
   // while a beslut can be saved even when the handläggning fields aren't dirty.
   const beslutSaveRef = useRef<(() => Promise<boolean>) | null>(null);
+  // The orsak picked on the Beslut tab outlives the tab so "Besluta och utbetala" can send it.
+  const [beslutReasons, setBeslutReasons] = useState<BeslutReasons>();
   const [canSaveBeslut, setCanSaveBeslut] = useState<boolean>(false);
   const [savingAll, setSavingAll] = useState<boolean>(false);
   const registerBeslutSave = useCallback((beslutSave: (() => Promise<boolean>) | null) => {
@@ -403,6 +410,8 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                       />
                     }
                     onRegisterSave={registerBeslutSave}
+                    reasons={beslutReasons}
+                    onReasonsChange={setBeslutReasons}
                   />
                 </ErrandTabPanel>
               ),
@@ -500,11 +509,12 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
         onSave={() => void saveAll()}
         actions={
           <>
-            {/* Beslut/utbetalning gäller bara återansökan, och bara medan ärendet inte är avslutat. */}
-            {isRenewalApplication && errand.status !== 'CLOSED' ?
+            {/* Beslut/utbetalning gäller bara återansökan, och bara medan ärendet inte är beslutat. */}
+            {isRenewalApplication && !DECIDED_STATUSES.includes(errand.status ?? '') ?
               <ErrandAvsluta
                 errandId={apiErrandId}
-                onClosed={() => {
+                reason={beslutReasons?.reason}
+                onFinalized={() => {
                   refresh();
                   refreshAttachments();
                 }}

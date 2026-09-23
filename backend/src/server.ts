@@ -15,6 +15,7 @@ import { DocumentController } from './controllers/document.controller';
 import { DocumentTemplateController } from './controllers/document-template.controller';
 import { ErrandController } from './controllers/errand.controller';
 import { EventController } from './controllers/event.controller';
+import { FinalizeController } from './controllers/finalize.controller';
 import { FormSnapshotController } from './controllers/form-snapshot.controller';
 import { HealthController } from './controllers/health.controller';
 import { JobStimulusController } from './controllers/job-stimulus.controller';
@@ -57,6 +58,7 @@ const app = new App([
   FormSnapshotController,
   ActualisationController,
   DecisionNotificationController,
+  FinalizeController,
   AdministratorController,
   AdminTemplateController,
   PdfController,

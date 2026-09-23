@@ -229,12 +229,6 @@ export interface DecisionProposalApiResponse {
   message: string;
 }
 
-export interface DecisionNotificationDto {
-  minaSidor?: boolean;
-  digitalBrevlada?: boolean;
-  brev?: boolean;
-}
-
 export interface DigitalMailboxStatus {
   available: boolean;
 }
@@ -468,6 +462,8 @@ export interface FindErrandsQueryDto {
   size?: number;
   sort?: string[];
   hasUnacknowledgedNotifications?: boolean;
+  hasUnhandledNotifications?: boolean;
+  notificationOwnerId?: string;
 }
 
 export interface Attachment {
@@ -519,6 +515,34 @@ export interface ActorEventLogApiResponse {
 
 export interface ErrandEventsApiResponse {
   data: ErrandEvent[];
+  message: string;
+}
+
+export interface DecisionNotificationDto {
+  minaSidor?: boolean;
+  digitalBrevlada?: boolean;
+  brev?: boolean;
+}
+
+export interface FinalizeErrandDto {
+  /** @maxLength 4096 */
+  reason?: string;
+  minaSidor?: boolean;
+  digitalBrevlada?: boolean;
+  brev?: boolean;
+}
+
+export interface FinalizeResult {
+  decisionId?: string;
+  paymentIds: string[];
+  payeeWarnings: string[];
+  failedRpaTasks: string[];
+  processMessageCorrelated: boolean;
+  failedChannels: string[];
+}
+
+export interface FinalizeApiResponse {
+  data: FinalizeResult;
   message: string;
 }
 
@@ -653,6 +677,53 @@ export interface JournalEntryTypesApiResponse {
   message: string;
 }
 
+export interface LifecareRecordView {
+  id: string;
+  category: string;
+  title: string;
+  dateTime: string;
+  type: string;
+  ownerTypeText: string;
+  responsibleCaseworker?: string;
+  modifiedBy: string;
+  locked: boolean;
+  protected: boolean;
+}
+
+export interface LifecareRecordsView {
+  journalNotes: LifecareRecordView[];
+  documents: LifecareRecordView[];
+}
+
+export interface LifecareRecordsApiResponse {
+  data: LifecareRecordsView;
+  message: string;
+}
+
+export interface LifecareRecordContentView {
+  id: string;
+  category: string;
+  title: string;
+  content: string;
+  occurenceDate: string;
+  time: string;
+  editable: boolean;
+}
+
+export interface LifecareRecordContentApiResponse {
+  data: LifecareRecordContentView;
+  message: string;
+}
+
+export interface UpdateLifecareRecordDto {
+  /** @maxLength 1048576 */
+  content: string;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  occurenceDate?: string;
+  /** @pattern ^\d{2}:\d{2}$ */
+  time?: string;
+}
+
 export interface MessageAttachment {
   id?: string;
   fileName?: string;
@@ -730,7 +801,6 @@ export interface NormPersonRow {
   position?: number;
   origin?: string;
   partyId?: string;
-  /** Personnummer resolved from partyId via the Citizen API; best-effort, so it can be absent. */
   personalNumber?: string;
   role?: string;
   roleDisplayName?: string;
@@ -742,7 +812,6 @@ export interface NormPersonRow {
   deviationFromDate?: string;
   deviationToDate?: string;
   normInterval?: string;
-  /** The member's own share of the norm — the Belopp column; carried over from the previous Lifecare calculation. */
   amount?: number;
   jobStimulusAmount?: number;
   deleted?: boolean;
@@ -874,8 +943,9 @@ export interface UpdateNoteDto {
   body: string;
 }
 
-export interface AcknowledgeNotificationDto {
-  acknowledged: boolean;
+export interface UpdateNotificationDto {
+  acknowledged?: boolean;
+  handled?: boolean;
 }
 
 export interface ErrandNotification {
@@ -888,6 +958,7 @@ export interface ErrandNotification {
   description?: string;
   content?: string;
   acknowledged?: boolean;
+  handled?: boolean;
   created?: string;
   modified?: string;
 }

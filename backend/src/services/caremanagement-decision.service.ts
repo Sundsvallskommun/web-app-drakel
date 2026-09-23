@@ -2,7 +2,14 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 
-import { Decision, DecisionOption, DecisionProposal, ErrandTypeSchema } from '@/data-contracts/caremanagement/data-contracts';
+import {
+  Decision,
+  DecisionOption,
+  DecisionProposal,
+  ErrandTypeSchema,
+  FinalizeRequest,
+  FinalizeResponse,
+} from '@/data-contracts/caremanagement/data-contracts';
 
 /** Extracts the decision id (last path segment) from a caremanagement Location header. */
 const decisionIdFromLocation = (location?: string): string | undefined => location?.split('/').filter(Boolean).pop();
@@ -48,6 +55,19 @@ class CaremanagementDecisionService {
   async readDecisionProposal(errandId: string): Promise<ApiResponse<DecisionProposal>> {
     return this.apiService.get<DecisionProposal>({
       url: caremanagementUrl('errands', 'financial-assistance', errandId, 'decision-proposal'),
+    });
+  }
+
+  /**
+   * "Besluta och utbetala": records the PAYMENT decision with its orsak, period and amount, creates the
+   * payment rows, queues the Lifecare write-backs and resumes the process (which sets GRANTED/REJECTED).
+   * Sends nothing to the applicant — the caller does that through the echoed channels. A second finalize,
+   * the wrong status or unapproved sections are a 409.
+   */
+  async finalize(errandId: string, request: FinalizeRequest): Promise<ApiResponse<FinalizeResponse>> {
+    return this.apiService.post<FinalizeResponse>({
+      url: caremanagementUrl('errands', 'financial-assistance', errandId, 'finalize'),
+      data: request,
     });
   }
 }

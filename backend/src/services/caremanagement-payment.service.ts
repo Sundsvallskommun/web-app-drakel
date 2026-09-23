@@ -48,6 +48,11 @@ class CaremanagementPaymentService {
     return this.apiService.post<Payment>({ url: this.paymentsUrl(errandId), data: input });
   }
 
+  /** Removes an utbetalning from the errand. */
+  async deletePayment(errandId: string, paymentId: string): Promise<ApiResponse<null>> {
+    return this.apiService.delete<null>({ url: this.paymentsUrl(errandId, paymentId) });
+  }
+
   private payeesUrl(errandId: string, ...rest: string[]): string {
     return caremanagementUrl('errands', 'financial-assistance', errandId, 'payees', ...rest);
   }

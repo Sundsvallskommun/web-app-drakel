@@ -51,11 +51,9 @@
     "button": "Decide and pay",
     "preparing": "Preparing…",
     "executing": "Executing…",
-    "sendError": "The decision could not be sent through any channel",
-    "closeError": "The decision was sent but the errand could not be closed",
-    "failedChannels": "The decision could not be sent to: {{channels}}.",
-    "unapproved_one": "You have not approved the section <strong>{{sections}}</strong>.",
-    "unapproved_other": "You have not approved the sections <strong>{{sections}}</strong>.",
+    "finalizeError": "The errand could not be decided.",
+    "unapproved_one": "Approve the section <strong>{{sections}}</strong> before deciding and paying.",
+    "unapproved_other": "Approve the sections <strong>{{sections}}</strong> before deciding and paying.",
     "sendVia": "Send the decision via:",
     "channels": {
       "minaSidor": "Mina sidor",
@@ -69,7 +67,15 @@
       "DECISION": "Decision"
     },
     "messageLabel": "Message to the applicant",
-    "messageRequired": "Write a message before deciding"
+    "messageRequired": "Write a message before deciding",
+    "done": {
+      "title": "The errand is decided",
+      "description": "The decision is saved, but this did not go through:",
+      "failedChannels": "The decision could not be sent to: {{detail}}.",
+      "payeeWarnings": "Payee: {{detail}}",
+      "failedRpaTasks": "Could not be queued for Lifecare: {{detail}}.",
+      "processNotResumed": "The process was not told about the decision."
+    }
   },
   "actualisation": {
     "button": "Archive to actualisation",

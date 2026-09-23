@@ -18,6 +18,10 @@ interface ProblemDetail {
  * (Lifecare) refused, and the sentence says which of the handläggare's data it could not work with —
  * "No personal identity number could be resolved for a person on the calculation", say. Replacing that
  * with a generic message would leave the handläggare with a failure and nothing to act on.
+ *
+ * A 409 is carried through the same way: it means the errand is not in a state that allows the action
+ * (finalize answers it for "wrong status, sections not approved or already finalized"), and the detail
+ * says which of those it was.
  */
 export const caremanagementError = (error: unknown): HttpException => {
   if (axios.isAxiosError<ProblemDetail>(error)) {
@@ -26,6 +30,8 @@ export const caremanagementError = (error: unknown): HttpException => {
         return new HttpException(400, 'Bad request from caremanagement');
       case 404:
         return new HttpException(404, 'Not found');
+      case 409:
+        return new HttpException(409, error.response.data?.detail ?? 'The errand is not in a state that allows this');
       case 413:
         return new HttpException(413, 'Uploaded file is too large');
       case 502:

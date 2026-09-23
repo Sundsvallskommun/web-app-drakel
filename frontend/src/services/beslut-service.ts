@@ -32,6 +32,16 @@ export interface Decision {
   created?: string;
 }
 
+/**
+ * The orsak a handläggare picked on the Beslut tab. Kept by the errand view rather than the tab, because
+ * the tab unmounts when left and "Besluta och utbetala" — which is what persists the orsak — sits outside it.
+ * A field left undefined has not been picked, so the beslutsförslag's proposal stands.
+ */
+export interface BeslutReasons {
+  reason?: string;
+  coApplicantReason?: string;
+}
+
 /** The fields sent when recording a beslut. */
 export interface CreateBeslutInput {
   value: string;
@@ -107,8 +117,8 @@ interface DecisionProposalWarning {
  * and the previous Lifecare decision, never stored.
  *
  * The orsak fields belong to the finalize payload ("Besluta och utbetala"), not to the plain decision
- * POST — a Decision carries no reason. The form lets a handläggare pick them so the choice is visible
- * and reviewable, but nothing persists them until finalize is wired.
+ * POST — a Decision carries no reason. Finalize carries the sökandes orsak; the medsökandes has no field
+ * there yet, so it is shown and pickable but not persisted.
  */
 export interface DecisionProposal {
   outcome?: string;

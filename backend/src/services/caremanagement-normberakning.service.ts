@@ -38,6 +38,15 @@ class CaremanagementNormberakningService {
   }
 
   /**
+   * Whether the handläggare overrode the household size on the draft — what finalize forwards as
+   * `householdSizeChanged`. Reads the draft as it is, without resolving personnummer for its persons.
+   */
+  async readHouseholdSizeChanged(errandId: string): Promise<boolean> {
+    const res = await this.apiService.get<CalculationDraft>({ url: this.draftUrl(errandId) });
+    return res.data?.hasCustomHouseholdSize ?? false;
+  }
+
+  /**
    * Adds the personnummer (resolved from the row's partyId) to a person row — the handläggare identifies a
    * household member by personnummer, the way Lifecare's Beräkning view does, and the draft only carries the
    * partyId. Best-effort: a row without a partyId, or one the Citizen API cannot resolve, keeps no number.

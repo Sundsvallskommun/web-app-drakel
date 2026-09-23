@@ -51,11 +51,9 @@
     "button": "Besluta och utbetala",
     "preparing": "Förbereder…",
     "executing": "Verkställer…",
-    "sendError": "Det gick inte att skicka beslutet till någon kanal",
-    "closeError": "Beslutet skickades men ärendet kunde inte avslutas",
-    "failedChannels": "Beslutet kunde inte skickas till: {{channels}}.",
-    "unapproved_one": "Du har inte godkänt sektionen <strong>{{sections}}</strong>.",
-    "unapproved_other": "Du har inte godkänt sektionerna <strong>{{sections}}</strong>.",
+    "finalizeError": "Ärendet kunde inte beslutas.",
+    "unapproved_one": "Godkänn sektionen <strong>{{sections}}</strong> innan du beslutar och betalar ut.",
+    "unapproved_other": "Godkänn sektionerna <strong>{{sections}}</strong> innan du beslutar och betalar ut.",
     "sendVia": "Skicka beslutet via:",
     "channels": {
       "minaSidor": "Mina sidor",
@@ -69,7 +67,15 @@
       "DECISION": "Beslut"
     },
     "messageLabel": "Meddelande till sökande",
-    "messageRequired": "Skriv ett meddelande innan du beslutar"
+    "messageRequired": "Skriv ett meddelande innan du beslutar",
+    "done": {
+      "title": "Ärendet är beslutat",
+      "description": "Beslutet är sparat, men det här gick inte igenom:",
+      "failedChannels": "Beslutet kunde inte skickas till: {{detail}}.",
+      "payeeWarnings": "Betalningsmottagare: {{detail}}",
+      "failedRpaTasks": "Kunde inte köas till Lifecare: {{detail}}.",
+      "processNotResumed": "Processen fick inte besked om beslutet."
+    }
   },
   "actualisation": {
     "button": "Arkivera till aktualisering",

@@ -1,5 +1,5 @@
-import { getDigitalMailbox, sendDecisionNotification } from '@services/decision-notification-service';
-import { updateErrand } from '@services/errand-service/errand-service';
+import { getDigitalMailbox } from '@services/decision-notification-service';
+import { finalizeErrand } from '@services/finalize-service';
 import { getSectionApprovals } from '@services/section-approval-service';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -12,15 +12,23 @@ vi.mock('@components/common/text-editor.component', () => ({
   default: ({ className }: { className?: string }) => <div className={className} data-testid="text-editor" />,
 }));
 
-vi.mock('@services/decision-notification-service', () => ({
-  getDigitalMailbox: vi.fn(),
-  sendDecisionNotification: vi.fn(),
-}));
-vi.mock('@services/errand-service/errand-service', () => ({ updateErrand: vi.fn() }));
+vi.mock('@services/decision-notification-service', () => ({ getDigitalMailbox: vi.fn() }));
+vi.mock('@services/finalize-service', () => ({ finalizeErrand: vi.fn() }));
 vi.mock('@services/section-approval-service', () => ({ getSectionApprovals: vi.fn() }));
 
-const openModal = async () => {
-  render(<ErrandAvsluta errandId="errand-1" onClosed={vi.fn()} checkApprovals={false} />);
+const finalized = {
+  decisionId: 'decision-1',
+  paymentIds: ['payment-1'],
+  payeeWarnings: [],
+  failedRpaTasks: [],
+  processMessageCorrelated: true,
+  failedChannels: [],
+};
+
+const openModal = async ({ onFinalized = vi.fn(), checkApprovals = false } = {}) => {
+  render(
+    <ErrandAvsluta errandId="errand-1" onFinalized={onFinalized} checkApprovals={checkApprovals} reason="Arbetslös" />
+  );
   fireEvent.click(screen.getByRole('button', { name: 'Besluta och utbetala' }));
   await waitFor(() => {
     expect(screen.getByLabelText('Meddelande')).toBeInTheDocument();
@@ -42,10 +50,8 @@ describe('ErrandAvsluta', () => {
     vi.mocked(getDigitalMailbox).mockResolvedValue({ data: false });
     vi.mocked(getSectionApprovals).mockReset();
     vi.mocked(getSectionApprovals).mockResolvedValue({ data: {} });
-    vi.mocked(sendDecisionNotification).mockReset();
-    vi.mocked(sendDecisionNotification).mockResolvedValue({ data: [] });
-    vi.mocked(updateErrand).mockReset();
-    vi.mocked(updateErrand).mockResolvedValue({});
+    vi.mocked(finalizeErrand).mockReset();
+    vi.mocked(finalizeErrand).mockResolvedValue({ data: finalized });
   });
 
   it('offers the message channel alongside the others, unticked', async () => {
@@ -83,18 +89,62 @@ describe('ErrandAvsluta', () => {
     expect(screen.getByText('Skriv ett meddelande innan du beslutar')).toBeInTheDocument();
   });
 
-  it('sends the beslut through the channels that were left ticked', async () => {
-    await openModal();
+  it('finalizes with the orsak and the channels that were left ticked', async () => {
+    const onFinalized = vi.fn();
+    await openModal({ onFinalized });
 
     fireEvent.click(screen.getByLabelText('Brev'));
     fireEvent.click(confirmButton());
 
     await waitFor(() => {
-      expect(sendDecisionNotification).toHaveBeenCalledWith('errand-1', {
-        minaSidor: true,
-        digitalBrevlada: false,
-        brev: false,
-      });
+      expect(onFinalized).toHaveBeenCalled();
     });
+    expect(finalizeErrand).toHaveBeenCalledWith('errand-1', {
+      minaSidor: true,
+      digitalBrevlada: false,
+      brev: false,
+      reason: 'Arbetslös',
+    });
+  });
+
+  it('holds the confirm button until every section is approved', async () => {
+    // caremanagement refuses a finalize with an unapproved section, so offering the button would only fail.
+    vi.mocked(getSectionApprovals).mockResolvedValue({
+      data: { calculation: { approved: true }, payment: { approved: false }, decision: { approved: true } },
+    });
+    await openModal({ checkApprovals: true });
+
+    expect(confirmButton()).toBeDisabled();
+    expect(screen.getByText('Utbetalning')).toBeInTheDocument();
+  });
+
+  it('keeps the dialog open with the reason when the finalize is refused', async () => {
+    vi.mocked(finalizeErrand).mockResolvedValue({ error: 409, message: 'The errand has already been finalized' });
+    const onFinalized = vi.fn();
+    await openModal({ onFinalized });
+
+    fireEvent.click(confirmButton());
+
+    await waitFor(() => {
+      expect(screen.getByText('The errand has already been finalized')).toBeInTheDocument();
+    });
+    expect(onFinalized).not.toHaveBeenCalled();
+  });
+
+  it('lists what did not go through before closing a finalized errand', async () => {
+    vi.mocked(finalizeErrand).mockResolvedValue({ data: { ...finalized, failedChannels: ['Brev'] } });
+    const onFinalized = vi.fn();
+    await openModal({ onFinalized });
+
+    fireEvent.click(confirmButton());
+
+    await waitFor(() => {
+      expect(screen.getByText('Beslutet kunde inte skickas till: Brev.')).toBeInTheDocument();
+    });
+    expect(onFinalized).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Stäng' }));
+
+    expect(onFinalized).toHaveBeenCalled();
   });
 });

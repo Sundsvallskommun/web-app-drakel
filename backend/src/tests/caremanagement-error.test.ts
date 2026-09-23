@@ -32,6 +32,15 @@ describe('caremanagementError', () => {
     expect(mapped.message).not.toBe('');
   });
 
+  it('carries a 409 through with the reason caremanagement gave', () => {
+    // A finalize conflict can be the wrong status, unapproved sections or a second finalize — the detail
+    // is what tells the handläggare which.
+    const mapped = caremanagementError(upstreamError(409, { detail: 'The errand has already been finalized' }));
+
+    expect(mapped.status).toBe(409);
+    expect(mapped.message).toBe('The errand has already been finalized');
+  });
+
   it('maps the statuses that mean something to the client', () => {
     expect(caremanagementError(upstreamError(404)).status).toBe(404);
     expect(caremanagementError(upstreamError(413)).status).toBe(413);

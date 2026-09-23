@@ -4,7 +4,7 @@ import { PdfPreviewButton } from '@components/common/pdf-preview-button.componen
 import { useDecisionProposal } from '@hooks/use-decision-proposal';
 import { useErrandBeslut } from '@hooks/use-errand-beslut';
 import { useErrandNormberakning } from '@hooks/use-errand-normberakning';
-import { createBeslut } from '@services/beslut-service';
+import { BeslutReasons, createBeslut } from '@services/beslut-service';
 import { getDocumentTemplateContent } from '@services/document-template-service';
 import { FormControl, FormLabel, Input, Select, Spinner } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
@@ -77,7 +77,10 @@ export const ErrandBeslut: FC<{
   headerSlot?: ReactNode;
   /** Registers this tab's save with the parent so the central "Spara ärende" button runs it (null = nothing to save). */
   onRegisterSave?: (save: (() => Promise<boolean>) | null) => void;
-}> = ({ errandId, locked = false, headerSlot, onRegisterSave }) => {
+  /** The orsak picked so far — owned by the errand view so "Besluta och utbetala" can send it. */
+  reasons?: BeslutReasons;
+  onReasonsChange?: (reasons: BeslutReasons) => void;
+}> = ({ errandId, locked = false, headerSlot, onRegisterSave, reasons, onReasonsChange }) => {
   const { t } = useTranslation('decision');
   const { draft, isLoading: draftLoading } = useErrandNormberakning(errandId);
   const { options, recommendation, savedBeslut, isLoading: beslutLoading, refresh } = useErrandBeslut(errandId);
@@ -91,10 +94,10 @@ export const ErrandBeslut: FC<{
   const [fromDate, setFromDate] = useState<string>(period.fromDate);
   const [toDate, setToDate] = useState<string>(period.toDate);
   // The orsak fields are inputs to finalize, not to the decision the form saves — a Decision carries
-  // no reason. They are prefilled and pickable so the choice is visible and reviewable; persisting
-  // them waits for "Besluta och utbetala".
-  const [reason, setReason] = useState<string>('');
-  const [coApplicantReason, setCoApplicantReason] = useState<string>('');
+  // no reason. Until the handläggare picks one, the beslutsförslag's proposal is shown; "Besluta och
+  // utbetala" sends the pick (or, without one, the BFF falls back to the same proposal).
+  const reason = reasons?.reason ?? proposal.reason ?? '';
+  const coApplicantReason = reasons?.coApplicantReason ?? proposal.coApplicantReason ?? '';
   const [saveError, setSaveError] = useState<string>();
   const [saved, setSaved] = useState<boolean>(false);
   // The beslutsmeddelande (composed below the divider) is saved as the decision's decisionMessage.
@@ -124,10 +127,6 @@ export const ErrandBeslut: FC<{
     setDate(prefillDate);
     setBeslutCode(prefillBeslutCode);
   }, [prefillDate, prefillBeslutCode]);
-  useEffect(() => {
-    setReason(proposal.reason ?? '');
-    setCoApplicantReason(proposal.coApplicantReason ?? '');
-  }, [proposal.reason, proposal.coApplicantReason]);
   useEffect(() => {
     setFromDate(prefillFrom);
     setToDate(prefillTo);
@@ -296,7 +295,9 @@ export const ErrandBeslut: FC<{
                 label={t('details.reason')}
                 value={reason}
                 options={proposal.reasonOptions ?? []}
-                onChange={setReason}
+                onChange={(value) => {
+                  onReasonsChange?.({ reason: value, coApplicantReason });
+                }}
               />
 
               {/* Medsökandes orsak visas bara när det finns en medsökande att föreslå för. */}
@@ -306,7 +307,9 @@ export const ErrandBeslut: FC<{
                   label={t('details.coApplicantReason')}
                   value={coApplicantReason}
                   options={proposal.reasonOptions ?? []}
-                  onChange={setCoApplicantReason}
+                  onChange={(value) => {
+                    onReasonsChange?.({ reason, coApplicantReason: value });
+                  }}
                 />
               : null}
 
