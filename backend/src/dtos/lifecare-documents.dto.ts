@@ -59,3 +59,31 @@ export class CreateLifecareJournalNoteDto {
   @IsOptional()
   occurenceDate?: string;
 }
+
+/**
+ * A new document, written straight to the errand's insats in Lifecare. The document type is Lifecare's
+ * own (`documentTypeCode` from the document-types endpoint); the rubrik defaults to its name.
+ */
+export class CreateLifecareDocumentDto {
+  /** The document body as HTML. */
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(1048576)
+  content!: string;
+
+  /** Lifecare's documentTypeCode, e.g. 1 for EK Brev. */
+  @IsInt()
+  documentTypeCode!: number;
+
+  /** The rubrik; the document type's name when left out. */
+  @IsString()
+  @MaxLength(255)
+  @IsOptional()
+  title?: string;
+
+  /** Documented date, `YYYY-MM-DD`; Lifecare's proposal (today) when left out or fixed by the type. */
+  @IsString()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'occurenceDate must be YYYY-MM-DD' })
+  @IsOptional()
+  occurenceDate?: string;
+}

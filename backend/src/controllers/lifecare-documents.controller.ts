@@ -4,7 +4,8 @@ import ErrandLifecareRecordsService from '@services/errand-lifecare-records.serv
 import { Body, Controller, Get, HttpCode, Param, Post, Put, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
-import { CreateLifecareJournalNoteDto, UpdateLifecareRecordDto } from '@/dtos/lifecare-documents.dto';
+import { CreateLifecareDocumentDto, CreateLifecareJournalNoteDto, UpdateLifecareRecordDto } from '@/dtos/lifecare-documents.dto';
+import { LifecareDocumentTypesApiResponse } from '@/responses/lifecare-document-proposal.response';
 import { LifecareRecordApiResponse, LifecareRecordContentApiResponse, LifecareRecordsApiResponse } from '@/responses/lifecare-documents.response';
 import { LifecareNoteTypesApiResponse } from '@/responses/lifecare-journal-note.response';
 
@@ -43,6 +44,23 @@ export class LifecareDocumentsController {
   @UseBefore(authMiddleware, validationMiddleware(CreateLifecareJournalNoteDto, 'body'))
   async createJournalNote(@Param('errandId') errandId: string, @Body() input: CreateLifecareJournalNoteDto) {
     return { data: await this.recordsService.createJournalNote(errandId, input), message: 'success' };
+  }
+
+  @Get('/errands/:errandId/lifecare-documents/document-types')
+  @OpenAPI({ summary: "The document types a new document on the errand's insats can have" })
+  @ResponseSchema(LifecareDocumentTypesApiResponse)
+  @UseBefore(authMiddleware)
+  async listDocumentTypes(@Param('errandId') errandId: string) {
+    return { data: await this.recordsService.documentTypes(errandId), message: 'success' };
+  }
+
+  @Post('/errands/:errandId/lifecare-documents/documents')
+  @HttpCode(201)
+  @OpenAPI({ summary: "Write a new document on the errand's insats in Lifecare" })
+  @ResponseSchema(LifecareRecordApiResponse)
+  @UseBefore(authMiddleware, validationMiddleware(CreateLifecareDocumentDto, 'body'))
+  async createDocument(@Param('errandId') errandId: string, @Body() input: CreateLifecareDocumentDto) {
+    return { data: await this.recordsService.createDocument(errandId, input), message: 'success' };
   }
 
   @Get('/errands/:errandId/lifecare-documents/journal-notes/:id')

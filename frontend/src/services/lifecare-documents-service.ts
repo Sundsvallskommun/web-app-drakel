@@ -1,5 +1,8 @@
 import {
+  CreateLifecareDocumentDto,
   CreateLifecareJournalNoteDto,
+  LifecareDocumentTypesApiResponse,
+  LifecareDocumentTypeView,
   LifecareNoteTypesApiResponse,
   LifecareNoteTypeView,
 } from '@data-contracts/backend/data-contracts';
@@ -107,5 +110,25 @@ export const createLifecareJournalNote = (
 ): Promise<ServiceResponse<null>> =>
   apiService
     .post<ApiResponse>(`errands/${errandId}/lifecare-documents/journal-notes`, input)
+    .then(() => ({ data: null }))
+    .catch(toServiceError);
+
+/** The document types a new document on the insats of the errand can have, as Lifecare lists them. */
+export const getLifecareDocumentTypes = (errandId: string): Promise<ServiceResponse<LifecareDocumentTypeView[]>> =>
+  apiService
+    .get<LifecareDocumentTypesApiResponse>(`errands/${errandId}/lifecare-documents/document-types`)
+    .then((res) => ({ data: res.data.data }))
+    .catch(toServiceError);
+
+/**
+ * Writes a new document straight to the insats of the errand in Lifecare. As with journalanteckningar,
+ * there is no copy anywhere else, so on a rejection the text only lives in the open form.
+ */
+export const createLifecareDocument = (
+  errandId: string,
+  input: CreateLifecareDocumentDto
+): Promise<ServiceResponse<null>> =>
+  apiService
+    .post<ApiResponse>(`errands/${errandId}/lifecare-documents/documents`, input)
     .then(() => ({ data: null }))
     .catch(toServiceError);

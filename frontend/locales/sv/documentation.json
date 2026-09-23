@@ -51,7 +51,9 @@
     "readOnly": "Posten är låst i Lifecare och kan inte redigeras.",
     "saveError": "Det gick inte att spara ändringen i Lifecare",
     "noteTypesError": "Det gick inte att hämta anteckningstyperna från Lifecare",
-    "createError": "Det gick inte att spara journalanteckningen i Lifecare"
+    "createError": "Det gick inte att spara journalanteckningen i Lifecare",
+    "documentTypesError": "Det gick inte att hämta dokumenttyperna från Lifecare",
+    "createDocumentError": "Det gick inte att spara dokumentet i Lifecare"
   },
   "form": {
     "typeRequired": "Typ *",

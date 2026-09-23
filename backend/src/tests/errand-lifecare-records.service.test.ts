@@ -65,6 +65,29 @@ describe('ErrandLifecareRecordsService', () => {
     expect(create).not.toHaveBeenCalled();
   });
 
+  it('writes a new document on the insats of the errand and logs it on the errand', async () => {
+    const createdDocument: LifecareRecordView = {
+      id: '139',
+      category: 'DOCUMENT',
+      title: 'EK Brev',
+      dateTime: '2026-09-23',
+      type: 'EK Brev',
+      ownerTypeText: '',
+      modifiedBy: 'RPA_031DEV 2026-09-23',
+      locked: false,
+      protected: false,
+    };
+    const newDocument = { content: '<p>Hej</p>', documentTypeCode: 1 };
+    const create = vi.spyOn(LifecareDocumentsService.prototype, 'createDocument').mockResolvedValue(createdDocument);
+    const report = vi.spyOn(CaremanagementEventService.prototype, 'reportLifecareAccess').mockResolvedValue();
+
+    const created = await new ErrandLifecareRecordsService().createDocument('errand-1', newDocument);
+
+    expect(created.id).toBe('139');
+    expect(create).toHaveBeenCalledWith(2, newDocument);
+    expect(report.mock.calls[0]?.[1]).toMatchObject([{ action: 'CREATE', target: 'DOCUMENT', lifecareId: '139' }]);
+  });
+
   it('does not hand over a read careM could not log', async () => {
     vi.spyOn(LifecareDocumentsService.prototype, 'listForClient').mockResolvedValue({ data: { documentModels: [] }, message: 'success' });
     vi.spyOn(CaremanagementEventService.prototype, 'reportLifecareAccess').mockRejectedValue(new HttpException(500, 'down'));

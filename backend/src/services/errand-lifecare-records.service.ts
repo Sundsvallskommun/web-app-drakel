@@ -6,6 +6,7 @@ import LifecareDocumentsService from '@services/lifecare-documents.service';
 import LifecareServiceIdService from '@services/lifecare-service-id.service';
 
 import { LifecareAccessActionEnum } from '@/data-contracts/caremanagement/data-contracts';
+import { LifecareDocumentTypeView, NewDocument, toDocumentTypes } from '@/responses/lifecare-document-proposal.response';
 import { LifecareRecordContentView, LifecareRecordsView, LifecareRecordView, toLifecareRecords } from '@/responses/lifecare-documents.response';
 import { LifecareNoteTypeView, NewJournalNote, toNoteTypes } from '@/responses/lifecare-journal-note.response';
 
@@ -86,6 +87,24 @@ class ErrandLifecareRecordsService {
     await this.accessLog.logWrite(errandId, LifecareAccessActionEnum.CREATE, {
       target: 'JOURNAL_NOTE',
       description: 'Skrev en journalanteckning i Lifecare',
+      lifecareId: created.id,
+    });
+    return created;
+  }
+
+  /** The document types a new document on the errand's insats can have. */
+  async documentTypes(errandId: string): Promise<LifecareDocumentTypeView[]> {
+    const serviceId = await this.serviceIds.resolve(errandId);
+    return toDocumentTypes(await this.documentsService.readDocumentProposal(serviceId));
+  }
+
+  /** Writes a new document on the errand's insats in Lifecare. Nothing is kept in careM. */
+  async createDocument(errandId: string, input: NewDocument & { documentTypeCode: number }): Promise<LifecareRecordView> {
+    const serviceId = await this.serviceIds.resolve(errandId);
+    const created = await this.documentsService.createDocument(serviceId, input);
+    await this.accessLog.logWrite(errandId, LifecareAccessActionEnum.CREATE, {
+      target: 'DOCUMENT',
+      description: 'Skrev ett dokument i Lifecare',
       lifecareId: created.id,
     });
     return created;

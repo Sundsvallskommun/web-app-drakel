@@ -51,7 +51,9 @@
     "readOnly": "The record is locked in Lifecare and cannot be edited.",
     "saveError": "Could not save the change in Lifecare",
     "noteTypesError": "The note types could not be read from Lifecare",
-    "createError": "The journal note could not be saved in Lifecare"
+    "createError": "The journal note could not be saved in Lifecare",
+    "documentTypesError": "The document types could not be read from Lifecare",
+    "createDocumentError": "The document could not be saved in Lifecare"
   },
   "form": {
     "typeRequired": "Type *",

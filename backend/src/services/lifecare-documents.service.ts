@@ -1,6 +1,7 @@
 import { HttpException } from '@exceptions/HttpException';
 import { ApiResponse } from '@interfaces/api-service.interface';
 
+import { buildDocument, LifecareDocumentProposalRaw, NewDocument, writableDocumentTypes } from '@/responses/lifecare-document-proposal.response';
 import {
   applyRecordEdit,
   isEditable,
@@ -90,6 +91,37 @@ class LifecareDocumentsService {
     const created = await this.apiService.post<LifecareDocumentModel>(
       { module: PROFESSIONAL_WEB, path: 'api2/Document/CreateJournalNote/' },
       buildJournalNote(proposal, noteType, input),
+    );
+    return toLifecareRecord(created.data);
+  }
+
+  /**
+   * Lifecare's proposal for a new document on an insats — the selectable document types and a blank
+   * document bound to the insats.
+   */
+  public async readDocumentProposal(serviceId: number): Promise<LifecareDocumentProposalRaw> {
+    const res = await this.apiService.get<LifecareDocumentProposalRaw>({
+      module: PROFESSIONAL_WEB,
+      path: 'api2/Document/GetDocumentProposalForService',
+      params: { id: String(serviceId) },
+    });
+    return res.data;
+  }
+
+  /**
+   * Writes a new document on an insats, the way Lifecare's own editor does: fetch the proposal, fill in
+   * its blank document and post it to `CreateDocument`. Lifecare answers with the new row.
+   */
+  public async createDocument(serviceId: number, input: NewDocument & { documentTypeCode: number }): Promise<LifecareRecordView> {
+    const proposal = await this.readDocumentProposal(serviceId);
+    const documentType = writableDocumentTypes(proposal).find(candidate => candidate.documentCode === input.documentTypeCode);
+    if (!documentType) {
+      throw new HttpException(400, 'Dokumenttypen finns inte i Lifecare');
+    }
+
+    const created = await this.apiService.post<LifecareDocumentModel>(
+      { module: PROFESSIONAL_WEB, path: 'api2/Document/CreateDocument/' },
+      buildDocument(proposal, documentType, input),
     );
     return toLifecareRecord(created.data);
   }
