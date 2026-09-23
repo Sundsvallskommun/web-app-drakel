@@ -45,3 +45,10 @@ export const updateLifecareReminder = (
     .put<ApiResponse>(`errands/${errandId}/lifecare-reminders/${String(reminderId)}`, input)
     .then(() => ({ data: null }))
     .catch(toServiceError);
+
+/** Removes a bevakning from the insats of the errand in Lifecare. A refusal carries Lifecare's reason in `message`. */
+export const removeLifecareReminder = (errandId: string, reminderId: number): Promise<ServiceResponse<null>> =>
+  apiService
+    .delete<ApiResponse>(`errands/${errandId}/lifecare-reminders/${String(reminderId)}`)
+    .then(() => ({ data: null }))
+    .catch(toServiceError);

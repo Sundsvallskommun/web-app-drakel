@@ -1,7 +1,7 @@
 import authMiddleware from '@middlewares/auth.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import ErrandLifecareRemindersService from '@services/errand-lifecare-reminders.service';
-import { Body, Controller, Get, HttpCode, Param, Post, Put, UseBefore } from 'routing-controllers';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
 import { CreateLifecareReminderDto } from '@/dtos/lifecare-reminder.dto';
@@ -42,6 +42,14 @@ export class LifecareRemindersController {
   @UseBefore(authMiddleware, validationMiddleware(CreateLifecareReminderDto, 'body'))
   async update(@Param('errandId') errandId: string, @Param('reminderId') reminderId: string, @Body() input: CreateLifecareReminderDto) {
     await this.remindersService.update(errandId, Number(reminderId), input);
+    return { data: null, message: 'success' };
+  }
+
+  @Delete('/errands/:errandId/lifecare-reminders/:reminderId')
+  @OpenAPI({ summary: "Remove a bevakning from the errand's insats in Lifecare" })
+  @UseBefore(authMiddleware)
+  async remove(@Param('errandId') errandId: string, @Param('reminderId') reminderId: string) {
+    await this.remindersService.remove(errandId, Number(reminderId));
     return { data: null, message: 'success' };
   }
 }

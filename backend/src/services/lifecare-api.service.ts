@@ -27,6 +27,9 @@ const chooseStrategy = (): LifecareAuthStrategy => {
   return LIFECARE_BROWSER_SIGN_IN ? new BrowserLifecareSession() : new ServiceAccountLifecareSession();
 };
 
+/** The HTTP methods drakel uses against api2. */
+type LifecareMethod = 'GET' | 'POST' | 'DELETE';
+
 const sharedSession = new LifecareSessionService(chooseStrategy());
 
 /**
@@ -78,7 +81,16 @@ class LifecareApiService {
     return this.requestWithSession<T>(request, 'POST', body);
   }
 
-  private async requestWithSession<T>(request: LifecareRequest, method: 'GET' | 'POST', body?: unknown): Promise<ApiResponse<T>> {
+  /**
+   * Removes something in Lifecare. Lifecare's own client sends the id in a JSON body rather than the
+   * URL, so the body goes along as on a POST. Retrying on a session refusal is as safe as for a write:
+   * Lifecare refused before acting on it.
+   */
+  public delete<T>(request: LifecareRequest, body: unknown): Promise<ApiResponse<T>> {
+    return this.requestWithSession<T>(request, 'DELETE', body);
+  }
+
+  private async requestWithSession<T>(request: LifecareRequest, method: LifecareMethod, body?: unknown): Promise<ApiResponse<T>> {
     let response = await this.send<T>(request, method, body);
 
     if (needsLifecareSession(response)) {
@@ -132,7 +144,7 @@ class LifecareApiService {
     logger.warn(`Lifecare sent back (${response.status}): ${asText.slice(0, 600).replace(/\s+/g, ' ')}`);
   }
 
-  private async send<T>(request: LifecareRequest, method: 'GET' | 'POST', body?: unknown): Promise<AxiosResponse<T>> {
+  private async send<T>(request: LifecareRequest, method: LifecareMethod, body?: unknown): Promise<AxiosResponse<T>> {
     const cookies = await this.session.prepare();
 
     try {
@@ -149,7 +161,7 @@ class LifecareApiService {
           Origin: new URL(LIFECARE_BASE_URL).origin,
           Referer: `${LIFECARE_BASE_URL.replace(/\/+$/, '')}/WE.Flow.Html/`,
           // Only on a write, and matching what Lifecare's own client sends down to the charset.
-          ...(method === 'POST' ? { 'Content-Type': 'application/json; charset=UTF-8' } : {}),
+          ...(method !== 'GET' ? { 'Content-Type': 'application/json; charset=UTF-8' } : {}),
           ...cookies,
         },
         // Redirects are never followed blindly here: one means the session is gone, and that is a

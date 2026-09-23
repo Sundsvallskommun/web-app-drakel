@@ -3,13 +3,18 @@
 import { AsyncContent } from '@components/common/async-content.component';
 import { CreateLifecareReminderDto, LifecareReminderView } from '@data-contracts/backend/data-contracts';
 import { useLifecareReminderOptions } from '@hooks/use-lifecare-reminder-options';
-import { createLifecareReminder, updateLifecareReminder } from '@services/lifecare-reminder-service';
+import {
+  createLifecareReminder,
+  removeLifecareReminder,
+  updateLifecareReminder,
+} from '@services/lifecare-reminder-service';
 import { Button } from '@sk-web-gui/react';
-import { Pencil } from 'lucide-react';
+import { Pencil, Trash } from 'lucide-react';
 import { FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { LifecareReminderForm } from './lifecare-reminder-form.component';
+import { LifecareReminderRemoveConfirm } from './lifecare-reminder-remove-confirm.component';
 
 interface ErrandBevakningarProps {
   errandId: string;
@@ -28,7 +33,11 @@ const toFormValues = (reminder: LifecareReminderView): CreateLifecareReminderDto
 });
 
 /** One bevakning: date and status on top, the text, then who it is "bevakad av" and what it hangs on. */
-const ReminderSummary: FC<{ reminder: LifecareReminderView; onEdit: () => void }> = ({ reminder, onEdit }) => {
+const ReminderSummary: FC<{ reminder: LifecareReminderView; onEdit: () => void; onRemove: () => void }> = ({
+  reminder,
+  onEdit,
+  onRemove,
+}) => {
   const { t } = useTranslation('sidebar');
 
   return (
@@ -47,21 +56,31 @@ const ReminderSummary: FC<{ reminder: LifecareReminderView; onEdit: () => void }
           {[reminder.caseworker, reminder.type].filter(Boolean).join(' · ')}
         </span>
       </div>
-      <Button
-        size="sm"
-        variant="tertiary"
-        iconButton
-        aria-label={t('bevakningar.edit')}
-        leftIcon={<Pencil />}
-        onClick={onEdit}
-      />
+      <div className="flex shrink-0 gap-4">
+        <Button
+          size="sm"
+          variant="tertiary"
+          iconButton
+          aria-label={t('bevakningar.edit')}
+          leftIcon={<Pencil />}
+          onClick={onEdit}
+        />
+        <Button
+          size="sm"
+          variant="tertiary"
+          iconButton
+          aria-label={t('bevakningar.remove')}
+          leftIcon={<Trash />}
+          onClick={onRemove}
+        />
+      </div>
     </div>
   );
 };
 
 /**
  * Sidebar section with the bevakningar on the errand's insats, read live from Lifecare. A bevakning is
- * added or changed there — changing the status to "Klar" is how one is marked done. It is always an
+ * added, changed or removed there — changing the status to "Klar" is how one is marked done. It is always an
  * IFO.Insats "Manuell bevakning insats", "bevakad av" the insats's handläggare.
  */
 export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
@@ -74,6 +93,7 @@ export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
   const { t } = useTranslation('sidebar');
   const { options } = useLifecareReminderOptions(errandId);
   const [editingId, setEditingId] = useState<number>();
+  const [removingId, setRemovingId] = useState<number>();
 
   const add = async (reminder: CreateLifecareReminderDto): Promise<string | undefined> => {
     const res = await createLifecareReminder(errandId, reminder);
@@ -90,6 +110,16 @@ export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
       return res.message ?? t('bevakningar.saveError');
     }
     setEditingId(undefined);
+    refresh();
+    return undefined;
+  };
+
+  const remove = async (reminderId: number): Promise<string | undefined> => {
+    const res = await removeLifecareReminder(errandId, reminderId);
+    if (res.error) {
+      return res.message ?? t('bevakningar.removeError');
+    }
+    setRemovingId(undefined);
     refresh();
     return undefined;
   };
@@ -117,12 +147,27 @@ export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
                     setEditingId(undefined);
                   }}
                 />
-              : <ReminderSummary
-                  reminder={reminder}
-                  onEdit={() => {
-                    setEditingId(reminder.id);
-                  }}
-                />
+              : <>
+                  <ReminderSummary
+                    reminder={reminder}
+                    onEdit={() => {
+                      setRemovingId(undefined);
+                      setEditingId(reminder.id);
+                    }}
+                    onRemove={() => {
+                      setEditingId(undefined);
+                      setRemovingId(reminder.id);
+                    }}
+                  />
+                  {removingId === reminder.id ?
+                    <LifecareReminderRemoveConfirm
+                      onConfirm={() => remove(reminder.id)}
+                      onCancel={() => {
+                        setRemovingId(undefined);
+                      }}
+                    />
+                  : null}
+                </>
               }
             </li>
           ))}

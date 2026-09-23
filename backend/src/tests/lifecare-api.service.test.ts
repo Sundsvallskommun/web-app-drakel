@@ -174,3 +174,20 @@ describe('LifecareApiService.get', () => {
     expect(authenticate).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('LifecareApiService.delete', () => {
+  beforeEach(() => {
+    axiosRequest.mockReset();
+  });
+
+  it('sends a DELETE with the id in a JSON body, like the Lifecare web client', async () => {
+    axiosRequest.mockResolvedValueOnce(lifecareResponse(200));
+
+    await lifecare().delete({ module: 'WESE.FC.ProfessionalWeb', path: 'api2/Reminders/RemoveReminder/' }, { id: 12 });
+
+    const call = axiosRequest.mock.calls[0]?.[0] as { method: string; data: unknown; headers: Record<string, string> };
+    expect(call.method).toBe('DELETE');
+    expect(call.data).toEqual({ id: 12 });
+    expect(call.headers['Content-Type']).toBe('application/json; charset=UTF-8');
+  });
+});

@@ -45,7 +45,10 @@
     "textPlaceholder": "What should be followed up?",
     "saving": "Saving",
     "add": "Add reminder",
-    "edit": "Change reminder"
+    "edit": "Change reminder",
+    "remove": "Remove reminder",
+    "removeConfirm": "Remove the reminder? It is removed in Lifecare and cannot be restored.",
+    "removeError": "The reminder could not be removed in Lifecare"
   },
   "events": {
     "filterSource": "Filter by source",

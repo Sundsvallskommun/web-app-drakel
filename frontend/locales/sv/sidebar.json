@@ -45,7 +45,10 @@
     "textPlaceholder": "Vad ska bevakas?",
     "saving": "Sparar",
     "add": "Lägg till bevakning",
-    "edit": "Ändra bevakning"
+    "edit": "Ändra bevakning",
+    "remove": "Ta bort bevakning",
+    "removeConfirm": "Ta bort bevakningen? Den tas bort i Lifecare och kan inte återställas.",
+    "removeError": "Det gick inte att ta bort bevakningen i Lifecare"
   },
   "events": {
     "filterSource": "Filtrera på källa",

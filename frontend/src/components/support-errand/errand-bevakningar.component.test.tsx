@@ -1,6 +1,7 @@
 import {
   createLifecareReminder,
   getLifecareReminderOptions,
+  removeLifecareReminder,
   updateLifecareReminder,
 } from '@services/lifecare-reminder-service';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
@@ -12,6 +13,7 @@ vi.mock('@services/lifecare-reminder-service', () => ({
   getLifecareReminderOptions: vi.fn(),
   createLifecareReminder: vi.fn(),
   updateLifecareReminder: vi.fn(),
+  removeLifecareReminder: vi.fn(),
 }));
 
 // Today is pinned so the dates below are in the future however long the tests live.
@@ -71,6 +73,7 @@ describe('ErrandBevakningar', () => {
     vi.mocked(getLifecareReminderOptions).mockResolvedValue({ data: OPTIONS });
     vi.mocked(createLifecareReminder).mockReset();
     vi.mocked(updateLifecareReminder).mockReset();
+    vi.mocked(removeLifecareReminder).mockReset();
   });
 
   it('lists the bevakningar read from Lifecare, with who they are bevakade av', () => {
@@ -165,5 +168,38 @@ describe('ErrandBevakningar', () => {
       expect(screen.getByRole('alert')).toHaveTextContent('Insatsen har ingen handläggare i Lifecare som kan bevaka.');
     });
     expect(form.getByLabelText('Text *')).toHaveValue('Följ upp hyresavin');
+  });
+
+  it('removes a bevakning in Lifecare once the handläggare has confirmed', async () => {
+    vi.mocked(removeLifecareReminder).mockResolvedValue({ data: null });
+    const refresh = vi.fn();
+    renderSection(refresh);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ta bort bevakning' }));
+    // Nothing is removed on the first click — it only asks.
+    expect(removeLifecareReminder).not.toHaveBeenCalled();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Ta bort bevakning' })[1] ?? document.body);
+
+    await waitFor(() => {
+      expect(refresh).toHaveBeenCalled();
+    });
+    expect(removeLifecareReminder).toHaveBeenCalledWith('errand-1', 40);
+  });
+
+  it('shows the reason Lifecare gave when it refuses the removal', async () => {
+    vi.mocked(removeLifecareReminder).mockResolvedValue({
+      error: 404,
+      message: 'Bevakningen finns inte på insatsen i Lifecare',
+    });
+    const refresh = vi.fn();
+    renderSection(refresh);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ta bort bevakning' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Ta bort bevakning' })[1] ?? document.body);
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('Bevakningen finns inte på insatsen i Lifecare');
+    });
+    expect(refresh).not.toHaveBeenCalled();
   });
 });

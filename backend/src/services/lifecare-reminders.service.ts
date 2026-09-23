@@ -11,7 +11,7 @@ const PROFESSIONAL_WEB = 'WESE.FC.ProfessionalWeb';
 
 /**
  * Lifecare's bevakning endpoints, with paths copied from captures of its own web app (2026-09-23) —
- * down to the trailing slash on `CreateReminder/` and none on the others.
+ * down to the trailing slash on the writes and none on the reads.
  */
 class LifecareRemindersService {
   private readonly apiService = new LifecareApiService();
@@ -49,6 +49,11 @@ class LifecareRemindersService {
   /** Saves a changed bevakning — also how one is marked done (status "Klar"). */
   public async update(reminder: Record<string, unknown>): Promise<void> {
     await this.apiService.post<unknown>({ module: PROFESSIONAL_WEB, path: 'api2/Reminders/UpdateReminder/' }, reminder);
+  }
+
+  /** Removes a bevakning. Lifecare takes the id in the body, not the URL. */
+  public async remove(reminderId: number): Promise<void> {
+    await this.apiService.delete<unknown>({ module: PROFESSIONAL_WEB, path: 'api2/Reminders/RemoveReminder/' }, { id: reminderId });
   }
 
   /** Creates a bevakning. Not idempotent — a second call creates a second one. */

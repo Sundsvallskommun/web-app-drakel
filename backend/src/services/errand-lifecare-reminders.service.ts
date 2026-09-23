@@ -56,10 +56,7 @@ class ErrandLifecareRemindersService {
    */
   async update(errandId: string, reminderId: number, reminder: NewLifecareReminder): Promise<void> {
     const serviceId = await this.serviceIds.resolve(errandId);
-    const [list, proposal] = await Promise.all([this.remindersService.listByService(serviceId), this.remindersService.readProposal(serviceId)]);
-    if (!list.reminders.some(candidate => candidate.reminderId === reminderId)) {
-      throw new HttpException(404, 'Bevakningen finns inte på insatsen i Lifecare');
-    }
+    const [, proposal] = await Promise.all([this.assertOnInsats(serviceId, reminderId), this.remindersService.readProposal(serviceId)]);
 
     const current = await this.remindersService.readForEdit(reminderId);
     const update = buildReminderUpdate(current, proposal.options, reminder);
@@ -72,6 +69,29 @@ class ErrandLifecareRemindersService {
       description: 'Ändrade en bevakning i Lifecare',
       lifecareId: String(reminderId),
     });
+  }
+
+  /**
+   * Removes a bevakning from the errand's insats in Lifecare. As with a change, only a bevakning Lifecare
+   * lists for this insats can be removed through this errand.
+   */
+  async remove(errandId: string, reminderId: number): Promise<void> {
+    const serviceId = await this.serviceIds.resolve(errandId);
+    await this.assertOnInsats(serviceId, reminderId);
+    await this.remindersService.remove(reminderId);
+    await this.accessLog.logWrite(errandId, LifecareAccessActionEnum.DELETE, {
+      target: 'REMINDER',
+      description: 'Tog bort en bevakning i Lifecare',
+      lifecareId: String(reminderId),
+    });
+  }
+
+  /** Refuses an id Lifecare does not list for the insats, so no errand reaches another's bevakning. */
+  private async assertOnInsats(serviceId: number, reminderId: number): Promise<void> {
+    const list = await this.remindersService.listByService(serviceId);
+    if (!list.reminders.some(candidate => candidate.reminderId === reminderId)) {
+      throw new HttpException(404, 'Bevakningen finns inte på insatsen i Lifecare');
+    }
   }
 
   /**
