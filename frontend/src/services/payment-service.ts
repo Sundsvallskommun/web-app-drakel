@@ -1,3 +1,4 @@
+import { PaymentRegistration, PaymentRegistrationApiResponse } from '@data-contracts/backend/data-contracts';
 import { ServiceResponse } from '@interfaces/services';
 import { ApiResponse, apiService, toServiceError } from '@services/api-service';
 
@@ -69,17 +70,6 @@ export const getPaymentProposal = (errandId: string): Promise<ServiceResponse<Pa
     .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);
 
-/** A labelled dropdown option from caremanagement's metadata catalogues. */
-interface PaymentTypeOption {
-  code?: string;
-  displayName?: string;
-}
-
-/** The Lifecare-sourced dropdown catalogue for the utbetalning form's Betalsätt. */
-export interface PaymentMetadata {
-  paymentMethods: PaymentTypeOption[];
-}
-
 /**
  * The fields sent when registering an utbetalning. caremanagement stores it as DRAFT and queues
  * nothing — the robot is started separately, so saving never sets anything in motion.
@@ -91,11 +81,6 @@ export interface PaymentInput {
   reportedOnStakeholderIds?: string[];
   accountingDate?: string;
   excludedFromPayment?: boolean;
-  /**
-   * The id of the payee row the recipient was picked from, so the robot gets the payee's Lifecare id
-   * rather than matching on name and account number. Left out for a Lifecare-derived payee (no row id).
-   */
-  payeeId?: string;
   payeeStakeholderId?: string;
   paymentMethod?: string;
   payeeName?: string;
@@ -156,58 +141,15 @@ export const createPayment = (errandId: string, input: PaymentInput): Promise<Se
     .then(() => ({ data: null }))
     .catch(toServiceError);
 
-/** The money types and payment methods behind the utbetalning form's dropdowns. */
-export const getPaymentMetadata = (): Promise<ServiceResponse<PaymentMetadata>> =>
-  apiService
-    .get<ApiResponse<PaymentMetadata>>('payment-metadata')
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
-
 /**
- * A selectable betalningsmottagare. A LIFECARE option comes from the applicant's Lifecare payment
- * history and has no id; a MANUAL one was added on the errand and carries how far the robot has got
- * writing it into Lifecare.
+ * Registers an utbetalning that is waiting for Lifecare (PENDING_REGISTRATION) there. A resolved result
+ * says how it went — registered, refused by Lifecare, or not sent and why.
  */
-export interface PayeeOption {
-  id?: string;
-  name?: string;
-  paymentMethod?: string;
-  clearing?: string;
-  accountNumber?: string;
-  source?: 'LIFECARE' | 'MANUAL';
-  lifecareStatus?: 'PENDING' | 'SYNCED' | 'FAILED';
-  lifecarePayeeId?: string;
-  /** Lifecare's own message when the write failed — shown to the handläggare as it came. */
-  lifecareDetail?: string;
-  lastPaidOn?: string;
-  created?: string;
-}
-
-/** The fields sent when adding a betalningsmottagare by hand. */
-export interface PayeeInput {
-  name: string;
-  paymentMethod: string;
-  clearing?: string;
-  accountNumber?: string;
-}
-
-/** The selectable betalningsmottagare on an errand. */
-export const getPayees = (errandId: string): Promise<ServiceResponse<PayeeOption[]>> =>
+export const registerPaymentInLifecare = (
+  errandId: string,
+  paymentId: string
+): Promise<ServiceResponse<PaymentRegistration>> =>
   apiService
-    .get<ApiResponse<PayeeOption[]>>(`errands/${errandId}/payees`)
+    .post<PaymentRegistrationApiResponse>(`errands/${errandId}/payments/${paymentId}/lifecare-registration`, {})
     .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
-
-/** Adds a betalningsmottagare by hand; an identical one is reused rather than duplicated. */
-export const createPayee = (errandId: string, input: PayeeInput): Promise<ServiceResponse<PayeeOption | null>> =>
-  apiService
-    .post<ApiResponse<PayeeOption | null>>(`errands/${errandId}/payees`, input)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
-
-/** Removes a manually added betalningsmottagare. */
-export const deletePayee = (errandId: string, payeeId: string): Promise<ServiceResponse<null>> =>
-  apiService
-    .delete<ApiResponse<null>>(`errands/${errandId}/payees/${payeeId}`)
-    .then(() => ({ data: null }))
     .catch(toServiceError);

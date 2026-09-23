@@ -35,18 +35,17 @@
     "noteText": "Anteckningstext"
   },
   "bevakningar": {
-    "saveError": "Det gick inte att spara bevakningen",
-    "deleteError": "Det gick inte att ta bort bevakningen",
-    "loadError": "Det gick inte att hämta bevakningar",
-    "empty": "Inga bevakningar.",
-    "delete": "Ta bort bevakning",
-    "title": "Rubrik *",
-    "titlePlaceholder": "Vad ska bevakas?",
-    "from": "Från *",
-    "to": "Till",
-    "description": "Beskrivning",
+    "saveError": "Det gick inte att spara bevakningen i Lifecare",
+    "loadError": "Det gick inte att hämta bevakningar från Lifecare",
+    "empty": "Inga bevakningar i Lifecare.",
+    "date": "Datum *",
+    "priority": "Prioritet",
+    "status": "Status",
+    "text": "Text *",
+    "textPlaceholder": "Vad ska bevakas?",
     "saving": "Sparar",
-    "add": "Lägg till bevakning"
+    "add": "Lägg till bevakning",
+    "edit": "Ändra bevakning"
   },
   "events": {
     "filterSource": "Filtrera på källa",

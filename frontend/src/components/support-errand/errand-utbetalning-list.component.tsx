@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 import { ContentBox } from './content-box.component';
 import { LifecareSourceBadge } from './lifecare-source-badge.component';
+import { RegisterPaymentButton } from './register-payment-button.component';
 
 /** Sort newest first by the payment date, falling back to when the row was created. */
 const byDateDesc = (first: Payment, second: Payment): number =>
@@ -39,12 +40,20 @@ const StatusLabel: FC<{ status?: string; lifecareDetail?: string }> = ({ status,
   );
 };
 
+// An utbetalning "Besluta och utbetala" created but could not yet register in Lifecare.
+const PENDING_REGISTRATION = 'PENDING_REGISTRATION';
+
 /**
  * The utbetalningar registered on the errand. Rows come from two places: the drafts a handläggare saved
- * in the form below, and the ones "Besluta och utbetala" created, which arrive already handed to the
- * robot. Read-only — a registered utbetalning is changed in Lifecare, not here.
+ * in the form below, and the ones "Besluta och utbetala" created. A registered utbetalning is changed in
+ * Lifecare, not here; one still waiting for Lifecare can be registered from its row.
  */
-export const ErrandUtbetalningList: FC<{ payments: Payment[] }> = ({ payments }) => {
+export const ErrandUtbetalningList: FC<{
+  errandId: string;
+  payments: Payment[];
+  /** Called after a waiting utbetalning was registered or refused, so the list can be read again. */
+  onPaymentsChanged: () => void;
+}> = ({ errandId, payments, onPaymentsChanged }) => {
   const { t, i18n } = useTranslation('decision');
   const rows = [...payments].sort(byDateDesc);
 
@@ -79,7 +88,16 @@ export const ErrandUtbetalningList: FC<{ payments: Payment[] }> = ({ payments })
                 </Table.Column>
                 <Table.Column>{payment.paymentMethod ?? '—'}</Table.Column>
                 <Table.Column>
-                  <StatusLabel status={payment.status} lifecareDetail={payment.lifecareDetail} />
+                  <span className="flex flex-col gap-8">
+                    <StatusLabel status={payment.status} lifecareDetail={payment.lifecareDetail} />
+                    {payment.status === PENDING_REGISTRATION && payment.id ?
+                      <RegisterPaymentButton
+                        errandId={errandId}
+                        paymentId={payment.id}
+                        onRegistered={onPaymentsChanged}
+                      />
+                    : null}
+                  </span>
                 </Table.Column>
               </Table.Row>
             ))

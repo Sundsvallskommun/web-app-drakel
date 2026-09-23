@@ -161,7 +161,14 @@ export const ErrandUtbetalning: FC<{
         </div>
       </ContentBox>
 
-      <ErrandUtbetalningList payments={payments} />
+      <ErrandUtbetalningList
+        errandId={errandId}
+        payments={payments}
+        onPaymentsChanged={() => {
+          refresh();
+          refreshPayments();
+        }}
+      />
 
       <ContentBox title={t('payment.form.title')}>
         <AsyncContent

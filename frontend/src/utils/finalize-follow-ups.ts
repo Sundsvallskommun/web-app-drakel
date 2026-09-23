@@ -1,16 +1,23 @@
-import { FinalizeResult } from '@data-contracts/backend/data-contracts';
+import { FinalizeResult, PaymentRegistrationOutcomeEnum } from '@data-contracts/backend/data-contracts';
 
 /** A part of "Besluta och utbetala" that did not go through once the errand was already decided. */
 export interface FinalizeFollowUp {
   /** The translation key under `decideAndPay.done`. */
-  key: 'failedChannels' | 'payeeWarnings' | 'failedRpaTasks' | 'processNotResumed';
+  key:
+    | 'failedChannels'
+    | 'payeeWarnings'
+    | 'failedRpaTasks'
+    | 'processNotResumed'
+    | 'paymentNotRegistered'
+    | 'paymentReceiptLost';
   detail?: string;
 }
 
 /**
  * What the handläggare still has to see to after a finalize: the channels the beslut could not reach, the
- * payees caremanagement warned about, the Lifecare write-backs it could not queue, and a process that was
- * never told about the decision. Empty when everything went through.
+ * payees caremanagement warned about, the Lifecare write-backs it could not queue, a process that was
+ * never told about the decision, and each utbetalning that did not get registered in Lifecare — or got
+ * registered without careM hearing of it. Empty when everything went through.
  */
 export const finalizeFollowUps = (result: FinalizeResult): FinalizeFollowUp[] => {
   const followUps: FinalizeFollowUp[] = [];
@@ -26,5 +33,12 @@ export const finalizeFollowUps = (result: FinalizeResult): FinalizeFollowUp[] =>
   if (!result.processMessageCorrelated) {
     followUps.push({ key: 'processNotResumed' });
   }
+  result.lifecarePayments.forEach((registration) => {
+    if (registration.outcome !== PaymentRegistrationOutcomeEnum.REGISTERED) {
+      followUps.push({ key: 'paymentNotRegistered', detail: registration.detail });
+    } else if (registration.detail) {
+      followUps.push({ key: 'paymentReceiptLost', detail: registration.detail });
+    }
+  });
   return followUps;
 };

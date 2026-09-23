@@ -35,18 +35,17 @@
     "noteText": "Note text"
   },
   "bevakningar": {
-    "saveError": "Could not save the reminder",
-    "deleteError": "Could not delete the reminder",
-    "loadError": "Could not load reminders",
-    "empty": "No reminders.",
-    "delete": "Delete reminder",
-    "title": "Title *",
-    "titlePlaceholder": "What should be followed up?",
-    "from": "From *",
-    "to": "To",
-    "description": "Description",
+    "saveError": "The reminder could not be saved in Lifecare",
+    "loadError": "The reminders could not be read from Lifecare",
+    "empty": "No reminders in Lifecare.",
+    "date": "Date *",
+    "priority": "Priority",
+    "status": "Status",
+    "text": "Text *",
+    "textPlaceholder": "What should be followed up?",
     "saving": "Saving",
-    "add": "Add reminder"
+    "add": "Add reminder",
+    "edit": "Change reminder"
   },
   "events": {
     "filterSource": "Filter by source",

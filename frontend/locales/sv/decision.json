@@ -100,7 +100,9 @@
         "FAILED": "Misslyckades",
         "PENDING_REGISTRATION": "Väntar på registrering",
         "REGISTERED": "Registrerad i Lifecare"
-      }
+      },
+      "register": "Registrera i Lifecare",
+      "registerError": "Det gick inte att registrera utbetalningen i Lifecare"
     },
     "disposal": {
       "title": "Att disponera",
@@ -113,12 +115,10 @@
       "adding": "Lägger till…",
       "addError": "Det gick inte att lägga till mottagaren",
       "name": "Namn",
+      "label": "Benämning i Lifecare",
       "paymentMethod": "Betalsätt",
       "clearing": "Clearing",
-      "accountNumber": "Kontonummer",
-      "pending": "Mottagaren skrivs in i Lifecare av roboten — den blir valbar där när det är klart.",
-      "failed": "Mottagaren kunde inte skrivas in i Lifecare",
-      "remove": "Ta bort mottagare"
+      "accountNumber": "Kontonummer"
     }
   },
   "proposal": {

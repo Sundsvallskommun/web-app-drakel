@@ -88,40 +88,9 @@ export interface AdministratorsApiResponse {
   message: string;
 }
 
-export interface BevakningInputDto {
-  title: string;
-  description?: string;
-  startDate: string;
-  endDate?: string;
-}
-
-export interface Bevakning {
-  id?: string;
-  source?: string;
-  lifecareId?: string;
-  title?: string;
-  description?: string;
-  startDate?: string;
-  endDate?: string;
-  createdBy?: string;
-  created?: string;
-  updated?: string;
-}
-
-export interface BevakningarApiResponse {
-  data: Bevakning[];
-  message: string;
-}
-
-export interface BevakningApiResponse {
-  data: Bevakning;
-  message: string;
-}
-
 export interface ErrandCounts {
   notes: number;
   warnings: number;
-  bevakningar: number;
   unreadMessages: number;
 }
 
@@ -532,12 +501,25 @@ export interface FinalizeErrandDto {
   brev?: boolean;
 }
 
+export interface PaymentRegistration {
+  paymentId: string;
+  outcome: PaymentRegistrationOutcomeEnum;
+  lifecareId?: string;
+  detail?: string;
+}
+
+export interface PaymentRegistrationApiResponse {
+  data: PaymentRegistration;
+  message: string;
+}
+
 export interface FinalizeResult {
   decisionId?: string;
   paymentIds: string[];
   payeeWarnings: string[];
   failedRpaTasks: string[];
   processMessageCorrelated: boolean;
+  lifecarePayments: PaymentRegistration[];
   failedChannels: string[];
 }
 
@@ -677,6 +659,17 @@ export interface JournalEntryTypesApiResponse {
   message: string;
 }
 
+export interface LifecareDocumentTypeView {
+  code: number;
+  name: string;
+  canChangeOccurenceDate: boolean;
+}
+
+export interface LifecareDocumentTypesApiResponse {
+  data: LifecareDocumentTypeView[];
+  message: string;
+}
+
 export interface LifecareRecordView {
   id: string;
   category: string;
@@ -752,6 +745,119 @@ export interface CreateLifecareJournalNoteDto {
   occurenceTime?: string;
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   occurenceDate?: string;
+}
+
+export interface CreateLifecareDocumentDto {
+  /**
+   * @minLength 1
+   * @maxLength 1048576
+   */
+  content: string;
+  documentTypeCode: number;
+  /** @maxLength 255 */
+  title?: string;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  occurenceDate?: string;
+}
+
+export interface LifecarePaymentMethodView {
+  code: number;
+  name: string;
+  localNumberEnabled: boolean;
+  localNumberMandatory: boolean;
+}
+
+export interface LifecarePayeeView {
+  id: number;
+  label: string;
+  name: string;
+  paymentMethodCode: number;
+  paymentMethod: string;
+  clearing: string;
+  accountNumber: string;
+  streetAddress: string;
+  careOfAddress: string;
+  postalCode: string;
+  postalAddress: string;
+  toRegisteredAddress: boolean;
+}
+
+export interface LifecarePaymentOptionsView {
+  paymentMethods: LifecarePaymentMethodView[];
+  payees: LifecarePayeeView[];
+}
+
+export interface LifecarePaymentOptionsApiResponse {
+  data: LifecarePaymentOptionsView;
+  message: string;
+}
+
+export interface LifecarePayeeApiResponse {
+  data?: LifecarePayeeView;
+  message: string;
+}
+
+export interface CreateLifecarePayeeDto {
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  name: string;
+  /** @maxLength 255 */
+  payeeName?: string;
+  paymentMethod: number;
+  /** @maxLength 16 */
+  clearing?: string;
+  /** @maxLength 64 */
+  accountNumber?: string;
+}
+
+export interface LifecareReminderView {
+  id: number;
+  date: string;
+  status: string;
+  statusCode: number;
+  priority: string;
+  priorityCode: number;
+  type: string;
+  objectType: string;
+  text: string;
+  caseworker: string;
+  caseworkerId: string;
+}
+
+export interface LifecareRemindersApiResponse {
+  data: LifecareReminderView[];
+  message: string;
+}
+
+export interface LifecareReminderChoiceView {
+  code: number;
+  text: string;
+}
+
+export interface LifecareReminderOptionsView {
+  priorities: LifecareReminderChoiceView[];
+  statuses: LifecareReminderChoiceView[];
+  defaultPriority: number;
+  defaultStatus: number;
+}
+
+export interface LifecareReminderOptionsApiResponse {
+  data: LifecareReminderOptionsView;
+  message: string;
+}
+
+export interface CreateLifecareReminderDto {
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  reminderDate: string;
+  /**
+   * @minLength 1
+   * @maxLength 4000
+   */
+  text: string;
+  priority: number;
+  status: number;
 }
 
 export interface MessageAttachment {
@@ -1027,13 +1133,6 @@ export interface PaymentInputDto {
   messageLines?: string[];
 }
 
-export interface PayeeInputDto {
-  name: string;
-  paymentMethod: string;
-  clearing?: string;
-  accountNumber?: string;
-}
-
 export interface PaymentStatusView {
   applicationMonth?: string;
   effectuated: boolean;
@@ -1135,39 +1234,6 @@ export interface PaymentApiResponse {
   message: string;
 }
 
-export interface PaymentMetadataView {
-  paymentMethods?: any[];
-}
-
-export interface PaymentMetadataApiResponse {
-  data: PaymentMetadataView;
-  message: string;
-}
-
-export interface PayeeOptionView {
-  id?: string;
-  name?: string;
-  paymentMethod?: string;
-  clearing?: string;
-  accountNumber?: string;
-  source?: string;
-  lifecareStatus?: string;
-  lifecarePayeeId?: string;
-  lifecareDetail?: string;
-  lastPaidOn?: string;
-  created?: string;
-}
-
-export interface PayeesApiResponse {
-  data: PayeeOptionView[];
-  message: string;
-}
-
-export interface PayeeApiResponse {
-  data?: PayeeOptionView;
-  message: string;
-}
-
 export interface RenderPdfDto {
   /** @minLength 1 */
   html: string;
@@ -1244,6 +1310,12 @@ export interface WarningsApiResponse {
 export enum SaveTemplateDtoKindEnum {
   DOCUMENT = "DOCUMENT",
   PHRASE = "PHRASE",
+}
+
+export enum PaymentRegistrationOutcomeEnum {
+  REGISTERED = "REGISTERED",
+  FAILED = "FAILED",
+  NOT_SENT = "NOT_SENT",
 }
 
 export enum UserRoleEnum {

@@ -7,7 +7,6 @@ import App from '@/app';
 import { ActualisationController } from './controllers/actualisation.controller';
 import { AdminTemplateController } from './controllers/admin-template.controller';
 import { AdministratorController } from './controllers/administrator.controller';
-import { BevakningController } from './controllers/bevakning.controller';
 import { CountsController } from './controllers/counts.controller';
 import { DecisionController } from './controllers/decision.controller';
 import { DecisionNotificationController } from './controllers/decision-notification.controller';
@@ -21,6 +20,8 @@ import { HealthController } from './controllers/health.controller';
 import { JobStimulusController } from './controllers/job-stimulus.controller';
 import { JournalController } from './controllers/journal.controller';
 import { LifecareDocumentsController } from './controllers/lifecare-documents.controller';
+import { LifecarePaymentsController } from './controllers/lifecare-payments.controller';
+import { LifecareRemindersController } from './controllers/lifecare-reminders.controller';
 import { MessageController } from './controllers/message.controller';
 import { MetadataController } from './controllers/metadata.controller';
 import { NormberakningController } from './controllers/normberakning.controller';
@@ -47,7 +48,6 @@ const app = new App([
   WarningController,
   PaymentController,
   SectionApprovalController,
-  BevakningController,
   JournalController,
   JobStimulusController,
   DocumentController,
@@ -63,6 +63,8 @@ const app = new App([
   AdminTemplateController,
   PdfController,
   LifecareDocumentsController,
+  LifecarePaymentsController,
+  LifecareRemindersController,
 ]);
 
 app.listen();

@@ -46,7 +46,7 @@ export const lifecareError = (response: AxiosResponse): HttpException => {
     case LIFECARE_REFUSED_STATUS:
       // The handläggare's input broke one of Lifecare's rules (e.g. a time in the future): theirs to fix,
       // so a 422 with Lifecare's sentence rather than a 502 that reads as an outage.
-      return new HttpException(422, message ?? 'Lifecare refused the request');
+      return new HttpException(422, message ?? 'Lifecare godtog inte uppgifterna.');
     default:
       return new HttpException(502, message ?? `Lifecare answered ${response.status}`);
   }

@@ -5,12 +5,11 @@ import { ApiResponse, apiService, toServiceError } from '@services/api-service';
 export interface ErrandCounts {
   notes: number;
   warnings: number;
-  bevakningar: number;
   /** Messages addressed to the handläggare that haven't been marked read. */
   unreadMessages: number;
 }
 
-/** Fetches the badge counts for an errand (notes, active warnings, bevakningar). */
+/** Fetches the badge counts for an errand (notes, active warnings, unread messages). */
 export const getErrandCounts = (errandId: string): Promise<ServiceResponse<ErrandCounts>> =>
   apiService
     .get<ApiResponse<ErrandCounts>>(`errands/${errandId}/counts`)

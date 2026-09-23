@@ -22,6 +22,7 @@ const finalized = {
   payeeWarnings: [],
   failedRpaTasks: [],
   processMessageCorrelated: true,
+  lifecarePayments: [],
   failedChannels: [],
 };
 

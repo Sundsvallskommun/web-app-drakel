@@ -1,23 +1,18 @@
 import authMiddleware from '@middlewares/auth.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import CaremanagementErrandService from '@services/caremanagement-errand.service';
-import CaremanagementMetadataService from '@services/caremanagement-metadata.service';
 import CaremanagementPaymentService from '@services/caremanagement-payment.service';
 import CaremanagementStakeholderService from '@services/caremanagement-stakeholder.service';
-import { toDropdownOption } from '@utils/dropdown-option';
-import { Body, Controller, Delete, Get, HttpCode, Param, Post, UseBefore } from 'routing-controllers';
+import LifecarePaymentRegistrationService from '@services/lifecare-payment-registration.service';
+import LifecareServiceIdService from '@services/lifecare-service-id.service';
+import { Body, Controller, Get, HttpCode, Param, Post, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
-import { PayeeInputDto, PaymentInputDto } from '@/dtos/payment.dto';
+import { PaymentInputDto } from '@/dtos/payment.dto';
 import { PaymentStatusApiResponse } from '@/responses/payment.response';
 import { PaymentProposalApiResponse } from '@/responses/payment-proposal.response';
-import {
-  PayeeApiResponse,
-  PayeesApiResponse,
-  PaymentApiResponse,
-  PaymentMetadataApiResponse,
-  PaymentsApiResponse,
-} from '@/responses/payment-resource.response';
+import { PaymentRegistrationApiResponse } from '@/responses/payment-registration.response';
+import { PaymentApiResponse, PaymentsApiResponse } from '@/responses/payment-resource.response';
 
 // The applicant whose Lifecare utbetalning the payment status concerns.
 const APPLICANT_ROLE = 'APPLICANT';
@@ -32,7 +27,8 @@ export class PaymentController {
   private paymentService = new CaremanagementPaymentService();
   private errandService = new CaremanagementErrandService();
   private stakeholderService = new CaremanagementStakeholderService();
-  private metadataService = new CaremanagementMetadataService();
+  private paymentRegistration = new LifecarePaymentRegistrationService();
+  private serviceIds = new LifecareServiceIdService();
 
   @Get('/errands/:errandId/payment-status')
   @OpenAPI({ summary: 'Whether the Lifecare utbetalning for the application month has been effectuated' })
@@ -99,44 +95,14 @@ export class PaymentController {
     return { data: res.data ?? null, message: 'success' };
   }
 
-  @Get('/payment-metadata')
-  @OpenAPI({ summary: 'The Lifecare payment methods for the utbetalning betalsätt dropdown' })
-  @ResponseSchema(PaymentMetadataApiResponse)
+  @Post('/errands/:errandId/payments/:paymentId/lifecare-registration')
+  @OpenAPI({
+    summary: 'Register an utbetalning waiting for Lifecare (PENDING_REGISTRATION) there, and receipt it to careM',
+  })
+  @ResponseSchema(PaymentRegistrationApiResponse)
   @UseBefore(authMiddleware)
-  async getPaymentMetadata() {
-    const res = await this.metadataService.readFinancialAssistanceMetadata();
-    return {
-      data: {
-        paymentMethods: (res.data?.paymentMethods ?? []).map(toDropdownOption),
-      },
-      message: 'success',
-    };
-  }
-
-  @Get('/errands/:errandId/payees')
-  @OpenAPI({ summary: 'The selectable betalningsmottagare — Lifecare history plus manually added ones' })
-  @ResponseSchema(PayeesApiResponse)
-  @UseBefore(authMiddleware)
-  async listPayees(@Param('errandId') errandId: string) {
-    const res = await this.paymentService.listPayees(errandId);
-    return { data: res.data ?? [], message: 'success' };
-  }
-
-  @Post('/errands/:errandId/payees')
-  @HttpCode(201)
-  @OpenAPI({ summary: 'Add a betalningsmottagare by hand (queues the robot that writes it into Lifecare)' })
-  @ResponseSchema(PayeeApiResponse)
-  @UseBefore(authMiddleware, validationMiddleware(PayeeInputDto, 'body'))
-  async createPayee(@Param('errandId') errandId: string, @Body() input: PayeeInputDto) {
-    const res = await this.paymentService.createPayee(errandId, input);
-    return { data: res.data ?? null, message: 'success' };
-  }
-
-  @Delete('/errands/:errandId/payees/:payeeId')
-  @OpenAPI({ summary: 'Remove a manually added betalningsmottagare' })
-  @UseBefore(authMiddleware)
-  async deletePayee(@Param('errandId') errandId: string, @Param('payeeId') payeeId: string) {
-    await this.paymentService.deletePayee(errandId, payeeId);
-    return { data: null, message: 'success' };
+  async registerInLifecare(@Param('errandId') errandId: string, @Param('paymentId') paymentId: string) {
+    const serviceId = await this.serviceIds.resolve(errandId);
+    return { data: await this.paymentRegistration.register(errandId, serviceId, paymentId), message: 'success' };
   }
 }

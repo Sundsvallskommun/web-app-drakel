@@ -4,13 +4,13 @@ import { AttachmentPdfButton } from '@components/common/attachment-pdf-button.co
 import { PdfPreview } from '@components/common/pdf-preview.component';
 import { useErrand } from '@hooks/use-errand';
 import { useErrandAttachments } from '@hooks/use-errand-attachments';
-import { useErrandBevakningar } from '@hooks/use-errand-bevakningar';
 import { useErrandCounts } from '@hooks/use-errand-counts';
 import { useErrandForm } from '@hooks/use-errand-form';
 import { useErrandNotes } from '@hooks/use-errand-notes';
 import { useErrandSectionApprovals } from '@hooks/use-errand-section-approvals';
 import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
 import { useErrandWarnings } from '@hooks/use-errand-warnings';
+import { useLifecareReminders } from '@hooks/use-lifecare-reminders';
 import { BeslutReasons } from '@services/beslut-service';
 import { Badge, Spinner, Tabs } from '@sk-web-gui/react';
 import { CLIENT_FILES_PDF } from '@utils/attachment-names';
@@ -172,12 +172,13 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   // Section approvals back the per-section checkboxes, the tab "godkänd" checks and the "Besluta och
   // utbetala" action — so they load eagerly with the errand (see approvalsEnabled above).
   const { approvals, pendingSection, setApproval } = useErrandSectionApprovals(resolvedErrandId, approvalsEnabled);
+  // Bevakningar live in Lifecare and are read from there; the list also gives the section its badge.
   const {
-    bevakningar,
-    isLoading: bevakningarLoading,
-    error: bevakningarError,
-    refresh: refreshBevakningar,
-  } = useErrandBevakningar(resolvedErrandId, bevakningarEnabled);
+    reminders,
+    isLoading: remindersLoading,
+    error: remindersError,
+    refresh: refreshReminders,
+  } = useLifecareReminders(resolvedErrandId, bevakningarEnabled);
   // Sökande + medsökande surfaced in the meta card under the errand title.
   const { stakeholders } = useErrandStakeholders(resolvedErrandId);
   // Right-column badge counts — backed by unlogged count endpoints, so they load with the errand (the lists
@@ -286,18 +287,15 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     {
       key: 'bevakningar',
       label: t('sidebar:sections.bevakningar'),
-      badge: counts.bevakningar,
-      badgeColor: counts.bevakningar > 0 ? 'warning' : 'tertiary',
+      badge: reminders.length,
+      badgeColor: reminders.length > 0 ? 'warning' : 'tertiary',
       component: (
         <ErrandBevakningar
           errandId={errand.id ?? ''}
-          bevakningar={bevakningar}
-          isLoading={bevakningarLoading}
-          loadError={!!bevakningarError}
-          refresh={() => {
-            refreshBevakningar();
-            refreshCounts();
-          }}
+          reminders={reminders}
+          isLoading={remindersLoading}
+          loadError={!!remindersError}
+          refresh={refreshReminders}
         />
       ),
     },

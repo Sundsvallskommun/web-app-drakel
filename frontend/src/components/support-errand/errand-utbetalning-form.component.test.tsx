@@ -1,5 +1,7 @@
+import { LifecarePayeeView } from '@data-contracts/backend/data-contracts';
 import { getErrandStakeholders } from '@services/errand-service/errand-service';
-import { createPayment, getPayees, getPaymentMetadata, PaymentProposal } from '@services/payment-service';
+import { getLifecarePaymentOptions } from '@services/lifecare-payment-service';
+import { createPayment, PaymentProposal } from '@services/payment-service';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -11,9 +13,11 @@ vi.mock('@services/errand-service/errand-service', () => ({
 
 vi.mock('@services/payment-service', () => ({
   createPayment: vi.fn(),
-  createPayee: vi.fn(),
-  getPayees: vi.fn(),
-  getPaymentMetadata: vi.fn(),
+}));
+
+vi.mock('@services/lifecare-payment-service', () => ({
+  getLifecarePaymentOptions: vi.fn(),
+  createLifecarePayee: vi.fn(),
 }));
 
 const APPLICANT = {
@@ -23,7 +27,7 @@ const APPLICANT = {
   lastName: 'Testsson',
 };
 
-// The betalsätt values are Lifecare's own, as caremanagement's metadata serves them.
+// The payee as careM's utbetalningsförslag names it: no id, just the account.
 const BANK_ACCOUNT_PAYEE = {
   name: 'Test Testsson',
   paymentMethod: 'Personkonto',
@@ -31,13 +35,33 @@ const BANK_ACCOUNT_PAYEE = {
   accountNumber: '1234567',
 };
 const GIRO_PAYEE = { name: 'Hyresvärden AB', paymentMethod: 'Plusgiro', accountNumber: '5051-6905' };
-// A payee added by hand has a row of its own, and so an id; a Lifecare-derived one has neither.
-const MANUAL_PAYEE = {
-  id: 'payee-row-1',
-  name: 'Elbolaget AB',
-  paymentMethod: 'Bankgiro via Plusgiro',
-  accountNumber: '9900-1122',
-  source: 'MANUAL' as const,
+
+/** A payee as Lifecare lists it for the insats. */
+const lifecarePayee = (
+  id: number,
+  payee: { name: string; paymentMethod: string; clearing?: string; accountNumber: string }
+): LifecarePayeeView => ({
+  id,
+  label: payee.name,
+  name: payee.name,
+  paymentMethodCode: 0,
+  paymentMethod: payee.paymentMethod,
+  clearing: payee.clearing ?? '',
+  accountNumber: payee.accountNumber,
+  streetAddress: '',
+  careOfAddress: '',
+  postalCode: '',
+  postalAddress: 'Sundsvall',
+  toRegisteredAddress: false,
+});
+
+const LIFECARE_OPTIONS = {
+  paymentMethods: [
+    { code: 5, name: 'Personkonto', localNumberEnabled: false, localNumberMandatory: false },
+    { code: 4, name: 'Plusgiro', localNumberEnabled: true, localNumberMandatory: false },
+    { code: 14, name: 'Bankgiro via Plusgiro', localNumberEnabled: false, localNumberMandatory: false },
+  ],
+  payees: [lifecarePayee(11, BANK_ACCOUNT_PAYEE), lifecarePayee(12, GIRO_PAYEE)],
 };
 
 const PROPOSAL: PaymentProposal = {
@@ -53,19 +77,17 @@ describe('ErrandUtbetalningForm', () => {
   beforeEach(() => {
     vi.mocked(getErrandStakeholders).mockReset();
     vi.mocked(getErrandStakeholders).mockResolvedValue({ data: [APPLICANT] });
-    vi.mocked(getPaymentMetadata).mockReset();
-    vi.mocked(getPaymentMetadata).mockResolvedValue({ data: { paymentMethods: [] } });
     vi.mocked(createPayment).mockReset();
     vi.mocked(createPayment).mockResolvedValue({ data: null });
-    vi.mocked(getPayees).mockReset();
-    // The payee dropdown is fed by caremanagement's payee endpoint, not by the proposal.
-    vi.mocked(getPayees).mockResolvedValue({ data: [BANK_ACCOUNT_PAYEE, GIRO_PAYEE, MANUAL_PAYEE] });
+    vi.mocked(getLifecarePaymentOptions).mockReset();
+    // Betalsätt and betalningsmottagare are Lifecare's own lists for the insats, not the proposal's.
+    vi.mocked(getLifecarePaymentOptions).mockResolvedValue({ data: LIFECARE_OPTIONS });
   });
 
   it('prefills date, amount and payee from the proposal', async () => {
     renderForm();
 
-    // The betalsätt options are built from the payee list, so the value only sticks once it has loaded.
+    // The betalsätt options come from Lifecare, so the value only sticks once they have loaded.
     await waitFor(() => {
       expect(screen.getByLabelText(/^Betalsätt/)).toHaveValue('Personkonto');
     });
@@ -75,7 +97,7 @@ describe('ErrandUtbetalningForm', () => {
     expect(screen.getByLabelText(/^Kontonummer/)).toHaveValue('1234567');
   });
 
-  it('lists the proposal payees as betalningsmottagare alternatives', async () => {
+  it('lists the Lifecare payees as betalningsmottagare alternatives', async () => {
     renderForm();
 
     await waitFor(() => {
@@ -102,11 +124,12 @@ describe('ErrandUtbetalningForm', () => {
       expect(screen.getByLabelText(/^Betalsätt/)).toHaveValue('Personkonto');
     });
 
-    fireEvent.change(screen.getByLabelText(/^Betalningsmottagare/), { target: { value: '1' } });
+    fireEvent.change(screen.getByLabelText(/^Betalningsmottagare/), { target: { value: '12' } });
 
     await waitFor(() => {
       expect(screen.getByLabelText(/^Namn/)).toHaveValue('Hyresvärden AB');
     });
+    expect(screen.getByLabelText(/^Ort/)).toHaveValue('Sundsvall');
     expect(screen.getByLabelText(/^Betalsätt/)).toHaveValue('Plusgiro');
     expect(screen.getByLabelText(/^Kontonummer/)).toHaveValue('5051-6905');
     // A giro number has no clearing number, so that field closes again.
@@ -166,45 +189,32 @@ describe('ErrandUtbetalningForm', () => {
     expect(onSaved).toHaveBeenCalledTimes(1);
   });
 
-  it('sends the payee row id so the robot gets the payee’s Lifecare id', async () => {
+  it('opens lokalbetalningsnummer only for a betalsätt Lifecare says takes one', async () => {
     renderForm();
     await waitFor(() => {
       expect(screen.getByLabelText(/^Betalsätt/)).toHaveValue('Personkonto');
     });
+    expect(screen.getByLabelText(/^Lokalbetalningsnummer/)).toBeDisabled();
 
-    fireEvent.change(screen.getByLabelText(/^Betalningsmottagare/), { target: { value: '2' } });
-    await waitFor(() => {
-      expect(screen.getByLabelText(/^Namn/)).toHaveValue('Elbolaget AB');
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Nästa' }));
+    fireEvent.change(screen.getByLabelText(/^Betalsätt/), { target: { value: 'Plusgiro' } });
 
     await waitFor(() => {
-      expect(createPayment).toHaveBeenCalledWith('errand-1', expect.objectContaining({ payeeId: 'payee-row-1' }));
+      expect(screen.getByLabelText(/^Lokalbetalningsnummer/)).toBeEnabled();
     });
   });
 
-  it('leaves the payee row id out once the account has been typed over', async () => {
-    // The id would otherwise point the robot at the row's Lifecare payee while the payment carries a
-    // different account — a missing id only costs the robot its shortcut, a wrong one pays the wrong party.
+  it('sends the räkningsnummer Lifecare needs for a bankgiro utbetalning', async () => {
     renderForm();
     await waitFor(() => {
-      expect(screen.getByLabelText(/^Betalsätt/)).toHaveValue('Personkonto');
+      expect(screen.getByLabelText(/^Belopp/)).toHaveValue('8450,00');
     });
 
-    fireEvent.change(screen.getByLabelText(/^Betalningsmottagare/), { target: { value: '2' } });
-    await waitFor(() => {
-      expect(screen.getByLabelText(/^Kontonummer/)).toHaveValue('9900-1122');
-    });
-    fireEvent.change(screen.getByLabelText(/^Kontonummer/), { target: { value: '9900-9999' } });
-
+    fireEvent.change(screen.getByLabelText(/^Räkningsnummer/), { target: { value: '123' } });
     fireEvent.click(screen.getByRole('button', { name: 'Nästa' }));
 
     await waitFor(() => {
-      expect(createPayment).toHaveBeenCalledTimes(1);
+      expect(createPayment).toHaveBeenCalledWith('errand-1', expect.objectContaining({ invoiceNumber: '123' }));
     });
-    // Sent as an absent value rather than an omitted key — axios leaves undefined out of the JSON body.
-    expect(vi.mocked(createPayment).mock.calls[0]?.[1].payeeId).toBeUndefined();
   });
 
   it('reports a failed registration instead of silently doing nothing', async () => {

@@ -74,7 +74,9 @@
       "failedChannels": "Beslutet kunde inte skickas till: {{detail}}.",
       "payeeWarnings": "Betalningsmottagare: {{detail}}",
       "failedRpaTasks": "Kunde inte köas till Lifecare: {{detail}}.",
-      "processNotResumed": "Processen fick inte besked om beslutet."
+      "processNotResumed": "Processen fick inte besked om beslutet.",
+      "paymentNotRegistered": "En utbetalning väntar på registrering i Lifecare: {{detail}} Den kan registreras från fliken Utbetalning.",
+      "paymentReceiptLost": "{{detail}}"
     }
   },
   "actualisation": {

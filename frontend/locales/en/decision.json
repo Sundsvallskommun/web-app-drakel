@@ -100,7 +100,9 @@
         "FAILED": "Failed",
         "PENDING_REGISTRATION": "Pending registration",
         "REGISTERED": "Registered in Lifecare"
-      }
+      },
+      "register": "Register in Lifecare",
+      "registerError": "The payment could not be registered in Lifecare"
     },
     "disposal": {
       "title": "Available to disburse",
@@ -113,12 +115,10 @@
       "adding": "Adding…",
       "addError": "Could not add the payee",
       "name": "Name",
+      "label": "Label in Lifecare",
       "paymentMethod": "Payment method",
       "clearing": "Clearing",
-      "accountNumber": "Account number",
-      "pending": "The robot is writing the payee into Lifecare — it becomes selectable there once done.",
-      "failed": "The payee could not be written into Lifecare",
-      "remove": "Remove payee"
+      "accountNumber": "Account number"
     }
   },
   "proposal": {

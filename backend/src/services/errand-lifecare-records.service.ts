@@ -1,9 +1,9 @@
 import { LIFECARE_CLIENT_ID_OVERRIDE, NODE_ENV } from '@config';
 import { HttpException } from '@exceptions/HttpException';
-import CaremanagementErrandService from '@services/caremanagement-errand.service';
 import CaremanagementStakeholderService from '@services/caremanagement-stakeholder.service';
 import LifecareAccessLogService from '@services/lifecare-access-log.service';
 import LifecareDocumentsService from '@services/lifecare-documents.service';
+import LifecareServiceIdService from '@services/lifecare-service-id.service';
 
 import { LifecareAccessActionEnum } from '@/data-contracts/caremanagement/data-contracts';
 import { LifecareRecordContentView, LifecareRecordsView, LifecareRecordView, toLifecareRecords } from '@/responses/lifecare-documents.response';
@@ -28,7 +28,7 @@ interface RecordEdit {
 class ErrandLifecareRecordsService {
   private documentsService = new LifecareDocumentsService();
   private stakeholderService = new CaremanagementStakeholderService();
-  private errandService = new CaremanagementErrandService();
+  private serviceIds = new LifecareServiceIdService();
   private accessLog = new LifecareAccessLogService();
 
   async list(errandId: string): Promise<LifecareRecordsView> {
@@ -75,13 +75,13 @@ class ErrandLifecareRecordsService {
 
   /** The note types a new journalanteckning on the errand's insats can have. */
   async journalNoteTypes(errandId: string): Promise<LifecareNoteTypeView[]> {
-    const serviceId = await this.resolveServiceId(errandId);
+    const serviceId = await this.serviceIds.resolve(errandId);
     return toNoteTypes(await this.documentsService.readNoteProposal(serviceId));
   }
 
   /** Writes a new journalanteckning on the errand's insats in Lifecare. Nothing is kept in careM. */
   async createJournalNote(errandId: string, input: NewJournalNote & { noteTypeCode: number }): Promise<LifecareRecordView> {
-    const serviceId = await this.resolveServiceId(errandId);
+    const serviceId = await this.serviceIds.resolve(errandId);
     const created = await this.documentsService.createJournalNote(serviceId, input);
     await this.accessLog.logWrite(errandId, LifecareAccessActionEnum.CREATE, {
       target: 'JOURNAL_NOTE',
@@ -89,20 +89,6 @@ class ErrandLifecareRecordsService {
       lifecareId: created.id,
     });
     return created;
-  }
-
-  /**
-   * The insats in Lifecare that the errand is — careM looks it up from the applicant's open financial
-   * assistance service. Without one there is nowhere to write a note.
-   */
-  private async resolveServiceId(errandId: string): Promise<number> {
-    const view = await this.errandService.getFinancialAssistanceView(errandId);
-    const serviceId = view.data?.lifecareServiceId;
-    // careM sends null, not an absent field, when it found no open insats.
-    if (typeof serviceId !== 'number') {
-      throw new HttpException(409, 'Sökande har ingen öppen insats för ekonomiskt bistånd i Lifecare');
-    }
-    return serviceId;
   }
 
   /**

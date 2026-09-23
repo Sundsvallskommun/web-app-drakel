@@ -37,15 +37,3 @@ export class PaymentInputDto {
   @IsBoolean() @IsOptional() usesOcr?: boolean;
   @IsArray() @IsString({ each: true }) @IsOptional() messageLines?: string[];
 }
-
-/**
- * A betalningsmottagare added by hand. Only the name and the payment method are required — clearing and
- * account number are optional on their own, deliberately: there is no per-betalsätt field logic here,
- * the handläggare fills in what the payee needs.
- */
-export class PayeeInputDto {
-  @IsString() name!: string;
-  @IsString() paymentMethod!: string;
-  @IsString() @IsOptional() clearing?: string;
-  @IsString() @IsOptional() accountNumber?: string;
-}
