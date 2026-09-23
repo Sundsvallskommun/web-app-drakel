@@ -501,6 +501,13 @@ export interface FinalizeErrandDto {
   brev?: boolean;
 }
 
+export interface DecisionRegistration {
+  decisionId: string;
+  outcome: DecisionRegistrationOutcomeEnum;
+  lifecareId?: string;
+  detail?: string;
+}
+
 export interface PaymentRegistration {
   paymentId: string;
   outcome: PaymentRegistrationOutcomeEnum;
@@ -519,6 +526,7 @@ export interface FinalizeResult {
   payeeWarnings: string[];
   failedRpaTasks: string[];
   processMessageCorrelated: boolean;
+  lifecareDecision?: DecisionRegistration;
   lifecarePayments: PaymentRegistration[];
   failedChannels: string[];
 }
@@ -1310,6 +1318,12 @@ export interface WarningsApiResponse {
 export enum SaveTemplateDtoKindEnum {
   DOCUMENT = "DOCUMENT",
   PHRASE = "PHRASE",
+}
+
+export enum DecisionRegistrationOutcomeEnum {
+  REGISTERED = "REGISTERED",
+  FAILED = "FAILED",
+  NOT_SENT = "NOT_SENT",
 }
 
 export enum PaymentRegistrationOutcomeEnum {

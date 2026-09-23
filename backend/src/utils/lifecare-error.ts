@@ -62,3 +62,12 @@ export const lifecareUnreachable = (error: unknown): HttpException => {
   const code = axios.isAxiosError(error) ? error.code : undefined;
   return new HttpException(502, code ? `Lifecare could not be reached (${code})` : 'Lifecare could not be reached');
 };
+
+/**
+ * Whether Lifecare itself turned a write down (400, or 422 for its own 461) — as opposed to not answering.
+ * Read off the status rather than the class, which is not guaranteed to be the same instance.
+ */
+export const isLifecareRefusal = (error: unknown): error is HttpException => {
+  const status = (error as { status?: unknown } | null)?.status;
+  return error instanceof Error && (status === 400 || status === 422);
+};

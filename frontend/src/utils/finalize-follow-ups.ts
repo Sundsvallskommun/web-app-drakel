@@ -1,4 +1,8 @@
-import { FinalizeResult, PaymentRegistrationOutcomeEnum } from '@data-contracts/backend/data-contracts';
+import {
+  DecisionRegistrationOutcomeEnum,
+  FinalizeResult,
+  PaymentRegistrationOutcomeEnum,
+} from '@data-contracts/backend/data-contracts';
 
 /** A part of "Besluta och utbetala" that did not go through once the errand was already decided. */
 export interface FinalizeFollowUp {
@@ -8,6 +12,8 @@ export interface FinalizeFollowUp {
     | 'payeeWarnings'
     | 'failedRpaTasks'
     | 'processNotResumed'
+    | 'decisionNotRegistered'
+    | 'decisionReceiptLost'
     | 'paymentNotRegistered'
     | 'paymentReceiptLost';
   detail?: string;
@@ -16,8 +22,8 @@ export interface FinalizeFollowUp {
 /**
  * What the handläggare still has to see to after a finalize: the channels the beslut could not reach, the
  * payees caremanagement warned about, the Lifecare write-backs it could not queue, a process that was
- * never told about the decision, and each utbetalning that did not get registered in Lifecare — or got
- * registered without careM hearing of it. Empty when everything went through.
+ * never told about the decision, a beslut and each utbetalning that did not get registered in Lifecare —
+ * or got registered without careM hearing of it. Empty when everything went through.
  */
 export const finalizeFollowUps = (result: FinalizeResult): FinalizeFollowUp[] => {
   const followUps: FinalizeFollowUp[] = [];
@@ -32,6 +38,12 @@ export const finalizeFollowUps = (result: FinalizeResult): FinalizeFollowUp[] =>
   }
   if (!result.processMessageCorrelated) {
     followUps.push({ key: 'processNotResumed' });
+  }
+  const decision = result.lifecareDecision;
+  if (decision && decision.outcome !== DecisionRegistrationOutcomeEnum.REGISTERED) {
+    followUps.push({ key: 'decisionNotRegistered', detail: decision.detail });
+  } else if (decision?.detail) {
+    followUps.push({ key: 'decisionReceiptLost', detail: decision.detail });
   }
   result.lifecarePayments.forEach((registration) => {
     if (registration.outcome !== PaymentRegistrationOutcomeEnum.REGISTERED) {

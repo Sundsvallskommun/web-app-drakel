@@ -4,6 +4,7 @@ import CaremanagementNormberakningService from '@services/caremanagement-normber
 import CaremanagementPaymentService from '@services/caremanagement-payment.service';
 import DecisionNotificationService from '@services/decision-notification.service';
 import ErrandFinalizeService from '@services/errand-finalize.service';
+import LifecareDecisionRegistrationService from '@services/lifecare-decision-registration.service';
 import LifecarePaymentRegistrationService from '@services/lifecare-payment-registration.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -22,6 +23,8 @@ const draft = {
 };
 
 describe('ErrandFinalizeService.finalize', () => {
+  let registerDecision: ReturnType<typeof vi.spyOn<LifecareDecisionRegistrationService, 'register'>>;
+
   beforeEach(() => {
     vi.spyOn(CaremanagementDecisionService.prototype, 'readDecisions').mockResolvedValue({
       data: [{ value: 'BIFALL', amount: 7900, decisionMessage: '<p>Beslut</p>' }],
@@ -36,6 +39,11 @@ describe('ErrandFinalizeService.finalize', () => {
     vi.spyOn(CaremanagementErrandService.prototype, 'getFinancialAssistanceView').mockResolvedValue({
       data: { lifecareServiceId: 1 },
       message: 'success',
+    });
+    registerDecision = vi.spyOn(LifecareDecisionRegistrationService.prototype, 'register').mockResolvedValue({
+      decisionId: 'decision-1',
+      outcome: 'REGISTERED',
+      lifecareId: '93',
     });
   });
 
@@ -70,6 +78,9 @@ describe('ErrandFinalizeService.finalize', () => {
     });
     expect(deletePayment).toHaveBeenCalledWith('errand-1', 'draft-1');
     expect(register).toHaveBeenCalledWith('errand-1', 1, 'payment-1');
+    expect(registerDecision.mock.calls[0]?.slice(0, 3)).toEqual(['errand-1', 1, 'decision-1']);
+    expect(registerDecision.mock.calls[0]?.[3]).toMatchObject({ outcome: 'BIFALL', reason: 'Arbetslös', amount: 7900 });
+    expect(registerDecision.mock.calls[0]?.[4]).toBe('caseworker01');
     expect(send).toHaveBeenCalledWith('errand-1', expect.objectContaining(channels), 'caseworker01');
     expect(result).toEqual({
       decisionId: 'decision-1',
@@ -77,6 +88,7 @@ describe('ErrandFinalizeService.finalize', () => {
       payeeWarnings: [],
       failedRpaTasks: ['REGISTER_PAYMENT'],
       processMessageCorrelated: true,
+      lifecareDecision: { decisionId: 'decision-1', outcome: 'REGISTERED', lifecareId: '93' },
       lifecarePayments: [{ paymentId: 'payment-1', outcome: 'REGISTERED', lifecareId: '4' }],
       failedChannels: ['Brev'],
     });

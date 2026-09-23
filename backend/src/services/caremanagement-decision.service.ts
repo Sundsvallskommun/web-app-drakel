@@ -4,6 +4,7 @@ import { caremanagementUrl } from '@utils/caremanagement-url';
 
 import {
   Decision,
+  DecisionLifecareResult,
   DecisionOption,
   DecisionProposal,
   ErrandTypeSchema,
@@ -56,6 +57,14 @@ class CaremanagementDecisionService {
     return this.apiService.get<DecisionProposal>({
       url: caremanagementUrl('errands', 'financial-assistance', errandId, 'decision-proposal'),
     });
+  }
+
+  /**
+   * Tells careM what happened when the beslut was written to Lifecare. WRITTEN and ALREADY_EXISTS store
+   * Lifecare's id on the beslut; FAILED needs Lifecare's own reason, shown to the handläggare as it came.
+   */
+  async reportLifecareResult(errandId: string, decisionId: string, result: DecisionLifecareResult): Promise<void> {
+    await this.apiService.post<null>({ url: caremanagementUrl('errands', errandId, 'decisions', decisionId, 'lifecare-result'), data: result });
   }
 
   /**

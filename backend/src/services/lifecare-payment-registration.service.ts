@@ -1,9 +1,10 @@
-import { HttpException } from '@exceptions/HttpException';
 import CaremanagementPaymentService from '@services/caremanagement-payment.service';
 import LifecareAccessLogService from '@services/lifecare-access-log.service';
 import LifecarePaymentsService from '@services/lifecare-payments.service';
+import { isLifecareRefusal } from '@utils/lifecare-error';
 import { buildPaymentCreate } from '@utils/lifecare-payment';
 import { logger } from '@utils/logger';
+import { succeedsWithin } from '@utils/retry';
 
 import { LifecareAccessActionEnum, PaymentLifecareResultOutcomeEnum, PaymentStatusEnum } from '@/data-contracts/caremanagement/data-contracts';
 import { PaymentRegistration } from '@/responses/payment-registration.response';
@@ -11,15 +12,6 @@ import { PaymentRegistration } from '@/responses/payment-registration.response';
 // careM's answer to a lifecare-result is retried this many times: once Lifecare holds the utbetalning,
 // a lost receipt leaves careM thinking it was never registered — and a retry from there pays twice.
 const RECEIPT_ATTEMPTS = 3;
-
-/**
- * Whether Lifecare itself turned the utbetalning down (400, or 422 for its own 461) — as opposed to not
- * answering. Read off the status rather than the class, which is not guaranteed to be the same instance.
- */
-const isRefusal = (error: unknown): error is HttpException => {
-  const status = (error as { status?: unknown } | null)?.status;
-  return error instanceof Error && (status === 400 || status === 422);
-};
 
 /**
  * Registers careM's utbetalningar in Lifecare — the work the REGISTER_PAYMENT robot was meant to do —
@@ -56,7 +48,7 @@ class LifecarePaymentRegistrationService {
     try {
       lifecareId = String((await this.lifecarePayments.createPayment(serviceId, create.body)).paymentId);
     } catch (error) {
-      if (isRefusal(error)) {
+      if (isLifecareRefusal(error)) {
         await this.receipt(errandId, paymentId, { outcome: PaymentLifecareResultOutcomeEnum.FAILED, detail: error.message });
         return { paymentId, outcome: 'FAILED', detail: error.message };
       }
@@ -88,13 +80,15 @@ class LifecarePaymentRegistrationService {
     paymentId: string,
     result: { outcome: PaymentLifecareResultOutcomeEnum; lifecarePaymentId?: string; detail?: string },
   ): Promise<boolean> {
-    for (let attempt = 1; attempt <= RECEIPT_ATTEMPTS; attempt++) {
-      try {
-        await this.caremanagementPayments.reportLifecareResult(errandId, paymentId, result);
-        return true;
-      } catch {
+    const receipted = await succeedsWithin(
+      RECEIPT_ATTEMPTS,
+      () => this.caremanagementPayments.reportLifecareResult(errandId, paymentId, result),
+      attempt => {
         logger.warn(`Could not report the Lifecare result for payment ${paymentId} on errand ${errandId} (attempt ${String(attempt)})`);
-      }
+      },
+    );
+    if (receipted) {
+      return true;
     }
     logger.error(`Payment ${paymentId} on errand ${errandId} has Lifecare outcome ${result.outcome} that careM never received`);
     return false;

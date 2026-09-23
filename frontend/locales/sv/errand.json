@@ -76,7 +76,9 @@
       "failedRpaTasks": "Kunde inte köas till Lifecare: {{detail}}.",
       "processNotResumed": "Processen fick inte besked om beslutet.",
       "paymentNotRegistered": "En utbetalning väntar på registrering i Lifecare: {{detail}} Den kan registreras från fliken Utbetalning.",
-      "paymentReceiptLost": "{{detail}}"
+      "paymentReceiptLost": "{{detail}}",
+      "decisionNotRegistered": "Beslutet registrerades inte i Lifecare: {{detail}} Registrera det direkt i Lifecare.",
+      "decisionReceiptLost": "{{detail}}"
     }
   },
   "actualisation": {

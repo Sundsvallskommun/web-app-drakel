@@ -4,7 +4,16 @@ import { logger } from '@utils/logger';
 import { LifecareAccessActionEnum } from '@/data-contracts/caremanagement/data-contracts';
 
 /** What in Lifecare was touched — stable names for the access log, not Lifecare paths. */
-type LifecareAccessTarget = 'JOURNAL_AND_DOCUMENTS' | 'JOURNAL_NOTE' | 'DOCUMENT' | 'PAYEES' | 'PAYEE' | 'PAYMENT' | 'REMINDERS' | 'REMINDER';
+type LifecareAccessTarget =
+  | 'JOURNAL_AND_DOCUMENTS'
+  | 'JOURNAL_NOTE'
+  | 'DOCUMENT'
+  | 'PAYEES'
+  | 'PAYEE'
+  | 'PAYMENT'
+  | 'REMINDERS'
+  | 'REMINDER'
+  | 'DECISION';
 
 interface LoggedAccess {
   target: LifecareAccessTarget;

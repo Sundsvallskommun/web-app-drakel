@@ -1,4 +1,7 @@
-import { PaymentRegistrationOutcomeEnum } from '@data-contracts/backend/data-contracts';
+import {
+  DecisionRegistrationOutcomeEnum,
+  PaymentRegistrationOutcomeEnum,
+} from '@data-contracts/backend/data-contracts';
 import { describe, expect, it } from 'vitest';
 
 import { finalizeFollowUps } from './finalize-follow-ups';
@@ -25,6 +28,11 @@ describe('finalizeFollowUps', () => {
         payeeWarnings: ['Anna Andersson finns inte i Lifecare än'],
         failedRpaTasks: ['REGISTER_PAYMENT'],
         processMessageCorrelated: false,
+        lifecareDecision: {
+          decisionId: 'decision-1',
+          outcome: DecisionRegistrationOutcomeEnum.NOT_SENT,
+          detail: 'Delvis bifall kan inte registreras i Lifecare från Drakel ännu.',
+        },
         lifecarePayments: [
           {
             paymentId: 'payment-1',
@@ -39,6 +47,7 @@ describe('finalizeFollowUps', () => {
       { key: 'payeeWarnings', detail: 'Anna Andersson finns inte i Lifecare än' },
       { key: 'failedRpaTasks', detail: 'REGISTER_PAYMENT' },
       { key: 'processNotResumed' },
+      { key: 'decisionNotRegistered', detail: 'Delvis bifall kan inte registreras i Lifecare från Drakel ännu.' },
       { key: 'paymentNotRegistered', detail: 'Saldot i Lifecare räcker inte.' },
     ]);
   });

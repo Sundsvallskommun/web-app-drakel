@@ -82,6 +82,11 @@ export const LIFECARE_CLIENT_ID_OVERRIDE = env.LIFECARE_CLIENT_ID_OVERRIDE ?? ''
 // Development scaffolding only — a session copied out of devtools, see PastedLifecareSession.
 // Holds a live session belonging to a real user, so it never leaves .env.development.local.
 export const LIFECARE_SESSION_COOKIE = env.LIFECARE_SESSION_COOKIE ?? '';
+// Test environments only: the beslutsfattare a beslut is registered in Lifecare under, instead of the
+// handläggare's own account. Lifecare's test environment knows no real handläggare as beslutsfattare, so
+// a beslut cannot be tested end to end without it. Never set in production: there the beslut must name
+// the handläggare, and a handläggare Lifecare does not know stops the beslut rather than falling back.
+export const LIFECARE_TEST_DECISION_MAKER = env.LIFECARE_TEST_DECISION_MAKER ?? '';
 // Messaging sender config for the beslut notification (Mina sidor / digital brevlåda / brev). Optional —
 // the send fails gracefully if unset, so a missing value never blocks BFF startup.
 export const MESSAGING_ORGANIZATION_NUMBER = env.MESSAGING_ORGANIZATION_NUMBER ?? '';

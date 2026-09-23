@@ -76,7 +76,9 @@
       "failedRpaTasks": "Could not be queued for Lifecare: {{detail}}.",
       "processNotResumed": "The process was not told about the decision.",
       "paymentNotRegistered": "A payment is waiting to be registered in Lifecare: {{detail}} It can be registered from the Payment tab.",
-      "paymentReceiptLost": "{{detail}}"
+      "paymentReceiptLost": "{{detail}}",
+      "decisionNotRegistered": "The decision was not registered in Lifecare: {{detail}} Register it directly in Lifecare.",
+      "decisionReceiptLost": "{{detail}}"
     }
   },
   "actualisation": {
