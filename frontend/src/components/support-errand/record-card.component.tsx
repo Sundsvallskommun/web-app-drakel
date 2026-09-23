@@ -42,10 +42,3 @@ export const RecordCardDetail: FC<{ label: string; value?: string }> = ({ label,
       {label}: {value}
     </p>
   : null;
-
-/**
- * A record's heading in bold, for use as a `<Trans>` component (e.g. `<heading></heading>` in a confirmation
- * text). It renders its own `heading` prop, so the (user-entered) heading never goes through i18next
- * interpolation and its escaping.
- */
-export const RecordHeadingEmphasis: FC<{ heading?: string }> = ({ heading }) => <strong>{heading}</strong>;

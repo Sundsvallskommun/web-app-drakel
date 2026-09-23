@@ -1002,7 +1002,7 @@ export interface Permit {
   modified?: string;
 }
 
-/** User-facing notification raised against an errand. Mutable: callers acknowledge (acknowledged=true) when the recipient has seen it; expired notifications are purged by a background job. */
+/** User-facing notification raised against an errand. Mutable: callers acknowledge (acknowledged=true) when the recipient has seen it and mark it handled (handled=true) when the recipient has acted on it; expired notifications are purged by a background job. */
 export interface Notification {
   /** Unique identifier */
   id?: string;
@@ -1032,8 +1032,10 @@ export interface Notification {
   description?: string;
   /** Optional longer content / body */
   content?: string;
-  /** Acknowledgement state. On PATCH, null leaves the value unchanged; true/false sets it. The bulk-acknowledge endpoint flips this to true for every notification on an errand. */
+  /** Acknowledgement state - the recipient has seen the notification. On PATCH, null leaves the value unchanged; true/false sets it. The bulk-acknowledge endpoint flips this to true for every notification on an errand. */
   acknowledged?: boolean;
+  /** Handled state - the recipient has acted on the notification, not merely seen it. On PATCH, null leaves the value unchanged; true/false sets it, and setting it to true also acknowledges the notification. The bulk-handle endpoint flips this to true for every notification on an errand. */
+  handled?: boolean;
   /**
    * Timestamp after which the notification is eligible for cleanup (server-assigned)
    * @format date-time

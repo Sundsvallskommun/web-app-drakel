@@ -1,4 +1,5 @@
 import { IndexController } from '@controllers/index.controller';
+import { warmUpLifecareSession } from '@services/lifecare-api.service';
 import validateEnv from '@utils/validateEnv';
 
 import App from '@/app';
@@ -18,6 +19,7 @@ import { FormSnapshotController } from './controllers/form-snapshot.controller';
 import { HealthController } from './controllers/health.controller';
 import { JobStimulusController } from './controllers/job-stimulus.controller';
 import { JournalController } from './controllers/journal.controller';
+import { LifecareDocumentsController } from './controllers/lifecare-documents.controller';
 import { MessageController } from './controllers/message.controller';
 import { MetadataController } from './controllers/metadata.controller';
 import { NormberakningController } from './controllers/normberakning.controller';
@@ -58,6 +60,11 @@ const app = new App([
   AdministratorController,
   AdminTemplateController,
   PdfController,
+  LifecareDocumentsController,
 ]);
 
 app.listen();
+
+// Sign in to Lifecare now rather than on the first request. Fire-and-forget: a Lifecare outage at
+// boot must not stop the BFF starting, and a good persisted session makes this a no-op.
+warmUpLifecareSession();

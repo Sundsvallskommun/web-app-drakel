@@ -13,7 +13,10 @@ export interface ErrandNotification {
   subType?: string;
   description?: string;
   content?: string;
+  /** The handläggare has seen the notification. */
   acknowledged?: boolean;
+  /** The handläggare has acted on it, not merely seen it. Marking it handled also acknowledges it. */
+  handled?: boolean;
   created?: string;
   modified?: string;
 }
@@ -33,5 +36,19 @@ export const acknowledgeNotification = (
 ): Promise<ServiceResponse<ErrandNotification>> =>
   apiService
     .patch<ApiResponse<ErrandNotification>>(`errands/${errandId}/notifications/${notificationId}`, { acknowledged })
+    .then((res) => ({ data: res.data.data }))
+    .catch(toServiceError);
+
+/**
+ * Marks a single notification as acted on. The API acknowledges it at the same time, so a notification
+ * cannot end up handled without also counting as read.
+ */
+export const handleNotification = (
+  errandId: string,
+  notificationId: string,
+  handled = true
+): Promise<ServiceResponse<ErrandNotification>> =>
+  apiService
+    .patch<ApiResponse<ErrandNotification>>(`errands/${errandId}/notifications/${notificationId}`, { handled })
     .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);

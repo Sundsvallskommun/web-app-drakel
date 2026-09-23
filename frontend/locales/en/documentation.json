@@ -32,6 +32,25 @@
     "actions": "Actions",
     "actionsFor": "Actions for {{recordLabel}}"
   },
+  "lifecare": {
+    "title": "Lifecare",
+    "description": "The client's journal notes and documents as they stand in Lifecare, read live. Read-only — managed in Lifecare.",
+    "sourceBadge": "From Lifecare",
+    "journalTitle": "Journal notes in Lifecare",
+    "journalEmpty": "No journal notes in Lifecare.",
+    "documentsTitle": "Documents in Lifecare",
+    "documentsEmpty": "No documents in Lifecare.",
+    "loadError": "Could not load data from Lifecare",
+    "type": "Type",
+    "owner": "Case file",
+    "responsible": "Responsible caseworker",
+    "modifiedBy": "Last modified",
+    "open": "Open",
+    "journalRecordTitle": "Journal note in Lifecare",
+    "documentRecordTitle": "Document in Lifecare",
+    "readOnly": "The record is locked in Lifecare and cannot be edited.",
+    "saveError": "Could not save the change in Lifecare"
+  },
   "form": {
     "typeRequired": "Type *",
     "selectType": "Select type",

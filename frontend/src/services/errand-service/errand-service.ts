@@ -39,7 +39,7 @@ export interface Message {
 }
 
 /** The generated FindErrandsQueryDto plus the notification filter (not yet in the regenerated contract). */
-export type ErrandsQuery = FindErrandsQueryDto & { hasUnacknowledgedNotifications?: boolean };
+export type ErrandsQuery = FindErrandsQueryDto & { hasUnhandledNotifications?: boolean };
 
 const buildParams = (query: ErrandsQuery): Record<string, unknown> => {
   const params: Record<string, unknown> = {};
@@ -55,8 +55,8 @@ const buildParams = (query: ErrandsQuery): Record<string, unknown> => {
   if (query.sort?.length) {
     params.sort = query.sort;
   }
-  if (query.hasUnacknowledgedNotifications) {
-    params.hasUnacknowledgedNotifications = true;
+  if (query.hasUnhandledNotifications) {
+    params.hasUnhandledNotifications = true;
   }
   return params;
 };

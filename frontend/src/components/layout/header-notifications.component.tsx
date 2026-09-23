@@ -57,6 +57,7 @@ export const HeaderNotifications: FC = () => {
               isLoading={notifications.isLoading}
               loadError={!!notifications.error}
               onAcknowledge={(notification) => void notifications.acknowledge(notification)}
+              onMarkHandled={(notification) => void notifications.markHandled(notification)}
               onClose={() => {
                 setShowNotifications(false);
               }}

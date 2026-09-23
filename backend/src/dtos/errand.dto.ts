@@ -83,4 +83,19 @@ export class FindErrandsQueryDto {
   @IsBoolean()
   @IsOptional()
   hasUnacknowledgedNotifications?: boolean;
+
+  /**
+   * When true, only errands that have at least one notification nobody has acted on. Separate from
+   * `hasUnacknowledgedNotifications`: a notification that has been read but not dealt with is no longer
+   * unacknowledged, and would fall out of that filter while still needing someone's attention.
+   */
+  @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  @IsOptional()
+  hasUnhandledNotifications?: boolean;
+
+  /** Narrows the notification filters to one recipient's notifications. */
+  @IsString()
+  @IsOptional()
+  notificationOwnerId?: string;
 }

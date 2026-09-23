@@ -32,6 +32,25 @@
     "actions": "Åtgärder",
     "actionsFor": "Åtgärder för {{recordLabel}}"
   },
+  "lifecare": {
+    "title": "Lifecare",
+    "description": "Den enskildes journalanteckningar och dokument som de ligger i Lifecare, hämtade direkt. Läsvy – hanteras i Lifecare.",
+    "sourceBadge": "Från Lifecare",
+    "journalTitle": "Journalanteckningar i Lifecare",
+    "journalEmpty": "Inga journalanteckningar i Lifecare.",
+    "documentsTitle": "Dokument i Lifecare",
+    "documentsEmpty": "Inga dokument i Lifecare.",
+    "loadError": "Det gick inte att hämta uppgifter från Lifecare",
+    "type": "Typ",
+    "owner": "Akt",
+    "responsible": "Ansvarig handläggare",
+    "modifiedBy": "Senast ändrad",
+    "open": "Öppna",
+    "journalRecordTitle": "Journalanteckning i Lifecare",
+    "documentRecordTitle": "Dokument i Lifecare",
+    "readOnly": "Posten är låst i Lifecare och kan inte redigeras.",
+    "saveError": "Det gick inte att spara ändringen i Lifecare"
+  },
   "form": {
     "typeRequired": "Typ *",
     "selectType": "Välj typ",

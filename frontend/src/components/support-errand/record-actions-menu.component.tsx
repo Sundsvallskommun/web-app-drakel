@@ -5,7 +5,7 @@ import { Ellipsis } from 'lucide-react';
 import { FC, ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export interface RecordAction {
+interface RecordAction {
   label: string;
   icon: ReactElement;
   onClick: () => void;

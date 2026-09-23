@@ -396,6 +396,7 @@ class App {
                 failMessage.append('failMessage', 'SAML_UNKNOWN_ERROR');
                 failureRedirect.search = failMessage.toString();
                 res.redirect(failureRedirect.toString());
+                return;
               }
               res.redirect(successRedirect.toString());
             });

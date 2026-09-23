@@ -26,10 +26,8 @@ import { ErrandAttachments } from './errand-attachments.component';
 import { ErrandAvsluta } from './errand-avsluta.component';
 import { ErrandBeslut } from './errand-beslut.component';
 import { ErrandBevakningar } from './errand-bevakningar.component';
-import { ErrandDocuments } from './errand-documents.component';
 import { ErrandEvents } from './errand-events.component';
 import { ErrandHeaderBanner } from './errand-header-banner.component';
-import { ErrandJournal } from './errand-journal.component';
 import { ErrandMessageAttachments } from './errand-message-attachments.component';
 import { ErrandMessages } from './errand-messages.component';
 import { ErrandMetaCard } from './errand-meta-card.component';
@@ -38,6 +36,7 @@ import { ErrandNotes } from './errand-notes.component';
 import { ErrandSidebar, SidebarSection } from './errand-sidebar.component';
 import { ErrandUtbetalning } from './errand-utbetalning.component';
 import { ErrandWarnings } from './errand-warnings.component';
+import { LifecareRecordSection } from './lifecare-record-section.component';
 import { SectionApprovalCheckbox } from './section-approval-checkbox.component';
 
 // Drafts are created with this sentinel title until the handläggare fills the errand in.
@@ -470,7 +469,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               label: t('detail.tabs.journal'),
               content: (
                 <ErrandTabPanel>
-                  <ErrandJournal errandId={apiErrandId} />
+                  <LifecareRecordSection errandId={apiErrandId} category="JOURNAL_NOTE" />
                 </ErrandTabPanel>
               ),
             },
@@ -478,7 +477,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               label: t('detail.tabs.documents'),
               content: (
                 <ErrandTabPanel>
-                  <ErrandDocuments errandId={apiErrandId} />
+                  <LifecareRecordSection errandId={apiErrandId} category="DOCUMENT" />
                 </ErrandTabPanel>
               ),
             },

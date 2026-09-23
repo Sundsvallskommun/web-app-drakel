@@ -16,8 +16,8 @@ interface OverviewFilterState {
   query: string;
   filters: ErrandFilters;
   sort: OverviewSort | undefined;
-  /** Only errands with unacknowledged notifications. */
-  onlyUnread: boolean;
+  /** Only errands carrying a notification nobody has acted on. */
+  onlyUnhandled: boolean;
   page: number;
   pageSize: number;
 }
@@ -27,7 +27,7 @@ interface OverviewFilterActions {
   setQuery: (query: string) => void;
   setFilter: (key: keyof ErrandFilters, value: string[]) => void;
   clearFilters: () => void;
-  setOnlyUnread: (onlyUnread: boolean) => void;
+  setOnlyUnhandled: (onlyUnhandled: boolean) => void;
   setPage: (page: number) => void;
   setPageSize: (pageSize: number) => void;
   toggleSort: (column: string) => void;
@@ -40,7 +40,7 @@ const initialState: OverviewFilterState = {
   query: '',
   filters: emptyFilters,
   sort: undefined,
-  onlyUnread: false,
+  onlyUnhandled: false,
   page: 0,
   pageSize: DEFAULT_PAGE_SIZE,
 };
@@ -73,8 +73,8 @@ export const useOverviewFilterStore = create<OverviewFilterState & OverviewFilte
       clearFilters: () => {
         set({ filters: emptyFilters, page: 0 });
       },
-      setOnlyUnread: (onlyUnread) => {
-        set({ onlyUnread, page: 0 });
+      setOnlyUnhandled: (onlyUnhandled) => {
+        set({ onlyUnhandled, page: 0 });
       },
       setPage: (page) => {
         set({ page });
@@ -94,9 +94,10 @@ export const useOverviewFilterStore = create<OverviewFilterState & OverviewFilte
     }),
     {
       name: 'drakel-overview-filter',
-      // Bumped whenever the set of views changes: a browser holding a view that no longer exists would
-      // otherwise select nothing, leaving the sidebar with no highlight and an unfiltered list.
-      version: 4,
+      // Bumped whenever the set of views changes, or a persisted key is renamed: a browser holding a view
+      // that no longer exists would otherwise select nothing, leaving the sidebar with no highlight and an
+      // unfiltered list. Version 5 renamed onlyUnread to onlyUnhandled.
+      version: 5,
       migrate: (persisted) => {
         const state = persisted as Partial<OverviewFilterState> | undefined;
         const view = state?.selectedView;
@@ -117,7 +118,7 @@ export const useOverviewFilterStore = create<OverviewFilterState & OverviewFilte
         query: state.query,
         filters: state.filters,
         sort: state.sort,
-        onlyUnread: state.onlyUnread,
+        onlyUnhandled: state.onlyUnhandled,
         pageSize: state.pageSize,
       }),
     }

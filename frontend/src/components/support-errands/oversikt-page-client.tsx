@@ -38,7 +38,7 @@ const buildStatusClause = (view: ErrandView): string => {
 interface AppliedSearch {
   query: string;
   filters: ErrandFilters;
-  onlyUnread: boolean;
+  onlyUnhandled: boolean;
 }
 
 /** An OR group over one field, e.g. (status:'A' or status:'B'); empty string when no values. */
@@ -80,14 +80,14 @@ const OversiktPageContent = () => {
   const query = useOverviewFilterStore((state) => state.query);
   const filters = useOverviewFilterStore((state) => state.filters);
   const sort = useOverviewFilterStore((state) => state.sort);
-  const onlyUnread = useOverviewFilterStore((state) => state.onlyUnread);
+  const onlyUnhandled = useOverviewFilterStore((state) => state.onlyUnhandled);
   const page = useOverviewFilterStore((state) => state.page);
   const pageSize = useOverviewFilterStore((state) => state.pageSize);
   const selectView = useOverviewFilterStore((state) => state.selectView);
   const setQuery = useOverviewFilterStore((state) => state.setQuery);
   const setFilter = useOverviewFilterStore((state) => state.setFilter);
   const clearFilters = useOverviewFilterStore((state) => state.clearFilters);
-  const setOnlyUnread = useOverviewFilterStore((state) => state.setOnlyUnread);
+  const setOnlyUnhandled = useOverviewFilterStore((state) => state.setOnlyUnhandled);
   const setPage = useOverviewFilterStore((state) => state.setPage);
   const setPageSize = useOverviewFilterStore((state) => state.setPageSize);
   const toggleSort = useOverviewFilterStore((state) => state.toggleSort);
@@ -103,7 +103,7 @@ const OversiktPageContent = () => {
   const { errandTypes } = useErrandTypes();
   // Ownership is a property of the view, not a filter: the three list views are the handläggare's own
   // errands by definition, and Sök deliberately searches across everyone's.
-  const active = isSearchView ? appliedSearch : { query, filters, onlyUnread };
+  const active = isSearchView ? appliedSearch : { query, filters, onlyUnhandled };
   const filter = buildErrandFilter(
     buildStatusClause(selectedView),
     active?.filters.status ?? [],
@@ -127,7 +127,7 @@ const OversiktPageContent = () => {
       size: pageSize,
       filter: filter || undefined,
       sort: sort ? [`${sort.column},${sort.direction}`] : undefined,
-      hasUnacknowledgedNotifications: active?.onlyUnread ?? undefined,
+      hasUnhandledNotifications: active?.onlyUnhandled ?? undefined,
     },
     !isSearchView || appliedSearch !== null
   );
@@ -158,14 +158,14 @@ const OversiktPageContent = () => {
             statuses={statuses}
             errandTypes={errandTypes}
             administrators={administrators}
-            onlyUnread={onlyUnread}
-            onOnlyUnreadChange={setOnlyUnread}
+            onlyUnhandled={onlyUnhandled}
+            onOnlyUnhandledChange={setOnlyUnhandled}
             showAssigneeFilter={isSearchView}
             onSearch={
               isSearchView ?
                 (searchQuery: string) => {
                   setPage(0);
-                  setAppliedSearch({ query: searchQuery, filters, onlyUnread });
+                  setAppliedSearch({ query: searchQuery, filters, onlyUnhandled });
                 }
               : undefined
             }

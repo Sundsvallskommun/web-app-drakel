@@ -5,7 +5,7 @@ import { ErrandNotification } from '@services/notification-service';
 import { Button } from '@sk-web-gui/react';
 import dayjs from 'dayjs';
 import { TFunction } from 'i18next';
-import { Check, X } from 'lucide-react';
+import { Check, CheckCheck, X } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { FC } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,15 +22,24 @@ interface NotificationsPanelProps {
   isLoading: boolean;
   loadError: boolean;
   onAcknowledge: (notification: ErrandNotification) => void;
+  onMarkHandled: (notification: ErrandNotification) => void;
   onClose: () => void;
 }
 
-/** The notifications list shown inside the overview sidebar: "Nya" (unread) + "Tidigare" (read). */
+/**
+ * The notifications list shown inside the overview sidebar, in the three states a notification moves
+ * through: "Nya" (not yet seen), "Lästa" (seen but not acted on) and "Hanterade" (done with).
+ *
+ * The middle group is the point of the split: a notification read in passing used to disappear from view
+ * although nobody had done anything about it. Marking one handled also marks it read, so the two buttons
+ * are only both offered while it is new.
+ */
 export const NotificationsPanel: FC<NotificationsPanelProps> = ({
   notifications,
   isLoading,
   loadError,
   onAcknowledge,
+  onMarkHandled,
   onClose,
 }) => {
   const { t } = useTranslation('overview');
@@ -43,10 +52,11 @@ export const NotificationsPanel: FC<NotificationsPanelProps> = ({
     }
   };
 
-  const unread = notifications.filter((notification) => !notification.acknowledged);
-  const read = notifications.filter((notification) => notification.acknowledged);
+  const unread = notifications.filter((notification) => !notification.acknowledged && !notification.handled);
+  const read = notifications.filter((notification) => notification.acknowledged && !notification.handled);
+  const handled = notifications.filter((notification) => notification.handled);
 
-  const renderItem = (notification: ErrandNotification, withAcknowledge: boolean) => (
+  const renderItem = (notification: ErrandNotification, withAcknowledge: boolean, withHandle: boolean) => (
     <li
       key={notification.id}
       className="rounded-12 border-1 border-divider bg-background-content p-12 flex flex-col gap-6"
@@ -64,18 +74,33 @@ export const NotificationsPanel: FC<NotificationsPanelProps> = ({
         : null}
         <span className="text-small text-dark-secondary">{formatWhen(notification.created)}</span>
       </button>
-      {withAcknowledge ?
-        <Button
-          size="sm"
-          variant="tertiary"
-          className="self-start"
-          leftIcon={<Check size={16} />}
-          onClick={() => {
-            onAcknowledge(notification);
-          }}
-        >
-          {t('notifications.markAsRead')}
-        </Button>
+      {withAcknowledge || withHandle ?
+        <div className="flex flex-wrap gap-8">
+          {withAcknowledge ?
+            <Button
+              size="sm"
+              variant="tertiary"
+              leftIcon={<Check size={16} />}
+              onClick={() => {
+                onAcknowledge(notification);
+              }}
+            >
+              {t('notifications.markAsRead')}
+            </Button>
+          : null}
+          {withHandle ?
+            <Button
+              size="sm"
+              variant="tertiary"
+              leftIcon={<CheckCheck size={16} />}
+              onClick={() => {
+                onMarkHandled(notification);
+              }}
+            >
+              {t('notifications.markAsHandled')}
+            </Button>
+          : null}
+        </div>
       : null}
     </li>
   );
@@ -105,13 +130,25 @@ export const NotificationsPanel: FC<NotificationsPanelProps> = ({
           {unread.length ?
             <section className="flex flex-col gap-8">
               <h3 className="text-small font-bold m-0">{t('notifications.unread')}</h3>
-              <ul className="flex flex-col gap-8 m-0 p-0 list-none">{unread.map((item) => renderItem(item, true))}</ul>
+              <ul className="flex flex-col gap-8 m-0 p-0 list-none">
+                {unread.map((item) => renderItem(item, true, true))}
+              </ul>
             </section>
           : null}
           {read.length ?
             <section className="flex flex-col gap-8">
               <h3 className="text-small font-bold m-0">{t('notifications.read')}</h3>
-              <ul className="flex flex-col gap-8 m-0 p-0 list-none">{read.map((item) => renderItem(item, false))}</ul>
+              <ul className="flex flex-col gap-8 m-0 p-0 list-none">
+                {read.map((item) => renderItem(item, false, true))}
+              </ul>
+            </section>
+          : null}
+          {handled.length ?
+            <section className="flex flex-col gap-8">
+              <h3 className="text-small font-bold m-0">{t('notifications.handled')}</h3>
+              <ul className="flex flex-col gap-8 m-0 p-0 list-none">
+                {handled.map((item) => renderItem(item, false, false))}
+              </ul>
             </section>
           : null}
         </div>

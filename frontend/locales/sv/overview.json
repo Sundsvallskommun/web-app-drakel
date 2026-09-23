@@ -16,7 +16,6 @@
     "dropdownSearchPlaceholder": "Skriv för att söka",
     "status": "Status",
     "assignee": "Handläggare",
-    "onlyUnread": "Olästa meddelanden",
     "clearStatus": "Rensa status {{status}}",
     "clearAssignee": "Rensa handläggare {{assignee}}",
     "clearAll": "Rensa alla",
@@ -24,7 +23,8 @@
     "search": "Sök",
     "type": "Ärendetyp",
     "clearType": "Ta bort filtret {{type}}",
-    "typeChip": "Typ: {{type}}"
+    "typeChip": "Typ: {{type}}",
+    "onlyUnhandled": "Ohanterade meddelanden"
   },
   "list": {
     "fetching": "Hämtar ärenden…",
@@ -69,7 +69,9 @@
       "STAKEHOLDER": "Intressent uppdaterad",
       "PARAMETER": "Parameter ändrad",
       "SYSTEM": "Systemhändelse"
-    }
+    },
+    "handled": "Hanterade",
+    "markAsHandled": "Markera som hanterad"
   },
   "registration": {
     "initiating": "Registrerar nytt ärende…",

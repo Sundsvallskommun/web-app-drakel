@@ -35,6 +35,10 @@ export class ErrandNotification {
   @IsBoolean()
   @IsOptional()
   acknowledged?: boolean;
+  /** The handläggare has acted on the notification, not merely seen it. */
+  @IsBoolean()
+  @IsOptional()
+  handled?: boolean;
   @IsString()
   @IsOptional()
   created?: string;

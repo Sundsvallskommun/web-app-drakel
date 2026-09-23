@@ -31,8 +31,8 @@ interface ErrandsFilterProps {
   statuses: Lookup[];
   errandTypes: Lookup[];
   administrators: Administrator[];
-  onlyUnread: boolean;
-  onOnlyUnreadChange: (checked: boolean) => void;
+  onlyUnhandled: boolean;
+  onOnlyUnhandledChange: (checked: boolean) => void;
   /**
    * Whether the handläggare filter is offered. On the list views everything is already the handläggare's
    * own, so narrowing by handläggare could only ever empty the list.
@@ -60,8 +60,8 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
   statuses,
   errandTypes,
   administrators,
-  onlyUnread,
-  onOnlyUnreadChange,
+  onlyUnhandled,
+  onOnlyUnhandledChange,
   showAssigneeFilter = true,
   onSearch,
 }) => {
@@ -109,7 +109,8 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
   const activeCount = filters.status.length + filters.type.length + filters.assignee.length;
   // Searching needs something to search for: a term, a chosen status or handläggare, or the unread
   // narrowing. Without that the Sök view would just list every errand in the municipality.
-  const canSearch = searchInput.trim() !== '' || filters.status.length > 0 || filters.assignee.length > 0 || onlyUnread;
+  const canSearch =
+    searchInput.trim() !== '' || filters.status.length > 0 || filters.assignee.length > 0 || onlyUnhandled;
 
   const removeValue = (key: keyof ErrandFilters, value: string) => {
     onFilterChange(
@@ -172,12 +173,12 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
         : null}
         <div className="flex flex-1 flex-wrap items-center justify-end gap-x-24 gap-y-8 text-small text-dark-secondary">
           <Checkbox
-            checked={onlyUnread}
+            checked={onlyUnhandled}
             onChange={(event) => {
-              onOnlyUnreadChange(event.target.checked);
+              onOnlyUnhandledChange(event.target.checked);
             }}
           >
-            {t('filter.onlyUnread')}
+            {t('filter.onlyUnhandled')}
           </Checkbox>
           {onSearch ?
             <Button

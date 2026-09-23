@@ -26,7 +26,7 @@ const NO_META: PagingAndSortingMetaData = {};
  * handläggare has said what to look for.
  */
 export const useErrands = (query: ErrandsQuery, enabled = true): UseErrandsResult => {
-  const { filter, page, size, hasUnacknowledgedNotifications } = query;
+  const { filter, page, size, hasUnhandledNotifications } = query;
   // Stable string for the dependency list. Joined with a newline — NOT a comma — because each sort entry
   // is itself "field,direction"; a comma delimiter would split the direction off into its own (invalid)
   // sort field, so the backend would always sort ascending.
@@ -39,9 +39,9 @@ export const useErrands = (query: ErrandsQuery, enabled = true): UseErrandsResul
         page,
         size,
         sort: sortKey ? sortKey.split('\n') : undefined,
-        hasUnacknowledgedNotifications,
+        hasUnhandledNotifications,
       }),
-    [filter, page, size, sortKey, hasUnacknowledgedNotifications]
+    [filter, page, size, sortKey, hasUnhandledNotifications]
   );
   const { data, ...result } = useServiceQuery(fetchErrands, { initialData: NO_RESULT, enabled });
   return { errands: data.errands ?? NO_ERRANDS, meta: data._meta ?? NO_META, ...result };

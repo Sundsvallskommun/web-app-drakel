@@ -16,7 +16,6 @@
     "dropdownSearchPlaceholder": "Type to search",
     "status": "Status",
     "assignee": "Case worker",
-    "onlyUnread": "Unread messages",
     "clearStatus": "Clear status {{status}}",
     "clearAssignee": "Clear case worker {{assignee}}",
     "clearAll": "Clear all",
@@ -24,7 +23,8 @@
     "search": "Search",
     "type": "Errand type",
     "clearType": "Remove the {{type}} filter",
-    "typeChip": "Type: {{type}}"
+    "typeChip": "Type: {{type}}",
+    "onlyUnhandled": "Unhandled messages"
   },
   "list": {
     "fetching": "Fetching errands…",
@@ -69,7 +69,9 @@
       "STAKEHOLDER": "Stakeholder updated",
       "PARAMETER": "Parameter changed",
       "SYSTEM": "System event"
-    }
+    },
+    "handled": "Handled",
+    "markAsHandled": "Mark as handled"
   },
   "registration": {
     "initiating": "Registering new errand…",
