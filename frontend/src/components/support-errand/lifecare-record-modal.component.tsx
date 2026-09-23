@@ -25,11 +25,12 @@ const DocumentEditor = dynamic(() => import('./document-editor.component'), {
  * be edited and saved back. Editability is decided by Lifecare (the `editable` flag on the fetched
  * record), never guessed from the list, so a record finalised since the tab loaded is read-only here.
  */
-export const LifecareRecordModal: FC<{ record: LifecareRecord; onClose: () => void; onSaved: () => void }> = ({
-  record,
-  onClose,
-  onSaved,
-}) => {
+export const LifecareRecordModal: FC<{
+  errandId: string;
+  record: LifecareRecord;
+  onClose: () => void;
+  onSaved: () => void;
+}> = ({ errandId, record, onClose, onSaved }) => {
   const { t } = useTranslation('documentation');
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -43,7 +44,7 @@ export const LifecareRecordModal: FC<{ record: LifecareRecord; onClose: () => vo
 
   useEffect(() => {
     let active = true;
-    void getLifecareRecordContent(record.category, record.id).then((res) => {
+    void getLifecareRecordContent(errandId, record.category, record.id).then((res) => {
       if (!active) {
         return;
       }
@@ -61,7 +62,7 @@ export const LifecareRecordModal: FC<{ record: LifecareRecord; onClose: () => vo
     return () => {
       active = false;
     };
-  }, [record.category, record.id]);
+  }, [errandId, record.category, record.id]);
 
   const save = async (): Promise<void> => {
     setSaving(true);
@@ -71,7 +72,7 @@ export const LifecareRecordModal: FC<{ record: LifecareRecord; onClose: () => vo
       occurenceDate: occurenceDate || undefined,
       time: time || undefined,
     };
-    const res = await updateLifecareRecord(record.category, record.id, edit);
+    const res = await updateLifecareRecord(errandId, record.category, record.id, edit);
     setSaving(false);
     if (res.error) {
       setSaveError(true);

@@ -49,7 +49,9 @@
     "journalRecordTitle": "Journalanteckning i Lifecare",
     "documentRecordTitle": "Dokument i Lifecare",
     "readOnly": "Posten är låst i Lifecare och kan inte redigeras.",
-    "saveError": "Det gick inte att spara ändringen i Lifecare"
+    "saveError": "Det gick inte att spara ändringen i Lifecare",
+    "noteTypesError": "Det gick inte att hämta anteckningstyperna från Lifecare",
+    "createError": "Det gick inte att spara journalanteckningen i Lifecare"
   },
   "form": {
     "typeRequired": "Typ *",

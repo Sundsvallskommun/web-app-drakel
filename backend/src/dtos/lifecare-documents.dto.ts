@@ -1,4 +1,4 @@
-import { IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 
 /**
  * The edits a handläggare makes to a Lifecare journalanteckning or document.
@@ -24,4 +24,38 @@ export class UpdateLifecareRecordDto {
   @Matches(/^\d{2}:\d{2}$/, { message: 'time must be HH:mm' })
   @IsOptional()
   time?: string;
+}
+
+/**
+ * A new journalanteckning, written straight to the errand's insats in Lifecare. The note type is
+ * Lifecare's own (`noteTypeCode` from the note-types endpoint); the rubrik defaults to its name.
+ */
+export class CreateLifecareJournalNoteDto {
+  /** The note body as HTML. */
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(1048576)
+  content!: string;
+
+  /** Lifecare's noteTypeCode, e.g. 1 for Journalanteckning. */
+  @IsInt()
+  noteTypeCode!: number;
+
+  /** The rubrik; the note type's name when left out. */
+  @IsString()
+  @MaxLength(255)
+  @IsOptional()
+  title?: string;
+
+  /** Documented time, `HH:mm`; Lifecare stamps the time of saving when left out. */
+  @IsString()
+  @Matches(/^\d{2}:\d{2}$/, { message: 'occurenceTime must be HH:mm' })
+  @IsOptional()
+  occurenceTime?: string;
+
+  /** Documented date, `YYYY-MM-DD`; Lifecare's proposal (today) when left out. */
+  @IsString()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'occurenceDate must be YYYY-MM-DD' })
+  @IsOptional()
+  occurenceDate?: string;
 }

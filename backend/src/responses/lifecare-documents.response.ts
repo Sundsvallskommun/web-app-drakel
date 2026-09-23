@@ -110,6 +110,11 @@ export class LifecareRecordContentView {
   @IsBoolean() editable!: boolean;
 }
 
+export class LifecareRecordApiResponse implements ApiResponse<LifecareRecordView> {
+  @ValidateNested() @Type(() => LifecareRecordView) data!: LifecareRecordView;
+  @IsString() message!: string;
+}
+
 export class LifecareRecordContentApiResponse implements ApiResponse<LifecareRecordContentView> {
   @ValidateNested() @Type(() => LifecareRecordContentView) data!: LifecareRecordContentView;
   @IsString() message!: string;
@@ -144,7 +149,8 @@ export const applyRecordEdit = (
   ...(edit.time ? { time: edit.time, occurenceTime: edit.time } : {}),
 });
 
-const toRecordView = (model: LifecareDocumentModel): LifecareRecordView => ({
+/** Turns one Lifecare document row — from the list, or the row a create answers with — into the UI's view. */
+export const toLifecareRecord = (model: LifecareDocumentModel): LifecareRecordView => ({
   id: String(model.id),
   category: model.documentType_Name === JOURNAL_NOTE_TYPE ? 'JOURNAL_NOTE' : 'DOCUMENT',
   title: model.title,
@@ -166,7 +172,7 @@ const toRecordView = (model: LifecareDocumentModel): LifecareRecordView => ({
  */
 export const toLifecareRecords = (raw: LifecareDocumentsListRaw | undefined): LifecareRecordsView => {
   const models = raw?.documentModels ?? [];
-  const records = models.map(toRecordView);
+  const records = models.map(toLifecareRecord);
   return {
     journalNotes: records.filter(record => record.category === 'JOURNAL_NOTE'),
     documents: records.filter(record => record.category === 'DOCUMENT'),

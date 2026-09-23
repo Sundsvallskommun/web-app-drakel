@@ -4,12 +4,16 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import {
   applyRecordEdit,
   isEditable,
+  LifecareDocumentModel,
   LifecareDocumentsListRaw,
   LifecareEditableRecord,
   LifecareRecordCategory,
   LifecareRecordContentView,
+  LifecareRecordView,
+  toLifecareRecord,
   toRecordContent,
 } from '@/responses/lifecare-documents.response';
+import { buildJournalNote, LifecareNoteProposalRaw, NewJournalNote } from '@/responses/lifecare-journal-note.response';
 
 import LifecareApiService from './lifecare-api.service';
 
@@ -57,6 +61,37 @@ class LifecareDocumentsService {
       path: 'api2/Document/GetDocumentsListForClient/',
       params: { id: identityNumber },
     });
+  }
+
+  /**
+   * Lifecare's proposal for a new journal note on an insats — the selectable note types and a blank note
+   * bound to the insats. Every drakel errand is one insats in Lifecare, so this is where its notes go.
+   */
+  public async readNoteProposal(serviceId: number): Promise<LifecareNoteProposalRaw> {
+    const res = await this.apiService.get<LifecareNoteProposalRaw>({
+      module: PROFESSIONAL_WEB,
+      path: 'api2/Document/GetNoteProposalForService',
+      params: { id: String(serviceId) },
+    });
+    return res.data;
+  }
+
+  /**
+   * Writes a new journalanteckning on an insats, the way Lifecare's own editor does: fetch the proposal,
+   * fill in its blank note and post it to `CreateJournalNote`. Lifecare answers with the new row.
+   */
+  public async createJournalNote(serviceId: number, input: NewJournalNote & { noteTypeCode: number }): Promise<LifecareRecordView> {
+    const proposal = await this.readNoteProposal(serviceId);
+    const noteType = proposal.documentNoteTypes.find(candidate => candidate.id === input.noteTypeCode && candidate.isActive);
+    if (!noteType) {
+      throw new HttpException(400, 'Anteckningstypen finns inte i Lifecare');
+    }
+
+    const created = await this.apiService.post<LifecareDocumentModel>(
+      { module: PROFESSIONAL_WEB, path: 'api2/Document/CreateJournalNote/' },
+      buildJournalNote(proposal, noteType, input),
+    );
+    return toLifecareRecord(created.data);
   }
 
   /** Reads a journalanteckning with its body, for viewing or as the base of an edit. */

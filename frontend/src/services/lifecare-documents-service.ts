@@ -1,3 +1,8 @@
+import {
+  CreateLifecareJournalNoteDto,
+  LifecareNoteTypesApiResponse,
+  LifecareNoteTypeView,
+} from '@data-contracts/backend/data-contracts';
 import { ServiceResponse } from '@interfaces/services';
 import { ApiResponse, apiService, toServiceError } from '@services/api-service';
 
@@ -61,23 +66,46 @@ export const getLifecareRecords = (errandId: string): Promise<ServiceResponse<Li
     .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);
 
-/** Fetches one Lifecare record with its body. */
+/** Fetches one Lifecare record with its body. Read through the errand, so the read is logged on it. */
 export const getLifecareRecordContent = (
+  errandId: string,
   category: LifecareRecordCategory,
   id: string
 ): Promise<ServiceResponse<LifecareRecordContent>> =>
   apiService
-    .get<ApiResponse<LifecareRecordContent>>(`lifecare-documents/${pathFor(category)}/${id}`)
+    .get<ApiResponse<LifecareRecordContent>>(`errands/${errandId}/lifecare-documents/${pathFor(category)}/${id}`)
     .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);
 
 /** Saves an edit to a Lifecare record. */
 export const updateLifecareRecord = (
+  errandId: string,
   category: LifecareRecordCategory,
   id: string,
   edit: LifecareRecordEdit
 ): Promise<ServiceResponse<LifecareRecordContent>> =>
   apiService
-    .put<ApiResponse<LifecareRecordContent>>(`lifecare-documents/${pathFor(category)}/${id}`, edit)
+    .put<ApiResponse<LifecareRecordContent>>(`errands/${errandId}/lifecare-documents/${pathFor(category)}/${id}`, edit)
     .then((res) => ({ data: res.data.data }))
+    .catch(toServiceError);
+
+/** The note types a new journalanteckning on the insats of the errand can have, as Lifecare lists them. */
+export const getLifecareJournalNoteTypes = (errandId: string): Promise<ServiceResponse<LifecareNoteTypeView[]>> =>
+  apiService
+    .get<LifecareNoteTypesApiResponse>(`errands/${errandId}/lifecare-documents/journal-note-types`)
+    .then((res) => ({ data: res.data.data }))
+    .catch(toServiceError);
+
+/**
+ * Writes a new journalanteckning straight to the insats of the errand in Lifecare. There is no copy
+ * anywhere else, so on a rejection (`error`, with Lifecare's reason in `message`) the text only lives in
+ * the form the handläggare is still looking at.
+ */
+export const createLifecareJournalNote = (
+  errandId: string,
+  input: CreateLifecareJournalNoteDto
+): Promise<ServiceResponse<null>> =>
+  apiService
+    .post<ApiResponse>(`errands/${errandId}/lifecare-documents/journal-notes`, input)
+    .then(() => ({ data: null }))
     .catch(toServiceError);

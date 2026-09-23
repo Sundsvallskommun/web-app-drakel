@@ -710,8 +710,23 @@ export interface LifecareRecordContentView {
   editable: boolean;
 }
 
+export interface LifecareRecordApiResponse {
+  data: LifecareRecordView;
+  message: string;
+}
+
 export interface LifecareRecordContentApiResponse {
   data: LifecareRecordContentView;
+  message: string;
+}
+
+export interface LifecareNoteTypeView {
+  code: number;
+  name: string;
+}
+
+export interface LifecareNoteTypesApiResponse {
+  data: LifecareNoteTypeView[];
   message: string;
 }
 
@@ -722,6 +737,21 @@ export interface UpdateLifecareRecordDto {
   occurenceDate?: string;
   /** @pattern ^\d{2}:\d{2}$ */
   time?: string;
+}
+
+export interface CreateLifecareJournalNoteDto {
+  /**
+   * @minLength 1
+   * @maxLength 1048576
+   */
+  content: string;
+  noteTypeCode: number;
+  /** @maxLength 255 */
+  title?: string;
+  /** @pattern ^\d{2}:\d{2}$ */
+  occurenceTime?: string;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  occurenceDate?: string;
 }
 
 export interface MessageAttachment {

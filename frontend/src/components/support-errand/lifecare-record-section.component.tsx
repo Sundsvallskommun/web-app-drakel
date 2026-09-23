@@ -2,11 +2,13 @@
 
 import { useLifecareDocuments } from '@hooks/use-lifecare-documents';
 import { LifecareRecord } from '@services/lifecare-documents-service';
-import { Eye } from 'lucide-react';
+import { Button } from '@sk-web-gui/react';
+import { Eye, Plus } from 'lucide-react';
 import { FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ErrandSectionHeader } from './errand-section-header.component';
+import { LifecareJournalNoteCreateModal } from './lifecare-journal-note-create-modal.component';
 import { LifecareRecordModal } from './lifecare-record-modal.component';
 import { RecordActionsMenu } from './record-actions-menu.component';
 import { RecordCard, RecordCardDetail } from './record-card.component';
@@ -36,6 +38,7 @@ const keysFor = (category: RecordCategory) =>
 /**
  * One tab's worth of Lifecare records — the applicant's journalanteckningar or their documents, read
  * live from Lifecare. A record opens to show its body and can be edited when Lifecare still allows it.
+ * The journal tab also writes new journalanteckningar, straight to the insats of the errand in Lifecare.
  *
  * Both the "Journal" and "Dokument" tabs are this component with a different `category`; the data comes
  * from the same person-wide Lifecare list, split by kind on the backend.
@@ -44,13 +47,32 @@ export const LifecareRecordSection: FC<{ errandId: string; category: RecordCateg
   const { records, isLoading, error, refresh } = useLifecareDocuments(errandId);
   const { t } = useTranslation('documentation');
   const [openRecord, setOpenRecord] = useState<LifecareRecord>();
+  const [showCreate, setShowCreate] = useState<boolean>(false);
 
   const keys = keysFor(category);
   const items = category === 'JOURNAL_NOTE' ? records.journalNotes : records.documents;
 
   return (
     <div className="flex flex-col gap-24">
-      <ErrandSectionHeader title={t(keys.title)} description={t(keys.description)} />
+      <ErrandSectionHeader
+        title={t(keys.title)}
+        description={t(keys.description)}
+        action={
+          category === 'JOURNAL_NOTE' ?
+            <Button
+              color="vattjom"
+              variant="primary"
+              size="sm"
+              leftIcon={<Plus />}
+              onClick={() => {
+                setShowCreate(true);
+              }}
+            >
+              {t('journal.newEntry')}
+            </Button>
+          : undefined
+        }
+      />
 
       <RecordList
         title={t(keys.listTitle)}
@@ -102,12 +124,26 @@ export const LifecareRecordSection: FC<{ errandId: string; category: RecordCateg
 
       {openRecord ?
         <LifecareRecordModal
+          errandId={errandId}
           record={openRecord}
           onClose={() => {
             setOpenRecord(undefined);
           }}
           onSaved={() => {
             setOpenRecord(undefined);
+            refresh();
+          }}
+        />
+      : null}
+
+      {showCreate ?
+        <LifecareJournalNoteCreateModal
+          errandId={errandId}
+          onClose={() => {
+            setShowCreate(false);
+          }}
+          onCreated={() => {
+            setShowCreate(false);
             refresh();
           }}
         />
