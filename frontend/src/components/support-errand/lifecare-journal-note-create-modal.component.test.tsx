@@ -39,8 +39,8 @@ describe('LifecareJournalNoteCreateModal', () => {
     vi.mocked(getLifecareJournalNoteTypes).mockReset();
     vi.mocked(getLifecareJournalNoteTypes).mockResolvedValue({
       data: [
-        { code: 3, name: 'Beslut' },
-        { code: 1, name: 'Journalanteckning' },
+        { code: 3, name: 'Beslut', protectedByDefault: true },
+        { code: 1, name: 'Journalanteckning', protectedByDefault: false },
       ],
     });
     vi.mocked(createLifecareJournalNote).mockReset();
@@ -80,6 +80,29 @@ describe('LifecareJournalNoteCreateModal', () => {
         expect.objectContaining({ noteTypeCode: 3, title: 'Telefonsamtal', occurenceTime: '11:50' })
       );
     });
+  });
+
+  it('saves the note skrivskyddad when the handläggare ticks it', async () => {
+    vi.mocked(createLifecareJournalNote).mockResolvedValue({ data: null });
+    render(<LifecareJournalNoteCreateModal errandId="errand-1" onClose={vi.fn()} onCreated={vi.fn()} />);
+
+    await fillIn();
+    expect(screen.getByRole('checkbox', { name: 'Spara skrivskyddad' })).not.toBeChecked();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Spara skrivskyddad' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Skapa' }));
+
+    await waitFor(() => {
+      expect(createLifecareJournalNote).toHaveBeenCalledWith('errand-1', expect.objectContaining({ protected: true }));
+    });
+  });
+
+  it('starts skrivskyddad for a note type Lifecare protects by default', async () => {
+    render(<LifecareJournalNoteCreateModal errandId="errand-1" onClose={vi.fn()} onCreated={vi.fn()} />);
+
+    await fillIn();
+    fireEvent.change(screen.getByLabelText('Typ *'), { target: { value: '3' } });
+
+    expect(screen.getByRole('checkbox', { name: 'Spara skrivskyddad' })).toBeChecked();
   });
 
   it('keeps the text and shows the reason Lifecare gave when it refuses the note', async () => {

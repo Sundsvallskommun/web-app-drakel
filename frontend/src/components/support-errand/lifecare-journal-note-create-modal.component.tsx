@@ -22,6 +22,7 @@ export const LifecareJournalNoteCreateModal: FC<{ errandId: string; onClose: () 
         occurenceDate: values.occurenceDate,
         occurenceTime: values.occurenceTime,
         content: values.content,
+        protected: values.protected,
       }),
     [errandId]
   );

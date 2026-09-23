@@ -1,6 +1,6 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
 import { Type } from 'class-transformer';
-import { IsArray, IsNumber, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsNumber, IsString, ValidateNested } from 'class-validator';
 
 import { LifecareEditableRecord } from '@/responses/lifecare-documents.response';
 
@@ -14,6 +14,8 @@ export interface LifecareNoteTypeRaw {
   name: string;
   sortOrder: number;
   isActive: boolean;
+  /** Whether a note of this type is write-protected unless the handläggare says otherwise. */
+  writeProtectAuto?: boolean;
 }
 
 /**
@@ -32,6 +34,8 @@ export class LifecareNoteTypeView {
   /** Lifecare's noteTypeCode. */
   @IsNumber() code!: number;
   @IsString() name!: string;
+  /** Whether a new note of this type is saved skrivskyddad unless the handläggare says otherwise. */
+  @IsBoolean() protectedByDefault!: boolean;
 }
 
 export class LifecareNoteTypesApiResponse implements ApiResponse<LifecareNoteTypeView[]> {
@@ -44,7 +48,7 @@ export const toNoteTypes = (proposal: LifecareNoteProposalRaw): LifecareNoteType
   proposal.documentNoteTypes
     .filter(noteType => noteType.isActive)
     .sort((first, second) => first.sortOrder - second.sortOrder)
-    .map(noteType => ({ code: noteType.id, name: noteType.name }));
+    .map(noteType => ({ code: noteType.id, name: noteType.name, protectedByDefault: noteType.writeProtectAuto === true }));
 
 /** What a handläggare fills in on a new journalanteckning. */
 export interface NewJournalNote {
@@ -52,6 +56,8 @@ export interface NewJournalNote {
   title?: string;
   occurenceDate?: string;
   occurenceTime?: string;
+  /** Saved skrivskyddad; the note type's own default when left out. */
+  protected?: boolean;
 }
 
 /**
@@ -61,6 +67,8 @@ export interface NewJournalNote {
  * object, and the blank note already carries the insats it belongs to. Without a rubrik of its own the
  * note is titled by its type, which is what Lifecare's own editor prefills. The time goes in
  * `occurenceTime`, the field Lifecare's editor writes it to; left out, Lifecare stamps the time of saving.
+ * `protected` is always sent: a skrivskyddad note can no longer be changed, so it is never left to
+ * whatever the blank note happened to carry.
  */
 export const buildJournalNote = (
   proposal: LifecareNoteProposalRaw,
@@ -71,6 +79,7 @@ export const buildJournalNote = (
   content: input.content,
   title: input.title?.trim() ? input.title.trim() : noteType.name,
   noteTypeCode: noteType.id,
+  protected: input.protected ?? noteType.writeProtectAuto === true,
   ...(input.occurenceDate ? { occurenceDate: input.occurenceDate } : {}),
   ...(input.occurenceTime ? { occurenceTime: input.occurenceTime } : {}),
 });

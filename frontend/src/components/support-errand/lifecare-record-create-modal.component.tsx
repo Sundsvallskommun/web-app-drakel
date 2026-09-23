@@ -1,7 +1,7 @@
 'use client';
 
 import { ServiceResponse } from '@interfaces/services';
-import { Button, DatePicker, FormControl, FormLabel, Input, Modal, Select } from '@sk-web-gui/react';
+import { Button, Checkbox, DatePicker, FormControl, FormLabel, Input, Modal, Select } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { todayDate } from '@utils/today-date';
 import dynamic from 'next/dynamic';
@@ -21,6 +21,8 @@ interface LifecareRecordType {
   name: string;
   /** False when the type keeps the date Lifecare proposes (today). */
   canChangeOccurenceDate?: boolean;
+  /** Whether Lifecare saves a record of this type skrivskyddad unless told otherwise. */
+  protectedByDefault: boolean;
 }
 
 /** What the handläggare filled in, handed to the record kind's own create call. */
@@ -30,6 +32,8 @@ export interface NewLifecareRecordValues {
   occurenceDate: string;
   occurenceTime?: string;
   content: string;
+  /** Saved skrivskyddad — Lifecare then no longer lets it be changed. */
+  protected: boolean;
 }
 
 interface LifecareRecordCreateModalProps {
@@ -50,7 +54,8 @@ interface LifecareRecordCreateModalProps {
 /**
  * Writes a new record straight to the insats of the errand in Lifecare. The types are Lifecare's own,
  * read from its proposal for the insats. Picking a type fills the rubrik with its name, as Lifecare's own
- * editor does, until the handläggare writes a rubrik of their own.
+ * editor does, until the handläggare writes a rubrik of their own. Skrivskydd starts from the type's own
+ * default and can be changed before saving.
  *
  * Nothing is kept outside Lifecare, so the dialog stays open with the text intact until Lifecare has
  * accepted the record, and a refusal is shown in Lifecare's own words.
@@ -75,6 +80,7 @@ export const LifecareRecordCreateModal: FC<LifecareRecordCreateModalProps> = ({
   const [occurenceDate, setOccurenceDate] = useState<string>(todayDate());
   const [occurenceTime, setOccurenceTime] = useState<string>('');
   const [content, setContent] = useState<TextEditorValue>(EMPTY_CONTENT);
+  const [writeProtected, setWriteProtected] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string>();
 
@@ -109,6 +115,7 @@ export const LifecareRecordCreateModal: FC<LifecareRecordCreateModalProps> = ({
     if (recordType?.canChangeOccurenceDate === false) {
       setOccurenceDate(todayDate());
     }
+    setWriteProtected(recordType?.protectedByDefault ?? false);
   };
 
   const submit = async (): Promise<void> => {
@@ -123,6 +130,7 @@ export const LifecareRecordCreateModal: FC<LifecareRecordCreateModalProps> = ({
       occurenceDate,
       occurenceTime: withTime && occurenceTime ? occurenceTime : undefined,
       content: content.markup?.trim() ?? '',
+      protected: writeProtected,
     });
     setSaving(false);
     if (res.error) {
@@ -192,6 +200,18 @@ export const LifecareRecordCreateModal: FC<LifecareRecordCreateModalProps> = ({
           <FormLabel>{t('form.text')}</FormLabel>
           <DocumentEditor value={content} onChange={setContent} />
         </FormControl>
+
+        <div className="flex flex-col gap-4">
+          <Checkbox
+            checked={writeProtected}
+            onChange={(event) => {
+              setWriteProtected(event.target.checked);
+            }}
+          >
+            {t('form.writeProtected')}
+          </Checkbox>
+          <p className="m-0 text-small text-dark-secondary">{t('form.writeProtectedHint')}</p>
+        </div>
 
         {error ?
           <p className="text-error-surface-primary m-0">{error}</p>

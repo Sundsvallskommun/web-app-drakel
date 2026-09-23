@@ -53,7 +53,13 @@
     "noteTypesError": "The note types could not be read from Lifecare",
     "createError": "The journal note could not be saved in Lifecare",
     "documentTypesError": "The document types could not be read from Lifecare",
-    "createDocumentError": "The document could not be saved in Lifecare"
+    "createDocumentError": "The document could not be saved in Lifecare",
+    "searchPlaceholder": "Search by heading, type, file or text",
+    "searchJournal": "Search the journal notes",
+    "searchDocuments": "Search the documents",
+    "noSearchMatches": "Nothing matches the search.",
+    "bodyLoading": "Fetching the text from Lifecare…",
+    "bodyUnreadable": "The text could not be fetched from Lifecare. Open the record to read it."
   },
   "form": {
     "typeRequired": "Type *",
@@ -70,6 +76,8 @@
     "time": "Time",
     "text": "Text",
     "create": "Create",
+    "writeProtected": "Save write-protected",
+    "writeProtectedHint": "A write-protected record cannot be changed afterwards, here or in Lifecare.",
     "saveChangeError": "Could not save the change"
   }
 }

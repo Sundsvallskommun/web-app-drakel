@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 
 /**
  * The edits a handläggare makes to a Lifecare journalanteckning or document.
@@ -58,6 +58,11 @@ export class CreateLifecareJournalNoteDto {
   @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'occurenceDate must be YYYY-MM-DD' })
   @IsOptional()
   occurenceDate?: string;
+
+  /** Saved skrivskyddad — it can then no longer be changed. The type's own default when left out. */
+  @IsBoolean()
+  @IsOptional()
+  protected?: boolean;
 }
 
 /**
@@ -86,4 +91,9 @@ export class CreateLifecareDocumentDto {
   @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'occurenceDate must be YYYY-MM-DD' })
   @IsOptional()
   occurenceDate?: string;
+
+  /** Saved skrivskyddad — it can then no longer be changed. The type's own default when left out. */
+  @IsBoolean()
+  @IsOptional()
+  protected?: boolean;
 }

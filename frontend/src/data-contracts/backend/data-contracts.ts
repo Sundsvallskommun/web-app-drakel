@@ -671,6 +671,7 @@ export interface LifecareDocumentTypeView {
   code: number;
   name: string;
   canChangeOccurenceDate: boolean;
+  protectedByDefault: boolean;
 }
 
 export interface LifecareDocumentTypesApiResponse {
@@ -721,9 +722,20 @@ export interface LifecareRecordContentApiResponse {
   message: string;
 }
 
+export interface LifecareRecordBodyView {
+  id: string;
+  content?: string;
+}
+
+export interface LifecareRecordBodiesApiResponse {
+  data: LifecareRecordBodyView[];
+  message: string;
+}
+
 export interface LifecareNoteTypeView {
   code: number;
   name: string;
+  protectedByDefault: boolean;
 }
 
 export interface LifecareNoteTypesApiResponse {
@@ -753,6 +765,7 @@ export interface CreateLifecareJournalNoteDto {
   occurenceTime?: string;
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   occurenceDate?: string;
+  protected?: boolean;
 }
 
 export interface CreateLifecareDocumentDto {
@@ -766,6 +779,7 @@ export interface CreateLifecareDocumentDto {
   title?: string;
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   occurenceDate?: string;
+  protected?: boolean;
 }
 
 export interface LifecarePaymentMethodView {

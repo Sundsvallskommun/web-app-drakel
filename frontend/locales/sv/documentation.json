@@ -53,7 +53,13 @@
     "noteTypesError": "Det gick inte att hämta anteckningstyperna från Lifecare",
     "createError": "Det gick inte att spara journalanteckningen i Lifecare",
     "documentTypesError": "Det gick inte att hämta dokumenttyperna från Lifecare",
-    "createDocumentError": "Det gick inte att spara dokumentet i Lifecare"
+    "createDocumentError": "Det gick inte att spara dokumentet i Lifecare",
+    "searchPlaceholder": "Sök på rubrik, typ, akt eller text",
+    "searchJournal": "Sök bland journalanteckningarna",
+    "searchDocuments": "Sök bland dokumenten",
+    "noSearchMatches": "Inget matchar sökningen.",
+    "bodyLoading": "Hämtar texten från Lifecare…",
+    "bodyUnreadable": "Texten kunde inte hämtas från Lifecare. Öppna posten för att läsa den."
   },
   "form": {
     "typeRequired": "Typ *",
@@ -70,6 +76,8 @@
     "time": "Tid",
     "text": "Text",
     "create": "Skapa",
+    "writeProtected": "Spara skrivskyddad",
+    "writeProtectedHint": "En skrivskyddad post kan inte ändras efteråt, varken här eller i Lifecare.",
     "saveChangeError": "Det gick inte att spara ändringen"
   }
 }

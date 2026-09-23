@@ -5,7 +5,7 @@ import { buildJournalNote, LifecareNoteProposalRaw, toNoteTypes } from '@/respon
 // Shaped after a captured GetNoteProposalForService answer, trimmed to the fields that matter here.
 const proposal: LifecareNoteProposalRaw = {
   documentNoteTypes: [
-    { id: 3, name: 'Beslut', sortOrder: 0, isActive: true },
+    { id: 3, name: 'Beslut', sortOrder: 0, isActive: true, writeProtectAuto: true },
     { id: 1, name: 'Journalanteckning', sortOrder: 240, isActive: true },
     { id: 9, name: 'Utgången typ', sortOrder: 100, isActive: false },
   ],
@@ -26,8 +26,8 @@ const journalNoteType = { id: 1, name: 'Journalanteckning', sortOrder: 240, isAc
 describe('toNoteTypes', () => {
   it('lists the active note types in Lifecare order', () => {
     expect(toNoteTypes(proposal)).toEqual([
-      { code: 3, name: 'Beslut' },
-      { code: 1, name: 'Journalanteckning' },
+      { code: 3, name: 'Beslut', protectedByDefault: true },
+      { code: 1, name: 'Journalanteckning', protectedByDefault: false },
     ]);
   });
 });
@@ -39,7 +39,19 @@ describe('buildJournalNote', () => {
       content: '<p>Hej</p>',
       title: 'Journalanteckning',
       noteTypeCode: 1,
+      protected: false,
     });
+  });
+
+  it('saves the note skrivskyddad when the handläggare asks for it', () => {
+    expect(buildJournalNote(proposal, journalNoteType, { content: '<p>Hej</p>', protected: true }).protected).toBe(true);
+  });
+
+  it('follows the note type when the handläggare says nothing about skrivskydd', () => {
+    const decisionType = { id: 3, name: 'Beslut', sortOrder: 0, isActive: true, writeProtectAuto: true };
+
+    expect(buildJournalNote(proposal, decisionType, { content: '<p>Hej</p>' }).protected).toBe(true);
+    expect(buildJournalNote(proposal, decisionType, { content: '<p>Hej</p>', protected: false }).protected).toBe(false);
   });
 
   it('takes the rubrik and time the handläggare gave', () => {

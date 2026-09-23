@@ -24,6 +24,7 @@ export const LifecareDocumentCreateModal: FC<{ errandId: string; onClose: () => 
         title: values.title,
         occurenceDate: values.occurenceDate,
         content: values.content,
+        protected: values.protected,
       }),
     [errandId]
   );

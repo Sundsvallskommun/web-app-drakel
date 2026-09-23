@@ -39,8 +39,8 @@ describe('LifecareDocumentCreateModal', () => {
     vi.mocked(getLifecareDocumentTypes).mockReset();
     vi.mocked(getLifecareDocumentTypes).mockResolvedValue({
       data: [
-        { code: 1, name: 'EK Brev', canChangeOccurenceDate: true },
-        { code: 4, name: 'EK Utredning', canChangeOccurenceDate: false },
+        { code: 1, name: 'EK Brev', canChangeOccurenceDate: true, protectedByDefault: false },
+        { code: 4, name: 'EK Utredning', canChangeOccurenceDate: false, protectedByDefault: true },
       ],
     });
     vi.mocked(createLifecareDocument).mockReset();
@@ -61,6 +61,19 @@ describe('LifecareDocumentCreateModal', () => {
       'errand-1',
       expect.objectContaining({ documentTypeCode: 1, title: 'EK Brev', content: '<p>Hej</p>' })
     );
+  });
+
+  it('saves the document skrivskyddad when the handläggare ticks it', async () => {
+    vi.mocked(createLifecareDocument).mockResolvedValue({ data: null });
+    render(<LifecareDocumentCreateModal errandId="errand-1" onClose={vi.fn()} onCreated={vi.fn()} />);
+
+    await fillIn('1');
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Spara skrivskyddad' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Skapa' }));
+
+    await waitFor(() => {
+      expect(createLifecareDocument).toHaveBeenCalledWith('errand-1', expect.objectContaining({ protected: true }));
+    });
   });
 
   it('has no time field, since a document carries none', async () => {

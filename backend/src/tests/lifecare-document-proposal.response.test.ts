@@ -8,7 +8,7 @@ const letterType = { documentCode: 1, name: 'EK Brev', sortOrder: 0, isActive: t
 const proposal: LifecareDocumentProposalRaw = {
   documentTypes: [
     { documentCode: 15, name: 'X Exempelblankett I', sortOrder: 0, isActive: true, isForm: true, canChangeOccurenceDate: true },
-    { documentCode: 4, name: 'EK Utredning', sortOrder: 20, isActive: true, isForm: false, canChangeOccurenceDate: false },
+    { documentCode: 4, name: 'EK Utredning', sortOrder: 20, isActive: true, isForm: false, canChangeOccurenceDate: false, writeProtectAuto: true },
     { documentCode: 9, name: 'Utgången typ', sortOrder: 5, isActive: false, isForm: false, canChangeOccurenceDate: true },
     letterType,
   ],
@@ -28,8 +28,8 @@ const proposal: LifecareDocumentProposalRaw = {
 describe('toDocumentTypes', () => {
   it('lists the active, non-blankett document types in Lifecare order', () => {
     expect(toDocumentTypes(proposal)).toEqual([
-      { code: 1, name: 'EK Brev', canChangeOccurenceDate: true },
-      { code: 4, name: 'EK Utredning', canChangeOccurenceDate: false },
+      { code: 1, name: 'EK Brev', canChangeOccurenceDate: true, protectedByDefault: false },
+      { code: 4, name: 'EK Utredning', canChangeOccurenceDate: false, protectedByDefault: true },
     ]);
   });
 });
@@ -41,7 +41,12 @@ describe('buildDocument', () => {
       content: '<p>Hej</p>',
       title: 'EK Brev',
       documentTypeCode: 1,
+      protected: false,
     });
+  });
+
+  it('saves the document skrivskyddad when the handläggare asks for it', () => {
+    expect(buildDocument(proposal, letterType, { content: '<p>Hej</p>', protected: true }).protected).toBe(true);
   });
 
   it('takes the rubrik and date the handläggare gave', () => {

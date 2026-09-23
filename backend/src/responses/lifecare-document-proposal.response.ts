@@ -17,6 +17,8 @@ export interface LifecareDocumentTypeRaw {
   isActive: boolean;
   isForm: boolean;
   canChangeOccurenceDate: boolean;
+  /** Whether a document of this type is write-protected unless the handläggare says otherwise. */
+  writeProtectAuto?: boolean;
 }
 
 /**
@@ -36,6 +38,8 @@ export class LifecareDocumentTypeView {
   @IsString() name!: string;
   /** Whether the documented date may differ from the one Lifecare proposes (today). */
   @IsBoolean() canChangeOccurenceDate!: boolean;
+  /** Whether a new document of this type is saved skrivskyddad unless the handläggare says otherwise. */
+  @IsBoolean() protectedByDefault!: boolean;
 }
 
 export class LifecareDocumentTypesApiResponse implements ApiResponse<LifecareDocumentTypeView[]> {
@@ -58,6 +62,7 @@ export const toDocumentTypes = (proposal: LifecareDocumentProposalRaw): Lifecare
       code: documentType.documentCode,
       name: documentType.name,
       canChangeOccurenceDate: documentType.canChangeOccurenceDate,
+      protectedByDefault: documentType.writeProtectAuto === true,
     }));
 
 /** What a handläggare fills in on a new document. */
@@ -65,6 +70,8 @@ export interface NewDocument {
   content: string;
   title?: string;
   occurenceDate?: string;
+  /** Saved skrivskyddad; the document type's own default when left out. */
+  protected?: boolean;
 }
 
 /**
@@ -73,6 +80,7 @@ export interface NewDocument {
  * The rest of the proposal is sent back as Lifecare returned it — its create endpoint takes its own full
  * object, and the blank document already carries the insats it belongs to. Without a rubrik of its own
  * the document is titled by its type. A type that fixes its date keeps the one Lifecare proposed.
+ * `protected` is always sent, as for a journalanteckning.
  */
 export const buildDocument = (
   proposal: LifecareDocumentProposalRaw,
@@ -83,5 +91,6 @@ export const buildDocument = (
   content: input.content,
   title: input.title?.trim() ? input.title.trim() : documentType.name,
   documentTypeCode: documentType.documentCode,
+  protected: input.protected ?? documentType.writeProtectAuto === true,
   ...(input.occurenceDate && documentType.canChangeOccurenceDate ? { occurenceDate: input.occurenceDate } : {}),
 });
