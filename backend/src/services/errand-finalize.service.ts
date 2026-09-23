@@ -2,13 +2,13 @@ import CaremanagementDecisionService from '@services/caremanagement-decision.ser
 import CaremanagementNormberakningService from '@services/caremanagement-normberakning.service';
 import CaremanagementPaymentService from '@services/caremanagement-payment.service';
 import DecisionNotificationService from '@services/decision-notification.service';
-import LifecareDecisionRegistrationService from '@services/lifecare-decision-registration.service';
+import ErrandLifecareDecisionService from '@services/errand-lifecare-decision.service';
 import LifecarePaymentRegistrationService from '@services/lifecare-payment-registration.service';
 import LifecareServiceIdService from '@services/lifecare-service-id.service';
-import { buildFinalizeRequest, draftPayments, latestSavedBeslut } from '@utils/finalize-request';
+import { buildFinalizeRequest, draftPayments } from '@utils/finalize-request';
 import { logger } from '@utils/logger';
 
-import { CommunicationChannels, FinalizeDecision, FinalizeResponse, Payment } from '@/data-contracts/caremanagement/data-contracts';
+import { CommunicationChannels, FinalizeResponse, Payment } from '@/data-contracts/caremanagement/data-contracts';
 import { FinalizeErrandDto } from '@/dtos/finalize.dto';
 import { DecisionRegistration } from '@/responses/decision-registration.response';
 import { FinalizeResult } from '@/responses/finalize.response';
@@ -27,9 +27,6 @@ const selectedChannelLabels = (input: FinalizeErrandDto): string[] =>
   (Object.keys(ALL_CHANNEL_LABELS) as (keyof typeof ALL_CHANNEL_LABELS)[])
     .filter(channel => input[channel])
     .map(channel => ALL_CHANNEL_LABELS[channel]);
-
-/** The text, or undefined when there is nothing but whitespace in it. */
-const nonBlank = (text: string | undefined): string | undefined => (text?.trim() ? text.trim() : undefined);
 
 const toFinalizeResult = (
   finalized: FinalizeResponse | undefined,
@@ -50,12 +47,11 @@ const toFinalizeResult = (
 /**
  * "Besluta och utbetala": finalizes the errand in caremanagement and then sends the beslut to the applicant.
  *
- * caremanagement records the PAYMENT decision, creates the payment rows and resumes the process (which sets
- * the errand GRANTED/REJECTED). The BFF then does what the robot was meant to: registers the beslut in
- * Lifecare, then the utbetalningar, one per payment row, receipting each back to careM. The order is
- * Lifecare's: an utbetalning draws on the balance the beslut gives the insats, so one whose beslut did not
- * get written waits as PENDING_REGISTRATION for a run from the Utbetalning tab. Last it sends the beslut
- * to the applicant through the chosen channels.
+ * The beslut is already in Lifecare — the Beslut tab saves it there — so finalize reads it from Lifecare
+ * and hands careM that. caremanagement records the PAYMENT decision, creates the payment rows and resumes
+ * the process (which sets the errand GRANTED/REJECTED). The BFF then links careM's decision to the Lifecare
+ * beslut and registers the utbetalningar in Lifecare, one per payment row, receipting each back to careM.
+ * Last it sends Lifecare's print of the beslut to the applicant through the chosen channels.
  *
  * Once caremanagement has accepted the finalize the errand is decided and cannot be finalized again, so every
  * step after it is best-effort and reported in the result rather than thrown.
@@ -65,22 +61,20 @@ class ErrandFinalizeService {
   private paymentService = new CaremanagementPaymentService();
   private normberakningService = new CaremanagementNormberakningService();
   private notificationService = new DecisionNotificationService();
-  private decisionRegistration = new LifecareDecisionRegistrationService();
+  private lifecareDecision = new ErrandLifecareDecisionService();
   private paymentRegistration = new LifecarePaymentRegistrationService();
   private serviceIds = new LifecareServiceIdService();
 
   async finalize(errandId: string, input: FinalizeErrandDto, author: string): Promise<FinalizeResult> {
-    const [decisions, payments, householdSizeChanged, reason] = await Promise.all([
-      this.decisionService.readDecisions(errandId),
+    const [beslut, payments, householdSizeChanged] = await Promise.all([
+      this.lifecareDecision.read(errandId),
       this.paymentService.listPayments(errandId),
       this.normberakningService.readHouseholdSizeChanged(errandId),
-      this.resolveReason(errandId, input.reason),
     ]);
     const drafts = draftPayments(payments.data ?? []);
     const request = buildFinalizeRequest({
-      beslut: latestSavedBeslut(decisions.data ?? []),
+      beslut,
       drafts,
-      reason,
       communication: toCommunicationChannels(input),
       householdSizeChanged,
     });
@@ -89,7 +83,8 @@ class ErrandFinalizeService {
 
     await this.removeDrafts(errandId, drafts);
     const serviceId = await this.resolveServiceId(errandId);
-    const lifecareDecision = await this.registerDecision(errandId, serviceId, finalized.data.decisionId, request.decision, author);
+    const lifecareDecision =
+      finalized.data.decisionId && beslut ? await this.lifecareDecision.receiptFinalized(errandId, finalized.data.decisionId, beslut.id) : undefined;
     const lifecarePayments = await this.registerPayments(errandId, serviceId, finalized.data.paymentIds ?? []);
     const failedChannels = await this.sendBeslut(errandId, input, author);
     return toFinalizeResult(finalized.data, lifecareDecision, lifecarePayments, failedChannels);
@@ -101,28 +96,6 @@ class ErrandFinalizeService {
       return await this.serviceIds.resolve(errandId);
     } catch (error) {
       return error instanceof Error ? error.message : 'Insatsen i Lifecare kunde inte slås upp.';
-    }
-  }
-
-  /** Registers the finalized beslut in Lifecare. Nothing here may undo the finalize, so a failure is an outcome. */
-  private async registerDecision(
-    errandId: string,
-    serviceId: number | string,
-    decisionId: string | undefined,
-    decision: FinalizeDecision,
-    handlaggare: string,
-  ): Promise<DecisionRegistration | undefined> {
-    if (!decisionId) {
-      return undefined;
-    }
-    if (typeof serviceId === 'string') {
-      return { decisionId, outcome: 'NOT_SENT', detail: serviceId };
-    }
-    try {
-      return await this.decisionRegistration.register(errandId, serviceId, decisionId, decision, handlaggare);
-    } catch {
-      logger.warn(`Finalized errand ${errandId} but could not register decision ${decisionId} in Lifecare`);
-      return { decisionId, outcome: 'NOT_SENT', detail: 'Beslutet kunde inte registreras i Lifecare. Registrera det direkt i Lifecare.' };
     }
   }
 
@@ -145,19 +118,6 @@ class ErrandFinalizeService {
       }
     }
     return registrations;
-  }
-
-  /** The orsak the handläggare picked, or — when they never touched it — the one the beslutsförslag proposes. */
-  private async resolveReason(errandId: string, pickedReason: string | undefined): Promise<string | undefined> {
-    if (pickedReason !== undefined) {
-      return nonBlank(pickedReason);
-    }
-    try {
-      const proposal = await this.decisionService.readDecisionProposal(errandId);
-      return nonBlank(proposal.data?.reason);
-    } catch {
-      return undefined;
-    }
   }
 
   /**

@@ -1,6 +1,6 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 /** A beslut recorded on an errand (the audit trail of every decision made on the case). */
 export class Decision {
@@ -47,40 +47,10 @@ export class Decision {
   created?: string;
 }
 
-/** An allowed beslutsalternativ (decision outcome) for an errand type. */
-export class DecisionOption {
-  @IsString()
-  @IsOptional()
-  code?: string;
-  @IsString()
-  @IsOptional()
-  displayName?: string;
-  /** True for outcomes that grant a belopp; false for ones that imply 0 (e.g. avslag). */
-  @IsBoolean()
-  @IsOptional()
-  carriesAmount?: boolean;
-}
-
 export class DecisionsApiResponse implements ApiResponse<Decision[]> {
   @ValidateNested({ each: true })
   @Type(() => Decision)
   data!: Decision[];
-  @IsString()
-  message!: string;
-}
-
-export class DecisionApiResponse implements ApiResponse<Decision> {
-  @ValidateNested()
-  @Type(() => Decision)
-  data!: Decision;
-  @IsString()
-  message!: string;
-}
-
-export class DecisionOptionsApiResponse implements ApiResponse<DecisionOption[]> {
-  @ValidateNested({ each: true })
-  @Type(() => DecisionOption)
-  data!: DecisionOption[];
   @IsString()
   message!: string;
 }

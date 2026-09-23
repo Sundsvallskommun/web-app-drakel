@@ -1,7 +1,9 @@
 /** A beslutstyp as Lifecare's `Decision/GetProposalForService` lists it, with the rules it carries. */
-interface LifecareDecisionTypeRaw {
+export interface LifecareDecisionTypeRaw {
   code: number;
   name: string;
+  /** Lifecare's category for the type — 0 for a bifall, 10 for an avslag, 9 for återkrav … */
+  type: number;
   isActive: boolean;
   requiresFromDate: boolean;
   requiresToDate: boolean;
@@ -27,9 +29,25 @@ interface LifecareDecisionPersonRaw {
 }
 
 /** The blank beslut in the underlag — `Decision/Create` takes it back filled in. Only read fields are named. */
-interface LifecareDecisionRaw {
+export interface LifecareDecisionRaw {
   decisionPersons: LifecareDecisionPersonRaw[];
   [field: string]: unknown;
+}
+
+/**
+ * A beslut already registered in Lifecare, as `Decision/GetDecision` returns it — the object
+ * `Decision/Update` takes back. Carries the personnummer: never log it.
+ */
+export interface LifecareSavedDecisionRaw extends LifecareDecisionRaw {
+  decisionId: number;
+  decisionCode: number;
+  /** The category of its beslutstyp — the same as the type's own `type`. */
+  decisionType: number;
+  /** Set once the beslutsmeddelande is locked in Lifecare; the beslut can no longer be changed then. */
+  lockedMessage: boolean;
+  /** The beslutstyp with its rules; the web app sends it back with an empty `reasons` list. */
+  type: Record<string, unknown> | null;
+  message: string | null;
 }
 
 /**

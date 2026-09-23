@@ -102,6 +102,12 @@ export interface PaymentRequest {
   /** The id of the payee row on the errand this payment pays to, as GET .../payees returns it. Send it when the caseworker picked an entry from that list — it is what lets the REGISTER_PAYMENT robot be handed the payee's Lifecare id instead of matching on name and account number. Omit it for a payee derived from the Lifecare payment history, which has no local row. */
   payeeId?: string;
   /**
+   * The payee's id in Lifecare. Send it when the caseworker picked a payee Lifecare already has — the list read from Lifecare, or one just created there — so the payment can be registered against that payee by id instead of matching on name and account number.
+   * @minLength 0
+   * @maxLength 64
+   */
+  lifecarePayeeId?: string;
+  /**
    * The stakeholder id of the payee
    * @minLength 0
    * @maxLength 64
@@ -622,6 +628,11 @@ export interface FinancialAssistanceData {
    * @format date-time
    */
   attestedAt?: string;
+  /**
+   * The Lifecare decision (beslut) id the errand concerns, set by the caseworker
+   * @format int32
+   */
+  lifecareDecisionId?: number;
   /** Children included in the application */
   children?: Child[];
   /** Costs applied for */
@@ -1384,6 +1395,16 @@ export interface DecisionLifecareResult {
   detail?: string;
 }
 
+/** Request to add a co-caseworker (medhandläggare) to an errand */
+export interface AddCoCaseworker {
+  /**
+   * User id of the co-caseworker to add
+   * @minLength 0
+   * @maxLength 64
+   */
+  userId: string;
+}
+
 /** Request to create a financial assistance income warning on an errand (no Lifecare round-trip). */
 export interface CreateWarningRequest {
   /**
@@ -1412,7 +1433,7 @@ export interface Warning {
   type?: WarningTypeEnum;
   /** Swedish display name for the warning type */
   typeDisplayName?: string;
-  /** The Draken view section (tab) the warning belongs to — derived from the type: the decision proposal's types are DECISION, the payment proposal's are PAYMENT, everything else is CALCULATION */
+  /** The Draken view section (tab) the warning belongs to — derived from the type: the decision proposal's types are DECISION, the payment warnings' are PAYMENT, everything else is CALCULATION */
   section?: WarningSectionEnum;
   /** A stable key for the income the warning concerns (benefit/incomeType) — the dedup key */
   sourceKey?: string;
@@ -1713,6 +1734,18 @@ export interface FinalizePayment {
    * @maxLength 64
    */
   accountingCode?: string;
+  /**
+   * The payee's local payment number (lokalbetalningsnummer), for the payment methods Lifecare takes one for
+   * @minLength 0
+   * @maxLength 64
+   */
+  localPaymentNumber?: string;
+  /**
+   * The invoice number (räkningsnummer). Lifecare requires it for some payment methods, e.g. bankgiro via plusgiro.
+   * @minLength 0
+   * @maxLength 64
+   */
+  invoiceNumber?: string;
 }
 
 /** Finalize a financial assistance errand: record the decision, hand the Lifecare write-backs to RPA and resume the process. */
@@ -1755,6 +1788,36 @@ export interface Payee {
    * @maxLength 64
    */
   accountNumber?: string;
+  /**
+   * The payee's id in Lifecare. Send it when the caseworker picked a payee Lifecare already has — the list read from Lifecare, or one just created there — so the payment can be registered against that payee by id instead of matching on name and account number.
+   * @minLength 0
+   * @maxLength 64
+   */
+  lifecarePayeeId?: string;
+  /**
+   * The payee's street address
+   * @minLength 0
+   * @maxLength 255
+   */
+  address?: string;
+  /**
+   * The payee's c/o line
+   * @minLength 0
+   * @maxLength 255
+   */
+  careOf?: string;
+  /**
+   * The payee's zip code
+   * @minLength 0
+   * @maxLength 16
+   */
+  zipCode?: string;
+  /**
+   * The payee's city
+   * @minLength 0
+   * @maxLength 255
+   */
+  city?: string;
 }
 
 /** The receipt of a finalize — decision id, process correlation, RPA tasks and the communication channels to act on. */
@@ -2055,6 +2118,12 @@ export interface NormExpenseRow {
 
 /** Request to read whether the Lifecare payment for an application month has been effectuated. */
 export interface PaymentStatusRequest {
+  /**
+   * The errand whose decided payments to verify. When given, the status is effectuated only when every payment the
+   * decision registered is found in Lifecare, by its Lifecare id. Without it, any Lifecare payment for the applicant and
+   * application month counts — kept only for callers that predate the field.
+   */
+  errandId?: string;
   /** The applicant's partyId (personId GUID) */
   applicant: string;
   /**
@@ -2066,10 +2135,12 @@ export interface PaymentStatusRequest {
 
 /** Whether the Lifecare payment for the application month has been effectuated. */
 export interface PaymentStatusResponse {
-  /** True when a Lifecare payment concerning the application month has been registered */
+  /** True when the decided payments (or, without an errand, a payment for the application month) are registered in Lifecare */
   effectuated?: boolean;
   /** The date the payment was made (Lifecare PayDate), when effectuated */
   paymentDate?: string;
+  /** Why the status is not effectuated, in words a caseworker can act on; empty when effectuated */
+  detail?: string;
 }
 
 /** Request to evaluate which financial assistance application a citizen should be offered. */
@@ -2183,6 +2254,35 @@ export interface CalculationRequest {
   changeWarnings?: string[];
   /** Whether SSBTEK could not be read for this run. True means the rules were deliberately not evaluated: the calculation is left exactly as it stands and the errand carries the read-failure warning until a later run succeeds. Absent is read as false, so a caller that does not know about the flag behaves as before. */
   ssbtekError?: boolean;
+  /** The SSBTEK facts that gate the dagersättning day check (AF economic decision, FK consumed days). Absent means the caller did not read them, and the day check is then not made at all. */
+  dayCheckBasis?: DayCheckBasis;
+}
+
+/** The SSBTEK facts that gate the dagersättning day check: Arbetsförmedlingen's economic-decision periods and Försäkringskassan's consumed jobb- och utvecklingsgaranti days. A null field means the caller did not read it, and the day check is then not made at all. */
+export interface DayCheckBasis {
+  /** Arbetsförmedlingen's economic-decision periods (af BeslutInfo.EkonomiskaBeslut.Beslut). An empty list means AF answered and reports no decision; null means AF was not read or could not answer. */
+  economicDecisionPeriods?: EconomicDecisionPeriod[];
+  /**
+   * Försäkringskassan's consumed days in the jobb- och utvecklingsgaranti (fk formansinformation.programjobdagar antalForbrukade, 'Förbrukade dagar'); null when not read
+   * @format int32
+   */
+  consumedDays?: number;
+  /** Whether Försäkringskassan reports all days used up (fk formansinformation.programjobdagar harForbrukatMaxAntal, 'Alla dagar förbrukade'). False when FK answered without any programjobdagar; null when FK was not read. */
+  allDaysConsumed?: boolean;
+}
+
+/** A period Arbetsförmedlingen reports an economic decision (ekonomiskt beslut) for, as read from SSBTEK. */
+export interface EconomicDecisionPeriod {
+  /**
+   * Decision period start (BeslutFrom)
+   * @format date
+   */
+  fromDate?: string;
+  /**
+   * Decision period end (BeslutTom); null for an open period
+   * @format date
+   */
+  toDate?: string;
 }
 
 /** The created Lifecare calculation id plus the income warnings to review. */
@@ -2684,6 +2784,21 @@ export interface ErrandEventCount {
   count?: number;
 }
 
+/** A co-caseworker (medhandläggare) on an errand. Both the errand's ordinary caseworker and every co-caseworker receive the errand's notifications as one shared, logical message */
+export interface CoCaseworker {
+  /** Unique identifier */
+  id?: string;
+  /** Errand id this co-caseworker is added to */
+  errandId?: string;
+  /** User id of the co-caseworker */
+  userId?: string;
+  /**
+   * When the co-caseworker was added
+   * @format date-time
+   */
+  created?: string;
+}
+
 /** Attachment model */
 export interface Attachment {
   /** Unique identifier */
@@ -2826,59 +2941,6 @@ export interface PaymentCount {
    * @format int64
    */
   count?: number;
-}
-
-/** The payment proposal (utbetalningsförslag) — derived data, recomputed on every read. */
-export interface PaymentProposal {
-  /** The proposed payments — always exactly one entry from the service; the frontend may split it into several before registering */
-  payments?: ProposedPayment[];
-  /** Every distinct payee seen on the applicant's Lifecare payments in the last 12 months — the dropdown alternatives. FamilyCare has no payee register, so this is the only source */
-  payeeOptions?: Payee[];
-  /** Where the proposed payee came from: PREVIOUS_PAYMENT (the most recent Lifecare payment) or APPLICATION (the applicant stated a new account in the application, paymentSameAsPrevious=false). Null when no payee could be proposed */
-  payeeSource?: PaymentProposalPayeeSourceEnum;
-  /** The applicant's most recent Lifecare payment, or null when none was found (or Lifecare could not be read) */
-  previousPayment?: PreviousPayment;
-  /** Why the proposal is incomplete (Swedish), e.g. no norm is known so no amount could be estimated. Null when the proposal is complete */
-  explanation?: string;
-  /** The PAYMENT-section warnings this proposal raised (reconciled on every read) */
-  warnings?: Warning[];
-}
-
-/** The applicant's most recent Lifecare payment. */
-export interface PreviousPayment {
-  /** The Lifecare pay date (raw Lifecare string) */
-  payDate?: string;
-  /** The paid amount */
-  amount?: number;
-  /** The month the payment concerned (raw Lifecare string) */
-  concernedMonth?: string;
-  /** The payment method as Lifecare names it */
-  paymentMethod?: string;
-  /** The payee name */
-  name?: string;
-  /** The clearing number, when a bank account */
-  clearing?: string;
-  /** The account number, when a bank account */
-  accountNumber?: string;
-  /** The payment message */
-  message?: string;
-}
-
-/** One proposed payment (a proposal always starts with a single entry; the frontend may split it). */
-export interface ProposedPayment {
-  /**
-   * The proposed payment date: the 27th of the concerned month, moved to the Friday before when the 27th is a Saturday (→ 26th) or Sunday (→ 25th). Swedish public holidays (röda dagar) are not considered — an open question with verksamheten
-   * @format date
-   */
-  paymentDate?: string;
-  /** The proposed amount — the whole estimated bistånd (see DecisionProposal.estimatedAmount). Null when no norm is known */
-  amount?: number;
-  /** The month the payment concerns (YYYY-MM) — the calculation's application month */
-  concernedMonth?: string;
-  /** The proposed payee, or null when neither a previous payment nor the application names one */
-  payee?: Payee;
-  /** Kontering. Always null for now: the FamilyCare API exposes no accounting code, so the caseworker fills it in. The field exists so the frontend can render and post it */
-  accountingCode?: string | null;
 }
 
 /** The number of monitorings on the errand */
@@ -3749,7 +3811,7 @@ export enum WarningTypeEnum {
   INCOME_TRANSFERRED_LATE = "INCOME_TRANSFERRED_LATE",
 }
 
-/** The Draken view section (tab) the warning belongs to — derived from the type: the decision proposal's types are DECISION, the payment proposal's are PAYMENT, everything else is CALCULATION */
+/** The Draken view section (tab) the warning belongs to — derived from the type: the decision proposal's types are DECISION, the payment warnings' are PAYMENT, everything else is CALCULATION */
 export enum WarningSectionEnum {
   CALCULATION = "CALCULATION",
   DECISION = "DECISION",
@@ -3935,12 +3997,6 @@ export enum AttachmentDocumentTypeEnum {
 export enum AttachmentSenderRoleEnum {
   CLIENT = "CLIENT",
   CASEWORKER = "CASEWORKER",
-}
-
-/** Where the proposed payee came from: PREVIOUS_PAYMENT (the most recent Lifecare payment) or APPLICATION (the applicant stated a new account in the application, paymentSameAsPrevious=false). Null when no payee could be proposed */
-export enum PaymentProposalPayeeSourceEnum {
-  PREVIOUS_PAYMENT = "PREVIOUS_PAYMENT",
-  APPLICATION = "APPLICATION",
 }
 
 /** Whose period it is */

@@ -17,12 +17,14 @@
     "saved": "Beslutet sparades.",
     "reason": "Orsak",
     "coApplicantReason": "Orsak medsökande",
-    "selectReason": "Välj orsak"
+    "selectReason": "Välj orsak",
+    "lockedInLifecare": "Beslutsmeddelandet är låst i Lifecare, så beslutet kan inte längre ändras här.",
+    "typesError": "Beslutstyperna kunde inte hämtas från Lifecare: {{reason}}",
+    "saveErrorTitle": "Beslutet sparades inte i Lifecare"
   },
   "message": {
     "title": "Beslutsmeddelande",
     "previewModalLabel": "Förhandsgranska beslut",
-    "previewEmpty": "Det finns inget beslutsmeddelande att förhandsgranska.",
     "categoryLabel": "Beslutsformulering – kategori",
     "categoryPlaceholder": "Välj kategori",
     "categorySearch": "Sök kategori…",
@@ -30,9 +32,10 @@
     "headingLabel": "Beslutsformulering – rubrik",
     "headingPlaceholder": "Välj och lägg till frastext",
     "headingSearch": "Sök rubrik…",
-    "placeholderHelp": "<bold>{{name}}</bold> ersätts med sökandes namn. <bold>{{amount}}</bold> (belopp) och <bold>{{period}}</bold> (period) fylls i från beräkningen senare.",
+    "placeholderHelp": "Frasens <bold>{{name}}</bold> (sökandes namn), <bold>{{amount}}</bold> (belopp) och <bold>{{period}}</bold> (period) fylls i från beslutet när frasen läggs till. Saknas en uppgift står tecknet kvar.",
     "applicantNameMissing": "Sökandes namn kunde inte hämtas — namn-platshållaren lämnas oersatt.",
-    "addFullfoljd": "Lägg till fullföljdshänvisning"
+    "addFullfoljd": "Lägg till fullföljdshänvisning",
+    "previewNeedsSave": "Förhandsgranskningen visar beslutet som det är sparat i Lifecare. Spara för att se dina ändringar."
   },
   "payment": {
     "header": {

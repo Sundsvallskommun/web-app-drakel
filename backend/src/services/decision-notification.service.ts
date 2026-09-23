@@ -1,12 +1,9 @@
-import { HttpException } from '@exceptions/HttpException';
 import CaremanagementAttachmentService from '@services/caremanagement-attachment.service';
-import CaremanagementDecisionService from '@services/caremanagement-decision.service';
 import CaremanagementErrandService from '@services/caremanagement-errand.service';
 import CaremanagementMessageService from '@services/caremanagement-message.service';
 import CaremanagementStakeholderService from '@services/caremanagement-stakeholder.service';
+import ErrandLifecareDecisionService from '@services/errand-lifecare-decision.service';
 import MessagingService from '@services/messaging.service';
-import TemplatingService from '@services/templating.service';
-import { latestSavedBeslut } from '@utils/finalize-request';
 
 import { DecisionNotificationDto } from '@/dtos/decision-notification.dto';
 
@@ -22,14 +19,13 @@ interface Channel {
 }
 
 /**
- * Sends a beslut to the applicant: renders the beslutsmeddelande to a PDF, saves it on the errand as a
+ * Sends a beslut to the applicant: takes Lifecare's own print of the beslut as PDF, saves it on the errand as a
  * DECISION attachment and sends it through the chosen Messaging channels (Mina sidor / digital brevlåda /
  * brev). caremanagement records which channels were chosen but sends nothing itself — this is the BFF's job.
  */
 class DecisionNotificationService {
-  private decisionService = new CaremanagementDecisionService();
+  private lifecareDecision = new ErrandLifecareDecisionService();
   private errandService = new CaremanagementErrandService();
-  private templatingService = new TemplatingService();
   private attachmentService = new CaremanagementAttachmentService();
   private stakeholderService = new CaremanagementStakeholderService();
   private messageService = new CaremanagementMessageService();
@@ -51,21 +47,13 @@ class DecisionNotificationService {
    * failed. Each channel is sent independently so one failing channel does not abort the others.
    */
   async send(errandId: string, channels: DecisionNotificationDto, author: string): Promise<string[]> {
-    const decisions = await this.decisionService.readDecisions(errandId);
-    const decisionMessage = latestSavedBeslut(decisions.data ?? [])?.decisionMessage;
-    if (!decisionMessage) {
-      throw new HttpException(400, 'No decision message to send');
-    }
-
-    const pdfBase64 = await this.templatingService.renderHtmlToPdf(decisionMessage);
-    if (!pdfBase64) {
-      throw new HttpException(502, 'Failed to render the decision PDF');
-    }
+    const pdf = await this.lifecareDecision.pdf(errandId);
+    const pdfBase64 = pdf.toString('base64');
 
     // Save the rendered PDF on the errand as the DECISION attachment, named beslut-<ärendenummer>.pdf.
     const errand = await this.errandService.getErrand(errandId);
     const filename = `beslut-${errand.data?.errandNumber ?? errandId}.pdf`;
-    const pdfFile = { buffer: Buffer.from(pdfBase64, 'base64'), originalname: filename, mimetype: 'application/pdf' };
+    const pdfFile = { buffer: pdf, originalname: filename, mimetype: 'application/pdf' };
     await this.attachmentService.createAttachment(errandId, pdfFile, DECISION_DOCUMENT_TYPE);
 
     // The applicant's partyId is only needed by the digital brevlåda / brev channels; Mina sidor goes

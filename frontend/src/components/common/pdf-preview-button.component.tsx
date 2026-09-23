@@ -1,6 +1,6 @@
 'use client';
 
-import { renderPdf } from '@services/pdf-service';
+import { ServiceResponse } from '@interfaces/services';
 import { Button, Modal, Spinner } from '@sk-web-gui/react';
 import { ScanEye } from 'lucide-react';
 import { FC, useState } from 'react';
@@ -13,17 +13,16 @@ const base64ToObjectUrl = (base64: string): string => {
 };
 
 /**
- * "Förhandsgranska PDF"-knapp: bygger HTML (via `buildHtml`), renderar den till en PDF via BFF:n och
- * visar den i en modal. Inget sparas. Återanvänds av beslut och beräkning.
+ * "Förhandsgranska PDF"-knapp: hämtar en PDF (via `loadPdf`) och visar den i en modal. Inget sparas.
+ * Beräkningen renderar sin egen HTML till PDF; beslutet är Lifecares egen utskrift.
  */
 export const PdfPreviewButton: FC<{
-  /** Builds the HTML to render (undefined ⇒ nothing to preview). */
-  buildHtml: () => Promise<string | undefined>;
+  /** Fetches the PDF to show, as base64; an error's `message` is shown in its place. */
+  loadPdf: () => Promise<ServiceResponse<string>>;
   label?: string;
   modalLabel?: string;
-  emptyMessage?: string;
   disabled?: boolean;
-}> = ({ buildHtml, label, modalLabel, emptyMessage, disabled = false }) => {
+}> = ({ loadPdf, label, modalLabel, disabled = false }) => {
   const { t } = useTranslation('attachments');
   const buttonLabel = label ?? t('pdfPreviewButton.label');
   const modalTitle = modalLabel ?? t('common:preview');
@@ -43,17 +42,10 @@ export const PdfPreviewButton: FC<{
   const preview = async (): Promise<void> => {
     setLoading(true);
     setError(undefined);
-    const html = await buildHtml();
-    if (!html) {
-      setLoading(false);
-      setError(emptyMessage ?? t('pdfPreviewButton.empty'));
-      setOpen(true);
-      return;
-    }
-    const res = await renderPdf(html);
+    const res = await loadPdf();
     setLoading(false);
     if (res.error || !res.data) {
-      setError(t('pdfPreviewButton.createError'));
+      setError(res.message ?? t('pdfPreviewButton.createError'));
       setOpen(true);
       return;
     }

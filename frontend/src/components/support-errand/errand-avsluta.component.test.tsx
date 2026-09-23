@@ -27,9 +27,7 @@ const finalized = {
 };
 
 const openModal = async ({ onFinalized = vi.fn(), checkApprovals = false } = {}) => {
-  render(
-    <ErrandAvsluta errandId="errand-1" onFinalized={onFinalized} checkApprovals={checkApprovals} reason="Arbetslös" />
-  );
+  render(<ErrandAvsluta errandId="errand-1" onFinalized={onFinalized} checkApprovals={checkApprovals} />);
   fireEvent.click(screen.getByRole('button', { name: 'Besluta och utbetala' }));
   await waitFor(() => {
     expect(screen.getByLabelText('Meddelande')).toBeInTheDocument();
@@ -104,7 +102,6 @@ describe('ErrandAvsluta', () => {
       minaSidor: true,
       digitalBrevlada: false,
       brev: false,
-      reason: 'Arbetslös',
     });
   });
 

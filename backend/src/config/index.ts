@@ -87,6 +87,9 @@ export const LIFECARE_SESSION_COOKIE = env.LIFECARE_SESSION_COOKIE ?? '';
 // a beslut cannot be tested end to end without it. Never set in production: there the beslut must name
 // the handläggare, and a handläggare Lifecare does not know stops the beslut rather than falling back.
 export const LIFECARE_TEST_DECISION_MAKER = env.LIFECARE_TEST_DECISION_MAKER ?? '';
+// The Lifecare print template a beslut is rendered as PDF with — for the preview and for what is sent to
+// the sökande. The same template serves every beslut.
+export const LIFECARE_DECISION_PRINT_TEMPLATE_ID = env.LIFECARE_DECISION_PRINT_TEMPLATE_ID ?? '885bfb68-c97b-47c0-921d-ef00caaa2423';
 // Messaging sender config for the beslut notification (Mina sidor / digital brevlåda / brev). Optional —
 // the send fails gracefully if unset, so a missing value never blocks BFF startup.
 export const MESSAGING_ORGANIZATION_NUMBER = env.MESSAGING_ORGANIZATION_NUMBER ?? '';

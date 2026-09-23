@@ -101,13 +101,13 @@ const proposal = (): LifecareDecisionProposalRaw => ({
     { id: 'TEST', name: 'Test Handläggare', title: 'Testhandläggare' },
   ],
   decisionTypes: [
-    { code: 152, name: 'EK Ekonomiskt bistånd 12 kap 1, 7 §§ SoL, avslag', isActive: true, requiresFromDate: false, requiresToDate: false },
-    { code: 153, name: 'Ek Ekonomiskt bistånd 12 kap 1, 7 §§ SoL, bifall', isActive: true, requiresFromDate: true, requiresToDate: true },
+    { code: 152, name: 'EK Ekonomiskt bistånd 12 kap 1, 7 §§ SoL, avslag', type: 10, isActive: true, requiresFromDate: false, requiresToDate: false },
+    { code: 153, name: 'Ek Ekonomiskt bistånd 12 kap 1, 7 §§ SoL, bifall', type: 0, isActive: true, requiresFromDate: true, requiresToDate: true },
   ],
 });
 
 const bifall = {
-  outcome: 'BIFALL',
+  decisionCode: 153,
   periodFrom: '2026-09-01',
   periodTo: '2026-09-30',
   amount: 5,
@@ -223,10 +223,35 @@ describe('buildDecisionCreate', () => {
     expect(buildDecisionCreate(proposal(), { ...bifall, decisionMakerId: 'oli09bor' }).writable).toBe(false);
   });
 
-  it('refuses delvis bifall, which has no settled registration in Lifecare', () => {
-    expect(buildDecisionCreate(proposal(), { ...bifall, outcome: 'DELAVSLAG' })).toEqual({
+  it('registers any bifall type Lifecare offers, going by its category rather than its code', () => {
+    const withSection2 = proposal();
+    withSection2.decisionTypes.push({
+      code: 150,
+      name: 'EK Ekonomiskt bistånd 12 Kap 2 § SoL, bifall',
+      type: 0,
+      isActive: true,
+      requiresFromDate: true,
+      requiresToDate: true,
+    });
+
+    const create = buildDecisionCreate(withSection2, { ...bifall, decisionCode: 150 });
+
+    expect(create.writable && create.body.decisionCode).toBe(150);
+  });
+
+  it('refuses a beslutstyp Drakel does not register yet, however Lifecare offers it', () => {
+    const withRecovery = proposal();
+    withRecovery.decisionTypes.push({
+      code: 161,
+      name: 'EK Återkrav Ekonomiskt bistånd, grundbeslut',
+      isActive: true,
+      requiresFromDate: false,
+      requiresToDate: false,
+    });
+
+    expect(buildDecisionCreate(withRecovery, { ...bifall, decisionCode: 161 })).toEqual({
       writable: false,
-      reason: expect.stringContaining('Delvis bifall') as string,
+      reason: expect.stringContaining('EK Återkrav Ekonomiskt bistånd, grundbeslut') as string,
     });
   });
 
@@ -242,7 +267,7 @@ describe('buildDecisionCreate', () => {
 
   it('refuses a bifall without the period its type requires, but takes an avslag without one', () => {
     expect(buildDecisionCreate(proposal(), { ...bifall, periodFrom: undefined }).writable).toBe(false);
-    expect(buildDecisionCreate(proposal(), { ...bifall, outcome: 'AVSLAG', amount: 0, periodFrom: undefined, periodTo: undefined }).writable).toBe(
+    expect(buildDecisionCreate(proposal(), { ...bifall, decisionCode: 152, amount: 0, periodFrom: undefined, periodTo: undefined }).writable).toBe(
       true,
     );
   });

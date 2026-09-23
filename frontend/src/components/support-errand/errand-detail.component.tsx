@@ -11,7 +11,6 @@ import { useErrandSectionApprovals } from '@hooks/use-errand-section-approvals';
 import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
 import { useErrandWarnings } from '@hooks/use-errand-warnings';
 import { useLifecareReminders } from '@hooks/use-lifecare-reminders';
-import { BeslutReasons } from '@services/beslut-service';
 import { Badge, Spinner, Tabs } from '@sk-web-gui/react';
 import { CLIENT_FILES_PDF } from '@utils/attachment-names';
 import { stakeholderDisplayName } from '@utils/stakeholder-name';
@@ -104,8 +103,6 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   // (only while that tab is mounted), and the button runs both. canSaveBeslut keeps the button enabled
   // while a beslut can be saved even when the handläggning fields aren't dirty.
   const beslutSaveRef = useRef<(() => Promise<boolean>) | null>(null);
-  // The orsak picked on the Beslut tab outlives the tab so "Besluta och utbetala" can send it.
-  const [beslutReasons, setBeslutReasons] = useState<BeslutReasons>();
   const [canSaveBeslut, setCanSaveBeslut] = useState<boolean>(false);
   const [savingAll, setSavingAll] = useState<boolean>(false);
   const registerBeslutSave = useCallback((beslutSave: (() => Promise<boolean>) | null) => {
@@ -408,8 +405,6 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                       />
                     }
                     onRegisterSave={registerBeslutSave}
-                    reasons={beslutReasons}
-                    onReasonsChange={setBeslutReasons}
                   />
                 </ErrandTabPanel>
               ),
@@ -511,7 +506,6 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
             {isRenewalApplication && !DECIDED_STATUSES.includes(errand.status ?? '') ?
               <ErrandAvsluta
                 errandId={apiErrandId}
-                reason={beslutReasons?.reason}
                 onFinalized={() => {
                   refresh();
                   refreshAttachments();

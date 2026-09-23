@@ -19,6 +19,7 @@ import { FormSnapshotController } from './controllers/form-snapshot.controller';
 import { HealthController } from './controllers/health.controller';
 import { JobStimulusController } from './controllers/job-stimulus.controller';
 import { JournalController } from './controllers/journal.controller';
+import { LifecareDecisionController } from './controllers/lifecare-decision.controller';
 import { LifecareDocumentsController } from './controllers/lifecare-documents.controller';
 import { LifecarePaymentsController } from './controllers/lifecare-payments.controller';
 import { LifecareRemindersController } from './controllers/lifecare-reminders.controller';
@@ -64,6 +65,7 @@ const app = new App([
   PdfController,
   LifecareDocumentsController,
   LifecarePaymentsController,
+  LifecareDecisionController,
   LifecareRemindersController,
 ]);
 

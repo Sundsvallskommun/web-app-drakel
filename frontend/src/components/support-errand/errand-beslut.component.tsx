@@ -1,15 +1,21 @@
 'use client';
 
 import { PdfPreviewButton } from '@components/common/pdf-preview-button.component';
+import { LifecareDecisionReasonView } from '@data-contracts/backend/data-contracts';
+import { useBeslutRecommendation } from '@hooks/use-beslut-recommendation';
 import { useDecisionProposal } from '@hooks/use-decision-proposal';
-import { useErrandBeslut } from '@hooks/use-errand-beslut';
 import { useErrandNormberakning } from '@hooks/use-errand-normberakning';
-import { BeslutReasons, createBeslut } from '@services/beslut-service';
+import { useLifecareDecision } from '@hooks/use-lifecare-decision';
+import { useLifecareDecisionReasons } from '@hooks/use-lifecare-decision-reasons';
+import { useLifecareDecisionTypes } from '@hooks/use-lifecare-decision-types';
 import { getDocumentTemplateContent } from '@services/document-template-service';
+import { getLifecareDecisionPdf, saveLifecareDecision } from '@services/lifecare-decision-service';
+import { Alert } from '@sk-web-gui/alert';
 import { FormControl, FormLabel, Input, Select, Spinner } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { resolveBeslutAmount, resolveBeslutPeriod } from '@utils/beslut';
 import { formatAmount } from '@utils/format-amount';
+import { groupDecisionReasons } from '@utils/group-decision-reasons';
 import dayjs from 'dayjs';
 import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -30,15 +36,15 @@ const EMPTY_MESSAGE: TextEditorValue = { markup: '', plainText: '' };
 const FULLFOLJD_TEMPLATE_IDENTIFIER = 'drakel.fa.beslut.fullfoljdshanvisning';
 
 /**
- * En orsaksrullista. Sökandes och medsökandes orsak plockas ur samma katalog, så de renderas
- * identiskt; en orsak utanför katalogen (från ett äldre beslut) läggs till sist av caremanagement och
- * följer därför med i listan.
+ * En orsaksrullista med Lifecares orsaker för vald beslutstyp, grupperade under sina rubriker som i
+ * Lifecare. Sökandes och medsökandes orsak plockas ur samma katalog, så de renderas identiskt. Värdet är
+ * Lifecares orsakskod.
  */
 const ReasonField: FC<{
   id: string;
   label: string;
   value: string;
-  options: string[];
+  options: LifecareDecisionReasonView[];
   onChange: (value: string) => void;
 }> = ({ id, label, value, options, onChange }) => {
   const { t } = useTranslation('decision');
@@ -54,10 +60,14 @@ const ReasonField: FC<{
         }}
       >
         <Select.Option value="">{t('details.selectReason')}</Select.Option>
-        {options.map((option) => (
-          <Select.Option key={option} value={option}>
-            {option}
-          </Select.Option>
+        {groupDecisionReasons(options).map((group) => (
+          <Select.Optgroup key={group.header} label={group.header}>
+            {group.reasons.map((option) => (
+              <Select.Option key={option.code} value={String(option.code)}>
+                {option.name}
+              </Select.Option>
+            ))}
+          </Select.Optgroup>
         ))}
       </Select>
     </FormControl>
@@ -65,10 +75,13 @@ const ReasonField: FC<{
 };
 
 /**
- * "Beslut" tab — the Nytt beslut form (mirroring Lifecare's BESLUT / BESLUTSMEDDELANDE view). Datum,
- * Beslut and Från/Till are prefilled from the automated recommendation (falling back to today and the
- * normberäkning month); Belopp is 0 for an avslag, otherwise the recommended amount. Beslutsfattare and
- * Tjänst are intentionally omitted.
+ * "Beslut" tab — the Nytt beslut form (mirroring Lifecare's BESLUT / BESLUTSMEDDELANDE view). Spara writes
+ * the beslut straight to Lifecare — created the first time, changed after that — and the form is read back
+ * from there. Beslutstyper and orsaker are Lifecare's own lists for the insats. Before anything is saved,
+ * Datum, Beslut, Orsak and Från/Till are prefilled from careM's beslutsförslag and automated recommendation
+ * (falling back to today and the normberäkning month), matched to Lifecare's types and orsaker; Belopp is 0
+ * for an avslag, otherwise the recommended amount. The beslutsfattare is the handläggare who saves.
+ * Förhandsgranska shows Lifecare's own print of the saved beslut.
  */
 export const ErrandBeslut: FC<{
   errandId: string;
@@ -77,27 +90,42 @@ export const ErrandBeslut: FC<{
   headerSlot?: ReactNode;
   /** Registers this tab's save with the parent so the central "Spara ärende" button runs it (null = nothing to save). */
   onRegisterSave?: (save: (() => Promise<boolean>) | null) => void;
-  /** The orsak picked so far — owned by the errand view so "Besluta och utbetala" can send it. */
-  reasons?: BeslutReasons;
-  onReasonsChange?: (reasons: BeslutReasons) => void;
-}> = ({ errandId, locked = false, headerSlot, onRegisterSave, reasons, onReasonsChange }) => {
+}> = ({ errandId, locked = false, headerSlot, onRegisterSave }) => {
   const { t } = useTranslation('decision');
   const { draft, isLoading: draftLoading } = useErrandNormberakning(errandId);
-  const { options, recommendation, savedBeslut, isLoading: beslutLoading, refresh } = useErrandBeslut(errandId);
+  const { recommendation, isLoading: recommendationLoading } = useBeslutRecommendation(errandId);
+  const { types, isLoading: typesLoading, errorMessage: typesError } = useLifecareDecisionTypes(errandId);
+  const { decision: savedBeslut, isLoading: savedLoading, refresh } = useLifecareDecision(errandId);
   const { proposal } = useDecisionProposal(errandId);
+  // A beslut whose meddelande Lifecare has locked can no longer be changed from here.
+  const formLocked = locked || savedBeslut?.locked === true;
 
   const period = useMemo(() => resolveBeslutPeriod(recommendation, draft), [recommendation, draft]);
   const today = useMemo(() => todayDate(), []);
 
   const [date, setDate] = useState<string>(todayDate);
-  const [beslutCode, setBeslutCode] = useState<string>('');
+  // Lifecare's beslutstyp code, as the select holds it.
+  const [decisionCode, setDecisionCode] = useState<string>('');
+  const selectedType = types.find((type) => String(type.code) === decisionCode);
+  const { reasons } = useLifecareDecisionReasons(selectedType?.code);
   const [fromDate, setFromDate] = useState<string>(period.fromDate);
   const [toDate, setToDate] = useState<string>(period.toDate);
-  // The orsak fields are inputs to finalize, not to the decision the form saves — a Decision carries
-  // no reason. Until the handläggare picks one, the beslutsförslag's proposal is shown; "Besluta och
-  // utbetala" sends the pick (or, without one, the BFF falls back to the same proposal).
-  const reason = reasons?.reason ?? proposal.reason ?? '';
-  const coApplicantReason = reasons?.coApplicantReason ?? proposal.coApplicantReason ?? '';
+  // The orsak (Lifecare's code) is saved with the beslut. Until the handläggare picks one, the saved
+  // beslut's orsak stands — or, for a type not yet saved, the beslutsförslag's, found by its wording among
+  // Lifecare's orsaker. The medsökandes is not saved: a household with a medsökande cannot be registered
+  // from Drakel yet.
+  const [pickedReason, setPickedReason] = useState<string>();
+  const [pickedCoApplicantReason, setPickedCoApplicantReason] = useState<string>();
+  const reasonCodeNamed = (name: string | undefined): string => {
+    const match = name ? reasons.find((candidate) => candidate.name === name) : undefined;
+    return match ? String(match.code) : '';
+  };
+  const prefillReason =
+    savedBeslut && savedBeslut.decisionCode === selectedType?.code ?
+      String(savedBeslut.reasonCode ?? '')
+    : reasonCodeNamed(proposal.reason);
+  const reason = pickedReason ?? prefillReason;
+  const coApplicantReason = pickedCoApplicantReason ?? reasonCodeNamed(proposal.coApplicantReason);
   const [saveError, setSaveError] = useState<string>();
   const [saved, setSaved] = useState<boolean>(false);
   // The beslutsmeddelande (composed below the divider) is saved as the decision's decisionMessage.
@@ -107,16 +135,25 @@ export const ErrandBeslut: FC<{
   // markup diff) because Quill re-normalizes loaded HTML, which would otherwise read as a change.
   const [messageTouched, setMessageTouched] = useState<boolean>(false);
 
-  // The form is read back from the handläggare's saved beslut when there is one, otherwise from the
+  // The form is read back from the beslut saved in Lifecare when there is one, otherwise from the
   // automated recommendation/period. This is also the baseline the dirty-check compares against.
   // The beslutsförslag sits between the saved beslut and the older recommendation: caremanagement
   // derives it from the current draft, so it is a better answer than the stored recommendation, but a
   // handläggare's own saved beslut still wins.
-  const prefillDate = savedBeslut?.decisionDate ?? recommendation?.decisionDate ?? today;
-  const prefillBeslutCode = savedBeslut?.value ?? proposal.outcome ?? recommendation?.value ?? '';
+  const prefillDate = savedBeslut?.date ?? recommendation?.decisionDate ?? today;
+  // careM proposes an outcome (BIFALL/AVSLAG). The Lifecare beslutstyp for it is preselected only when it
+  // is the only one — with several (12 kap 1, 7 §§ and 12 kap 2 § SoL, say) the handläggare picks the
+  // paragraph, since a guess would register the beslut under the wrong one.
+  const proposedOutcome = proposal.outcome ?? recommendation?.value;
+  const typesForOutcome = proposedOutcome ? types.filter((type) => type.outcome === proposedOutcome) : [];
+  const proposedType = typesForOutcome.length === 1 ? typesForOutcome[0] : undefined;
+  const prefillBeslutCode =
+    savedBeslut ? String(savedBeslut.decisionCode)
+    : proposedType ? String(proposedType.code)
+    : '';
   const prefillFrom = savedBeslut?.periodFrom ?? proposal.periodFrom ?? period.fromDate;
   const prefillTo = savedBeslut?.periodTo ?? proposal.periodTo ?? period.toDate;
-  const prefillMessage = savedBeslut?.decisionMessage ?? '';
+  const prefillMessage = savedBeslut?.message ?? '';
   // A saved beslut's message already includes the fullföljdshänvisning (it was appended on save), so don't
   // default to appending it again; a fresh beslut defaults to adding it.
   const prefillAddFullfoljd = savedBeslut === null;
@@ -125,7 +162,7 @@ export const ErrandBeslut: FC<{
   // them). User edits change the field state, not the prefill values, so they aren't clobbered.
   useEffect(() => {
     setDate(prefillDate);
-    setBeslutCode(prefillBeslutCode);
+    setDecisionCode(prefillBeslutCode);
   }, [prefillDate, prefillBeslutCode]);
   useEffect(() => {
     setFromDate(prefillFrom);
@@ -138,25 +175,26 @@ export const ErrandBeslut: FC<{
     setMessageTouched(false);
   }, [prefillMessage, prefillAddFullfoljd]);
 
-  const selectedOption = options.find((option) => option.code === beslutCode);
-  const recommendedOption = options.find((option) => option.code === recommendation?.value);
   const amount = resolveBeslutAmount(
-    selectedOption,
+    selectedType?.outcome,
     savedBeslut?.amount ?? proposal.estimatedAmount ?? recommendation?.amount
   );
 
-  const recommendationLabel = recommendedOption?.displayName ?? recommendation?.value ?? t('details.noRecommendation');
+  const recommendedType = types.find((type) => type.outcome !== undefined && type.outcome === recommendation?.value);
+  const recommendationLabel = recommendedType?.name ?? recommendation?.value ?? t('details.noRecommendation');
 
-  // The beslut counts as dirty — and the central "Spara ärende" button lights up — only when a field
-  // differs from the saved beslut (or, before any save, the prefilled recommendation) or the user has
-  // edited the message. Opening the tab alone is not a change.
+  // The beslut counts as dirty — and the central "Spara ärende" button lights up — while nothing is saved
+  // in Lifecare yet (finalize needs a saved beslut, even one taken straight from the förslag), and after
+  // that when a field differs from the saved beslut or the user has edited the message. Opening the tab
+  // on a saved beslut is not a change.
   const fieldsChanged =
     date !== prefillDate ||
-    beslutCode !== prefillBeslutCode ||
+    decisionCode !== prefillBeslutCode ||
     fromDate !== prefillFrom ||
     toDate !== prefillTo ||
+    reason !== prefillReason ||
     addFullfoljd !== prefillAddFullfoljd;
-  const beslutDirty = !!beslutCode && (fieldsChanged || messageTouched);
+  const beslutDirty = !!decisionCode && (savedBeslut === null || fieldsChanged || messageTouched);
 
   // The decision message is the composed beslutsmeddelande, with the fullföljdshänvisning (fetched from
   // Templating) appended at the end when the handläggare ticked the box.
@@ -174,22 +212,24 @@ export const ErrandBeslut: FC<{
   const save = async (): Promise<boolean> => {
     // Nothing to save without a chosen beslut (mirrors the old Spara button's disabled guard); the central
     // save can fire from the sidebar for other reasons, so we must not POST an empty decision.
-    if (!beslutCode) {
+    if (!selectedType) {
       return false;
     }
     setSaveError(undefined);
     setSaved(false);
     const decisionMessage = await buildDecisionMessage();
-    const result = await createBeslut(errandId, {
-      value: beslutCode,
+    const result = await saveLifecareDecision(errandId, {
+      decisionCode: selectedType.code,
+      date: date || undefined,
+      periodFrom: fromDate || undefined,
+      periodTo: toDate || undefined,
       amount: amount ?? 0,
-      decisionDate: date,
-      periodFrom: fromDate,
-      periodTo: toDate,
+      reasonCode: reason ? Number(reason) : undefined,
       decisionMessage,
     });
     if (result.error) {
-      setSaveError(t('details.saveError'));
+      // Lifecare's own reason, or why Drakel will not send the beslut, when there is one.
+      setSaveError(result.message ?? t('details.saveError'));
       return false;
     }
     setSaved(true);
@@ -206,7 +246,7 @@ export const ErrandBeslut: FC<{
     saveRef.current = save;
   });
   useEffect(() => {
-    if (locked || !beslutDirty) {
+    if (formLocked || !beslutDirty) {
       onRegisterSave?.(null);
       return;
     }
@@ -214,7 +254,7 @@ export const ErrandBeslut: FC<{
     return () => {
       onRegisterSave?.(null);
     };
-  }, [onRegisterSave, locked, beslutDirty]);
+  }, [onRegisterSave, formLocked, beslutDirty]);
 
   const header = (
     <ErrandSectionHeader title={t('header.title')} description={t('header.description')} action={headerSlot}>
@@ -224,7 +264,7 @@ export const ErrandBeslut: FC<{
     </ErrandSectionHeader>
   );
 
-  if (draftLoading || beslutLoading) {
+  if (draftLoading || recommendationLoading || typesLoading || savedLoading) {
     return (
       <div className="flex flex-col gap-24">
         {header}
@@ -241,12 +281,28 @@ export const ErrandBeslut: FC<{
 
       {/* The proposal is read-only, so it sits outside the LockFieldset and stays legible when the
           section is approved. */}
+      {/* Up top, not beside the fields: Spara sits in the bar above, and a refused beslut must not go unseen. */}
+      {saveError ?
+        <Alert type="error">
+          <Alert.Icon />
+          <Alert.Content>
+            <Alert.Content.Title className="font-bold">{t('details.saveErrorTitle')}</Alert.Content.Title>
+            <Alert.Content.Description>{saveError}</Alert.Content.Description>
+          </Alert.Content>
+        </Alert>
+      : null}
+
       <BeslutProposalBox proposal={proposal} />
 
+      {savedBeslut?.locked ?
+        <p className="m-0 text-dark-secondary">{t('details.lockedInLifecare')}</p>
+      : null}
+
       <ContentBox title={t('details.title')}>
-        <LockFieldset locked={locked}>
+        <LockFieldset locked={formLocked}>
           <div className="flex flex-col gap-24">
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-24 gap-y-16">
+            {/* Datum and the period on one row, beslutstyp and orsak on the next. */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-24 gap-y-16">
               <FormControl id="beslut-datum" className="w-full">
                 <FormLabel>{t('details.date')}</FormLabel>
                 <Input
@@ -256,27 +312,6 @@ export const ErrandBeslut: FC<{
                     setDate(event.target.value);
                   }}
                 />
-              </FormControl>
-
-              <FormControl id="beslut-typ" className="w-full">
-                <FormLabel>{t('details.decision')}</FormLabel>
-                <Select
-                  className="w-full"
-                  value={beslutCode}
-                  onChange={(event) => {
-                    setBeslutCode(event.target.value);
-                  }}
-                >
-                  <Select.Option value="">{t('details.selectDecision')}</Select.Option>
-                  {options.map((option) => (
-                    <Select.Option key={option.code} value={option.code ?? ''}>
-                      {option.displayName ?? option.code}
-                    </Select.Option>
-                  ))}
-                </Select>
-                <span className="text-small text-dark-secondary mt-4">
-                  {t('details.recommended', { label: recommendationLabel })}
-                </span>
               </FormControl>
 
               <FormControl id="beslut-fran" className="w-full">
@@ -290,29 +325,6 @@ export const ErrandBeslut: FC<{
                 />
               </FormControl>
 
-              <ReasonField
-                id="beslut-orsak"
-                label={t('details.reason')}
-                value={reason}
-                options={proposal.reasonOptions ?? []}
-                onChange={(value) => {
-                  onReasonsChange?.({ reason: value, coApplicantReason });
-                }}
-              />
-
-              {/* Medsökandes orsak visas bara när det finns en medsökande att föreslå för. */}
-              {proposal.coApplicantReason || proposal.previousDecision?.coApplicant ?
-                <ReasonField
-                  id="beslut-orsak-medsokande"
-                  label={t('details.coApplicantReason')}
-                  value={coApplicantReason}
-                  options={proposal.reasonOptions ?? []}
-                  onChange={(value) => {
-                    onReasonsChange?.({ reason, coApplicantReason: value });
-                  }}
-                />
-              : null}
-
               <FormControl id="beslut-till" className="w-full">
                 <FormLabel>{t('details.to')}</FormLabel>
                 <Input
@@ -324,6 +336,55 @@ export const ErrandBeslut: FC<{
                 />
               </FormControl>
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-24 gap-y-16">
+              <FormControl id="beslut-typ" className="w-full">
+                <FormLabel>{t('details.decision')}</FormLabel>
+                <Select
+                  className="w-full"
+                  value={decisionCode}
+                  onChange={(event) => {
+                    setDecisionCode(event.target.value);
+                    // Another type has other orsaker, so the pick goes back to what that type proposes.
+                    setPickedReason(undefined);
+                    setPickedCoApplicantReason(undefined);
+                  }}
+                >
+                  <Select.Option value="">{t('details.selectDecision')}</Select.Option>
+                  {types.map((type) => (
+                    <Select.Option key={type.code} value={String(type.code)}>
+                      {type.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+                {typesError ?
+                  <span className="text-small text-error-surface-primary mt-4">
+                    {t('details.typesError', { reason: typesError })}
+                  </span>
+                : null}
+                <span className="text-small text-dark-secondary mt-4">
+                  {t('details.recommended', { label: recommendationLabel })}
+                </span>
+              </FormControl>
+
+              <ReasonField
+                id="beslut-orsak"
+                label={t('details.reason')}
+                value={reason}
+                options={reasons}
+                onChange={setPickedReason}
+              />
+
+              {/* Medsökandes orsak visas bara när det finns en medsökande att föreslå för. */}
+              {proposal.coApplicantReason || proposal.previousDecision?.coApplicant ?
+                <ReasonField
+                  id="beslut-orsak-medsokande"
+                  label={t('details.coApplicantReason')}
+                  value={coApplicantReason}
+                  options={reasons}
+                  onChange={setPickedCoApplicantReason}
+                />
+              : null}
+            </div>
 
             {/* Belopp is derived (0 for an avslag, otherwise the recommended amount), so it's shown
                 as a read-only value rather than an input field. */}
@@ -331,14 +392,14 @@ export const ErrandBeslut: FC<{
               <span className="font-bold">{formatAmount(amount ?? 0)}</span>
             </LabeledValue>
 
-            {saveError && <p className="text-error-surface-primary m-0">{saveError}</p>}
             {saved && <p className="text-dark-secondary m-0">{t('details.saved')}</p>}
           </div>
         </LockFieldset>
       </ContentBox>
 
       {/* The "Förhandsgranska" button is read-only, so it sits in the box header OUTSIDE the LockFieldset and
-          remains clickable even when the section is approved/locked. Only the editor below is locked. */}
+          remains clickable even when the section is approved/locked. Only the editor below is locked. It shows
+          Lifecare's print of the saved beslut, so it waits until what is on screen has been saved. */}
       <ContentBox
         title={t('message.title')}
         action={
@@ -346,17 +407,23 @@ export const ErrandBeslut: FC<{
           // become two children and justify-between would push the button to the middle.
           <div>
             <PdfPreviewButton
-              buildHtml={buildDecisionMessage}
+              loadPdf={() => getLifecareDecisionPdf(errandId)}
               label={t('common:preview')}
               modalLabel={t('message.previewModalLabel')}
-              emptyMessage={t('message.previewEmpty')}
+              disabled={!savedBeslut || beslutDirty}
             />
           </div>
         }
       >
-        <LockFieldset locked={locked}>
+        {!savedBeslut || beslutDirty ?
+          <p className="m-0 mb-16 text-small text-dark-secondary">{t('message.previewNeedsSave')}</p>
+        : null}
+        <LockFieldset locked={formLocked}>
           <BeslutMeddelande
             errandId={errandId}
+            amount={amount}
+            periodFrom={fromDate || undefined}
+            periodTo={toDate || undefined}
             value={messageValue}
             onChange={setMessageValue}
             addFullfoljd={addFullfoljd}

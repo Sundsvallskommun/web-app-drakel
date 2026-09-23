@@ -55,6 +55,17 @@ class CaremanagementErrandService {
     });
   }
 
+  /**
+   * Points the errand at its beslut in Lifecare. Only the reference is kept in careM — the beslut itself
+   * lives in Lifecare. careM leaves every field the patch does not name as it was.
+   */
+  async setLifecareDecisionId(errandId: string, lifecareDecisionId: number): Promise<void> {
+    await this.apiService.patch<unknown>({
+      url: caremanagementUrl('errands', 'financial-assistance', errandId, 'data'),
+      data: { lifecareDecisionId },
+    });
+  }
+
   async createErrand(errand: CreateErrandDto): Promise<ApiResponse<Errand>> {
     // caremanagement returns "201 Created" with a Location header and an empty body, so we resolve
     // the created errand by the id in that Location and return the full errand to the caller.

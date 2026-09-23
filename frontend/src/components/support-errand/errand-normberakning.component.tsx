@@ -4,6 +4,7 @@ import { PdfPreviewButton } from '@components/common/pdf-preview-button.componen
 import { useErrandNormberakning } from '@hooks/use-errand-normberakning';
 import { useNormberakningTypes } from '@hooks/use-normberakning-types';
 import { TypeOption } from '@services/normberakning-service';
+import { renderPdf } from '@services/pdf-service';
 import { Warning } from '@services/warning-service';
 import { DatePicker, FormControl, FormLabel, Input, Spinner, Tabs } from '@sk-web-gui/react';
 import { formatApplicationMonth } from '@utils/application-month';
@@ -168,8 +169,8 @@ export const ErrandNormberakning: FC<{
           // become two children of the action group.
           <div>
             <PdfPreviewButton
-              buildHtml={() =>
-                Promise.resolve(
+              loadPdf={() =>
+                renderPdf(
                   buildNormberakningHtml(draft, {
                     costTypeLabels: typeLabelMap(types.costTypes),
                     livingCostTypeLabels: typeLabelMap(types.livingCostTypes),
@@ -178,7 +179,6 @@ export const ErrandNormberakning: FC<{
                 )
               }
               modalLabel={t('preview.modalLabel')}
-              emptyMessage={t('preview.empty')}
             />
           </div>
         )}

@@ -1,23 +1,16 @@
-import { BeslutOption, Decision } from '@services/beslut-service';
+import { Decision } from '@services/beslut-service';
 import { NormberakningDraft } from '@services/normberakning-service';
 import dayjs from 'dayjs';
 
-/** An avslag is a beslutsalternativ that grants no belopp (carriesAmount === false). */
-const isAvslag = (option: BeslutOption | undefined): boolean => option?.carriesAmount === false;
-
 /**
  * The paid amount for a beslut: 0 for an avslag, otherwise the recommended amount from the
- * normberäkning. Returns undefined when no decision is selected and no recommendation is available.
+ * normberäkning. `outcome` is careM's outcome for the chosen Lifecare beslutstyp. Returns undefined when
+ * there is no recommendation to go on.
  */
 export const resolveBeslutAmount = (
-  option: BeslutOption | undefined,
+  outcome: string | undefined,
   recommendedAmount: number | undefined
-): number | undefined => {
-  if (isAvslag(option)) {
-    return 0;
-  }
-  return recommendedAmount;
-};
+): number | undefined => (outcome === 'AVSLAG' ? 0 : recommendedAmount);
 
 /** The application period (Från/Till) a beslut concerns. */
 export interface BeslutPeriod {

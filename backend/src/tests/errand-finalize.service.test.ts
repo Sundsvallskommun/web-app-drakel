@@ -4,7 +4,7 @@ import CaremanagementNormberakningService from '@services/caremanagement-normber
 import CaremanagementPaymentService from '@services/caremanagement-payment.service';
 import DecisionNotificationService from '@services/decision-notification.service';
 import ErrandFinalizeService from '@services/errand-finalize.service';
-import LifecareDecisionRegistrationService from '@services/lifecare-decision-registration.service';
+import ErrandLifecareDecisionService from '@services/errand-lifecare-decision.service';
 import LifecarePaymentRegistrationService from '@services/lifecare-payment-registration.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -22,28 +22,35 @@ const draft = {
   paymentMethod: 'Bankkonto',
 };
 
+/** The beslut the handläggare saved, as it stands in Lifecare. */
+const lifecareBeslut = {
+  id: 98,
+  outcome: 'BIFALL',
+  date: '2026-06-20',
+  amount: 7900,
+  periodFrom: '2026-06-01',
+  periodTo: '2026-06-30',
+  reason: 'Arbetslös',
+  message: '<p>Beslut</p>',
+  locked: false,
+  decisionMaker: 'Test Handläggare',
+};
+
 describe('ErrandFinalizeService.finalize', () => {
-  let registerDecision: ReturnType<typeof vi.spyOn<LifecareDecisionRegistrationService, 'register'>>;
+  let receiptFinalized: ReturnType<typeof vi.spyOn<ErrandLifecareDecisionService, 'receiptFinalized'>>;
 
   beforeEach(() => {
-    vi.spyOn(CaremanagementDecisionService.prototype, 'readDecisions').mockResolvedValue({
-      data: [{ value: 'BIFALL', amount: 7900, decisionMessage: '<p>Beslut</p>' }],
-      message: 'success',
-    });
-    vi.spyOn(CaremanagementDecisionService.prototype, 'readDecisionProposal').mockResolvedValue({
-      data: { reason: 'Föreslagen orsak' },
-      message: 'success',
-    });
+    vi.spyOn(ErrandLifecareDecisionService.prototype, 'read').mockResolvedValue(lifecareBeslut);
     vi.spyOn(CaremanagementPaymentService.prototype, 'listPayments').mockResolvedValue({ data: [draft], message: 'success' });
     vi.spyOn(CaremanagementNormberakningService.prototype, 'readHouseholdSizeChanged').mockResolvedValue(false);
     vi.spyOn(CaremanagementErrandService.prototype, 'getFinancialAssistanceView').mockResolvedValue({
       data: { lifecareServiceId: 1 },
       message: 'success',
     });
-    registerDecision = vi.spyOn(LifecareDecisionRegistrationService.prototype, 'register').mockResolvedValue({
+    receiptFinalized = vi.spyOn(ErrandLifecareDecisionService.prototype, 'receiptFinalized').mockResolvedValue({
       decisionId: 'decision-1',
       outcome: 'REGISTERED',
-      lifecareId: '93',
+      lifecareId: '98',
     });
   });
 
@@ -51,7 +58,7 @@ describe('ErrandFinalizeService.finalize', () => {
     vi.restoreAllMocks();
   });
 
-  it('finalizes, removes the drafts it sent and sends the beslut', async () => {
+  it('finalizes the Lifecare beslut, removes the drafts it sent and sends the beslut', async () => {
     const finalize = vi.spyOn(CaremanagementDecisionService.prototype, 'finalize').mockResolvedValue({
       data: {
         decisionId: 'decision-1',
@@ -70,17 +77,16 @@ describe('ErrandFinalizeService.finalize', () => {
       .spyOn(LifecarePaymentRegistrationService.prototype, 'register')
       .mockResolvedValue({ paymentId: 'payment-1', outcome: 'REGISTERED', lifecareId: '4' });
 
-    const result = await new ErrandFinalizeService().finalize('errand-1', { ...channels, reason: 'Arbetslös' }, 'caseworker01');
+    const result = await new ErrandFinalizeService().finalize('errand-1', channels, 'caseworker01');
 
+    // Everything about the beslut — orsak included — comes from Lifecare.
     expect(finalize.mock.calls[0]?.[1]).toMatchObject({
-      decision: { outcome: 'BIFALL', reason: 'Arbetslös', amount: 7900 },
+      decision: { outcome: 'BIFALL', reason: 'Arbetslös', amount: 7900, decisionMessage: '<p>Beslut</p>' },
       communication: { minaSidor: true, digitalMailbox: false, letter: true },
     });
     expect(deletePayment).toHaveBeenCalledWith('errand-1', 'draft-1');
     expect(register).toHaveBeenCalledWith('errand-1', 1, 'payment-1');
-    expect(registerDecision.mock.calls[0]?.slice(0, 3)).toEqual(['errand-1', 1, 'decision-1']);
-    expect(registerDecision.mock.calls[0]?.[3]).toMatchObject({ outcome: 'BIFALL', reason: 'Arbetslös', amount: 7900 });
-    expect(registerDecision.mock.calls[0]?.[4]).toBe('caseworker01');
+    expect(receiptFinalized).toHaveBeenCalledWith('errand-1', 'decision-1', 98);
     expect(send).toHaveBeenCalledWith('errand-1', expect.objectContaining(channels), 'caseworker01');
     expect(result).toEqual({
       decisionId: 'decision-1',
@@ -88,7 +94,7 @@ describe('ErrandFinalizeService.finalize', () => {
       payeeWarnings: [],
       failedRpaTasks: ['REGISTER_PAYMENT'],
       processMessageCorrelated: true,
-      lifecareDecision: { decisionId: 'decision-1', outcome: 'REGISTERED', lifecareId: '93' },
+      lifecareDecision: { decisionId: 'decision-1', outcome: 'REGISTERED', lifecareId: '98' },
       lifecarePayments: [{ paymentId: 'payment-1', outcome: 'REGISTERED', lifecareId: '4' }],
       failedChannels: ['Brev'],
     });
@@ -105,14 +111,13 @@ describe('ErrandFinalizeService.finalize', () => {
     expect(result.lifecarePayments).toEqual([{ paymentId: 'payment-1', outcome: 'NOT_SENT', detail: expect.any(String) as string }]);
   });
 
-  it('falls back to the proposed orsak when the handläggare never picked one', async () => {
-    const finalize = vi.spyOn(CaremanagementDecisionService.prototype, 'finalize').mockResolvedValue({ data: {}, message: 'success' });
-    vi.spyOn(CaremanagementPaymentService.prototype, 'deletePayment').mockResolvedValue({ data: null, message: 'success' });
-    vi.spyOn(DecisionNotificationService.prototype, 'send').mockResolvedValue([]);
+  it('refuses to finalize before a beslut is saved in Lifecare', async () => {
+    vi.spyOn(ErrandLifecareDecisionService.prototype, 'read').mockResolvedValue(undefined);
+    const finalize = vi.spyOn(CaremanagementDecisionService.prototype, 'finalize');
 
-    await new ErrandFinalizeService().finalize('errand-1', channels, 'caseworker01');
+    await expect(new ErrandFinalizeService().finalize('errand-1', channels, 'caseworker01')).rejects.toMatchObject({ status: 400 });
 
-    expect(finalize.mock.calls[0]?.[1].decision.reason).toBe('Föreslagen orsak');
+    expect(finalize).not.toHaveBeenCalled();
   });
 
   it('leaves the drafts and sends nothing when caremanagement refuses the finalize', async () => {

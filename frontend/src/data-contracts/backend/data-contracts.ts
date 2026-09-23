@@ -99,21 +99,6 @@ export interface ErrandCountsApiResponse {
   message: string;
 }
 
-export interface CreateDecisionDto {
-  /** @maxLength 32 */
-  decisionType?: string;
-  /** @maxLength 255 */
-  value: string;
-  amount?: number;
-  decisionDate?: string;
-  periodFrom?: string;
-  periodTo?: string;
-  /** @maxLength 8192 */
-  decisionMessage?: string;
-  /** @maxLength 4096 */
-  description?: string;
-}
-
 export interface Decision {
   id?: string;
   decisionType?: string;
@@ -128,24 +113,8 @@ export interface Decision {
   created?: string;
 }
 
-export interface DecisionOption {
-  code?: string;
-  displayName?: string;
-  carriesAmount?: boolean;
-}
-
 export interface DecisionsApiResponse {
   data: Decision[];
-  message: string;
-}
-
-export interface DecisionApiResponse {
-  data: Decision;
-  message: string;
-}
-
-export interface DecisionOptionsApiResponse {
-  data: DecisionOption[];
   message: string;
 }
 
@@ -195,6 +164,55 @@ export interface DecisionProposalView {
 
 export interface DecisionProposalApiResponse {
   data: DecisionProposalView;
+  message: string;
+}
+
+export interface LifecareDecisionView {
+  id: number;
+  decisionCode: number;
+  outcome?: string;
+  date: string;
+  periodFrom?: string;
+  periodTo?: string;
+  amount: number;
+  reasonCode?: number;
+  reason?: string;
+  message?: string;
+  locked: boolean;
+  decisionMaker: string;
+}
+
+export interface LifecareDecisionApiResponse {
+  data?: LifecareDecisionView;
+  message: string;
+}
+
+export interface LifecareDecisionTypeView {
+  code: number;
+  name: string;
+  outcome?: string;
+  requiresFromDate: boolean;
+  requiresToDate: boolean;
+}
+
+export interface LifecareDecisionTypesApiResponse {
+  data: LifecareDecisionTypeView[];
+  message: string;
+}
+
+export interface LifecareDecisionReasonView {
+  code: number;
+  name: string;
+  header: string;
+}
+
+export interface LifecareDecisionReasonsApiResponse {
+  data: LifecareDecisionReasonView[];
+  message: string;
+}
+
+export interface LifecareDecisionPdfApiResponse {
+  data: string;
   message: string;
 }
 
@@ -493,14 +511,6 @@ export interface DecisionNotificationDto {
   brev?: boolean;
 }
 
-export interface FinalizeErrandDto {
-  /** @maxLength 4096 */
-  reason?: string;
-  minaSidor?: boolean;
-  digitalBrevlada?: boolean;
-  brev?: boolean;
-}
-
 export interface DecisionRegistration {
   decisionId: string;
   outcome: DecisionRegistrationOutcomeEnum;
@@ -665,6 +675,20 @@ export interface JournalEntryApiResponse {
 export interface JournalEntryTypesApiResponse {
   data: JournalEntryType[];
   message: string;
+}
+
+export interface SaveLifecareDecisionDto {
+  decisionCode: number;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  date?: string;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  periodFrom?: string;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  periodTo?: string;
+  amount?: number;
+  reasonCode?: number;
+  /** @maxLength 1048576 */
+  decisionMessage?: string;
 }
 
 export interface LifecareDocumentTypeView {

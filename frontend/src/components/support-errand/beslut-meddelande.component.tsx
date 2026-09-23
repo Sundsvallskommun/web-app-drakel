@@ -4,6 +4,7 @@ import TextEditor from '@components/common/text-editor.component';
 import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
 import { Checkbox, Combobox, FormControl, FormLabel } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
+import { fillBeslutPhrase } from '@utils/fill-beslut-phrase';
 import { stakeholderDisplayName } from '@utils/stakeholder-name';
 import { FC, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
@@ -36,8 +37,9 @@ const toMarkup = (text: string): string =>
 /**
  * Decision-message editor: a WYSIWYG TextEditor plus a two-level phrase picker — a kategori combobox and a
  * searchable rubrik combobox (both single-select). Selecting a rubrik appends its text to the bottom of
- * the editor, separated from the previous content by two empty rows, with the `¤` placeholder replaced by
- * the sökande's name. `§`→`¥` (belopp) and `※` (period) are left in place — mapped from the beräkning later.
+ * the editor, separated from the previous content by two empty rows, filled from the errand: `¤` with the
+ * sökandes name, `¥` with the belopp and `※` with the period as the form holds them when the phrase is
+ * added. A value the errand lacks leaves its placeholder, to be written by hand.
  */
 export const BeslutMeddelande: FC<{
   errandId: string;
@@ -49,7 +51,12 @@ export const BeslutMeddelande: FC<{
   onAddFullfoljdChange: (checked: boolean) => void;
   /** Called when the user edits the message (typing or inserting a phrase) — not on programmatic load. */
   onUserEdit?: () => void;
-}> = ({ errandId, value, onChange, addFullfoljd, onAddFullfoljdChange, onUserEdit }) => {
+  /** The beslut's belopp, filled in for `¥`. */
+  amount?: number;
+  /** The beslut's period (`YYYY-MM-DD`), filled in for `※`. */
+  periodFrom?: string;
+  periodTo?: string;
+}> = ({ errandId, value, onChange, addFullfoljd, onAddFullfoljdChange, onUserEdit, amount, periodFrom, periodTo }) => {
   const { t } = useTranslation('decision');
   const { stakeholders } = useErrandStakeholders(errandId);
   const applicant = stakeholders.find((stakeholder) => stakeholder.role === 'APPLICANT');
@@ -73,8 +80,7 @@ export const BeslutMeddelande: FC<{
     );
 
   const addPhrase = (phrase: BeslutPhrase): void => {
-    // Only the name is substituted now; the belopp/period markers are filled from the beräkning later.
-    const filledText = applicantName ? phrase.text.split(NAME_PLACEHOLDER).join(applicantName) : phrase.text;
+    const filledText = fillBeslutPhrase(phrase.text, { applicantName, amount, periodFrom, periodTo });
     const phraseMarkup = toMarkup(filledText);
     // An "empty" editor still has markup like <p></p> once it's been touched — replace it (rather than
     // append) so the phrase doesn't end up after an empty first line. Otherwise add one empty line.

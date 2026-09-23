@@ -1,17 +1,24 @@
-import { buildFinalizeRequest, draftPayments, latestSavedBeslut, toFinalizePayment } from '@utils/finalize-request';
+import { buildFinalizeRequest, draftPayments, toFinalizePayment } from '@utils/finalize-request';
 import { describe, expect, it } from 'vitest';
 
-import { Decision, FinalizeDecisionOutcomeEnum, Payment, PaymentStatusEnum } from '@/data-contracts/caremanagement/data-contracts';
+import { FinalizeDecisionOutcomeEnum, Payment, PaymentStatusEnum } from '@/data-contracts/caremanagement/data-contracts';
+import { LifecareDecisionView } from '@/responses/lifecare-decision.response';
 
 const communication = { minaSidor: true, digitalMailbox: false, letter: true };
 
-const beslut: Decision = {
-  value: 'BIFALL',
+/** The beslut as it stands in Lifecare. */
+const beslut = {
+  id: 98,
+  outcome: 'BIFALL',
+  date: '2026-06-20',
   amount: 7900,
   periodFrom: '2026-06-01',
   periodTo: '2026-06-30',
-  decisionMessage: '<p>Du beviljas bistånd</p>',
-};
+  reason: 'Arbetslös',
+  message: '<p>Du beviljas bistånd</p>',
+  locked: false,
+  decisionMaker: 'Test Handläggare',
+} satisfies LifecareDecisionView;
 
 const draft: Payment = {
   id: 'draft-1',
@@ -26,18 +33,6 @@ const draft: Payment = {
   accountNumber: '1234567',
   accountingCode: 'K1',
 };
-
-describe('latestSavedBeslut', () => {
-  it('picks the newest decision that carries a beslutsmeddelande', () => {
-    const decisions: Decision[] = [
-      { id: 'old', decisionMessage: 'Äldre' },
-      { id: 'saved', decisionMessage: 'Senaste' },
-      { id: 'no-message', decisionMessage: '  ' },
-    ];
-
-    expect(latestSavedBeslut(decisions)?.id).toBe('saved');
-  });
-});
 
 describe('draftPayments', () => {
   it('keeps only the rows nothing has handed to Lifecare yet', () => {
@@ -72,8 +67,8 @@ describe('toFinalizePayment', () => {
 });
 
 describe('buildFinalizeRequest', () => {
-  it('builds the payload from the saved beslut and the drafts', () => {
-    const request = buildFinalizeRequest({ beslut, drafts: [draft], reason: 'Arbetslös', communication, householdSizeChanged: true });
+  it('builds the payload from the Lifecare beslut and the drafts', () => {
+    const request = buildFinalizeRequest({ beslut, drafts: [draft], communication, householdSizeChanged: true });
 
     expect(request.decision).toEqual({
       outcome: FinalizeDecisionOutcomeEnum.BIFALL,
@@ -90,9 +85,8 @@ describe('buildFinalizeRequest', () => {
 
   it('sends no payments and no amount for an avslag, whatever drafts were saved', () => {
     const request = buildFinalizeRequest({
-      beslut: { ...beslut, value: 'AVSLAG', amount: 0 },
+      beslut: { ...beslut, outcome: 'AVSLAG', amount: 0 },
       drafts: [draft],
-      reason: undefined,
       communication,
       householdSizeChanged: false,
     });
@@ -102,23 +96,22 @@ describe('buildFinalizeRequest', () => {
   });
 
   it('refuses when no beslut has been saved', () => {
-    expect(() => buildFinalizeRequest({ beslut: undefined, drafts: [draft], reason: undefined, communication, householdSizeChanged: false })).toThrow(
+    expect(() => buildFinalizeRequest({ beslut: undefined, drafts: [draft], communication, householdSizeChanged: false })).toThrow(
       expect.objectContaining({ status: 400 }),
     );
   });
 
   it('refuses a granting beslut without any utbetalning', () => {
-    expect(() => buildFinalizeRequest({ beslut, drafts: [], reason: undefined, communication, householdSizeChanged: false })).toThrow(
+    expect(() => buildFinalizeRequest({ beslut, drafts: [], communication, householdSizeChanged: false })).toThrow(
       expect.objectContaining({ status: 400 }),
     );
   });
 
-  it('refuses an outcome caremanagement no longer accepts', () => {
+  it('refuses a Lifecare beslutstyp Drakel does not finalize', () => {
     expect(() =>
       buildFinalizeRequest({
-        beslut: { ...beslut, value: 'AVVISNING' },
+        beslut: { ...beslut, outcome: undefined },
         drafts: [draft],
-        reason: undefined,
         communication,
         householdSizeChanged: false,
       }),

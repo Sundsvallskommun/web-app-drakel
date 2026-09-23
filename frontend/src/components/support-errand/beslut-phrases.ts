@@ -1,8 +1,7 @@
 /**
- * Unique placeholder characters in a phrase that map to errand data. NAME is replaced with the sökande's
- * name on insert; AMOUNT (belopp) and PERIOD (MÅNADÅR/MÅNADPERIOD) are left in place for now and will be
- * mapped from the beräkning later. AMOUNT is `¥` (not `§`) so it never collides with legal references like
- * "12 kap. 1 §".
+ * Unique placeholder characters in a phrase that map to errand data — filled on insert by fillBeslutPhrase:
+ * NAME with the sökandes name, AMOUNT with the beslut's belopp and PERIOD (MÅNADÅR/MÅNADPERIOD) with its
+ * period. AMOUNT is `¥` (not `§`) so it never collides with legal references like "12 kap. 1 §".
  */
 export const NAME_PLACEHOLDER = '¤';
 export const AMOUNT_PLACEHOLDER = '¥';

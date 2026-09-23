@@ -29,9 +29,7 @@ export const ErrandAvsluta: FC<{
   errandId: string;
   onFinalized: () => void;
   checkApprovals?: boolean;
-  /** The sökandes orsak picked on the Beslut tab; left out, the BFF uses the proposed one. */
-  reason?: string;
-}> = ({ errandId, onFinalized, checkApprovals = true, reason }) => {
+}> = ({ errandId, onFinalized, checkApprovals = true }) => {
   const { t } = useTranslation('errand');
   const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
   const [unapproved, setUnapproved] = useState<SectionKey[]>([]);
@@ -97,7 +95,6 @@ export const ErrandAvsluta: FC<{
       minaSidor,
       digitalBrevlada: digitalBrevlada && mailboxAvailable,
       brev,
-      reason,
     });
     setWorking(false);
     if (result.error || !result.data) {

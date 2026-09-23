@@ -17,12 +17,14 @@
     "saved": "The decision was saved.",
     "reason": "Reason",
     "coApplicantReason": "Co-applicant reason",
-    "selectReason": "Select a reason"
+    "selectReason": "Select a reason",
+    "lockedInLifecare": "The decision message is locked in Lifecare, so the decision can no longer be changed here.",
+    "typesError": "The decision types could not be fetched from Lifecare: {{reason}}",
+    "saveErrorTitle": "The decision was not saved in Lifecare"
   },
   "message": {
     "title": "Decision message",
     "previewModalLabel": "Preview decision",
-    "previewEmpty": "There is no decision message to preview.",
     "categoryLabel": "Decision wording – category",
     "categoryPlaceholder": "Select category",
     "categorySearch": "Search category…",
@@ -30,9 +32,10 @@
     "headingLabel": "Decision wording – heading",
     "headingPlaceholder": "Select and add phrase text",
     "headingSearch": "Search heading…",
-    "placeholderHelp": "<bold>{{name}}</bold> is replaced with the applicant's name. <bold>{{amount}}</bold> (amount) and <bold>{{period}}</bold> (period) are filled in from the calculation later.",
+    "placeholderHelp": "The phrase's <bold>{{name}}</bold> (applicant's name), <bold>{{amount}}</bold> (amount) and <bold>{{period}}</bold> (period) are filled in from the decision when the phrase is added. A missing value leaves its character in place.",
     "applicantNameMissing": "The applicant's name could not be fetched — the name placeholder is left unreplaced.",
-    "addFullfoljd": "Add appeal instructions"
+    "addFullfoljd": "Add appeal instructions",
+    "previewNeedsSave": "The preview shows the decision as saved in Lifecare. Save to see your changes."
   },
   "payment": {
     "header": {

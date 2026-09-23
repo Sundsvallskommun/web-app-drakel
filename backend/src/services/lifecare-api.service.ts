@@ -153,6 +153,7 @@ class LifecareApiService {
         url: lifecareUrl(request.module, request.path),
         params: request.params,
         data: body,
+        responseType: request.responseType,
         headers: {
           ...LIFECARE_AJAX_HEADERS,
           // Lifecare's own client sends these on every api2 call, and ASP.NET applications of this

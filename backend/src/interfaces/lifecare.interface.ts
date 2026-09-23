@@ -15,6 +15,8 @@ export interface LifecareRequest {
   /** The path below the module, e.g. `api2/Person/Search`. */
   path: string;
   params?: Record<string, string>;
+  /** `arraybuffer` for a file Lifecare renders, e.g. a beslut as PDF; JSON otherwise. */
+  responseType?: 'arraybuffer';
 }
 
 /**
