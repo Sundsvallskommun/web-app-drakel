@@ -1185,6 +1185,33 @@ export interface JournalEntry {
   locked?: string;
 }
 
+/** One read or write made in Lifecare directly on an errand's behalf, reported to the errand's access log. */
+export interface LifecareAccess {
+  /**
+   * What was done in Lifecare
+   * @minLength 1
+   */
+  action: LifecareAccessActionEnum;
+  /**
+   * What in Lifecare was accessed — a stable name, not a Lifecare path
+   * @minLength 0
+   * @maxLength 255
+   */
+  target: string;
+  /**
+   * A human-readable summary, shown in the access log
+   * @minLength 0
+   * @maxLength 512
+   */
+  description?: string;
+  /**
+   * The Lifecare record the access was about (e.g. the journal note written), when there is one
+   * @minLength 0
+   * @maxLength 64
+   */
+  lifecareId?: string;
+}
+
 export interface CreateDocument {
   /**
    * Document type (Lifecare 'Typ'/Dokumenttyp)
@@ -1323,11 +1350,38 @@ export interface Decision {
    * @maxLength 64
    */
   createdBy?: string;
+  /** Where the decision stands in Lifecare: PENDING once handed over to be written there, SYNCED once written, FAILED when Lifecare refused it (see lifecareDetail). Null for a decision that is never written to Lifecare. */
+  lifecareStatus?: DecisionLifecareStatusEnum;
+  /** The decision's id in Lifecare, once written there */
+  lifecareId?: string;
+  /** Lifecare's own message when writing the decision failed — shown to the caseworker as-is */
+  lifecareDetail?: string;
   /**
    * Timestamp the decision was recorded (server-assigned)
    * @format date-time
    */
   created?: string;
+}
+
+/** The report on writing a decision into Lifecare. */
+export interface DecisionLifecareResult {
+  /**
+   * What happened when the decision was written to Lifecare
+   * @minLength 1
+   */
+  outcome: DecisionLifecareResultOutcomeEnum;
+  /**
+   * The decision id Lifecare gave, when it gave one. Stored as the decision's lifecareId
+   * @minLength 0
+   * @maxLength 64
+   */
+  lifecareId?: string;
+  /**
+   * Lifecare's own message. Required when outcome is FAILED — it is shown to the caseworker as-is
+   * @minLength 0
+   * @maxLength 1024
+   */
+  detail?: string;
 }
 
 /** Request to create a financial assistance income warning on an errand (no Lifecare round-trip). */
@@ -2154,9 +2208,9 @@ export interface ArchiveActualisationRequest {
   errandId?: string;
   /** The document title shown in Lifecare. Defaults to the uploaded file name when omitted. */
   title?: string;
-  /** The Lifecare InsertDocumentType code for the document. Server default when omitted. */
+  /** The Lifecare InsertDocumentType id, from the actualisation proposal's attachmentTypes. Server default when omitted. */
   documentType?: string;
-  /** The Lifecare InsertDocumentSenderType code for the document. Server default when omitted. */
+  /** The Lifecare InsertDocumentSenderType id, from the chosen attachment type's senderTypes. Server default when omitted. */
   documentSenderType?: string;
   /** The sender name shown in Lifecare. Server default when omitted. */
   senderName?: string;
@@ -2499,6 +2553,7 @@ export interface ErrandEventEntry {
   description?: string;
   httpMethod?: string;
   requestPath?: string;
+  lifecareId?: string;
   actor?: string;
   actorType?: string;
   requestId?: string;
@@ -2718,6 +2773,11 @@ export interface FinancialAssistanceView {
    * @format date-time
    */
   lastDailyRunAt?: string;
+  /**
+   * The applicant's open financial-assistance service (insats) id in Lifecare — the key Lifecare's own case reads (journal, documents, reminders, jobbstimulans) take. Null while the applicant has no open EB insats, or when the Lifecare lookup could not be made; a later read tries again.
+   * @format int32
+   */
+  lifecareServiceId?: number;
   /** The typed financial assistance application payload */
   data?: FinancialAssistanceData;
   /** The most recent automated recommendation on the errand (the latest RECOMMENDATION decision the caseworker reviews), or null when none has been produced. Carries the recommended value and, when the pipeline has computed it, the recommended amount/period to prefill the Decision form. */
@@ -3600,10 +3660,38 @@ export enum JournalEntryStatusEnum {
   LOCKED = "LOCKED",
 }
 
+/**
+ * What was done in Lifecare
+ * @minLength 1
+ */
+export enum LifecareAccessActionEnum {
+  READ = "READ",
+  CREATE = "CREATE",
+  UPDATE = "UPDATE",
+  DELETE = "DELETE",
+}
+
 /** Write-protection status — WORKING is an editable draft, LOCKED is a finalised record */
 export enum DocumentStatusEnum {
   WORKING = "WORKING",
   LOCKED = "LOCKED",
+}
+
+/** Where the decision stands in Lifecare: PENDING once handed over to be written there, SYNCED once written, FAILED when Lifecare refused it (see lifecareDetail). Null for a decision that is never written to Lifecare. */
+export enum DecisionLifecareStatusEnum {
+  PENDING = "PENDING",
+  SYNCED = "SYNCED",
+  FAILED = "FAILED",
+}
+
+/**
+ * What happened when the decision was written to Lifecare
+ * @minLength 1
+ */
+export enum DecisionLifecareResultOutcomeEnum {
+  WRITTEN = "WRITTEN",
+  ALREADY_EXISTS = "ALREADY_EXISTS",
+  FAILED = "FAILED",
 }
 
 /**
