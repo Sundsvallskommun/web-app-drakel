@@ -39,9 +39,10 @@ export interface LifecarePaymentMethodRaw {
 }
 
 /** One konteringsrad on an utbetalning; the amount is spread over these per `purpose`. */
-interface LifecarePostingRaw {
+export interface LifecarePostingRaw {
   amount: number;
   purpose: number;
+  purposeText: string | null;
   [field: string]: unknown;
 }
 
@@ -95,6 +96,25 @@ export interface LifecarePaymentForCreateRaw {
   paymentMethods: LifecarePaymentMethodRaw[];
   paymentConcernMonths?: LifecareConcernMonthRaw[];
   balances?: LifecareBalanceRaw[];
+  [field: string]: unknown;
+}
+
+/**
+ * An utbetalning already registered on the insats, as `Payment/GetLatestPayments` lists it. Only the
+ * fields that identify it are named; the row carries the account and more, so never log it.
+ */
+export interface LifecareRegisteredPaymentRaw {
+  paymentId: number;
+  amount: number;
+  payDate: string;
+  concernedMonth: string | null;
+  paymentMethodText?: string | null;
+  /** Who the utbetalning goes to — the account holder or addressee copied from the payee. */
+  name?: string | null;
+  accountNumber: string | null;
+  statusText?: string | null;
+  /** Empty until the utbetalning is makulerad. */
+  cancellationDate: string;
   [field: string]: unknown;
 }
 

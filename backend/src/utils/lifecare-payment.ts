@@ -1,4 +1,10 @@
-import { LifecareBalanceRaw, LifecarePaymentForCreateRaw, LifecarePaymentRaw } from '@interfaces/lifecare-payment.interface';
+import {
+  LifecareBalanceRaw,
+  LifecarePaymentForCreateRaw,
+  LifecarePaymentRaw,
+  LifecarePostingRaw,
+  LifecareRegisteredPaymentRaw,
+} from '@interfaces/lifecare-payment.interface';
 import { ADDRESS_PAYEE_ID } from '@utils/lifecare-payee';
 
 import { Payment } from '@/data-contracts/caremanagement/data-contracts';
@@ -39,6 +45,23 @@ const payeeIsInLifecare = (underlag: LifecarePaymentForCreateRaw, payment: Payme
 };
 
 /**
+ * The ändamål (Lifecare's `purpose`) the amount is booked on. The handläggare picks it from the insats's own
+ * konteringsrader and careM keeps its code as the utbetalning's kontering; an insats with a single rad
+ * needs no pick. Several rader and no pick — or a pick the insats does not have — stops the utbetalning.
+ */
+const choosePurpose = (postings: LifecarePostingRaw[], accountingCode: string | undefined): number | string => {
+  const [onlyPosting, ...otherPostings] = postings;
+  if (!onlyPosting) {
+    return 'Insatsen har ingen konteringsrad i Lifecare.';
+  }
+  if (!accountingCode) {
+    return otherPostings.length === 0 ? onlyPosting.purpose : 'Välj ändamål (kontering) för utbetalningen.';
+  }
+  const chosen = postings.find(posting => String(posting.purpose) === accountingCode.trim());
+  return chosen ? chosen.purpose : `Ändamålet "${accountingCode}" finns inte bland insatsens konteringsrader i Lifecare.`;
+};
+
+/**
  * The balance the utbetalning is booked against. `balance` goes back with an `id` field the list does
  * not have; with one balance in the capture, both its row and its `ownerId` were 1, so which one `id`
  * means is not settled. An insats with several balances is therefore refused until that is verified.
@@ -62,8 +85,10 @@ const pickBalance = (balances: LifecareBalanceRaw[]): LifecareBalanceRaw | strin
  *
  * `Payment/Create` is not idempotent and moves money, so anything that cannot be decided safely stops
  * the utbetalning with a reason instead of being guessed: a betalsätt or month Lifecare does not offer,
- * more than one konteringsrad or balance, a balance that does not cover the amount (the beslut is then
- * not in Lifecare yet), a blocking maximum amount, or a payee Lifecare does not have.
+ * no ändamål picked among several konteringsrader, more than one balance, a balance that does not cover
+ * the amount (the beslut is then not in Lifecare yet), a blocking maximum amount, or a payee Lifecare
+ * does not have. With several konteringsrader every one of them goes back, the amount on the chosen
+ * ändamål and 0 on the others (capture 2026-09-23).
  */
 export const buildPaymentCreate = (underlag: LifecarePaymentForCreateRaw, payment: Payment): PaymentCreate => {
   const amount = payment.amount;
@@ -81,9 +106,10 @@ export const buildPaymentCreate = (underlag: LifecarePaymentForCreateRaw, paymen
     return refuse(`Lifecare tar inte emot utbetalningar för månaden ${payment.applicationMonth ?? ''}.`);
   }
 
-  const [posting, ...otherPostings] = underlag.payment.postings ?? [];
-  if (!posting || otherPostings.length > 0) {
-    return refuse('Insatsen har flera konteringsrader i Lifecare, och fördelning av beloppet stöds inte än.');
+  const postings = underlag.payment.postings ?? [];
+  const purpose = choosePurpose(postings, payment.accountingCode);
+  if (typeof purpose === 'string') {
+    return refuse(purpose);
   }
 
   const balance = pickBalance(underlag.balances ?? []);
@@ -129,11 +155,36 @@ export const buildPaymentCreate = (underlag: LifecarePaymentForCreateRaw, paymen
     ...person,
     personIdAndName: `${person.personIdFormatted ?? ''} ${person.name ?? ''}`,
   }));
-  body.postings = [{ ...posting, amount }];
+  // Every konteringsrad goes back, in the underlag's order: the whole amount on the chosen ändamål, 0 on the rest.
+  body.postings = postings.map(posting => ({ ...posting, amount: posting.purpose === purpose ? amount : 0 }));
   body.balanceId = balanceId;
   delete body.aktualiseringId;
   body.creditAccount = '';
   body.simpleAccount = '';
 
   return { writable: true, body };
+};
+
+/**
+ * The utbetalning already on the insats that the one about to be sent would duplicate, if there is one:
+ * not makulerad, and the same amount, month, account and payment date as the body built for it.
+ *
+ * `Payment/Create` is not idempotent. When Lifecare registered an utbetalning but careM never got the
+ * receipt, the next attempt would pay a second time — this is what recognises the first one instead. Two
+ * truly identical utbetalningar (same account, day, month and amount) are read as one; the second is then
+ * made by hand in Lifecare.
+ */
+export const findRegisteredPayment = (
+  registered: LifecareRegisteredPaymentRaw[],
+  body: Record<string, unknown>,
+): LifecareRegisteredPaymentRaw | undefined => {
+  const account = digitsOnly(typeof body.accountNumber === 'string' ? body.accountNumber : '');
+  return registered.find(
+    payment =>
+      payment.cancellationDate === '' &&
+      payment.amount === body.amount &&
+      payment.concernedMonth === body.concernedMonth &&
+      payment.payDate === body.payDate &&
+      digitsOnly(payment.accountNumber) === account,
+  );
 };

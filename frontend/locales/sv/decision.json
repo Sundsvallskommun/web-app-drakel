@@ -79,10 +79,10 @@
       "next": "Nästa",
       "unknownStakeholder": "Okänd intressent",
       "messageLine": "Meddelanderad {{number}}",
-      "proposalLoadError": "Det gick inte att hämta utbetalningsförslaget",
       "saveError": "Det gick inte att registrera utbetalningen",
       "saving": "Sparar…",
-      "accountingCode": "Kontering"
+      "accountingCode": "Kontering",
+      "optionsLoadError": "Lifecare lämnade inte ut betalningsmottagare och betalsätt för insatsen: {{reason}}"
     },
     "list": {
       "title": "Registrerade utbetalningar",
@@ -102,13 +102,16 @@
         "REGISTERED": "Registrerad i Lifecare"
       },
       "register": "Registrera i Lifecare",
-      "registerError": "Det gick inte att registrera utbetalningen i Lifecare"
+      "registerError": "Det gick inte att registrera utbetalningen i Lifecare",
+      "waitingTitle": "Väntar på registrering i Lifecare"
     },
     "disposal": {
       "title": "Att disponera",
       "decided": "Beslutat belopp",
       "committed": "Registrerat",
-      "remaining": "Kvar att disponera"
+      "remaining": "Kvar att disponera",
+      "unavailable": "Saldot kunde inte läsas från Lifecare.",
+      "none": "Insatsen har inget saldo i Lifecare än – beslutet är inte registrerat där."
     },
     "payee": {
       "add": "Lägg till mottagare",
@@ -119,6 +122,13 @@
       "paymentMethod": "Betalsätt",
       "clearing": "Clearing",
       "accountNumber": "Kontonummer"
+    },
+    "lifecareList": {
+      "title": "Utbetalningar i Lifecare",
+      "empty": "Inga utbetalningar registrerade på insatsen.",
+      "loadError": "Det gick inte att hämta utbetalningarna från Lifecare",
+      "cancelled": "Makulerad",
+      "registered": "Registrerad"
     }
   },
   "proposal": {

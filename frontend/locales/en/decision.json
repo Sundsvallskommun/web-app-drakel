@@ -79,10 +79,10 @@
       "next": "Next",
       "unknownStakeholder": "Unknown stakeholder",
       "messageLine": "Message line {{number}}",
-      "proposalLoadError": "Could not load the payment proposal",
       "saveError": "Could not register the payment",
       "saving": "Saving…",
-      "accountingCode": "Accounting code"
+      "accountingCode": "Accounting code",
+      "optionsLoadError": "Lifecare did not provide payees and payment methods for the service: {{reason}}"
     },
     "list": {
       "title": "Registered payments",
@@ -102,13 +102,16 @@
         "REGISTERED": "Registered in Lifecare"
       },
       "register": "Register in Lifecare",
-      "registerError": "The payment could not be registered in Lifecare"
+      "registerError": "The payment could not be registered in Lifecare",
+      "waitingTitle": "Waiting to be registered in Lifecare"
     },
     "disposal": {
       "title": "Available to disburse",
       "decided": "Decided amount",
       "committed": "Registered",
-      "remaining": "Remaining"
+      "remaining": "Remaining",
+      "unavailable": "The balance could not be read from Lifecare.",
+      "none": "The service has no balance in Lifecare yet – the decision is not registered there."
     },
     "payee": {
       "add": "Add payee",
@@ -119,6 +122,13 @@
       "paymentMethod": "Payment method",
       "clearing": "Clearing",
       "accountNumber": "Account number"
+    },
+    "lifecareList": {
+      "title": "Payments in Lifecare",
+      "empty": "No payments registered on the service.",
+      "loadError": "The payments could not be read from Lifecare",
+      "cancelled": "Cancelled",
+      "registered": "Registered"
     }
   },
   "proposal": {

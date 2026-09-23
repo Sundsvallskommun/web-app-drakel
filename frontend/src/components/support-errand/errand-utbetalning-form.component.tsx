@@ -1,18 +1,16 @@
 'use client';
 
 import { FormField } from '@components/common/form-field.component';
-import { LifecarePayeeView, Stakeholder } from '@data-contracts/backend/data-contracts';
+import { LifecarePaymentOptionsView, Stakeholder } from '@data-contracts/backend/data-contracts';
 import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
-import { useLifecarePaymentOptions } from '@hooks/use-lifecare-payment-options';
-import { createPayment, Payee, PaymentInput, PaymentProposal } from '@services/payment-service';
+import { createPayment, PaymentInput } from '@services/payment-service';
 import { Button, Checkbox, DatePicker, FormControl, FormLabel, Input, Select } from '@sk-web-gui/react';
-import { applicationMonthOptions, formatApplicationMonth } from '@utils/application-month';
 import { formatAmount, parseAmount } from '@utils/format-amount';
 import { getEditableRecipientFields } from '@utils/payment-method';
 import { stakeholderListLabel } from '@utils/stakeholder-name';
 import { todayDate } from '@utils/today-date';
 import { Plus } from 'lucide-react';
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useRef, useState } from 'react';
 import { FieldArrayWithId, useFieldArray, useForm, UseFormRegister, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
@@ -67,31 +65,19 @@ const EMPTY_FORM_VALUES: UtbetalningFormValues = {
   messageLines: [{ text: '' }],
 };
 
-/** The form values the proposal prefills; everything it has no opinion on keeps its empty default. */
-const proposedFormValues = (proposal: PaymentProposal, applicationMonth?: string): UtbetalningFormValues => {
-  const proposed = proposal.payments?.[0];
-  const payee = proposed?.payee;
-
-  return {
-    ...EMPTY_FORM_VALUES,
-    paymentDate: proposed?.paymentDate ?? todayDate(),
-    amount: proposed?.amount == null ? '' : formatAmount(proposed.amount),
-    applicationMonth: proposed?.concernedMonth ?? applicationMonth ?? '',
-    paymentMethod: payee?.paymentMethod ?? '',
-    name: payee?.name ?? '',
-    clearingNumber: payee?.clearing ?? '',
-    accountNumber: payee?.accountNumber ?? '',
-    accountingCode: proposed?.accountingCode ?? '',
-  };
-};
-
-/** Whether a Lifecare payee is the one the proposal names — the proposal carries no id, only the account. */
-const isSamePayee = (candidate: LifecarePayeeView, payee?: Payee): boolean =>
-  !!payee &&
-  candidate.name === (payee.name ?? '') &&
-  candidate.paymentMethod === (payee.paymentMethod ?? '') &&
-  candidate.clearing === (payee.clearing ?? '') &&
-  candidate.accountNumber === (payee.accountNumber ?? '');
+/**
+ * The form values Lifecare prefills — its proposed date and month, what is left on the saldo, the payee
+ * the insats was last paid to (whose account and address then follow), and the ändamål when the insats
+ * has a single konteringsrad. Everything else keeps its empty default.
+ */
+const proposedFormValues = ({ proposal, postings }: LifecarePaymentOptionsView): UtbetalningFormValues => ({
+  ...EMPTY_FORM_VALUES,
+  paymentDate: proposal.paymentDate ?? todayDate(),
+  amount: proposal.amount === undefined ? '' : formatAmount(proposal.amount),
+  applicationMonth: proposal.concernedMonth ?? '',
+  payeeId: proposal.payeeId === undefined ? '' : String(proposal.payeeId),
+  accountingCode: postings.length === 1 && postings[0] ? String(postings[0].purpose) : '',
+});
 
 /**
  * The form as caremanagement's PaymentRequest. The fields the form keeps closed (bokföringsdatum, OCR)
@@ -128,7 +114,16 @@ const ReportedOnField: FC<{
 
   return (
     <FormControl fieldset required disabled={disabled} className="w-full">
-      <FormLabel>{t('payment.form.reportedOn')}</FormLabel>
+      {/* sk-web-gui renders a fieldset's label as a `display: contents` legend, which would put the asterisk
+          on a line of its own — so the text and the asterisk share one element here. */}
+      <FormLabel showRequired={false}>
+        <span>
+          {t('payment.form.reportedOn')}
+          <span className="sk-form-required-indicator" aria-hidden="true">
+            *
+          </span>
+        </span>
+      </FormLabel>
       <div className="flex flex-col gap-8">
         {stakeholders.map((stakeholder) => (
           <Checkbox key={stakeholder.id} value={stakeholder.id ?? ''} {...register('reportedOnStakeholderIds')}>
@@ -183,9 +178,9 @@ const MessageLinesField: FC<{
 };
 
 /**
- * The Lifecare utbetalning form ("Utbetalning"), rebuilt with sk-web-gui form components. careM's
- * utbetalningsförslag prefills the date, amount, month and payee; Betalningsmottagare and Betalsätt are
- * Lifecare's own lists for the insats, read live — Lifecare is the register of record for both.
+ * The Lifecare utbetalning form ("Utbetalning"), rebuilt with sk-web-gui form components. Everything it
+ * offers and proposes is Lifecare's own, read live for the insats: the date, amount, month and payee it
+ * starts from, the months, Betalningsmottagare, Betalsätt and konteringsrader to choose between.
  *
  * Which recipient fields are editable follows the chosen betalsätt — see `getEditableRecipientFields`.
  * Lokalbetalningsnummer opens when Lifecare says the betalsätt takes one. Räkningsnummer is open: Lifecare
@@ -198,19 +193,20 @@ const MessageLinesField: FC<{
  */
 export const ErrandUtbetalningForm: FC<{
   errandId: string;
-  /** The utbetalningsförslag; prefills the form and supplies the payee alternatives. */
-  proposal: PaymentProposal;
-  /** The errand's ansökningsmånad (ISO yyyy-MM), used when the proposal names no month. */
-  applicationMonth?: string;
   /** Disables every field, e.g. when the section is approved. */
   disabled?: boolean;
+  /** Lifecare's betalsätt, betalningsmottagare and konteringsrader for the insats. */
+  options: LifecarePaymentOptionsView;
+  /** Lifecare's own reason when it would not hand those lists over. */
+  optionsError?: string;
+  /** Called after a betalningsmottagare was added in Lifecare, so the lists can be read again. */
+  onPayeeAdded: () => void;
   /** Called after the utbetalning has been registered, so the parent can refetch. */
   onSaved?: () => void;
-}> = ({ errandId, proposal, applicationMonth, disabled = false, onSaved }) => {
+}> = ({ errandId, options, optionsError, onPayeeAdded, disabled = false, onSaved }) => {
   const { t } = useTranslation('decision');
   const { stakeholders } = useErrandStakeholders(errandId);
-  const { options, refresh: refreshOptions } = useLifecarePaymentOptions(errandId);
-  const { payees, paymentMethods } = options;
+  const { payees, paymentMethods, postings } = options;
   const [saving, setSaving] = useState<boolean>(false);
   const [saveError, setSaveError] = useState<string>();
 
@@ -226,23 +222,17 @@ export const ErrandUtbetalningForm: FC<{
   const editableFields = getEditableRecipientFields(paymentMethod);
   const chosenMethod = paymentMethods.find((method) => method.name === paymentMethod);
 
-  const monthOptions = applicationMonthOptions(proposal.payments?.[0]?.concernedMonth ?? applicationMonth);
-
-  // The proposal is derived on every read, so re-prefill whenever a new one arrives. Anything the
-  // handläggare has already typed is replaced — the proposal is the starting point, not a merge.
+  // Re-prefill when Lifecare proposes something new. The lists are read again after a payee is added,
+  // which must not throw away what the handläggare has typed, so an unchanged proposal is left alone.
+  const proposedValues = proposedFormValues(options);
+  const proposedKey = JSON.stringify(proposedValues);
+  const appliedProposalKey = useRef<string>('');
   useEffect(() => {
-    reset(proposedFormValues(proposal, applicationMonth));
-  }, [proposal, applicationMonth, reset]);
-
-  // The payee list loads separately from the proposal, so the proposed payee is selected once it
-  // arrives — with setValue rather than a reset, which would throw away anything already typed.
-  useEffect(() => {
-    const proposedPayee = proposal.payments?.[0]?.payee;
-    const match = payees.find((option) => isSamePayee(option, proposedPayee));
-    if (match) {
-      setValue('payeeId', String(match.id));
+    if (appliedProposalKey.current !== proposedKey) {
+      appliedProposalKey.current = proposedKey;
+      reset(proposedValues);
     }
-  }, [payees, proposal, setValue]);
+  }, [proposedKey, proposedValues, reset]);
 
   // Picking a betalningsmottagare carries its account and address across, the way Lifecare's own
   // utbetalning copies them from the payee.
@@ -278,8 +268,11 @@ export const ErrandUtbetalningForm: FC<{
     // save on them. caremanagement stores the utbetalning as DRAFT with every field optional, so a
     // handläggare is meant to be able to save an incomplete one. Validation belongs to caremanagement.
     <form className="flex flex-col gap-24" noValidate onSubmit={(event) => void submit(event)}>
-      {proposal.explanation ?
-        <p className="m-0 text-dark-secondary">{proposal.explanation}</p>
+      {/* Without Lifecare's lists there is nothing to pick a mottagare, betalsätt or kontering from — say why. */}
+      {optionsError ?
+        <p className="m-0 text-error-surface-primary" role="alert">
+          {t('payment.form.optionsLoadError', { reason: optionsError, interpolation: { escapeValue: false } })}
+        </p>
       : null}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-24 gap-y-16 items-start">
@@ -295,9 +288,9 @@ export const ErrandUtbetalningForm: FC<{
         <FormField label={t('payment.form.applicationMonth')} required disabled={disabled}>
           <Select {...register('applicationMonth')}>
             <Select.Option value="" />
-            {monthOptions.map((month) => (
-              <Select.Option key={month} value={month}>
-                {formatApplicationMonth(month)}
+            {options.concernMonths.map((concernMonth) => (
+              <Select.Option key={concernMonth.month} value={concernMonth.month}>
+                {concernMonth.label}
               </Select.Option>
             ))}
           </Select>
@@ -326,7 +319,7 @@ export const ErrandUtbetalningForm: FC<{
             setValue('payeeId', id);
           }}
           onPayeeAdded={(payee) => {
-            refreshOptions();
+            onPayeeAdded();
             setValue('payeeId', String(payee.id));
           }}
           disabled={disabled}
@@ -370,9 +363,17 @@ export const ErrandUtbetalningForm: FC<{
             <Input {...register('accountNumber')} />
           </FormField>
         </div>
-        {/* Kontering is free text — FamilyCare exposes no catalogue of accounting codes. */}
-        <FormField label={t('payment.form.accountingCode')} disabled={disabled}>
-          <Input {...register('accountingCode')} />
+        {/* Kontering is the ändamål the amount is booked on — one of the insats's own konteringsrader in
+            Lifecare. The whole amount goes on the one picked. */}
+        <FormField label={t('payment.form.accountingCode')} required disabled={disabled}>
+          <Select {...register('accountingCode')}>
+            <Select.Option value="" />
+            {postings.map((posting) => (
+              <Select.Option key={posting.purpose} value={String(posting.purpose)}>
+                {posting.text}
+              </Select.Option>
+            ))}
+          </Select>
         </FormField>
 
         {/* Lifecare says per betalsätt whether a lokalbetalningsnummer is taken, and whether it must be. */}
@@ -410,7 +411,7 @@ export const ErrandUtbetalningForm: FC<{
           variant="secondary"
           disabled={disabled}
           onClick={() => {
-            reset(proposedFormValues(proposal, applicationMonth));
+            reset(proposedValues);
           }}
         >
           {t('common:cancel')}

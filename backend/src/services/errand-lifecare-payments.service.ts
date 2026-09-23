@@ -1,11 +1,15 @@
 import { HttpException } from '@exceptions/HttpException';
+import CaremanagementErrandService from '@services/caremanagement-errand.service';
 import LifecareAccessLogService from '@services/lifecare-access-log.service';
 import LifecarePaymentsService from '@services/lifecare-payments.service';
 import LifecareServiceIdService from '@services/lifecare-service-id.service';
 import { buildPayeeCreate, findMatchingPayee, NewLifecarePayee } from '@utils/lifecare-payee';
+import { paymentForMonth, toPaymentProposal } from '@utils/lifecare-payment-proposal';
 
 import { LifecareAccessActionEnum } from '@/data-contracts/caremanagement/data-contracts';
 import { LifecarePayeeView, LifecarePaymentOptionsView, toPayeeView, toPaymentOptions } from '@/responses/lifecare-payment-options.response';
+import { LifecareRegisteredPaymentView, toRegisteredPayments } from '@/responses/lifecare-registered-payment.response';
+import { PaymentStatusView } from '@/responses/payment.response';
 
 /**
  * The betalsätt and betalningsmottagare of an errand's insats, read and written in Lifecare — the
@@ -15,13 +19,53 @@ class ErrandLifecarePaymentsService {
   private paymentsService = new LifecarePaymentsService();
   private serviceIds = new LifecareServiceIdService();
   private accessLog = new LifecareAccessLogService();
+  private errandService = new CaremanagementErrandService();
 
-  /** The betalsätt in use on the insats and the person's active payees. */
+  /**
+   * Everything the utbetalning form needs, from Lifecare: betalsätt, payees, konteringsrader, saldon, the
+   * months it may concern, and a proposal to start from.
+   */
   async paymentOptions(errandId: string): Promise<LifecarePaymentOptionsView> {
     const serviceId = await this.serviceIds.resolve(errandId);
-    const raw = await this.paymentsService.readPaymentForCreate(serviceId);
-    await this.accessLog.logRead(errandId, { target: 'PAYEES', description: 'Läste betalningsmottagare i Lifecare' });
-    return toPaymentOptions(raw);
+    const [raw, registered] = await Promise.all([
+      this.paymentsService.readPaymentForCreate(serviceId),
+      this.paymentsService.readLatestPayments(serviceId),
+    ]);
+    await this.accessLog.logRead(errandId, { target: 'PAYEES', description: 'Läste utbetalningsunderlag i Lifecare' });
+    return toPaymentOptions(raw, toPaymentProposal(raw, registered));
+  }
+
+  /**
+   * Whether the utbetalning for the errand's month has been made, read from the insats's utbetalningar in
+   * Lifecare. The month is the errand's own ansökningsmånad; `unavailable` when there is none or Lifecare
+   * could not be read.
+   */
+  async paymentStatus(errandId: string): Promise<PaymentStatusView> {
+    const view = await this.errandService.getFinancialAssistanceView(errandId);
+    const month = view.data?.data?.periodMonth;
+    const year = view.data?.data?.periodYear;
+    const applicationMonth = month && year ? `${String(year)}-${String(month).padStart(2, '0')}` : undefined;
+    if (!applicationMonth) {
+      return { effectuated: false, unavailable: true };
+    }
+    try {
+      const serviceId = await this.serviceIds.resolve(errandId);
+      const registered = await this.paymentsService.readLatestPayments(serviceId);
+      await this.accessLog.logRead(errandId, { target: 'PAYMENTS', description: 'Läste utbetalningar i Lifecare' });
+      const payment = paymentForMonth(registered, applicationMonth);
+      return { applicationMonth, effectuated: !!payment, paymentDate: payment?.payDate, unavailable: false };
+    } catch {
+      // Lifecare being unreachable is a normal state for a status read — say so rather than fail.
+      return { applicationMonth, effectuated: false, unavailable: true };
+    }
+  }
+
+  /** The utbetalningar registered on the insats in Lifecare — what has actually been paid, or is on its way. */
+  async registeredPayments(errandId: string): Promise<LifecareRegisteredPaymentView[]> {
+    const serviceId = await this.serviceIds.resolve(errandId);
+    const raw = await this.paymentsService.readLatestPayments(serviceId);
+    await this.accessLog.logRead(errandId, { target: 'PAYMENTS', description: 'Läste utbetalningar i Lifecare' });
+    return toRegisteredPayments(raw);
   }
 
   /**

@@ -3,14 +3,12 @@
 import { AsyncContent } from '@components/common/async-content.component';
 import { useErrandPayment } from '@hooks/use-errand-payment';
 import { useErrandPayments } from '@hooks/use-errand-payments';
-import { useLatestBeslut } from '@hooks/use-latest-beslut';
-import { usePaymentProposal } from '@hooks/use-payment-proposal';
-import { PaymentProposalWarning, PaymentStatus } from '@services/payment-service';
+import { useLifecarePaymentOptions } from '@hooks/use-lifecare-payment-options';
+import { useLifecarePayments } from '@hooks/use-lifecare-payments';
+import { PaymentStatus } from '@services/payment-service';
 import { Alert } from '@sk-web-gui/alert';
-import { Button, cx } from '@sk-web-gui/react';
+import { Button } from '@sk-web-gui/react';
 import { formatApplicationMonth } from '@utils/application-month';
-import { displayAmount } from '@utils/format-amount';
-import { paymentDisposal } from '@utils/payment-disposal';
 import { RotateCcw } from 'lucide-react';
 import { FC, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +18,8 @@ import { ErrandSectionHeader } from './errand-section-header.component';
 import { ErrandUtbetalningForm } from './errand-utbetalning-form.component';
 import { ErrandUtbetalningList } from './errand-utbetalning-list.component';
 import { LabeledValue } from './labeled-value.component';
+import { LifecareBalanceBox } from './lifecare-balance-box.component';
+import { LifecarePaymentList } from './lifecare-payment-list.component';
 import { LockedBanner } from './lockable-section.component';
 
 /** The Lifecare payment status as an Alert: unavailable, utbetald or not yet utbetald. */
@@ -57,37 +57,12 @@ const PaymentStatusAlert: FC<{ status: PaymentStatus }> = ({ status }) => {
   );
 };
 
-/** The PAYMENT-section warnings the utbetalningsförslag raised, shown above the form. */
-const PaymentProposalWarnings: FC<{ warnings: PaymentProposalWarning[] }> = ({ warnings }) => {
-  const openWarnings = warnings.filter((warning) => warning.status === 'OPEN');
-  if (openWarnings.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="flex flex-col gap-12">
-      {openWarnings.map((warning, index) => (
-        <Alert key={warning.id ?? index} type="warning">
-          <Alert.Icon />
-          <Alert.Content>
-            {/* typeDisplayName is caremanagement's own Swedish label — no local translation table. */}
-            <Alert.Content.Title className="font-bold">{warning.typeDisplayName ?? warning.type}</Alert.Content.Title>
-            {warning.message ?
-              <Alert.Content.Description>{warning.message}</Alert.Content.Description>
-            : null}
-          </Alert.Content>
-        </Alert>
-      ))}
-    </div>
-  );
-};
-
 /**
- * "Utbetalning" tab: the Lifecare payment status for the application month, the utbetalningar already
- * registered on the errand, and the form for registering a new one from caremanagement's proposal.
+ * "Utbetalning" tab, read from Lifecare: the payment status for the application month, the insats's
+ * saldo and utbetalningar, and the form for a new one starting from Lifecare's own proposal.
  *
- * The list holds rows from two places — drafts saved here and rows "Besluta och utbetala" created —
- * so it must stay readable for payments Draken did not author.
+ * The one careM part is the utbetalningar that have not reached Lifecare yet — drafts saved here and
+ * rows "Besluta och utbetala" created — which finalize registers in Lifecare.
  */
 export const ErrandUtbetalning: FC<{
   errandId: string;
@@ -98,10 +73,22 @@ export const ErrandUtbetalning: FC<{
 }> = ({ errandId, locked = false, headerSlot }) => {
   const { t, i18n } = useTranslation('decision');
   const { status, isLoading, error, refresh } = useErrandPayment(errandId);
-  const { proposal, isLoading: proposalLoading, error: proposalError } = usePaymentProposal(errandId);
   const { payments, refresh: refreshPayments } = useErrandPayments(errandId);
-  const savedBeslut = useLatestBeslut(errandId);
-  const disposal = paymentDisposal(savedBeslut?.amount, payments);
+  const lifecareOptions = useLifecarePaymentOptions(errandId);
+  const lifecarePayments = useLifecarePayments(errandId);
+  // Lifecare is the register of what is paid; careM's rows only show what has not reached Lifecare yet —
+  // a draft, one waiting to be registered, or one Lifecare refused. Rows read out of Lifecare, and ones
+  // already registered there, are in Lifecare's own list.
+  const waitingForLifecare = payments.filter(
+    (payment) => payment.source !== 'LIFECARE' && payment.status !== 'REGISTERED'
+  );
+
+  const refreshAll = (): void => {
+    refresh();
+    refreshPayments();
+    lifecareOptions.refresh();
+    lifecarePayments.refresh();
+  };
 
   const renderStatus = (): ReactNode => {
     if (isLoading || error || !status) {
@@ -144,53 +131,32 @@ export const ErrandUtbetalning: FC<{
         {renderStatus()}
       </ContentBox>
 
-      <ContentBox title={t('payment.disposal.title')}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-24">
-          <LabeledValue label={t('payment.disposal.decided')}>
-            <span className="tabular-nums">{displayAmount(disposal.decided)}</span>
-          </LabeledValue>
-          <LabeledValue label={t('payment.disposal.committed')}>
-            <span className="tabular-nums">{displayAmount(disposal.committed)}</span>
-          </LabeledValue>
-          <LabeledValue label={t('payment.disposal.remaining')}>
-            {/* Negative means more has been registered than the beslut allows — worth seeing, not hiding. */}
-            <span className={cx('tabular-nums font-bold', disposal.remaining < 0 && 'text-error-surface-primary')}>
-              {displayAmount(disposal.remaining)}
-            </span>
-          </LabeledValue>
-        </div>
-      </ContentBox>
-
-      <ErrandUtbetalningList
-        errandId={errandId}
-        payments={payments}
-        onPaymentsChanged={() => {
-          refresh();
-          refreshPayments();
-        }}
+      <LifecareBalanceBox
+        balances={lifecareOptions.options.balances}
+        isLoading={lifecareOptions.isLoading}
+        failed={!!lifecareOptions.error}
       />
 
+      <LifecarePaymentList
+        payments={lifecarePayments.payments}
+        isLoading={lifecarePayments.isLoading}
+        failed={!!lifecarePayments.error}
+        errorMessage={lifecarePayments.errorMessage}
+      />
+
+      {waitingForLifecare.length > 0 ?
+        <ErrandUtbetalningList errandId={errandId} payments={waitingForLifecare} onPaymentsChanged={refreshAll} />
+      : null}
+
       <ContentBox title={t('payment.form.title')}>
-        <AsyncContent
-          isLoading={proposalLoading}
-          error={proposalError}
-          errorText={t('payment.form.proposalLoadError')}
-          centered
-        >
-          <div className="flex flex-col gap-24">
-            <PaymentProposalWarnings warnings={proposal.warnings ?? []} />
-            <ErrandUtbetalningForm
-              errandId={errandId}
-              proposal={proposal}
-              applicationMonth={status?.applicationMonth}
-              disabled={locked}
-              onSaved={() => {
-                refresh();
-                refreshPayments();
-              }}
-            />
-          </div>
-        </AsyncContent>
+        <ErrandUtbetalningForm
+          errandId={errandId}
+          options={lifecareOptions.options}
+          optionsError={lifecareOptions.errorMessage}
+          onPayeeAdded={lifecareOptions.refresh}
+          disabled={locked}
+          onSaved={refreshAll}
+        />
       </ContentBox>
     </div>
   );

@@ -790,9 +790,37 @@ export interface LifecarePayeeView {
   toRegisteredAddress: boolean;
 }
 
+export interface LifecarePostingView {
+  purpose: number;
+  text: string;
+}
+
+export interface LifecareBalanceView {
+  name: string;
+  approvedAmount: number;
+  bookedAmount: number;
+  balanceAmount: number;
+}
+
+export interface LifecareConcernMonthView {
+  month: string;
+  label: string;
+}
+
+export interface LifecarePaymentProposalView {
+  paymentDate?: string;
+  concernedMonth?: string;
+  amount?: number;
+  payeeId?: number;
+}
+
 export interface LifecarePaymentOptionsView {
   paymentMethods: LifecarePaymentMethodView[];
   payees: LifecarePayeeView[];
+  postings: LifecarePostingView[];
+  balances: LifecareBalanceView[];
+  concernMonths: LifecareConcernMonthView[];
+  proposal: LifecarePaymentProposalView;
 }
 
 export interface LifecarePaymentOptionsApiResponse {
@@ -802,6 +830,22 @@ export interface LifecarePaymentOptionsApiResponse {
 
 export interface LifecarePayeeApiResponse {
   data?: LifecarePayeeView;
+  message: string;
+}
+
+export interface LifecareRegisteredPaymentView {
+  id: number;
+  payDate: string;
+  concernedMonth: string;
+  amount: number;
+  paymentMethod: string;
+  recipient: string;
+  status: string;
+  cancelled: boolean;
+}
+
+export interface LifecareRegisteredPaymentsApiResponse {
+  data: LifecareRegisteredPaymentView[];
   message: string;
 }
 
@@ -818,6 +862,18 @@ export interface CreateLifecarePayeeDto {
   clearing?: string;
   /** @maxLength 64 */
   accountNumber?: string;
+}
+
+export interface PaymentStatusView {
+  applicationMonth?: string;
+  effectuated: boolean;
+  paymentDate?: string;
+  unavailable: boolean;
+}
+
+export interface PaymentStatusApiResponse {
+  data: PaymentStatusView;
+  message: string;
 }
 
 export interface LifecareReminderView {
@@ -1139,67 +1195,6 @@ export interface PaymentInputDto {
   invoiceNumber?: string;
   usesOcr?: boolean;
   messageLines?: string[];
-}
-
-export interface PaymentStatusView {
-  applicationMonth?: string;
-  effectuated: boolean;
-  paymentDate?: string;
-  unavailable: boolean;
-}
-
-export interface PaymentStatusApiResponse {
-  data: PaymentStatusView;
-  message: string;
-}
-
-export interface PayeeView {
-  name?: string;
-  paymentMethod?: string;
-  clearing?: string;
-  accountNumber?: string;
-}
-
-export interface ProposedPaymentView {
-  paymentDate?: string;
-  amount?: number;
-  concernedMonth?: string;
-  payee?: PayeeView;
-  accountingCode?: string;
-}
-
-export interface PreviousPaymentView {
-  payDate?: string;
-  amount?: number;
-  concernedMonth?: string;
-  paymentMethod?: string;
-  name?: string;
-  clearing?: string;
-  accountNumber?: string;
-  message?: string;
-}
-
-export interface PaymentProposalWarningView {
-  id?: string;
-  type?: string;
-  typeDisplayName?: string;
-  message?: string;
-  status?: string;
-  statusDisplayName?: string;
-}
-
-export interface PaymentProposalView {
-  payments?: ProposedPaymentView[];
-  payeeOptions?: PayeeView[];
-  payeeSource?: string;
-  previousPayment?: PreviousPaymentView;
-  explanation?: string;
-  warnings?: PaymentProposalWarningView[];
-}
-
-export interface PaymentProposalApiResponse {
-  data: PaymentProposalView;
-  message: string;
 }
 
 export interface PaymentView {

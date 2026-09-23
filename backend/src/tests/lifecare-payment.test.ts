@@ -271,6 +271,33 @@ describe('buildPaymentCreate', () => {
     expect(buildPaymentCreate(underlag(), { ...payment, applicationMonth: '2026-10' }).writable).toBe(false);
   });
 
+  it('books the amount on the chosen ändamål and sends every konteringsrad, the others at 0', () => {
+    // Capture 2026-09-23: Payment/Create on an insats with two konteringsrader, 1 kr on ändamål 1.
+    const twoPostings = underlag();
+    twoPostings.payment.postings = [
+      { paymentId: 0, account: 'TEST UTB', amount: 0, purpose: 1, purposeText: 'Försörjningsstöd exklusive tillfälligt boende' },
+      { paymentId: 0, account: 'TEST UTB  TVÅ', amount: 0, purpose: 3, purposeText: 'Hälso och sjukvård' },
+    ];
+
+    const create = buildPaymentCreate(twoPostings, { ...payment, accountingCode: '1' });
+
+    expect(create.writable && create.body.postings).toEqual([
+      { paymentId: 0, account: 'TEST UTB', amount: 1, purpose: 1, purposeText: 'Försörjningsstöd exklusive tillfälligt boende' },
+      { paymentId: 0, account: 'TEST UTB  TVÅ', amount: 0, purpose: 3, purposeText: 'Hälso och sjukvård' },
+    ]);
+  });
+
+  it('holds an utbetalning on several konteringsrader when no ändamål, or one the insats lacks, is picked', () => {
+    const twoPostings = underlag();
+    twoPostings.payment.postings = [
+      { amount: 0, purpose: 1, purposeText: 'Försörjningsstöd exklusive tillfälligt boende' },
+      { amount: 0, purpose: 3, purposeText: 'Hälso och sjukvård' },
+    ];
+
+    expect(buildPaymentCreate(twoPostings, payment).writable).toBe(false);
+    expect(buildPaymentCreate(twoPostings, { ...payment, accountingCode: '9' }).writable).toBe(false);
+  });
+
   it('holds an insats with more than one konteringsrad or balance', () => {
     const twoPostings = underlag();
     twoPostings.payment.postings = [

@@ -4,6 +4,8 @@ import {
   LifecarePayeeView,
   LifecarePaymentOptionsApiResponse,
   LifecarePaymentOptionsView,
+  LifecareRegisteredPaymentsApiResponse,
+  LifecareRegisteredPaymentView,
 } from '@data-contracts/backend/data-contracts';
 import { ServiceResponse } from '@interfaces/services';
 import { apiService, toServiceError } from '@services/api-service';
@@ -26,5 +28,12 @@ export const createLifecarePayee = (
 ): Promise<ServiceResponse<LifecarePayeeView>> =>
   apiService
     .post<LifecarePayeeApiResponse>(`errands/${errandId}/lifecare-payees`, input)
+    .then((res) => ({ data: res.data.data }))
+    .catch(toServiceError);
+
+/** The utbetalningar registered on the insats of the errand, read live from Lifecare. */
+export const getLifecarePayments = (errandId: string): Promise<ServiceResponse<LifecareRegisteredPaymentView[]>> =>
+  apiService
+    .get<LifecareRegisteredPaymentsApiResponse>(`errands/${errandId}/lifecare-payments`)
     .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);

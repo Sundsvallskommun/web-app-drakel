@@ -1,4 +1,9 @@
-import { LifecareCreatedPaymentRaw, LifecarePayeeRaw, LifecarePaymentForCreateRaw } from '@interfaces/lifecare-payment.interface';
+import {
+  LifecareCreatedPaymentRaw,
+  LifecarePayeeRaw,
+  LifecarePaymentForCreateRaw,
+  LifecareRegisteredPaymentRaw,
+} from '@interfaces/lifecare-payment.interface';
 
 import LifecareApiService from './lifecare-api.service';
 
@@ -33,6 +38,33 @@ class LifecarePaymentsService {
    */
   public async createPayee(payee: LifecarePayeeRaw): Promise<LifecarePayeeRaw> {
     const res = await this.apiService.post<LifecarePayeeRaw>({ module: PROFESSIONAL_WEB, path: 'api2/Payee/Create' }, payee);
+    return res.data;
+  }
+
+  /**
+   * Whether the person has a hushåll in Lifecare on the given date — the check Lifecare's web app makes
+   * before it saves an utbetalning. The personnummer goes in the query string because that is where
+   * Lifecare reads it.
+   */
+  public async hasHouseholdOn(personId: string, date: string): Promise<boolean> {
+    const res = await this.apiService.get<boolean>({
+      module: PROFESSIONAL_WEB,
+      path: 'api2/Household/HasHouseholdThisDate/',
+      params: { personId, date },
+    });
+    return res.data;
+  }
+
+  /**
+   * The latest utbetalningar registered on the insats. "Latest" is Lifecare's own word, so the list may not
+   * reach far back — enough to recognise an utbetalning that was just made.
+   */
+  public async readLatestPayments(serviceId: number): Promise<LifecareRegisteredPaymentRaw[]> {
+    const res = await this.apiService.get<LifecareRegisteredPaymentRaw[]>({
+      module: PROFESSIONAL_WEB,
+      path: 'api2/Payment/GetLatestPayments',
+      params: { businessType: SERVICE_BUSINESS_TYPE, businessId: String(serviceId) },
+    });
     return res.data;
   }
 

@@ -1,6 +1,7 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
 import { LifecarePayeeRaw, LifecarePaymentForCreateRaw, LifecarePaymentMethodRaw } from '@interfaces/lifecare-payment.interface';
 import { ADDRESS_PAYEE_ID } from '@utils/lifecare-payee';
+import { LifecarePaymentProposal, toMonth } from '@utils/lifecare-payment-proposal';
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
@@ -35,10 +36,49 @@ export class LifecarePayeeView {
   @IsBoolean() toRegisteredAddress!: boolean;
 }
 
-/** The betalsätt and betalningsmottagare an utbetalning on the insats can use — Lifecare's own lists. */
+/** A konteringsrad on the insats: the ändamål an utbetalning can be booked on. */
+export class LifecarePostingView {
+  /** Lifecare's ändamål code — what the utbetalning keeps as its kontering. */
+  @IsNumber() purpose!: number;
+  @IsString() text!: string;
+}
+
+/** A saldo on the insats: what the beslut granted, what is already booked, and what is left. */
+export class LifecareBalanceView {
+  @IsString() name!: string;
+  @IsNumber() approvedAmount!: number;
+  @IsNumber() bookedAmount!: number;
+  @IsNumber() balanceAmount!: number;
+}
+
+/** A month an utbetalning on the insats may concern, as Lifecare offers it. */
+export class LifecareConcernMonthView {
+  /** `yyyy-MM`. */
+  @IsString() month!: string;
+  /** Lifecare's own wording, e.g. "September 2026". */
+  @IsString() label!: string;
+}
+
+/** What the utbetalning form starts from — Lifecare's own figures, all changeable. */
+export class LifecarePaymentProposalView {
+  @IsString() @IsOptional() paymentDate?: string;
+  @IsString() @IsOptional() concernedMonth?: string;
+  /** What is left on the saldo. */
+  @IsNumber() @IsOptional() amount?: number;
+  /** The payee the latest utbetalning on the insats went to. */
+  @IsNumber() @IsOptional() payeeId?: number;
+}
+
+/** The betalsätt, betalningsmottagare and ändamål an utbetalning on the insats can use — Lifecare's own lists. */
 export class LifecarePaymentOptionsView {
   @IsArray() @ValidateNested({ each: true }) @Type(() => LifecarePaymentMethodView) paymentMethods!: LifecarePaymentMethodView[];
   @IsArray() @ValidateNested({ each: true }) @Type(() => LifecarePayeeView) payees!: LifecarePayeeView[];
+  @IsArray() @ValidateNested({ each: true }) @Type(() => LifecarePostingView) postings!: LifecarePostingView[];
+  /** The insats's saldon — what is left to pay out, as Lifecare counts it. */
+  @IsArray() @ValidateNested({ each: true }) @Type(() => LifecareBalanceView) balances!: LifecareBalanceView[];
+  /** The months an utbetalning may concern. */
+  @IsArray() @ValidateNested({ each: true }) @Type(() => LifecareConcernMonthView) concernMonths!: LifecareConcernMonthView[];
+  @ValidateNested() @Type(() => LifecarePaymentProposalView) proposal!: LifecarePaymentProposalView;
 }
 
 export class LifecarePaymentOptionsApiResponse implements ApiResponse<LifecarePaymentOptionsView> {
@@ -75,8 +115,17 @@ export const toPayeeView = (payee: LifecarePayeeRaw, methods: LifecarePaymentMet
   toRegisteredAddress: payee.payeeId === ADDRESS_PAYEE_ID,
 });
 
-/** The betalsätt in use and the active payees, out of Lifecare's underlag for a new utbetalning. */
-export const toPaymentOptions = (raw: LifecarePaymentForCreateRaw): LifecarePaymentOptionsView => ({
+/** Everything the utbetalning form needs, out of Lifecare's underlag for a new utbetalning. */
+export const toPaymentOptions = (raw: LifecarePaymentForCreateRaw, proposal: LifecarePaymentProposal): LifecarePaymentOptionsView => ({
   paymentMethods: raw.paymentMethods.filter(method => method.inUse).map(toMethodView),
   payees: raw.payees.filter(payee => payee.isActive).map(payee => toPayeeView(payee, raw.paymentMethods)),
+  postings: (raw.payment.postings ?? []).map(posting => ({ purpose: posting.purpose, text: posting.purposeText ?? String(posting.purpose) })),
+  balances: (raw.balances ?? []).map(balance => ({
+    name: balance.name.trim(),
+    approvedAmount: balance.approvedAmount,
+    bookedAmount: balance.bookedAmount,
+    balanceAmount: balance.balanceAmount,
+  })),
+  concernMonths: (raw.paymentConcernMonths ?? []).map(month => ({ month: toMonth(month.concernMonth), label: month.displayMonth })),
+  proposal,
 });

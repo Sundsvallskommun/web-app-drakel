@@ -2,7 +2,7 @@ import CaremanagementPaymentService from '@services/caremanagement-payment.servi
 import LifecareAccessLogService from '@services/lifecare-access-log.service';
 import LifecarePaymentsService from '@services/lifecare-payments.service';
 import { isLifecareRefusal } from '@utils/lifecare-error';
-import { buildPaymentCreate } from '@utils/lifecare-payment';
+import { buildPaymentCreate, findRegisteredPayment } from '@utils/lifecare-payment';
 import { logger } from '@utils/logger';
 import { succeedsWithin } from '@utils/retry';
 
@@ -18,11 +18,13 @@ const RECEIPT_ATTEMPTS = 3;
  * and hands the outcome back to careM with `payments/{id}/lifecare-result`.
  *
  * Lifecare's `Payment/Create` is not idempotent and moves money, so every step leans towards not paying:
- * - an utbetalning careM already has as REGISTERED is left alone;
+ * - an utbetalning careM already has as REGISTERED is left alone, and one Lifecare already holds is
+ *   receipted as ALREADY_EXISTS instead of being made again;
  * - one the builder cannot vouch for (see buildPaymentCreate) is not sent, stays PENDING_REGISTRATION and
  *   can be run again once the reason is fixed — typically once the beslut is in Lifecare;
  * - only a refusal Lifecare itself gave is reported as FAILED, with Lifecare's reason;
- * - a call Lifecare did not answer is not reported at all, since whether it paid is then unknown.
+ * - a call Lifecare did not answer is not reported at all, since whether it paid is then unknown; the next
+ *   attempt finds out, through the duplicate check above.
  */
 class LifecarePaymentRegistrationService {
   private caremanagementPayments = new CaremanagementPaymentService();
@@ -43,6 +45,20 @@ class LifecarePaymentRegistrationService {
     if (!create.writable) {
       return { paymentId, outcome: 'NOT_SENT', detail: create.reason };
     }
+    // Lifecare's web app checks the person has a hushåll on the payment date before it saves; so does this.
+    const personId = underlag.payment.susPersonId;
+    if (!personId || !(await this.lifecarePayments.hasHouseholdOn(personId, String(create.body.payDate)))) {
+      return { paymentId, outcome: 'NOT_SENT', detail: 'Personen har inget hushåll i Lifecare på utbetalningsdagen.' };
+    }
+
+    // An utbetalning Lifecare already made — typically one whose receipt never reached careM — is
+    // receipted as it stands rather than paid a second time.
+    const alreadyRegistered = findRegisteredPayment(await this.lifecarePayments.readLatestPayments(serviceId), create.body);
+    if (alreadyRegistered) {
+      const existingId = String(alreadyRegistered.paymentId);
+      await this.receipt(errandId, paymentId, { outcome: PaymentLifecareResultOutcomeEnum.ALREADY_EXISTS, lifecarePaymentId: existingId });
+      return { paymentId, outcome: 'REGISTERED', lifecareId: existingId };
+    }
 
     let lifecareId: string;
     try {
@@ -52,7 +68,11 @@ class LifecarePaymentRegistrationService {
         await this.receipt(errandId, paymentId, { outcome: PaymentLifecareResultOutcomeEnum.FAILED, detail: error.message });
         return { paymentId, outcome: 'FAILED', detail: error.message };
       }
-      return { paymentId, outcome: 'NOT_SENT', detail: 'Lifecare svarade inte. Kontrollera i Lifecare innan utbetalningen registreras igen.' };
+      return {
+        paymentId,
+        outcome: 'NOT_SENT',
+        detail: 'Lifecare svarade inte. Försök igen — en utbetalning som ändå kom fram känns igen och skapas inte två gånger.',
+      };
     }
 
     await this.accessLog.logWrite(errandId, LifecareAccessActionEnum.CREATE, {
@@ -70,7 +90,7 @@ class LifecarePaymentRegistrationService {
           paymentId,
           outcome: 'REGISTERED',
           lifecareId,
-          detail: `Registrerad i Lifecare (id ${lifecareId}) men kunde inte kvitteras i careM. Registrera den inte igen.`,
+          detail: `Registrerad i Lifecare (id ${lifecareId}) men kunde inte kvitteras i careM. Kör "Registrera i Lifecare" igen för att kvittera den.`,
         };
   }
 

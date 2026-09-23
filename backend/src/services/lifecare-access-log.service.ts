@@ -11,6 +11,7 @@ type LifecareAccessTarget =
   | 'PAYEES'
   | 'PAYEE'
   | 'PAYMENT'
+  | 'PAYMENTS'
   | 'REMINDERS'
   | 'REMINDER'
   | 'DECISION';
@@ -40,10 +41,14 @@ class LifecareAccessLogService {
   }
 
   /**
-   * Logs a write. By now Lifecare has already made the change and it cannot be taken back, so a failed
+   * Logs a write — a create, change or removal. By now Lifecare has already made the change and it cannot be taken back, so a failed
    * report is logged here rather than raised — raising would invite the handläggare to write it again.
    */
-  async logWrite(errandId: string, action: LifecareAccessActionEnum.CREATE | LifecareAccessActionEnum.UPDATE, access: LoggedAccess): Promise<void> {
+  async logWrite(
+    errandId: string,
+    action: LifecareAccessActionEnum.CREATE | LifecareAccessActionEnum.UPDATE | LifecareAccessActionEnum.DELETE,
+    access: LoggedAccess,
+  ): Promise<void> {
     try {
       await this.eventService.reportLifecareAccess(errandId, [{ action, ...access }]);
     } catch {

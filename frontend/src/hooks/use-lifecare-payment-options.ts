@@ -10,14 +10,24 @@ interface UseLifecarePaymentOptionsResult {
   options: LifecarePaymentOptionsView;
   isLoading: boolean;
   error?: ServiceError;
+  /** Lifecare's own reason when it would not hand the options over. */
+  errorMessage?: string;
   refresh: () => void;
 }
 
-const NO_OPTIONS: LifecarePaymentOptionsView = { paymentMethods: [], payees: [] };
+const NO_OPTIONS: LifecarePaymentOptionsView = {
+  paymentMethods: [],
+  payees: [],
+  postings: [],
+  balances: [],
+  concernMonths: [],
+  proposal: {},
+};
 
 /**
- * The betalsätt and betalningsmottagare an utbetalning on the errand can use, read live from Lifecare —
- * the register of record for both. Reading it is logged on the errand.
+ * Everything the utbetalning form needs, read live from Lifecare: betalsätt, betalningsmottagare,
+ * ändamål (konteringsrader), saldon, the months it may concern and the proposal it starts from. Reading
+ * it is logged on the errand.
  */
 export const useLifecarePaymentOptions = (errandId: string): UseLifecarePaymentOptionsResult => {
   const fetchOptions = useCallback(() => getLifecarePaymentOptions(errandId), [errandId]);

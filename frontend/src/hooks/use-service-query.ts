@@ -28,6 +28,8 @@ interface ServiceQueryResult<T> {
   data: T;
   isLoading: boolean;
   error?: ServiceError;
+  /** The reason the failed load came back with, when it gave one — e.g. Lifecare's own sentence. */
+  errorMessage?: string;
   /** Fetches again with the same inputs. */
   refresh: () => void;
 }
@@ -46,6 +48,7 @@ export const useServiceQuery = <T>(
   const [data, setData] = useState<T>(initialData);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<ServiceError>();
+  const [errorMessage, setErrorMessage] = useState<string>();
   // Bumped by refresh() to re-run the fetch effect with unchanged inputs.
   const [reloadToken, setReloadToken] = useState<number>(0);
 
@@ -72,9 +75,11 @@ export const useServiceQuery = <T>(
       const { initialData: emptyData, select: transform } = dataOptionsRef.current;
       if (response.error && !(notFoundAsEmpty && response.error === NOT_FOUND)) {
         setError(response.error);
+        setErrorMessage(response.message);
         setData(emptyData);
       } else {
         setError(undefined);
+        setErrorMessage(undefined);
         const loaded = response.error ? emptyData : (response.data ?? emptyData);
         setData(transform ? transform(loaded) : loaded);
       }
@@ -89,5 +94,5 @@ export const useServiceQuery = <T>(
     setReloadToken((token) => token + 1);
   }, []);
 
-  return { data, isLoading, error, refresh };
+  return { data, isLoading, error, errorMessage, refresh };
 };

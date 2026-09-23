@@ -1,4 +1,4 @@
-import { LifecarePaymentForCreateRaw } from '@interfaces/lifecare-payment.interface';
+import { LifecarePaymentForCreateRaw, LifecareRegisteredPaymentRaw } from '@interfaces/lifecare-payment.interface';
 import CaremanagementEventService from '@services/caremanagement-event.service';
 import CaremanagementPaymentService from '@services/caremanagement-payment.service';
 import LifecarePaymentRegistrationService from '@services/lifecare-payment-registration.service';
@@ -21,7 +21,13 @@ const pending: Payment = {
 };
 
 const underlag: LifecarePaymentForCreateRaw = {
-  payment: { paymentId: 0, postings: [{ amount: 0, purpose: 1 }], paymentPersons: [] },
+  payment: {
+    paymentId: 0,
+    payDate: '2026-09-21',
+    susPersonId: '19800101T001',
+    postings: [{ amount: 0, purpose: 1, purposeText: 'Försörjningsstöd exklusive tillfälligt boende' }],
+    paymentPersons: [],
+  },
   payees: [
     {
       payeeId: 2,
@@ -56,6 +62,8 @@ describe('LifecarePaymentRegistrationService', () => {
   beforeEach(() => {
     vi.spyOn(CaremanagementPaymentService.prototype, 'readPayment').mockResolvedValue({ data: pending, message: 'success' });
     vi.spyOn(LifecarePaymentsService.prototype, 'readPaymentForCreate').mockResolvedValue(underlag);
+    vi.spyOn(LifecarePaymentsService.prototype, 'readLatestPayments').mockResolvedValue([]);
+    vi.spyOn(LifecarePaymentsService.prototype, 'hasHouseholdOn').mockResolvedValue(true);
     vi.spyOn(CaremanagementEventService.prototype, 'reportLifecareAccess').mockResolvedValue();
     report = vi.spyOn(CaremanagementPaymentService.prototype, 'reportLifecareResult').mockResolvedValue();
   });
@@ -71,6 +79,58 @@ describe('LifecarePaymentRegistrationService', () => {
 
     expect(registration).toEqual({ paymentId: 'payment-1', outcome: 'REGISTERED', lifecareId: '4' });
     expect(report).toHaveBeenCalledWith('errand-1', 'payment-1', { outcome: 'REGISTERED', lifecarePaymentId: '4' });
+  });
+
+  it('receipts an utbetalning Lifecare already holds instead of paying it twice', async () => {
+    // Shaped after a captured Payment/GetLatestPayments row: the one a lost receipt left behind.
+    const existing: LifecareRegisteredPaymentRaw = {
+      paymentId: 4,
+      amount: 1,
+      payDate: '2026-09-21',
+      concernedMonth: '202609',
+      accountNumber: '11111111',
+      cancellationDate: '',
+    };
+    vi.spyOn(LifecarePaymentsService.prototype, 'readLatestPayments').mockResolvedValue([existing]);
+    const create = vi.spyOn(LifecarePaymentsService.prototype, 'createPayment');
+
+    const registration = await new LifecarePaymentRegistrationService().register('errand-1', 1, 'payment-1');
+
+    expect(registration).toEqual({ paymentId: 'payment-1', outcome: 'REGISTERED', lifecareId: '4' });
+    expect(create).not.toHaveBeenCalled();
+    expect(report).toHaveBeenCalledWith('errand-1', 'payment-1', { outcome: 'ALREADY_EXISTS', lifecarePaymentId: '4' });
+  });
+
+  it('does not take a makulerad or different utbetalning for the same one', async () => {
+    const base: LifecareRegisteredPaymentRaw = {
+      paymentId: 4,
+      amount: 1,
+      payDate: '2026-09-21',
+      concernedMonth: '202609',
+      accountNumber: '11111111',
+      cancellationDate: '',
+    };
+    vi.spyOn(LifecarePaymentsService.prototype, 'readLatestPayments').mockResolvedValue([
+      { ...base, cancellationDate: '2026-09-22' },
+      { ...base, paymentId: 5, amount: 2 },
+      { ...base, paymentId: 6, payDate: '2026-09-08' },
+    ]);
+    const create = vi.spyOn(LifecarePaymentsService.prototype, 'createPayment').mockResolvedValue({ paymentId: 7 });
+
+    const registration = await new LifecarePaymentRegistrationService().register('errand-1', 1, 'payment-1');
+
+    expect(registration.lifecareId).toBe('7');
+    expect(create).toHaveBeenCalled();
+  });
+
+  it('does not send an utbetalning for a person Lifecare has no hushåll for on the payment date', async () => {
+    vi.spyOn(LifecarePaymentsService.prototype, 'hasHouseholdOn').mockResolvedValue(false);
+    const create = vi.spyOn(LifecarePaymentsService.prototype, 'createPayment');
+
+    const registration = await new LifecarePaymentRegistrationService().register('errand-1', 1, 'payment-1');
+
+    expect(registration.outcome).toBe('NOT_SENT');
+    expect(create).not.toHaveBeenCalled();
   });
 
   it('leaves an utbetalning careM already has as registered alone', async () => {
@@ -117,14 +177,14 @@ describe('LifecarePaymentRegistrationService', () => {
     expect(report).not.toHaveBeenCalled();
   });
 
-  it('warns not to register again when careM never takes the receipt', async () => {
+  it('asks for another run to receipt it when careM never takes the receipt', async () => {
     vi.spyOn(LifecarePaymentsService.prototype, 'createPayment').mockResolvedValue({ paymentId: 4 });
     report.mockRejectedValue(new HttpException(500, 'down'));
 
     const registration = await new LifecarePaymentRegistrationService().register('errand-1', 1, 'payment-1');
 
     expect(registration.outcome).toBe('REGISTERED');
-    expect(registration.detail).toContain('Registrera den inte igen');
+    expect(registration.detail).toContain('för att kvittera den');
     expect(report).toHaveBeenCalledTimes(3);
   });
 });
