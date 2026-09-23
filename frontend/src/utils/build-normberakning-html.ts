@@ -1,6 +1,5 @@
 import { NormberakningDraft, NormExpenseRow, NormIncomeRow, NormPersonRow } from '@services/normberakning-service';
 import { formatApplicationMonth } from '@utils/application-month';
-import { stakeholderRoleLabel } from '@utils/stakeholder-role';
 
 /** Shown where a value is computed in Lifecare and not (yet) exposed by the API. */
 const COMPUTED_IN_LIFECARE = 'Beräknas i Lifecare';
@@ -32,13 +31,14 @@ const personsTable = (persons: NormPersonRow[]): string => {
   const rows = visible(persons);
   const body =
     rows.length === 0 ?
-      '<tr><td colspan="5">Inga personer</td></tr>'
+      '<tr><td colspan="6">Inga personer</td></tr>'
     : rows
         .map(
           (person) => `<tr>
             <td>${person.included ? 'Ja' : 'Nej'}</td>
+            <td>${text(person.personalNumber)}</td>
             <td>${text(person.name)}</td>
-            <td>${escapeHtml(stakeholderRoleLabel(person.role) || '—')}</td>
+            <td class="num">${amount(person.amount)}</td>
             <td class="num">${person.effectiveDays ?? '—'}</td>
             <td>${text(person.normInterval)}</td>
           </tr>`
@@ -46,10 +46,10 @@ const personsTable = (persons: NormPersonRow[]): string => {
         .join('');
   return `
     <table>
-      <thead><tr><th>Omfattas</th><th>Namn</th><th>Roll</th><th class="num">Dagar</th><th>Normintervall</th></tr></thead>
+      <thead><tr><th>Omfattas</th><th>Personnummer</th><th>Namn</th><th class="num">Belopp</th><th class="num">Dagar</th><th>Normintervall/Belopp</th></tr></thead>
       <tbody>${body}</tbody>
     </table>
-    <p class="muted">Belopp för familjenormen: ${COMPUTED_IN_LIFECARE}.</p>`;
+    <p class="muted">Summa norm: ${COMPUTED_IN_LIFECARE}.</p>`;
 };
 
 const incomesTable = (incomes: NormIncomeRow[], sum?: number): string => {

@@ -2,6 +2,7 @@
 
 import { NormPersonRow } from '@services/normberakning-service';
 import { Icon, Table } from '@sk-web-gui/react';
+import { formatAmount } from '@utils/format-amount';
 import { Check } from 'lucide-react';
 import { FC } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { NormberakningTableBox } from './normberakning-table-box.component';
 
 const days = (value?: number): string => (value == null ? '—' : String(value));
+const displayAmount = (value?: number): string => (value == null ? '—' : formatAmount(value));
 
 /**
  * FAMILJ section of the draft normberäkning — the persons the norm covers. Read-only: adding persons
@@ -23,8 +25,9 @@ export const NormberakningFamilj: FC<{ persons: NormPersonRow[] }> = ({ persons 
       <Table dense>
         <Table.Header>
           <Table.HeaderColumn>{t('family.included')}</Table.HeaderColumn>
+          <Table.HeaderColumn>{t('family.personalNumber')}</Table.HeaderColumn>
           <Table.HeaderColumn>{t('family.name')}</Table.HeaderColumn>
-          <Table.HeaderColumn>{t('family.role')}</Table.HeaderColumn>
+          <Table.HeaderColumn>{t('family.amount')}</Table.HeaderColumn>
           <Table.HeaderColumn>{t('family.includedFrom')}</Table.HeaderColumn>
           <Table.HeaderColumn>{t('family.includedTo')}</Table.HeaderColumn>
           <Table.HeaderColumn>{t('family.days')}</Table.HeaderColumn>
@@ -42,8 +45,9 @@ export const NormberakningFamilj: FC<{ persons: NormPersonRow[] }> = ({ persons 
                     <Icon icon={<Check />} aria-label={t('family.included')} />
                   : <span className="sr-only">{t('family.notIncluded')}</span>}
                 </Table.Column>
+                <Table.Column className="tabular-nums">{person.personalNumber ?? '—'}</Table.Column>
                 <Table.Column>{person.name ?? '—'}</Table.Column>
-                <Table.Column>{person.roleDisplayName ?? person.role ?? '—'}</Table.Column>
+                <Table.Column className="tabular-nums">{displayAmount(person.amount)}</Table.Column>
                 <Table.Column>{person.deviationFromDate ?? '—'}</Table.Column>
                 <Table.Column>{person.deviationToDate ?? '—'}</Table.Column>
                 <Table.Column className="tabular-nums">{days(person.effectiveDays)}</Table.Column>

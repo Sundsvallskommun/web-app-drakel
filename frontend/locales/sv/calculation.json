@@ -38,13 +38,14 @@
   "family": {
     "title": "Personer som omfattas",
     "included": "Omfattas",
+    "personalNumber": "Personnummer",
     "notIncluded": "Omfattas inte",
     "name": "Namn",
-    "role": "Roll",
+    "amount": "Belopp",
     "includedFrom": "Ingår från",
     "includedTo": "Ingår till",
     "days": "Dagar",
-    "normInterval": "Normintervall",
+    "normInterval": "Normintervall/Belopp",
     "empty": "Inga personer"
   },
   "incomes": {

@@ -730,6 +730,8 @@ export interface NormPersonRow {
   position?: number;
   origin?: string;
   partyId?: string;
+  /** Personnummer resolved from partyId via the Citizen API; best-effort, so it can be absent. */
+  personalNumber?: string;
   role?: string;
   roleDisplayName?: string;
   name?: string;
@@ -740,6 +742,8 @@ export interface NormPersonRow {
   deviationFromDate?: string;
   deviationToDate?: string;
   normInterval?: string;
+  /** The member's own share of the norm — the Belopp column; carried over from the previous Lifecare calculation. */
+  amount?: number;
   jobStimulusAmount?: number;
   deleted?: boolean;
   note?: string;
