@@ -6,7 +6,7 @@ import LifecareDocumentsService from '@services/lifecare-documents.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HttpException } from '@/exceptions/HttpException';
-import { LifecareRecordView } from '@/responses/lifecare-documents.response';
+import { LifecareDocumentModel, LifecareRecordView } from '@/responses/lifecare-documents.response';
 
 const createdNote: LifecareRecordView = {
   id: '138',
@@ -21,6 +21,22 @@ const createdNote: LifecareRecordView = {
 };
 
 const newNote = { content: '<p>Hej</p>', noteTypeCode: 1 };
+
+/** A row of Lifecare's document list; the tests vary its id and kind. */
+const listRow: LifecareDocumentModel = {
+  id: 0,
+  title: 'Anteckning',
+  date: '2026-09-23',
+  time: '10:00',
+  type: 'Journalanteckning',
+  ownerTypeText: '',
+  responsibleCaseworker: null,
+  updateSignature: 'RPA_031DEV',
+  updateDate: '2026-09-23',
+  protected: false,
+  locked: false,
+  documentType_Name: 'JournalNote',
+};
 
 describe('ErrandLifecareRecordsService', () => {
   beforeEach(() => {
@@ -47,6 +63,48 @@ describe('ErrandLifecareRecordsService', () => {
     expect(created.id).toBe('138');
     expect(create).toHaveBeenCalledWith(2, newNote);
     expect(report.mock.calls[0]?.[1]).toMatchObject([{ action: 'CREATE', target: 'JOURNAL_NOTE', lifecareId: '138' }]);
+  });
+
+  it('reads the body of every journalanteckning, leaving out what has none and what Lifecare refuses', async () => {
+    vi.spyOn(LifecareDocumentsService.prototype, 'listForClient').mockResolvedValue({
+      data: {
+        documentModels: [
+          { ...listRow, id: 1, documentType_Name: 'JournalNote' },
+          { ...listRow, id: 2, documentType_Name: 'JournalNote' },
+          { ...listRow, id: 3, documentType_Name: 'Regular' },
+          { ...listRow, id: 4, documentType_Name: 'Pdf' },
+        ],
+      },
+      message: 'success',
+    });
+    const readBody = vi
+      .spyOn(LifecareDocumentsService.prototype, 'readBody')
+      .mockImplementation((_category, id) => (id === '2' ? Promise.reject(new HttpException(500, 'down')) : Promise.resolve(`<p>${id}</p>`)));
+    const report = vi.spyOn(CaremanagementEventService.prototype, 'reportLifecareAccess').mockResolvedValue();
+
+    const bodies = await new ErrandLifecareRecordsService().bodies('errand-1', 'JOURNAL_NOTE');
+
+    expect(bodies).toEqual([{ id: '1', content: '<p>1</p>' }, { id: '2' }]);
+    expect(readBody).toHaveBeenCalledTimes(2);
+    // One access-log row for the whole tab, not one per record.
+    expect(report).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips blanketter and PDF files when reading document bodies', async () => {
+    vi.spyOn(LifecareDocumentsService.prototype, 'listForClient').mockResolvedValue({
+      data: {
+        documentModels: [
+          { ...listRow, id: 3, documentType_Name: 'Regular' },
+          { ...listRow, id: 4, documentType_Name: 'Pdf' },
+          { ...listRow, id: 5, documentType_Name: 'Form' },
+        ],
+      },
+      message: 'success',
+    });
+    vi.spyOn(LifecareDocumentsService.prototype, 'readBody').mockResolvedValue('<p>Brev</p>');
+    vi.spyOn(CaremanagementEventService.prototype, 'reportLifecareAccess').mockResolvedValue();
+
+    expect(await new ErrandLifecareRecordsService().bodies('errand-1', 'DOCUMENT')).toEqual([{ id: '3', content: '<p>Brev</p>' }]);
   });
 
   it('still reports the note as written when careM cannot log it', async () => {

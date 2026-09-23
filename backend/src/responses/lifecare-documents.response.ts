@@ -37,6 +37,9 @@ export type LifecareRecordCategory = 'JOURNAL_NOTE' | 'DOCUMENT';
 /** Lifecare's own name for a journalanteckning row; everything else is treated as a document. */
 const JOURNAL_NOTE_TYPE = 'JournalNote';
 
+/** Rows with no written body: a blankett is built from form fields, a PDF is a file. */
+const NO_TEXT_BODY_TYPES = ['Form', 'Pdf'];
+
 /** A Lifecare record as drakel shows it — a journalanteckning or a document, cleaned up for the UI. */
 export class LifecareRecordView {
   @IsString() id!: string;
@@ -119,6 +122,25 @@ export class LifecareRecordContentApiResponse implements ApiResponse<LifecareRec
   @ValidateNested() @Type(() => LifecareRecordContentView) data!: LifecareRecordContentView;
   @IsString() message!: string;
 }
+
+/** A record's body, shown in the list without opening the record. */
+export class LifecareRecordBodyView {
+  @IsString() id!: string;
+  /** The body as HTML; left out when Lifecare would not hand it over. */
+  @IsString() @IsOptional() content?: string;
+}
+
+export class LifecareRecordBodiesApiResponse implements ApiResponse<LifecareRecordBodyView[]> {
+  @IsArray() @ValidateNested({ each: true }) @Type(() => LifecareRecordBodyView) data!: LifecareRecordBodyView[];
+  @IsString() message!: string;
+}
+
+/** The ids of the rows in one group that carry a written body worth showing. */
+export const textRecordIds = (raw: LifecareDocumentsListRaw | undefined, category: LifecareRecordCategory): string[] =>
+  (raw?.documentModels ?? [])
+    .filter(model => (model.documentType_Name === JOURNAL_NOTE_TYPE ? 'JOURNAL_NOTE' : 'DOCUMENT') === category)
+    .filter(model => !NO_TEXT_BODY_TYPES.includes(model.documentType_Name))
+    .map(model => String(model.id));
 
 const asString = (value: unknown): string => (typeof value === 'string' ? value : '');
 

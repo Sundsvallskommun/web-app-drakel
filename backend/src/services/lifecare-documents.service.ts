@@ -136,6 +136,21 @@ class LifecareDocumentsService {
     return this.readRecord(DOCUMENT_ENDPOINTS, id);
   }
 
+  /**
+   * Reads just the body of a record, for showing it in a list. Asked for in view mode (inEdit=false),
+   * since nothing is going to be changed — a bulk read must not look like the records were opened for
+   * editing.
+   */
+  public async readBody(category: LifecareRecordCategory, id: string): Promise<string> {
+    const endpoints = category === 'JOURNAL_NOTE' ? JOURNAL_NOTE_ENDPOINTS : DOCUMENT_ENDPOINTS;
+    const res = await this.apiService.get<LifecareEditableRecord>({
+      module: PROFESSIONAL_WEB,
+      path: endpoints.read,
+      params: { id, hideRevisions: 'true', inEdit: 'false' },
+    });
+    return typeof res.data.content === 'string' ? res.data.content : '';
+  }
+
   /** Saves an edit to a journalanteckning, if Lifecare still allows it to be changed. */
   public async updateJournalNote(
     id: string,

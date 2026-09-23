@@ -4,14 +4,26 @@ import CaremanagementStakeholderService from '@services/caremanagement-stakehold
 import LifecareAccessLogService from '@services/lifecare-access-log.service';
 import LifecareDocumentsService from '@services/lifecare-documents.service';
 import LifecareServiceIdService from '@services/lifecare-service-id.service';
+import { mapWithConcurrency } from '@utils/map-with-concurrency';
 
 import { LifecareAccessActionEnum } from '@/data-contracts/caremanagement/data-contracts';
 import { LifecareDocumentTypeView, NewDocument, toDocumentTypes } from '@/responses/lifecare-document-proposal.response';
-import { LifecareRecordContentView, LifecareRecordsView, LifecareRecordView, toLifecareRecords } from '@/responses/lifecare-documents.response';
+import {
+  LifecareRecordBodyView,
+  LifecareRecordCategory,
+  LifecareRecordContentView,
+  LifecareRecordsView,
+  LifecareRecordView,
+  textRecordIds,
+  toLifecareRecords,
+} from '@/responses/lifecare-documents.response';
 import { LifecareNoteTypeView, NewJournalNote, toNoteTypes } from '@/responses/lifecare-journal-note.response';
 
 /** The stakeholder role whose Lifecare record is shown. */
 const APPLICANT_ROLE = 'APPLICANT';
+
+/** Body reads in flight at once — quick enough for a tab, without flooding Lifecare. */
+const BODY_READ_CONCURRENCY = 4;
 
 interface RecordEdit {
   content: string;
@@ -40,6 +52,32 @@ class ErrandLifecareRecordsService {
       description: 'Läste journalanteckningar och dokument i Lifecare',
     });
     return toLifecareRecords(res.data);
+  }
+
+  /**
+   * The bodies of one group's records, so the tab can show every record's text without opening it.
+   * Lifecare's list carries no bodies, so each is read on its own, a few at a time. A body Lifecare will
+   * not hand over is left out rather than failing the rest. The reads land in the access log as one row.
+   */
+  async bodies(errandId: string, category: LifecareRecordCategory): Promise<LifecareRecordBodyView[]> {
+    const identityNumber = await this.resolveClientId(errandId);
+    const list = await this.documentsService.listForClient(identityNumber);
+    const bodies = await mapWithConcurrency(
+      textRecordIds(list.data, category),
+      BODY_READ_CONCURRENCY,
+      async (id): Promise<LifecareRecordBodyView> => {
+        try {
+          return { id, content: await this.documentsService.readBody(category, id) };
+        } catch {
+          return { id };
+        }
+      },
+    );
+    await this.accessLog.logRead(errandId, {
+      target: 'JOURNAL_AND_DOCUMENTS',
+      description: category === 'JOURNAL_NOTE' ? 'Läste journalanteckningarnas innehåll i Lifecare' : 'Läste dokumentens innehåll i Lifecare',
+    });
+    return bodies;
   }
 
   async readJournalNote(errandId: string, id: string): Promise<LifecareRecordContentView> {

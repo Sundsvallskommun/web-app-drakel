@@ -6,7 +6,12 @@ import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
 import { CreateLifecareDocumentDto, CreateLifecareJournalNoteDto, UpdateLifecareRecordDto } from '@/dtos/lifecare-documents.dto';
 import { LifecareDocumentTypesApiResponse } from '@/responses/lifecare-document-proposal.response';
-import { LifecareRecordApiResponse, LifecareRecordContentApiResponse, LifecareRecordsApiResponse } from '@/responses/lifecare-documents.response';
+import {
+  LifecareRecordApiResponse,
+  LifecareRecordBodiesApiResponse,
+  LifecareRecordContentApiResponse,
+  LifecareRecordsApiResponse,
+} from '@/responses/lifecare-documents.response';
 import { LifecareNoteTypesApiResponse } from '@/responses/lifecare-journal-note.response';
 
 /**
@@ -27,6 +32,22 @@ export class LifecareDocumentsController {
   @UseBefore(authMiddleware)
   async listDocuments(@Param('errandId') errandId: string) {
     return { data: await this.recordsService.list(errandId), message: 'success' };
+  }
+
+  @Get('/errands/:errandId/lifecare-journal-note-bodies')
+  @OpenAPI({ summary: "The bodies of the applicant's journalanteckningar, for showing them in the list" })
+  @ResponseSchema(LifecareRecordBodiesApiResponse)
+  @UseBefore(authMiddleware)
+  async listJournalNoteBodies(@Param('errandId') errandId: string) {
+    return { data: await this.recordsService.bodies(errandId, 'JOURNAL_NOTE'), message: 'success' };
+  }
+
+  @Get('/errands/:errandId/lifecare-document-bodies')
+  @OpenAPI({ summary: "The bodies of the applicant's documents, for showing them in the list" })
+  @ResponseSchema(LifecareRecordBodiesApiResponse)
+  @UseBefore(authMiddleware)
+  async listDocumentBodies(@Param('errandId') errandId: string) {
+    return { data: await this.recordsService.bodies(errandId, 'DOCUMENT'), message: 'success' };
   }
 
   @Get('/errands/:errandId/lifecare-documents/journal-note-types')

@@ -5,12 +5,14 @@ import {
   LifecareDocumentTypeView,
   LifecareNoteTypesApiResponse,
   LifecareNoteTypeView,
+  LifecareRecordBodiesApiResponse,
+  LifecareRecordBodyView,
 } from '@data-contracts/backend/data-contracts';
 import { ServiceResponse } from '@interfaces/services';
 import { ApiResponse, apiService, toServiceError } from '@services/api-service';
 
 /** Which group a Lifecare record belongs to. */
-type LifecareRecordCategory = 'JOURNAL_NOTE' | 'DOCUMENT';
+export type LifecareRecordCategory = 'JOURNAL_NOTE' | 'DOCUMENT';
 
 /** A Lifecare record — a journalanteckning or a document. Mirrors the backend LifecareRecordView. */
 export interface LifecareRecord {
@@ -77,6 +79,21 @@ export const getLifecareRecordContent = (
 ): Promise<ServiceResponse<LifecareRecordContent>> =>
   apiService
     .get<ApiResponse<LifecareRecordContent>>(`errands/${errandId}/lifecare-documents/${pathFor(category)}/${id}`)
+    .then((res) => ({ data: res.data.data }))
+    .catch(toServiceError);
+
+/**
+ * The bodies of every record in one group, so the tab can show their text without opening each one.
+ * Lifecare reads them one by one behind this call, so it answers after the list itself.
+ */
+export const getLifecareRecordBodies = (
+  errandId: string,
+  category: LifecareRecordCategory
+): Promise<ServiceResponse<LifecareRecordBodyView[]>> =>
+  apiService
+    .get<LifecareRecordBodiesApiResponse>(
+      `errands/${errandId}/${category === 'JOURNAL_NOTE' ? 'lifecare-journal-note-bodies' : 'lifecare-document-bodies'}`
+    )
     .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);
 
