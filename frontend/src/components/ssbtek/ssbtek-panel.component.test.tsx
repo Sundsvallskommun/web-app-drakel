@@ -1,11 +1,16 @@
+import { getSsbtekPayments } from '@services/ssbtek-service';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { useParams } from 'next/navigation';
 import { FC } from 'react';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SsbtekPanel } from './ssbtek-panel.component';
 import { SsbtekPanelProvider, useSsbtekPanel } from './ssbtek-panel-context';
 
-/** Stands in for the header's "Hämta från SSBTEK" button. */
+vi.mock('next/navigation', () => ({ useParams: vi.fn() }));
+vi.mock('@services/ssbtek-service', () => ({ getSsbtekPayments: vi.fn() }));
+
+/** Stands in for the header's "Hämta från SSBTEK" button, when SSBTEK opens on the errand. */
 const ToggleButton: FC = () => {
   const { toggle } = useSsbtekPanel();
   return (
@@ -26,7 +31,7 @@ const renderPanel = (): void => {
 
 const openPanel = (): HTMLElement => {
   fireEvent.click(screen.getByRole('button', { name: 'växla' }));
-  return screen.getByRole('region', { name: 'Hämta från SSBTEK' });
+  return screen.getByRole('region', { name: 'Uppgifter från SSBTEK' });
 };
 
 describe('SsbtekPanel', () => {
@@ -37,14 +42,19 @@ describe('SsbtekPanel', () => {
     }
   });
 
+  beforeEach(() => {
+    vi.mocked(useParams).mockReturnValue({ locale: 'sv', errandId: 'EB-26090036' });
+    vi.mocked(getSsbtekPayments).mockResolvedValue({ data: { payments: [] } });
+  });
+
   it('is hidden until the header button opens it, and the header button closes it again', () => {
     renderPanel();
-    expect(screen.queryByRole('region', { name: 'Hämta från SSBTEK' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Uppgifter från SSBTEK' })).not.toBeInTheDocument();
 
     openPanel();
     fireEvent.click(screen.getByRole('button', { name: 'växla' }));
 
-    expect(screen.queryByRole('region', { name: 'Hämta från SSBTEK' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Uppgifter från SSBTEK' })).not.toBeInTheDocument();
   });
 
   it('closes from its own close button', () => {
@@ -53,17 +63,16 @@ describe('SsbtekPanel', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Stäng SSBTEK-panelen' }));
 
-    expect(screen.queryByRole('region', { name: 'Hämta från SSBTEK' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Uppgifter från SSBTEK' })).not.toBeInTheDocument();
   });
 
-  it('stops at the right-hand sidebar and says it is only a mock', () => {
+  it("stops at the right-hand sidebar and shows the errand's SSBTEK payments", async () => {
     renderPanel();
     const panel = openPanel();
 
     expect(panel.style.right).toBe('var(--errand-sidebar-width, 0px)');
-    expect(screen.getByText('Mockad – ingen koppling mot SSBTEK än')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Hämta' })).toBeDisabled();
-    expect(screen.getByText('Bostadsbidrag')).toBeInTheDocument();
+    expect(await screen.findByText('SSBTEK rapporterar inga betalningar under perioden.')).toBeInTheDocument();
+    expect(getSsbtekPayments).toHaveBeenCalledWith('EB-26090036');
   });
 
   it('grows when its top edge is dragged up and never shrinks below a strip', () => {

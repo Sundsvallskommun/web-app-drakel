@@ -1,19 +1,35 @@
 {
-  "title": "Hämta från SSBTEK",
-  "mockBadge": "Mockad – ingen koppling mot SSBTEK än",
+  "title": "Uppgifter från SSBTEK",
+  "errand": "Ärende {{errand}}",
   "resize": "Dra för att ändra panelens höjd",
   "close": "Stäng SSBTEK-panelen",
-  "person": "Person",
-  "applicant": "Sökande",
-  "coApplicant": "Medsökande",
-  "from": "Från",
-  "to": "Till",
-  "fetch": "Hämta",
+  "tabs": {
+    "payments": "Betalningar"
+  },
+  "period": "Period: {{period}}",
+  "loading": "Hämtar från SSBTEK",
+  "loadError": "Uppgifterna från SSBTEK kunde inte hämtas.",
+  "empty": "SSBTEK rapporterar inga betalningar under perioden.",
+  "noDate": "Utan betalningsdag",
   "columns": {
-    "source": "Källa",
+    "benefit": "Förmån",
+    "paidOn": "Betalningsdag",
     "type": "Typ",
-    "period": "Period",
-    "amount": "Belopp",
-    "status": "Status"
+    "netAmount": "Nettobelopp",
+    "grossAmount": "Bruttobelopp",
+    "deductionAmount": "Avdragsbelopp",
+    "taxAmount": "Skattebelopp",
+    "period": "Period"
+  },
+  "parts": {
+    "column": "Delförmåner",
+    "open": "Visa delförmåner för {{benefit}}",
+    "close": "Dölj delförmåner för {{benefit}}",
+    "heading": "Delförmån {{number}}",
+    "benefit": "Delförmån",
+    "amountType": "Beloppstyp",
+    "extent": "Omfattning",
+    "hours": "Timmar",
+    "days": "Dagar"
   }
 }

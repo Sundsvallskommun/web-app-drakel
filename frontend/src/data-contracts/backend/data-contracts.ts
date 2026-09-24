@@ -1336,6 +1336,54 @@ export interface RenderPdfDto {
   html: string;
 }
 
+export interface SsbtekQueryDto {
+  person?: SsbtekQueryDtoPersonEnum;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  from?: string;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  to?: string;
+}
+
+export interface SsbtekPaymentPart {
+  benefit?: string;
+  amountType?: string;
+  periodFrom?: string;
+  periodTo?: string;
+  extent?: string;
+  hours?: number;
+  days?: number;
+  netAmount?: number;
+  grossAmount?: number;
+  deductionAmount?: number;
+  taxAmount?: number;
+}
+
+export interface SsbtekPayment {
+  source: string;
+  benefit: string;
+  paidOn?: string;
+  type?: string;
+  netAmount?: number;
+  grossAmount?: number;
+  deductionAmount?: number;
+  taxAmount?: number;
+  periodFrom?: string;
+  periodTo?: string;
+  preliminary: boolean;
+  parts: SsbtekPaymentPart[];
+}
+
+export interface SsbtekPaymentsView {
+  from?: string;
+  to?: string;
+  payments: SsbtekPayment[];
+}
+
+export interface SsbtekPaymentsApiResponse {
+  data: SsbtekPaymentsView;
+  message: string;
+}
+
 export interface TreservaJournalApiResponse {
   data: string;
   message: string;
@@ -1399,6 +1447,11 @@ export enum NormberakningDraftSourceEnum {
   LIFECARE = "LIFECARE",
 }
 
+export enum SsbtekQueryDtoPersonEnum {
+  APPLICANT = "APPLICANT",
+  CO_APPLICANT = "CO_APPLICANT",
+}
+
 export enum UserRoleEnum {
   AppRead = "app_read",
   AppAdmin = "app_admin",
@@ -1409,4 +1462,9 @@ export enum UpdateWarningStatusDtoStatusEnum {
   OPEN = "OPEN",
   ACKNOWLEDGED = "ACKNOWLEDGED",
   CLOSED = "CLOSED",
+}
+
+export enum SsbtekControllerReadPaymentsParamsPersonEnum {
+  APPLICANT = "APPLICANT",
+  CO_APPLICANT = "CO_APPLICANT",
 }
