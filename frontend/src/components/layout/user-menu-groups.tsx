@@ -3,11 +3,10 @@ import { permittedAdminPages } from '@components/admin/admin-pages';
 import { useChangeLanguage } from '@hooks/use-change-language';
 import { useUserStore } from '@services/user-service/user-service';
 import { Button, PopupMenu } from '@sk-web-gui/react';
+import { basePath } from '@utils/base-path';
 import { Check, ChevronRight, FileText, Languages, LogOut } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
 /** Submenu listing the available UI languages; the current one is checked. */
 const LanguageMenuItem = () => {

@@ -2,6 +2,7 @@
 
 import { useUserStore } from '@services/user-service/user-service';
 import { Button, Logo, UserMenu } from '@sk-web-gui/react';
+import { basePath } from '@utils/base-path';
 import { getInitials } from '@utils/get-initials';
 import { ExternalLink } from 'lucide-react';
 import NextLink from 'next/link';
@@ -11,8 +12,6 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { HeaderNotifications } from './header-notifications.component';
 import { useUserMenuGroups } from './user-menu-groups';
-
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
 /** Dark top header for the errand/register pages: service logo, "Nytt ärende", notifications and user menu. */
 export const AppHeader = () => {

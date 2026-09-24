@@ -2,6 +2,7 @@
 
 import { ServiceResponse } from '@interfaces/services';
 import { apiURL } from '@utils/api-url';
+import { basePath, withoutBasePath } from '@utils/base-path';
 import axios, { AxiosError } from 'axios';
 
 export interface ApiResponse<T = unknown> {
@@ -23,13 +24,13 @@ export const toServiceError = (error: unknown): ServiceResponse<never> => {
 const isAuthPath = (pathname: string): boolean => /\/login|\/logout/.test(pathname);
 
 const handleError = (error: AxiosError<ApiResponse>) => {
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+  const pathname = typeof window !== 'undefined' ? withoutBasePath(window.location.pathname) : '';
 
   // An expired or missing session surfaces as 401 — send the user back to the login page (unless
   // we are already on an auth page), preserving where they were so they return after logging in.
   if (error?.response?.status === 401 && !isAuthPath(pathname)) {
     const failMessage = error.response?.data?.message ?? 'NOT_AUTHORIZED';
-    window.location.href = `/login?path=${pathname}&failMessage=${failMessage}`;
+    window.location.href = `${basePath}/login?path=${pathname}&failMessage=${failMessage}`;
   }
 
   throw error;
