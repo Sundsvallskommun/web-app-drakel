@@ -11,7 +11,6 @@ import {
   changeIncome,
   changePerson,
   removeExpense,
-  removePerson,
   toLifecareDraftView,
 } from '@utils/lifecare-calculation-rows';
 import { describe, expect, it } from 'vitest';
@@ -280,10 +279,5 @@ describe('changing members', () => {
     // No days means the whole period.
     expect(changePerson(withNorm, '2', {}).calculationPersons[1]?.deviationDays).toBeNull();
     expect(() => changePerson(withNorm, '2', { normRowId: 99 })).toThrow(expect.objectContaining({ status: 422 }));
-  });
-
-  it('takes a member out of the beräkning, but never the sökande', () => {
-    expect(removePerson(withChild, '2').calculationPersons.map(person => person.personKey)).toEqual([1]);
-    expect(() => removePerson(withChild, '1')).toThrow(expect.objectContaining({ status: 422 }));
   });
 });

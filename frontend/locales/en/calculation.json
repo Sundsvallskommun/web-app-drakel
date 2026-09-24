@@ -44,7 +44,6 @@
     "days": "Days",
     "normInterval": "Norm interval / amount",
     "empty": "No persons",
-    "remove": "Remove {{name}} from the calculation",
     "wholePeriod": "All",
     "includedFrom": "Included from",
     "includedTo": "Included to"

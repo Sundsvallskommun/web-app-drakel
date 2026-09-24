@@ -64,11 +64,6 @@ export const NormberakningFamilj: FC<{
           <Table.HeaderColumn>{t('family.amount')}</Table.HeaderColumn>
           <Table.HeaderColumn>{t('family.days')}</Table.HeaderColumn>
           <Table.HeaderColumn>{t('family.normInterval')}</Table.HeaderColumn>
-          {editable ?
-            <Table.HeaderColumn>
-              <span className="sr-only">{t('table.actions')}</span>
-            </Table.HeaderColumn>
-          : null}
         </Table.Header>
         <Table.Body>
           {visiblePersons.length === 0 ?
@@ -82,7 +77,6 @@ export const NormberakningFamilj: FC<{
                   errandId={errandId}
                   person={person}
                   normRows={normRows}
-                  removable={index > 0}
                   onAction={(action) => void runRowAction(action)}
                 />
               : <ReadOnlyPersonRow key={person.id ?? index} person={person} />

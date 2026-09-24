@@ -1,10 +1,10 @@
-import { deleteNormRow, updateNormRow } from '@services/normberakning-service';
+import { updateNormRow } from '@services/normberakning-service';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { NormberakningFamilj } from './normberakning-familj.component';
 
-vi.mock('@services/normberakning-service', () => ({ deleteNormRow: vi.fn(), updateNormRow: vi.fn() }));
+vi.mock('@services/normberakning-service', () => ({ updateNormRow: vi.fn() }));
 
 const PERSONS = [
   {
@@ -37,7 +37,6 @@ const NORM_ROWS = [
 describe('NormberakningFamilj', () => {
   beforeEach(() => {
     vi.mocked(updateNormRow).mockReset().mockResolvedValue({ data: {} });
-    vi.mocked(deleteNormRow).mockReset().mockResolvedValue({ data: {} });
   });
 
   it('shows who the norm covers without Omfattas or Ingår från/till', () => {
@@ -76,15 +75,11 @@ describe('NormberakningFamilj', () => {
     });
   });
 
-  it('takes out anyone but the sökande', async () => {
+  it('offers no way to take a person out of the beräkning', () => {
     render(
       <NormberakningFamilj persons={PERSONS} errandId="errand-1" normRows={NORM_ROWS} editable onChanged={vi.fn()} />
     );
 
-    expect(screen.queryByRole('button', { name: 'Ta bort Testsson, Test ur normberäkningen' })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Ta bort Testbarn Test, Testar ur normberäkningen' }));
-    await waitFor(() => {
-      expect(deleteNormRow).toHaveBeenCalledWith('errand-1', 'persons', '2');
-    });
+    expect(screen.queryByRole('button', { name: /Ta bort/ })).not.toBeInTheDocument();
   });
 });

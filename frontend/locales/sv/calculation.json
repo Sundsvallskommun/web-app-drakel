@@ -44,7 +44,6 @@
     "days": "Dagar",
     "normInterval": "Normintervall/Belopp",
     "empty": "Inga personer",
-    "remove": "Ta bort {{name}} ur normberäkningen",
     "wholePeriod": "Alla",
     "includedFrom": "Ingår från",
     "includedTo": "Ingår till"

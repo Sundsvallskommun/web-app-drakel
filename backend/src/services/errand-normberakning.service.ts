@@ -16,7 +16,6 @@ import {
   changePerson,
   removeExpense,
   removeIncome,
-  removePerson,
 } from '@utils/lifecare-calculation-rows';
 
 import { TypeOptionGroupEnum } from '@/data-contracts/caremanagement/data-contracts';
@@ -133,7 +132,10 @@ class ErrandNormberakningService {
     await this.changeRow(errandId, {
       caremanagement: () => this.draftService.deleteRow(errandId, section, rowId),
       lifecare: bySection(section, {
-        persons: calculation => removePerson(calculation, rowId),
+        // Who is in the beräkning is Lifecare's: a person is not taken out from Drakel.
+        persons: () => {
+          throw new HttpException(422, 'Personer tas inte bort ur normberäkningen från Drakel.');
+        },
         incomes: calculation => removeIncome(calculation, rowId),
         expenses: calculation => removeExpense(calculation, rowId),
       }),

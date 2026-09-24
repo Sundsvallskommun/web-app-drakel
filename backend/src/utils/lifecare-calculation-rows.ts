@@ -390,15 +390,6 @@ export const needsRecount = (before: LifecareCalculationRaw, member: LifecareCal
   );
 };
 
-/** Takes the member `rowId` out of the beräkning. The sökande — the first member — stays. */
-export const removePerson = (calculation: LifecareCalculationRaw, rowId: string): LifecareCalculationRaw => {
-  const index = personIndexOf(calculation, rowId);
-  if (index === 0) {
-    throw new HttpException(422, 'Sökanden kan inte tas bort ur normberäkningen.');
-  }
-  return { ...calculation, calculationPersons: calculation.calculationPersons.filter((_person, position) => position !== index) };
-};
-
 /**
  * Puts the beräkning on another of Lifecare's norms. The members go to Lifecare on their old rows, as the web app
  * sends them; Lifecare keeps a row that fits the new norm and leaves the rest unplaced (see withPlacedPersons).
