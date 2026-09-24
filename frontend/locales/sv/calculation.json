@@ -1,7 +1,7 @@
 {
   "header": {
     "title": "Normberäkning",
-    "description": "Utkast till normberäkningen för ansökan. Inkomster och utgifter kan justeras – resultatet beräknas i Lifecare."
+    "description": "Inkomster och utgifter kan justeras. Innan normberäkningen sparas i Lifecare är det ett utkast från ansökan; efter det läses och ändras den direkt i Lifecare."
   },
   "loadError": "Det gick inte att hämta normberäkningen ({{error}})",
   "noDraft": "Ingen normberäkning har skapats för det här ärendet ännu. Draften skapas automatiskt när inkomstunderlaget (SSBTEK) har hämtats.",
@@ -135,6 +135,7 @@
     "finalized": "Normberäkningen är sparad som slutlig i Lifecare och kan inte ändras.",
     "saveFinal": "Spara som slutlig",
     "saveFinalConfirm": "En slutlig normberäkning kan inte ändras i Lifecare efteråt.",
-    "saveFinalYes": "Ja, spara som slutlig"
+    "saveFinalYes": "Ja, spara som slutlig",
+    "changesSavedDirectly": "Ändringar sparas direkt i Lifecare."
   }
 }

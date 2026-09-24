@@ -8,10 +8,10 @@ import { FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 /**
- * "Spara normberäkning" and "Spara som slutlig" at the foot of the tab: send the draft to Lifecare — the
- * first time as a new beräkning, after that as a change to the same one — and say when it was last saved
- * there. Slutlig cannot be undone in Lifecare, so it asks first. A refusal is shown in Lifecare's or
- * Drakel's own words.
+ * The foot of the Normberäkning tab. Before the beräkning is in Lifecare, "Spara normberäkning" creates it
+ * there from careM's draft; after that every change is saved in Lifecare as it is made, so only "Spara som
+ * slutlig" remains. Slutlig cannot be undone in Lifecare, so it asks first. A refusal is shown in Lifecare's
+ * or Drakel's own words.
  */
 export const LifecareCalculationSave: FC<{
   errandId: string;
@@ -54,19 +54,21 @@ export const LifecareCalculationSave: FC<{
           {saved ?
             saved.finalized ?
               t('lifecare.finalized')
-            : t('lifecare.savedAt', { date: saved.updated, id: saved.id })
+            : `${t('lifecare.savedAt', { date: saved.updated, id: saved.id })} ${t('lifecare.changesSavedDirectly')}`
           : t('lifecare.notYetSaved')}
         </p>
         <div className="flex flex-wrap gap-12">
-          <Button
-            color="vattjom"
-            variant="secondary"
-            loading={saving}
-            disabled={closed}
-            onClick={() => void save(false)}
-          >
-            {t('lifecare.save')}
-          </Button>
+          {saved ? null : (
+            <Button
+              color="vattjom"
+              variant="secondary"
+              loading={saving}
+              disabled={closed}
+              onClick={() => void save(false)}
+            >
+              {t('lifecare.save')}
+            </Button>
+          )}
           <Button
             color="vattjom"
             variant="primary"

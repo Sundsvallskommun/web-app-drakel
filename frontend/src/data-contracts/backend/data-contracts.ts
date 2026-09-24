@@ -1215,6 +1215,24 @@ export interface NormberakningDraft {
   specialExpenseSum?: number;
   created?: string;
   updated?: string;
+  source?: NormberakningDraftSourceEnum;
+  finalized?: boolean;
+}
+
+export interface NormTypeOption {
+  code?: string;
+  displayName?: string;
+}
+
+export interface NormberakningTypes {
+  incomeTypes: NormTypeOption[];
+  costTypes: NormTypeOption[];
+  livingCostTypes: NormTypeOption[];
+}
+
+export interface NormberakningTypesApiResponse {
+  data: NormberakningTypes;
+  message: string;
 }
 
 export interface NormberakningDraftApiResponse {
@@ -1350,6 +1368,11 @@ export enum DecisionRegistrationOutcomeEnum {
   REGISTERED = "REGISTERED",
   FAILED = "FAILED",
   NOT_SENT = "NOT_SENT",
+}
+
+export enum NormberakningDraftSourceEnum {
+  CAREM = "CAREM",
+  LIFECARE = "LIFECARE",
 }
 
 export enum UserRoleEnum {

@@ -5,6 +5,7 @@ import {
   LifecarePlacedPersonsRaw,
 } from '@interfaces/lifecare-calculation.interface';
 import { LifecareJobStimulusRaw } from '@interfaces/lifecare-job-stimulus.interface';
+import { withPlacedPersons } from '@utils/lifecare-calculation';
 
 import LifecareApiService from './lifecare-api.service';
 
@@ -63,6 +64,22 @@ class LifecareCalculationsService {
       { calculation, jobStimulus },
     );
     return res.data;
+  }
+
+  /**
+   * Has Lifecare place the included members on the norm for the period and mark who has jobbstimulans in it —
+   * what the web app asks before every save. Members left out are taken off the norm.
+   */
+  public async placeAndMark(calculation: LifecareCalculationRaw, jobStimulus: LifecareJobStimulusRaw): Promise<LifecareCalculationRaw> {
+    const placed = await this.placePersons({
+      startDate: calculation.startDate,
+      endDate: calculation.endDate,
+      normId: calculation.normId,
+      calculationPersons: calculation.calculationPersons.filter(person => person.included),
+    });
+    const withNorm = withPlacedPersons(calculation, placed.calculationPersons);
+    const marked = await this.withJobStimuli(withNorm, jobStimulus);
+    return { ...withNorm, hasApplicantJobStimuli: marked.hasApplicantJobStimuli, hasCoApplicantJobStimuli: marked.hasCoApplicantJobStimuli };
   }
 
   /** Creates a beräkning on the insats. Not idempotent: a second call makes a second beräkning. */

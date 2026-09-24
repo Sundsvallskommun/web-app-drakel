@@ -1,7 +1,7 @@
 {
   "header": {
     "title": "Norm calculation",
-    "description": "Draft of the norm calculation for the application. Income and expenses can be adjusted – the result is calculated in Lifecare."
+    "description": "Incomes and expenses can be adjusted. Until the calculation is saved in Lifecare it is a draft from the application; after that it is read and changed directly in Lifecare."
   },
   "loadError": "Could not fetch the norm calculation ({{error}})",
   "noDraft": "No norm calculation has been created for this errand yet. The draft is created automatically once the income data (SSBTEK) has been fetched.",
@@ -135,6 +135,7 @@
     "finalized": "The calculation is saved as final in Lifecare and cannot be changed.",
     "saveFinal": "Save as final",
     "saveFinalConfirm": "A final calculation cannot be changed in Lifecare afterwards.",
-    "saveFinalYes": "Yes, save as final"
+    "saveFinalYes": "Yes, save as final",
+    "changesSavedDirectly": "Changes are saved directly in Lifecare."
   }
 }

@@ -257,6 +257,14 @@ export const householdSizeOf = (calculation: LifecareCalculationRaw, draft: Calc
   return { custom, size: custom && draft.householdSize !== undefined ? draft.householdSize : members, members };
 };
 
+/** The household size a saved beräkning holds — its own when the handläggare set one, else the members included. */
+export const householdSizeOfSaved = (calculation: LifecareCalculationRaw): HouseholdSize => {
+  const members = calculation.calculationPersons.filter(person => person.included).length;
+  const saved = typeof calculation.householdSize === 'number' ? calculation.householdSize : undefined;
+  const custom = calculation.hasCustomHouseholdSize && saved !== undefined;
+  return { custom, size: custom && saved !== undefined ? saved : members, members };
+};
+
 const subscription = (value: unknown) => ({ da: value, Jb: false, Kb: null, hb: null });
 
 /**

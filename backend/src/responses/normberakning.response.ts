@@ -1,6 +1,6 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsInt, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 /**
  * The normberäkning draft mirrors the Lifecare FC "Beräkning" view: one income row per type (with an
@@ -95,6 +95,31 @@ export class NormberakningDraft {
   @IsNumber() @IsOptional() specialExpenseSum?: number;
   @IsString() @IsOptional() created?: string;
   @IsString() @IsOptional() updated?: string;
+  /**
+   * Where the rows come from: careM's draft (CAREM) until the beräkning is first saved in Lifecare, and the
+   * saved beräkning in Lifecare (LIFECARE) after that — then every change is made there directly.
+   */
+  @IsIn(['CAREM', 'LIFECARE']) @IsOptional() source?: 'CAREM' | 'LIFECARE';
+  /** Whether Lifecare holds the beräkning as slutlig — no further change is possible. */
+  @IsBoolean() @IsOptional() finalized?: boolean;
+}
+
+/** A selectable income or cost type: the code a row stores and the label shown. */
+export class NormTypeOption {
+  @IsString() @IsOptional() code?: string;
+  @IsString() @IsOptional() displayName?: string;
+}
+
+/** The type catalogues the add-row dropdowns offer — Lifecare's own once the beräkning is saved there. */
+export class NormberakningTypes {
+  @IsArray() @ValidateNested({ each: true }) @Type(() => NormTypeOption) incomeTypes!: NormTypeOption[];
+  @IsArray() @ValidateNested({ each: true }) @Type(() => NormTypeOption) costTypes!: NormTypeOption[];
+  @IsArray() @ValidateNested({ each: true }) @Type(() => NormTypeOption) livingCostTypes!: NormTypeOption[];
+}
+
+export class NormberakningTypesApiResponse implements ApiResponse<NormberakningTypes> {
+  @ValidateNested() @Type(() => NormberakningTypes) data!: NormberakningTypes;
+  @IsString() message!: string;
 }
 
 export class NormberakningDraftApiResponse implements ApiResponse<NormberakningDraft> {

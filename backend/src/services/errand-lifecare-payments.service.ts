@@ -3,6 +3,7 @@ import CaremanagementErrandService from '@services/caremanagement-errand.service
 import LifecareAccessLogService from '@services/lifecare-access-log.service';
 import LifecarePaymentsService from '@services/lifecare-payments.service';
 import LifecareServiceIdService from '@services/lifecare-service-id.service';
+import { applicationMonthOf } from '@utils/application-month';
 import { buildPayeeCreate, findMatchingPayee, NewLifecarePayee } from '@utils/lifecare-payee';
 import { paymentForMonth, toPaymentProposal } from '@utils/lifecare-payment-proposal';
 
@@ -42,9 +43,7 @@ class ErrandLifecarePaymentsService {
    */
   async paymentStatus(errandId: string): Promise<PaymentStatusView> {
     const view = await this.errandService.getFinancialAssistanceView(errandId);
-    const month = view.data?.data?.periodMonth;
-    const year = view.data?.data?.periodYear;
-    const applicationMonth = month && year ? `${String(year)}-${String(month).padStart(2, '0')}` : undefined;
+    const applicationMonth = applicationMonthOf(view.data?.data);
     if (!applicationMonth) {
       return { effectuated: false, unavailable: true };
     }

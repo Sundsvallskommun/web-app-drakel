@@ -3,18 +3,11 @@ import { LifecareCalculationRaw } from '@interfaces/lifecare-calculation.interfa
 import CaremanagementErrandService from '@services/caremanagement-errand.service';
 import CaremanagementNormberakningService from '@services/caremanagement-normberakning.service';
 import LifecareAccessLogService from '@services/lifecare-access-log.service';
+import LifecareCalculationEditService from '@services/lifecare-calculation-edit.service';
 import LifecareCalculationsService from '@services/lifecare-calculations.service';
 import LifecareJobStimulusService from '@services/lifecare-job-stimulus.service';
 import LifecareServiceIdService from '@services/lifecare-service-id.service';
-import {
-  applyDraft,
-  buildCalculationCreate,
-  buildCalculationUpdate,
-  CalculationDraftInput,
-  householdSizeOf,
-  withJobStimulusIncomes,
-  withPlacedPersons,
-} from '@utils/lifecare-calculation';
+import { applyDraft, buildCalculationCreate, CalculationDraftInput, householdSizeOf, withJobStimulusIncomes } from '@utils/lifecare-calculation';
 import { isLifecareRefusal } from '@utils/lifecare-error';
 import { logger } from '@utils/logger';
 import { succeedsWithin } from '@utils/retry';
@@ -27,15 +20,16 @@ import { LifecareCalculationView, toLifecareCalculationView } from '@/responses/
 const CAREM_ATTEMPTS = 3;
 
 /**
- * The errand's normberäkning, kept in Lifecare. careM's draft is the handläggare's working copy; Spara sends
- * it to Lifecare — `Calculation/Create` the first time, `Calculation/Update` after that — and careM keeps only
- * the reference (`lifecareCalculationId`), so the same beräkning is changed again rather than a second one
- * made. From then on Lifecare's own summering is the result the tabs show.
+ * The errand's normberäkning, kept in Lifecare. careM's draft — filled from the ansökan and SSBTEK — is the
+ * working copy until the first Spara creates the beräkning in Lifecare (`Calculation/Create`); careM then keeps
+ * only the reference (`lifecareCalculationId`). After that Lifecare owns the beräkning: the tab changes it
+ * there directly (see LifecareCalculationEditService), and Lifecare's own summering is the result shown.
  */
 class ErrandLifecareCalculationService {
   private errandService = new CaremanagementErrandService();
   private normberakning = new CaremanagementNormberakningService();
   private calculations = new LifecareCalculationsService();
+  private edit = new LifecareCalculationEditService();
   private jobStimulus = new LifecareJobStimulusService();
   private serviceIds = new LifecareServiceIdService();
   private accessLog = new LifecareAccessLogService();
@@ -56,40 +50,28 @@ class ErrandLifecareCalculationService {
   }
 
   /**
-   * Saves the draft in Lifecare: Lifecare places the members on the norm, marks who has jobbstimulans, and
-   * counts the beräkning. Created the first time and the errand pointed at it, changed every time after.
-   * `finalize` saves it as slutlig; Lifecare then allows no change, so a new beräkning is created first when
-   * none exists.
+   * Saves the beräkning in Lifecare. The first time it is created from careM's draft — Lifecare places the
+   * members on the norm, marks who has jobbstimulans and counts it — and the errand is pointed at it. Once it
+   * exists Lifecare owns it and the draft is no longer used: saving again saves Lifecare's own beräkning,
+   * which is what `finalize` (slutlig, after which Lifecare allows no change) needs.
    */
   async save(errandId: string, finalize = false): Promise<LifecareCalculationView> {
-    const [serviceId, calculationId, draft] = await Promise.all([
-      this.serviceIds.resolve(errandId),
-      this.calculationIdOf(errandId),
-      this.normberakning.readDraft(errandId),
-    ]);
-    const [proposal, saved, jobStimulus] = await Promise.all([
-      this.calculations.readProposal(serviceId),
-      calculationId === undefined ? Promise.resolve(undefined) : this.calculations.readForEdit(calculationId),
-      this.jobStimulus.readForService(serviceId),
-    ]);
-    await this.accessLog.logRead(errandId, { target: 'CALCULATION', description: 'Läste beräkningsunderlag i Lifecare' });
-    if (saved?.calculation.isFinalized) {
-      throw new HttpException(422, 'Normberäkningen är sparad som slutlig i Lifecare och kan inte ändras.');
+    const calculationId = await this.calculationIdOf(errandId);
+    if (calculationId !== undefined) {
+      return toLifecareCalculationView(await this.edit.change(errandId, calculationId, calculation => calculation, finalize));
     }
 
+    const [serviceId, draft] = await Promise.all([this.serviceIds.resolve(errandId), this.normberakning.readDraft(errandId)]);
+    const [proposal, jobStimulus] = await Promise.all([this.calculations.readProposal(serviceId), this.jobStimulus.readForService(serviceId)]);
+    await this.accessLog.logRead(errandId, { target: 'CALCULATION', description: 'Läste beräkningsunderlag i Lifecare' });
+
     const draftInput: CalculationDraftInput = draft.data;
-    const base = saved?.calculation ?? proposal.calculation;
-    const filled = applyDraft(base, proposal.calculation.calculationPersons, draftInput, saved ?? proposal, swedishToday());
+    const filled = applyDraft(proposal.calculation, proposal.calculation.calculationPersons, draftInput, proposal, swedishToday());
     if (!filled.writable) {
       throw new HttpException(422, filled.reason);
     }
-    const catalogues = saved ?? proposal;
-    const calculation = withJobStimulusIncomes(await this.placeAndMark(filled.calculation, jobStimulus), catalogues.incomeTypes);
+    const calculation = withJobStimulusIncomes(await this.calculations.placeAndMark(filled.calculation, jobStimulus), proposal.incomeTypes);
     const household = householdSizeOf(calculation, draftInput);
-
-    if (calculationId !== undefined) {
-      return this.updateInLifecare(errandId, calculationId, buildCalculationUpdate(calculation, household, finalize), finalize);
-    }
 
     const created = await this.createInLifecare(serviceId, buildCalculationCreate(calculation, household));
     await this.accessLog.logWrite(errandId, LifecareAccessActionEnum.CREATE, {
@@ -101,40 +83,8 @@ class ErrandLifecareCalculationService {
     if (!finalize) {
       return toLifecareCalculationView(created);
     }
-    // Slutlig is a change to a saved beräkning, so the new one is read back in the shape Update takes.
-    const createdForEdit = await this.calculations.readForEdit(created.calculationId);
-    return this.updateInLifecare(errandId, created.calculationId, buildCalculationUpdate(createdForEdit.calculation, household, true), true);
-  }
-
-  private async updateInLifecare(
-    errandId: string,
-    calculationId: number,
-    body: Record<string, unknown>,
-    finalize: boolean,
-  ): Promise<LifecareCalculationView> {
-    const updated = await this.calculations.update(calculationId, body);
-    await this.accessLog.logWrite(errandId, LifecareAccessActionEnum.UPDATE, {
-      target: 'CALCULATION',
-      description: finalize ? 'Sparade normberäkningen som slutlig i Lifecare' : 'Ändrade normberäkningen i Lifecare',
-      lifecareId: String(calculationId),
-    });
-    return toLifecareCalculationView(updated);
-  }
-
-  /** Has Lifecare place the included members on the norm and mark who has jobbstimulans in the period. */
-  private async placeAndMark(
-    calculation: LifecareCalculationRaw,
-    jobStimulus: Awaited<ReturnType<LifecareJobStimulusService['readForService']>>,
-  ): Promise<LifecareCalculationRaw> {
-    const placed = await this.calculations.placePersons({
-      startDate: calculation.startDate,
-      endDate: calculation.endDate,
-      normId: calculation.normId,
-      calculationPersons: calculation.calculationPersons.filter(person => person.included),
-    });
-    const withNorm = withPlacedPersons(calculation, placed.calculationPersons);
-    const marked = await this.calculations.withJobStimuli(withNorm, jobStimulus);
-    return { ...withNorm, hasApplicantJobStimuli: marked.hasApplicantJobStimuli, hasCoApplicantJobStimuli: marked.hasCoApplicantJobStimuli };
+    // Slutlig is a change to a saved beräkning, so the new one is saved again as slutlig.
+    return toLifecareCalculationView(await this.edit.change(errandId, created.calculationId, saved => saved, true));
   }
 
   /** Creates the beräkning, telling a call Lifecare never answered apart from a refusal. */

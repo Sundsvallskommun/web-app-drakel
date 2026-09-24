@@ -100,9 +100,10 @@ const typeLabelMap = (options: TypeOption[]): Record<string, string> => {
 
 /**
  * The "Normberäkning" tab, laid out like Lifecare's Beräkning view (header + sub-tabs FAMILJ /
- * INKOMSTER / UTGIFTER / LEVNADSKOSTNADER I ÖVRIGT / GEMENSAMMA KOSTNADER). careM's draft is the
- * handläggare's working copy; "Spara normberäkning" at the foot sends it to Lifecare, whose summering is
- * then the result shown at the top.
+ * INKOMSTER / UTGIFTER / LEVNADSKOSTNADER I ÖVRIGT / GEMENSAMMA KOSTNADER). Until the first "Spara
+ * normberäkning" the rows are careM's draft from the ansökan; that save creates the beräkning in Lifecare,
+ * and from then on the rows are Lifecare's own — read from it and changed in it directly — and Lifecare's
+ * summering is the result shown at the top.
  */
 export const ErrandNormberakning: FC<{
   errandId: string;
@@ -123,7 +124,15 @@ export const ErrandNormberakning: FC<{
   const normResult =
     lifecare.calculation?.summary ? fromLifecareSummary(lifecare.calculation.summary) : computeNormResult(proposal);
   const { draft, isLoading, error, refresh } = useErrandNormberakning(errandId);
-  const types = useNormberakningTypes();
+  const types = useNormberakningTypes(errandId, draft?.source);
+  // A beräkning Lifecare holds as slutlig cannot be changed, whatever the approval says.
+  const closed = locked || draft?.finalized === true;
+
+  // A row change moves the result too, and once the beräkning is in Lifecare that is Lifecare's summering.
+  const refreshAll = (): void => {
+    refresh();
+    lifecare.refresh();
+  };
   const [activeTab, setActiveTab] = useState<number>(0);
 
   const incomeWarnings = warnings.filter((warning) => INCOME_WARNING_TYPES.has(warning.type ?? ''));
@@ -241,7 +250,7 @@ export const ErrandNormberakning: FC<{
                 <Tabs.Content>
                   <NormberakningTabPanel
                     errandId={errandId}
-                    locked={locked}
+                    locked={closed}
                     warnings={personWarnings}
                     onWarningsChanged={onWarningsChanged}
                     footer={<PreviousNormberakningFamilj />}
@@ -255,7 +264,7 @@ export const ErrandNormberakning: FC<{
                 <Tabs.Content>
                   <NormberakningTabPanel
                     errandId={errandId}
-                    locked={locked}
+                    locked={closed}
                     warnings={incomeWarnings}
                     onWarningsChanged={onWarningsChanged}
                     footer={<PreviousNormberakningIncomes />}
@@ -265,7 +274,7 @@ export const ErrandNormberakning: FC<{
                       rows={draft.incomes ?? []}
                       incomeSum={draft.incomeSum}
                       incomeTypes={types.incomeTypes}
-                      onChanged={refresh}
+                      onChanged={refreshAll}
                     />
                   </NormberakningTabPanel>
                 </Tabs.Content>
@@ -275,7 +284,7 @@ export const ErrandNormberakning: FC<{
                 <Tabs.Content>
                   <NormberakningTabPanel
                     errandId={errandId}
-                    locked={locked}
+                    locked={closed}
                     warnings={expenseWarnings}
                     onWarningsChanged={onWarningsChanged}
                     footer={<PreviousNormberakningExpensesBucket />}
@@ -288,7 +297,7 @@ export const ErrandNormberakning: FC<{
                       summaLabel={t('expenses.sum')}
                       bucket="EXPENSE"
                       types={types.costTypes}
-                      onChanged={refresh}
+                      onChanged={refreshAll}
                     />
                   </NormberakningTabPanel>
                 </Tabs.Content>
@@ -298,7 +307,7 @@ export const ErrandNormberakning: FC<{
                 <Tabs.Content>
                   <NormberakningTabPanel
                     errandId={errandId}
-                    locked={locked}
+                    locked={closed}
                     onWarningsChanged={onWarningsChanged}
                     footer={<PreviousNormberakningLivingCosts />}
                   >
@@ -310,7 +319,7 @@ export const ErrandNormberakning: FC<{
                       summaLabel={t('livingCosts.sum')}
                       bucket="SPECIAL_EXPENSE"
                       types={types.livingCostTypes}
-                      onChanged={refresh}
+                      onChanged={refreshAll}
                     />
                   </NormberakningTabPanel>
                 </Tabs.Content>
@@ -320,7 +329,7 @@ export const ErrandNormberakning: FC<{
                 <Tabs.Content>
                   <NormberakningTabPanel
                     errandId={errandId}
-                    locked={locked}
+                    locked={closed}
                     onWarningsChanged={onWarningsChanged}
                     footer={<PreviousNormberakningGemensamma />}
                   >
@@ -342,7 +351,7 @@ export const ErrandNormberakning: FC<{
           errandId={errandId}
           saved={lifecare.calculation}
           disabled={locked}
-          onSaved={lifecare.refresh}
+          onSaved={refreshAll}
         />
       </div>
     </PreviousNormberakningProvider>

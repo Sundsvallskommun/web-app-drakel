@@ -1,24 +1,17 @@
 import authMiddleware from '@middlewares/auth.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
-import CaremanagementMetadataService from '@services/caremanagement-metadata.service';
-import CaremanagementNormberakningService, { NormSection } from '@services/caremanagement-normberakning.service';
+import { NormSection } from '@services/caremanagement-normberakning.service';
+import ErrandNormberakningService from '@services/errand-normberakning.service';
 import ErrandPreviousCalculationService from '@services/errand-previous-calculation.service';
-import { toDropdownOption } from '@utils/dropdown-option';
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
-import { TypeOptionGroupEnum } from '@/data-contracts/caremanagement/data-contracts';
 import { NormHeaderInputDto, NormRowInputDto } from '@/dtos/normberakning.dto';
 import { HttpException } from '@/exceptions/HttpException';
-import { NormberakningDraftApiResponse } from '@/responses/normberakning.response';
+import { NormberakningDraftApiResponse, NormberakningTypesApiResponse } from '@/responses/normberakning.response';
 import { PreviousCalculationApiResponse } from '@/responses/previous-calculation.response';
 
 const NORM_SECTIONS: readonly string[] = ['persons', 'incomes', 'expenses'];
-
-// caremanagement returns one costTypes list grouped by Mina-sidor section (group = enum code). The
-// HOUSING section is Lifecare's boendekostnader (the Utgifter / EXPENSE bucket); the other sections
-// (WORK_AND_STUDIES / HEALTH / OTHER) are levnadskostnader i övrigt (the SPECIAL_EXPENSE bucket).
-const HOUSING_GROUP = TypeOptionGroupEnum.HOUSING;
 
 /** Validates the section path segment so we never forward an unknown section to caremanagement. */
 const toSection = (section: string): NormSection => {
@@ -29,23 +22,21 @@ const toSection = (section: string): NormSection => {
 };
 
 /**
- * Owns the draft normberäkning (persons · incomes · expenses) of a financial-assistance errand. Each
- * section is edited one row at a time; mutations return the affected row, so the frontend refetches the
- * draft for the recomputed sums.
+ * The Normberäkning tab's rows (persons · incomes · expenses) for a financial-assistance errand: careM's draft
+ * until the beräkning is first saved in Lifecare, Lifecare's beräkning after that (see ErrandNormberakningService).
+ * Each section is edited one row at a time; the frontend reads the draft again for the recounted sums.
  */
 @Controller()
 export class NormberakningController {
-  private normberakningService = new CaremanagementNormberakningService();
+  private normberakning = new ErrandNormberakningService();
   private previousCalculation = new ErrandPreviousCalculationService();
-  private metadataService = new CaremanagementMetadataService();
 
   @Get('/errands/:errandId/normberakning/draft')
-  @OpenAPI({ summary: 'Read the draft normberäkning (persons · incomes · expenses) for an errand' })
+  @OpenAPI({ summary: "Read the errand's normberäkning rows — careM's draft, or Lifecare's beräkning once saved there" })
   @ResponseSchema(NormberakningDraftApiResponse)
   @UseBefore(authMiddleware)
   async getDraft(@Param('errandId') errandId: string) {
-    const res = await this.normberakningService.readDraft(errandId);
-    return { data: res.data, message: 'success' };
+    return { data: await this.normberakning.readDraft(errandId), message: 'success' };
   }
 
   @Get('/errands/:errandId/normberakning/previous')
@@ -56,42 +47,32 @@ export class NormberakningController {
     return { data: await this.previousCalculation.read(errandId), message: 'success' };
   }
 
-  @Get('/normberakning/types')
-  @OpenAPI({ summary: 'Labelled income/cost type catalogues for the add-row dropdowns' })
+  @Get('/errands/:errandId/normberakning/types')
+  @OpenAPI({ summary: "The income/cost types a new row can have — Lifecare's catalogues once the beräkning is saved there" })
+  @ResponseSchema(NormberakningTypesApiResponse)
   @UseBefore(authMiddleware)
-  async getTypes() {
-    const res = await this.metadataService.readFinancialAssistanceMetadata();
-    const costTypes = res.data?.costTypes ?? [];
-    // Split the single costTypes list into the two normberäkning buckets via the Mina-sidor group.
-    return {
-      data: {
-        incomeTypes: (res.data?.incomeTypes ?? []).map(toDropdownOption),
-        costTypes: costTypes.filter(type => type.group === HOUSING_GROUP).map(toDropdownOption),
-        livingCostTypes: costTypes.filter(type => type.group !== HOUSING_GROUP).map(toDropdownOption),
-      },
-      message: 'success',
-    };
+  async getTypes(@Param('errandId') errandId: string) {
+    return { data: await this.normberakning.types(errandId), message: 'success' };
   }
 
   @Patch('/errands/:errandId/normberakning/draft/header')
-  @OpenAPI({ summary: 'Edit the draft normberäkning header (norm, dates, household size)' })
-  @ResponseSchema(NormberakningDraftApiResponse)
+  @OpenAPI({ summary: 'Edit the draft normberäkning header (norm, dates, household size); careM draft only' })
   @UseBefore(authMiddleware, validationMiddleware(NormHeaderInputDto, 'body'))
   async updateHeader(@Param('errandId') errandId: string, @Body() input: NormHeaderInputDto) {
-    const res = await this.normberakningService.updateHeader(errandId, input);
-    return { data: res.data, message: 'success' };
+    await this.normberakning.updateHeader(errandId, input);
+    return { data: null, message: 'success' };
   }
 
   @Post('/errands/:errandId/normberakning/draft/:section')
-  @OpenAPI({ summary: 'Add a handläggare row to a draft normberäkning section' })
+  @OpenAPI({ summary: 'Add a handläggare row to a normberäkning section' })
   @UseBefore(authMiddleware, validationMiddleware(NormRowInputDto, 'body'))
   async addRow(@Param('errandId') errandId: string, @Param('section') section: string, @Body() input: NormRowInputDto) {
-    const res = await this.normberakningService.addRow(errandId, toSection(section), input);
-    return { data: res.data, message: 'success' };
+    await this.normberakning.addRow(errandId, toSection(section), input);
+    return { data: null, message: 'success' };
   }
 
   @Patch('/errands/:errandId/normberakning/draft/:section/:rowId')
-  @OpenAPI({ summary: 'Set the handläggare value/note on a draft normberäkning row' })
+  @OpenAPI({ summary: 'Set the handläggare value/note on a normberäkning row' })
   @UseBefore(authMiddleware, validationMiddleware(NormRowInputDto, 'body'))
   async updateRow(
     @Param('errandId') errandId: string,
@@ -99,23 +80,23 @@ export class NormberakningController {
     @Param('rowId') rowId: string,
     @Body() input: NormRowInputDto,
   ) {
-    const res = await this.normberakningService.updateRow(errandId, toSection(section), rowId, input);
-    return { data: res.data, message: 'success' };
+    await this.normberakning.updateRow(errandId, toSection(section), rowId, input);
+    return { data: null, message: 'success' };
   }
 
   @Delete('/errands/:errandId/normberakning/draft/:section/:rowId')
-  @OpenAPI({ summary: 'Soft-delete a draft normberäkning row' })
+  @OpenAPI({ summary: 'Remove a normberäkning row (a soft delete in the careM draft)' })
   @UseBefore(authMiddleware)
   async deleteRow(@Param('errandId') errandId: string, @Param('section') section: string, @Param('rowId') rowId: string) {
-    const res = await this.normberakningService.deleteRow(errandId, toSection(section), rowId);
-    return { data: res.data, message: 'success' };
+    await this.normberakning.deleteRow(errandId, toSection(section), rowId);
+    return { data: null, message: 'success' };
   }
 
   @Post('/errands/:errandId/normberakning/draft/:section/:rowId/restore')
-  @OpenAPI({ summary: 'Restore a soft-deleted draft normberäkning row' })
+  @OpenAPI({ summary: 'Restore a soft-deleted draft normberäkning row; careM draft only' })
   @UseBefore(authMiddleware)
   async restoreRow(@Param('errandId') errandId: string, @Param('section') section: string, @Param('rowId') rowId: string) {
-    const res = await this.normberakningService.restoreRow(errandId, toSection(section), rowId);
-    return { data: res.data, message: 'success' };
+    await this.normberakning.restoreRow(errandId, toSection(section), rowId);
+    return { data: null, message: 'success' };
   }
 }

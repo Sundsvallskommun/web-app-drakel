@@ -75,11 +75,11 @@ export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
   const [drafts, setDrafts] = useState<{ key: number; costType: string }[]>([]);
   const [draftSeq, setDraftSeq] = useState<number>(0);
 
-  const runRowAction = async (action: () => Promise<{ error?: unknown }>) => {
+  const runRowAction = async (action: () => Promise<{ error?: unknown; message?: string }>) => {
     setError(undefined);
     const result = await action();
     if (result.error) {
-      setError(t('table.saveError'));
+      setError(result.message ?? t('table.saveError'));
       return;
     }
     onChanged();
@@ -176,7 +176,7 @@ export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
 const ExpenseRow: FC<{
   errandId: string;
   row: NormExpenseRow;
-  onAction: (action: () => Promise<{ error?: unknown }>) => void;
+  onAction: (action: () => Promise<{ error?: unknown; message?: string }>) => void;
 }> = ({ errandId, row, onAction }) => {
   const { t } = useTranslation('calculation');
   const [applied, setApplied] = useState<string>(row.appliedAmount?.toString() ?? '');
@@ -325,7 +325,7 @@ const DraftExpenseRow: FC<{
     });
     setSaving(false);
     if (result.error) {
-      onError(t('table.addError'));
+      onError(result.message ?? t('table.addError'));
       return;
     }
     onCommitted();

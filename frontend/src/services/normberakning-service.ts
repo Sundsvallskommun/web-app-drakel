@@ -1,4 +1,11 @@
-import { PreviousCalculationApiResponse, PreviousCalculationView } from '@data-contracts/backend/data-contracts';
+import {
+  NormberakningDraftSourceEnum,
+  NormberakningTypes,
+  NormberakningTypesApiResponse,
+  NormTypeOption,
+  PreviousCalculationApiResponse,
+  PreviousCalculationView,
+} from '@data-contracts/backend/data-contracts';
 import { ServiceResponse } from '@interfaces/services';
 import { ApiResponse, apiService, toServiceError } from '@services/api-service';
 
@@ -97,6 +104,10 @@ export interface NormberakningDraft {
   specialExpenseSum?: number;
   created?: string;
   updated?: string;
+  /** careM's draft (CAREM) until the beräkning is first saved in Lifecare; Lifecare's beräkning (LIFECARE) after that. */
+  source?: NormberakningDraftSourceEnum;
+  /** Whether Lifecare holds the beräkning as slutlig — no further change is possible. */
+  finalized?: boolean;
 }
 
 /** Fields sent when adding/editing a row (the union of the three sections' inputs). */
@@ -143,29 +154,16 @@ export interface NormHeaderInput {
 type NormRow = NormPersonRow | NormIncomeRow | NormExpenseRow;
 
 /** A selectable income/cost type — the code stored on the row plus its Swedish display label. */
-export interface TypeOption {
-  code?: string;
-  displayName?: string;
-}
+export type TypeOption = NormTypeOption;
 
-/** The labelled type catalogues used by the add-row dropdowns. */
-export interface NormberakningTypes {
-  incomeTypes: TypeOption[];
-  costTypes: TypeOption[];
-  livingCostTypes: TypeOption[];
-}
-
-/** Fetches the labelled income/cost type catalogues (global for the financial-assistance type). */
-export const getNormberakningTypes = (): Promise<ServiceResponse<NormberakningTypes>> =>
+/**
+ * The income/cost types a new row on the errand's normberäkning can have: careM's catalogues until the
+ * beräkning is saved in Lifecare, Lifecare's own after that.
+ */
+export const getNormberakningTypes = (errandId: string): Promise<ServiceResponse<NormberakningTypes>> =>
   apiService
-    .get<ApiResponse<Partial<NormberakningTypes>>>('normberakning/types')
-    .then((res) => ({
-      data: {
-        incomeTypes: res.data.data.incomeTypes ?? [],
-        costTypes: res.data.data.costTypes ?? [],
-        livingCostTypes: res.data.data.livingCostTypes ?? [],
-      },
-    }))
+    .get<NormberakningTypesApiResponse>(`errands/${errandId}/normberakning/types`)
+    .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);
 
 const byPosition = (first: { position?: number }, second: { position?: number }): number =>
