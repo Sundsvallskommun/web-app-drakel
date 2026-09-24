@@ -131,6 +131,14 @@ const withResult = (result: number) => {
   });
 };
 
+/** careM's beslutsförslag — the only source of the outcome. */
+const withProposedOutcome = (outcome: string) => {
+  vi.mocked(useDecisionProposal).mockReturnValue({
+    proposal: { outcome, reason: 'Föräldrapenning otillräcklig' },
+    isLoading: false,
+  });
+};
+
 /** Renders the tab and hands back the save it registers with the central "Spara ärende" button. */
 const renderTab = () => {
   const onRegisterSave = vi.fn();
@@ -184,26 +192,6 @@ describe('ErrandBeslut', () => {
     );
   });
 
-  it('leaves the beslutstyp to the handläggare when Lifecare has several for the proposed outcome', () => {
-    vi.mocked(useLifecareDecisionTypes).mockReturnValue({
-      types: [
-        ...TYPES,
-        {
-          code: 150,
-          name: 'EK Ekonomiskt bistånd 12 Kap 2 § SoL, bifall',
-          outcome: 'BIFALL',
-          requiresFromDate: true,
-          requiresToDate: true,
-        },
-      ],
-      isLoading: false,
-    });
-    withSaved(null);
-    renderTab();
-
-    expect(screen.getByLabelText('Beslut *')).toHaveValue('');
-  });
-
   it('starts a new beslut from careM’s förslag, matched to Lifecare’s type and orsak', () => {
     withSaved(null);
     renderTab();
@@ -212,8 +200,9 @@ describe('ErrandBeslut', () => {
     expect(screen.getByLabelText('Orsak')).toHaveValue('16');
   });
 
-  it('preselects the avslag and shows no belopp on a normöverskott', () => {
+  it('preselects the avslag careM proposes, and shows no belopp on a normöverskott', () => {
     withSaved(null);
+    withProposedOutcome('AVSLAG');
     withResult(1200);
     renderTab();
 
@@ -222,7 +211,7 @@ describe('ErrandBeslut', () => {
     expect(screen.queryByText('Belopp att bevilja')).not.toBeInTheDocument();
   });
 
-  it('preselects 12 kap 1, 7 §§ bifall for a delvis bifall, even with other bifall types offered', () => {
+  it('preselects 12 kap 1, 7 §§ bifall for careM’s delvis bifall, even with other bifall types offered', () => {
     vi.mocked(useLifecareDecisionTypes).mockReturnValue({
       types: [
         ...TYPES,
@@ -236,12 +225,8 @@ describe('ErrandBeslut', () => {
       ],
       isLoading: false,
     });
-    vi.mocked(useErrandNormberakning).mockReturnValue({
-      draft: { expenses: [{ appliedAmount: 6000, effectiveAmount: 5000 }] },
-      isLoading: false,
-      refresh: vi.fn(),
-    });
     withSaved(null);
+    withProposedOutcome('DELAVSLAG');
     withResult(-5220);
     renderTab();
 
@@ -272,6 +257,27 @@ describe('ErrandBeslut', () => {
       expect(screen.getByTestId('beslut-meddelande')).toHaveTextContent(
         /Bifall med barn till Test Testsson med 5\s220 kronor för september 2026\./
       );
+    });
+  });
+
+  it('follows careM’s outcome, not its own reading of the normberäkning', () => {
+    withSaved(null);
+    withProposedOutcome('BIFALL');
+    // An överskott by Lifecare's summering — careM still decides.
+    withResult(1200);
+    renderTab();
+
+    expect(screen.getByLabelText('Beslut *')).toHaveValue('153');
+  });
+
+  it('starts a delvis bifall from the same beslutsformulering as a bifall', async () => {
+    withSaved(null);
+    withProposedOutcome('DELAVSLAG');
+    withResult(-5220);
+    renderTab();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('beslut-meddelande')).toHaveTextContent(/Bifall till Test Testsson/);
     });
   });
 

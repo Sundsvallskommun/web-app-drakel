@@ -17,13 +17,7 @@ import { Alert } from '@sk-web-gui/alert';
 import { FormControl, FormLabel, Input, Select, Spinner } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { resolveBeslutAmount, resolveBeslutPeriod } from '@utils/beslut';
-import {
-  allExpensesApproved,
-  bifallPhraseFor,
-  decisionTypeFor,
-  hasChildren,
-  outcomeFromNormResult,
-} from '@utils/beslut-outcome';
+import { bifallPhraseFor, decisionTypeFor, hasChildren, toBeslutOutcome } from '@utils/beslut-outcome';
 import { fillBeslutPhraseMarkup, markupToPlainText, withPhraseAppended } from '@utils/beslut-phrase-markup';
 import { formatAmount } from '@utils/format-amount';
 import { groupDecisionReasons } from '@utils/group-decision-reasons';
@@ -160,17 +154,12 @@ export const ErrandBeslut: FC<{
   // derives it from the current draft, so it is a better answer than the stored recommendation, but a
   // handläggare's own saved beslut still wins.
   const prefillDate = savedBeslut?.date ?? recommendation?.decisionDate ?? today;
-  // The normberäkning decides the outcome: a normöverskott is an avslag, a normunderskott a bifall when
-  // everything applied for is approved, else a delvis bifall — preselected as Lifecare's 12 kap 1, 7 §§
-  // bifall or avslag. Without a result careM's förslag stands, its beslutstyp preselected only when it is
-  // the only one for the outcome, since a guess could register the beslut under the wrong paragraph.
-  const normOutcome = normResult ? outcomeFromNormResult(normResult, allExpensesApproved(draft)) : undefined;
-  const proposedOutcome = normOutcome ?? proposal.outcome ?? recommendation?.value;
-  const typesForOutcome = proposedOutcome ? types.filter((type) => type.outcome === proposedOutcome) : [];
-  const proposedType =
-    normOutcome ? decisionTypeFor(types, normOutcome)
-    : typesForOutcome.length === 1 ? typesForOutcome[0]
-    : undefined;
+  // careM decides the outcome — its beslutsförslag, counted on the normberäkning (Lifecare's once saved
+  // there), else its stored recommendation. Drakel keeps no rule of its own; it only preselects the Lifecare
+  // beslutstyp the outcome is registered as: 12 kap 1, 7 §§ bifall for a bifall or delvis bifall, avslag for
+  // an avslag.
+  const proposedOutcome = toBeslutOutcome(proposal.outcome ?? recommendation?.value);
+  const proposedType = proposedOutcome ? decisionTypeFor(types, proposedOutcome) : undefined;
   const prefillBeslutCode =
     savedBeslut ? String(savedBeslut.decisionCode)
     : proposedType ? String(proposedType.code)
@@ -204,10 +193,12 @@ export const ErrandBeslut: FC<{
     savedBeslut?.amount ?? calculatedDeficit ?? proposal.estimatedAmount ?? recommendation?.amount
   );
 
-  // A new beslut the normberäkning makes a bifall starts from its beslutsformulering — "Bifall månad", or
-  // "Bifall månad MED BARN" with barn in the beräkning — filled from the errand. Only once, only into an
-  // empty message the handläggare has not touched, and only when everything it is filled from has loaded.
-  const bifallPhrase = normOutcome === 'BIFALL' ? bifallPhraseFor(phrases, hasChildren(draft)) : undefined;
+  // A new beslut the normberäkning makes a bifall or a delvis bifall starts from the bifall
+  // beslutsformulering — "Bifall månad", or "Bifall månad MED BARN" with barn in the beräkning — filled from
+  // the errand. Only once, only into an empty message the handläggare has not touched, and only when
+  // everything it is filled from has loaded.
+  const grants = proposedOutcome === 'BIFALL' || proposedOutcome === 'DELAVSLAG';
+  const bifallPhrase = grants ? bifallPhraseFor(phrases, hasChildren(draft)) : undefined;
   const autoFilled = useRef<boolean>(false);
   const messageEmpty = markupToPlainText(messageValue.markup ?? '').trim() === '';
   const readyToFill = !savedLoading && !stakeholdersLoading && savedBeslut === null && !messageTouched && messageEmpty;

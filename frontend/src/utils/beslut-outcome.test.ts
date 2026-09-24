@@ -1,22 +1,4 @@
-import { describe, expect, it } from 'vitest';
-
-import {
-  allExpensesApproved,
-  bifallPhraseFor,
-  decisionTypeFor,
-  hasChildren,
-  outcomeFromNormResult,
-} from './beslut-outcome';
-import { NormResult } from './norm-result';
-
-const result = (value: number): NormResult => ({
-  income: 0,
-  norm: 0,
-  expenses: 0,
-  sum: value,
-  specialExpenses: 0,
-  result: value,
-});
+import { bifallPhraseFor, decisionTypeFor, hasChildren, toBeslutOutcome } from './beslut-outcome';
 
 /** Lifecare's beslutstyper for the insats (GetProposalForService, capture 2026-09-24), trimmed. */
 const TYPES = [
@@ -43,23 +25,13 @@ const TYPES = [
   },
 ];
 
-describe('outcomeFromNormResult', () => {
-  it('gives an avslag on a normöverskott', () => {
-    expect(outcomeFromNormResult(result(1200), true)).toBe('AVSLAG');
-  });
-
-  it('gives a bifall on a normunderskott with everything approved, else a delvis bifall', () => {
-    expect(outcomeFromNormResult(result(-5220), true)).toBe('BIFALL');
-    expect(outcomeFromNormResult(result(-5220), false)).toBe('DELAVSLAG');
-  });
-});
-
-describe('allExpensesApproved', () => {
-  it('holds only when every row applied for is approved in full', () => {
-    expect(allExpensesApproved({ expenses: [{ appliedAmount: 5000, effectiveAmount: 5000 }] })).toBe(true);
-    expect(allExpensesApproved({ specialExpenses: [{ appliedAmount: 900, effectiveAmount: 800 }] })).toBe(false);
-    // A removed row is not part of the beräkning.
-    expect(allExpensesApproved({ expenses: [{ appliedAmount: 900, effectiveAmount: 0, deleted: true }] })).toBe(true);
+describe('toBeslutOutcome', () => {
+  it("takes careM's outcome as it is, and nothing careM did not decide", () => {
+    expect(toBeslutOutcome('BIFALL')).toBe('BIFALL');
+    expect(toBeslutOutcome('DELAVSLAG')).toBe('DELAVSLAG');
+    expect(toBeslutOutcome('AVSLAG')).toBe('AVSLAG');
+    expect(toBeslutOutcome('OK')).toBeUndefined();
+    expect(toBeslutOutcome(undefined)).toBeUndefined();
   });
 });
 

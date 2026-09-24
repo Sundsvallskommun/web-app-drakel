@@ -1,7 +1,5 @@
 import { DecisionPhrase, LifecareDecisionTypeView } from '@data-contracts/backend/data-contracts';
-import { NormberakningDraft, NormExpenseRow } from '@services/normberakning-service';
-
-import { isSurplus, NormResult } from './norm-result';
+import { NormberakningDraft } from '@services/normberakning-service';
 
 /** The outcome a beslut on the normberäkning comes to — careM's names for them. */
 export type BeslutOutcome = 'BIFALL' | 'DELAVSLAG' | 'AVSLAG';
@@ -19,24 +17,14 @@ const DECISION_TYPE_NAME_ENDING: Record<BeslutOutcome, string> = {
 
 const normalizedName = (name: string): string => name.trim().replace(/\s+/g, ' ').toLowerCase();
 
-/** A row approved in full: the handläggare's amount covers what was applied for. */
-const approvedInFull = (row: NormExpenseRow): boolean =>
-  row.appliedAmount === undefined || (row.effectiveAmount ?? 0) >= row.appliedAmount;
-
-/** Whether every utgift and levnadskostnad i övrigt applied for is approved in full. */
-export const allExpensesApproved = (draft: NormberakningDraft | undefined): boolean =>
-  [...(draft?.expenses ?? []), ...(draft?.specialExpenses ?? [])].filter((row) => !row.deleted).every(approvedInFull);
+const OUTCOMES: readonly BeslutOutcome[] = ['BIFALL', 'DELAVSLAG', 'AVSLAG'];
 
 /**
- * The outcome the normberäkning gives, by the rules: a normöverskott is an avslag; a normunderskott is a
- * bifall when everything applied for is approved, else a delvis bifall.
+ * careM's outcome as one Drakel registers. careM is the only source of the outcome: it decides it on the
+ * normberäkning (on Lifecare's once it is saved there), so Drakel keeps no rule of its own.
  */
-export const outcomeFromNormResult = (result: NormResult, everythingApproved: boolean): BeslutOutcome => {
-  if (isSurplus(result)) {
-    return 'AVSLAG';
-  }
-  return everythingApproved ? 'BIFALL' : 'DELAVSLAG';
-};
+export const toBeslutOutcome = (value: string | undefined): BeslutOutcome | undefined =>
+  OUTCOMES.find((outcome) => outcome === value);
 
 /** The Lifecare beslutstyp an outcome is registered as, among those Lifecare offers the insats. */
 export const decisionTypeFor = (
