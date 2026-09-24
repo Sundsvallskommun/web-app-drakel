@@ -17,4 +17,5 @@ export const I18N_NAMESPACES = [
   'decision',
   'documentation',
   'admin',
+  'ssbtek',
 ];

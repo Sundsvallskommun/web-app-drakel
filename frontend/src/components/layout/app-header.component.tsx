@@ -1,10 +1,11 @@
 'use client';
 
+import { useSsbtekPanel } from '@components/ssbtek/ssbtek-panel-context';
 import { useUserStore } from '@services/user-service/user-service';
 import { Button, Logo, UserMenu } from '@sk-web-gui/react';
 import { basePath } from '@utils/base-path';
 import { getInitials } from '@utils/get-initials';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, FileSearch } from 'lucide-react';
 import NextLink from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -13,11 +14,15 @@ import { useShallow } from 'zustand/react/shallow';
 import { HeaderNotifications } from './header-notifications.component';
 import { useUserMenuGroups } from './user-menu-groups';
 
-/** Dark top header for the errand/register pages: service logo, "Nytt ärende", notifications and user menu. */
+/**
+ * Dark top header for the errand/register pages: service logo, "Hämta från SSBTEK", "Nytt ärende", notifications
+ * and user menu.
+ */
 export const AppHeader = () => {
   const { t } = useTranslation('header');
   const user = useUserStore(useShallow((state) => state.user));
   const userMenuGroups = useUserMenuGroups();
+  const ssbtekPanel = useSsbtekPanel();
   const { locale } = useParams<{ locale: string }>();
   const appName = process.env.NEXT_PUBLIC_APP_NAME ?? 'Drakel';
 
@@ -30,17 +35,30 @@ export const AppHeader = () => {
       </NextLink>
 
       <div className="flex items-center gap-24 shrink-0">
-        {/* Registrering skapar ett utkast direkt, så det öppnas i en ny flik för att inte lämna pågående ärende. */}
-        <Button
-          color="vattjom"
-          inverted
-          rightIcon={<ExternalLink />}
-          onClick={() => {
-            window.open(`${basePath}/${locale}/registrera`, '_blank', 'noopener');
-          }}
-        >
-          {t('newErrand')}
-        </Button>
+        <div className="flex items-center gap-12">
+          {/* Öppnar/stänger SSBTEK-panelen längst ner på sidan. */}
+          <Button
+            color="vattjom"
+            inverted
+            variant="secondary"
+            leftIcon={<FileSearch />}
+            aria-pressed={ssbtekPanel.isOpen}
+            onClick={ssbtekPanel.toggle}
+          >
+            {t('ssbtek')}
+          </Button>
+          {/* Registrering skapar ett utkast direkt, så det öppnas i en ny flik för att inte lämna pågående ärende. */}
+          <Button
+            color="vattjom"
+            inverted
+            rightIcon={<ExternalLink />}
+            onClick={() => {
+              window.open(`${basePath}/${locale}/registrera`, '_blank', 'noopener');
+            }}
+          >
+            {t('newErrand')}
+          </Button>
+        </div>
 
         <HeaderNotifications />
 

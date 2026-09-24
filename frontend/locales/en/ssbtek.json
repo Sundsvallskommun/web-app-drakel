@@ -1,0 +1,19 @@
+{
+  "title": "Fetch from SSBTEK",
+  "mockBadge": "Mocked – not connected to SSBTEK yet",
+  "resize": "Drag to change the panel height",
+  "close": "Close the SSBTEK panel",
+  "person": "Person",
+  "applicant": "Applicant",
+  "coApplicant": "Co-applicant",
+  "from": "From",
+  "to": "To",
+  "fetch": "Fetch",
+  "columns": {
+    "source": "Source",
+    "type": "Type",
+    "period": "Period",
+    "amount": "Amount",
+    "status": "Status"
+  }
+}

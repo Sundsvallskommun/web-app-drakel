@@ -1,0 +1,19 @@
+{
+  "title": "Hämta från SSBTEK",
+  "mockBadge": "Mockad – ingen koppling mot SSBTEK än",
+  "resize": "Dra för att ändra panelens höjd",
+  "close": "Stäng SSBTEK-panelen",
+  "person": "Person",
+  "applicant": "Sökande",
+  "coApplicant": "Medsökande",
+  "from": "Från",
+  "to": "Till",
+  "fetch": "Hämta",
+  "columns": {
+    "source": "Källa",
+    "type": "Typ",
+    "period": "Period",
+    "amount": "Belopp",
+    "status": "Status"
+  }
+}

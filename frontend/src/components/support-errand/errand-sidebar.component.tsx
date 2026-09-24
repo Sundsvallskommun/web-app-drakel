@@ -1,8 +1,9 @@
 'use client';
 
+import { usePublishedWidth } from '@hooks/use-published-width';
 import { Badge, Button, Divider } from '@sk-web-gui/react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { FC, Fragment, ReactNode } from 'react';
+import { FC, Fragment, ReactNode, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export interface SidebarSection {
@@ -66,30 +67,36 @@ const SidebarAccordionItem: FC<{ section: SidebarSection; open: boolean; onToggl
 /**
  * Right-hand column of the errand view: a stack of accordion sections (Varningar, Anteckningar, …). The open
  * sections are controlled by the parent so it can lazy-load each section's data only once it's opened.
+ * Its width is published as `--errand-sidebar-width`, where the SSBTEK panel at the foot of the page stops.
  */
 export const ErrandSidebar: FC<{
   sections: SidebarSection[];
   openKeys: string[];
   onToggle: (key: string) => void;
-}> = ({ sections, openKeys, onToggle }) => (
-  <aside
-    data-cy="errand-sidebar"
-    className="shrink-0 w-full lg:w-[36rem] xl:w-[44rem] h-full overflow-y-auto bg-background-content border-l-1 border-divider pt-24 pb-32 flex flex-col gap-24"
-  >
-    {sections.map((section, index) => (
-      <Fragment key={section.key}>
-        {index > 0 ?
-          // sk Divider grows by default (flex-1), which would stretch it in this flex column.
-          <Divider className="grow-0" />
-        : null}
-        <SidebarAccordionItem
-          section={section}
-          open={openKeys.includes(section.key)}
-          onToggle={() => {
-            onToggle(section.key);
-          }}
-        />
-      </Fragment>
-    ))}
-  </aside>
-);
+}> = ({ sections, openKeys, onToggle }) => {
+  const asideRef = useRef<HTMLElement>(null);
+  usePublishedWidth(asideRef, '--errand-sidebar-width');
+  return (
+    <aside
+      ref={asideRef}
+      data-cy="errand-sidebar"
+      className="shrink-0 w-full lg:w-[36rem] xl:w-[44rem] h-full overflow-y-auto bg-background-content border-l-1 border-divider pt-24 pb-32 flex flex-col gap-24"
+    >
+      {sections.map((section, index) => (
+        <Fragment key={section.key}>
+          {index > 0 ?
+            // sk Divider grows by default (flex-1), which would stretch it in this flex column.
+            <Divider className="grow-0" />
+          : null}
+          <SidebarAccordionItem
+            section={section}
+            open={openKeys.includes(section.key)}
+            onToggle={() => {
+              onToggle(section.key);
+            }}
+          />
+        </Fragment>
+      ))}
+    </aside>
+  );
+};
