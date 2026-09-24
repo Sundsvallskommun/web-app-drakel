@@ -1,7 +1,9 @@
 import { LifecareDecisionView } from '@data-contracts/backend/data-contracts';
 import { useBeslutRecommendation } from '@hooks/use-beslut-recommendation';
+import { useDecisionPhrases } from '@hooks/use-decision-phrases';
 import { useDecisionProposal } from '@hooks/use-decision-proposal';
 import { useErrandNormberakning } from '@hooks/use-errand-normberakning';
+import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
 import { useLifecareCalculation } from '@hooks/use-lifecare-calculation';
 import { useLifecareDecision } from '@hooks/use-lifecare-decision';
 import { useLifecareDecisionReasons } from '@hooks/use-lifecare-decision-reasons';
@@ -20,13 +22,39 @@ vi.mock('@hooks/use-lifecare-decision-reasons', () => ({ useLifecareDecisionReas
 vi.mock('@hooks/use-lifecare-decision', () => ({ useLifecareDecision: vi.fn() }));
 vi.mock('@hooks/use-lifecare-calculation', () => ({ useLifecareCalculation: vi.fn() }));
 vi.mock('@hooks/use-decision-proposal', () => ({ useDecisionProposal: vi.fn() }));
+vi.mock('@hooks/use-decision-phrases', () => ({ useDecisionPhrases: vi.fn() }));
+vi.mock('@hooks/use-errand-stakeholders', () => ({ useErrandStakeholders: vi.fn() }));
 vi.mock('@services/lifecare-decision-service', () => ({
   saveLifecareDecision: vi.fn(),
   getLifecareDecisionPdf: vi.fn(),
 }));
 vi.mock('@services/document-template-service', () => ({ getDocumentTemplateContent: vi.fn() }));
 // The message editor is Quill behind next/dynamic; what is under test is the form around it.
-vi.mock('./beslut-meddelande.component', () => ({ BeslutMeddelande: () => null }));
+// The mock shows the message it is handed, so a message filled in by the tab can be read.
+vi.mock('./beslut-meddelande.component', () => ({
+  BeslutMeddelande: ({ value }: { value: { markup?: string } }) => (
+    <div data-testid="beslut-meddelande">{value.markup}</div>
+  ),
+}));
+
+/** The beslutsformuleringar in Templating a bifall starts from. */
+const PHRASES = [
+  {
+    identifier: 'drakel.fa.decision.bifall-manad',
+    category: 'Ek bistånd Bifall MÅNAD PERIOD ÄNDAMÅL',
+    name: 'Bifall månad',
+  },
+  {
+    identifier: 'drakel.fa.decision.bifall-manad-barn',
+    category: 'Ek bistånd Bifall MÅNAD PERIOD ÄNDAMÅL',
+    name: 'Bifall månad MED BARN',
+  },
+];
+
+const PHRASE_CONTENT: Record<string, string> = {
+  'drakel.fa.decision.bifall-manad': '<p>Bifall till ¤ med ¥ kronor för ※.</p>',
+  'drakel.fa.decision.bifall-manad-barn': '<p>Bifall med barn till ¤ med ¥ kronor för ※.</p>',
+};
 
 // Lifecare's beslutstyper for the insats; återkrav is offered but not registered from Drakel.
 const TYPES = [
@@ -125,7 +153,16 @@ describe('ErrandBeslut', () => {
     });
     vi.mocked(useLifecareCalculation).mockReturnValue({ calculation: null, isLoading: false, refresh: vi.fn() });
     vi.mocked(saveLifecareDecision).mockReset();
-    vi.mocked(getDocumentTemplateContent).mockResolvedValue({ data: '<p>Fullföljdshänvisning</p>' });
+    vi.mocked(getDocumentTemplateContent).mockClear();
+    vi.mocked(getDocumentTemplateContent).mockImplementation((identifier) =>
+      Promise.resolve({ data: PHRASE_CONTENT[identifier] ?? '<p>Fullföljdshänvisning</p>' })
+    );
+    vi.mocked(useDecisionPhrases).mockReturnValue({ phrases: PHRASES, isLoading: false });
+    vi.mocked(useErrandStakeholders).mockReturnValue({
+      stakeholders: [{ role: 'APPLICANT', firstName: 'Test', lastName: 'Testsson' }],
+      isLoading: false,
+      refresh: vi.fn(),
+    });
   });
 
   it('reads the form back from the beslut saved in Lifecare', () => {
@@ -211,6 +248,49 @@ describe('ErrandBeslut', () => {
     expect(screen.getByLabelText('Beslut *')).toHaveValue('153');
     expect(screen.getByText('Förslag: Delvis bifall')).toBeInTheDocument();
     expect(screen.getByText('Belopp att bevilja')).toBeInTheDocument();
+  });
+
+  it('starts a bifall with barn in the beräkning from "Bifall månad MED BARN", filled from the errand', async () => {
+    vi.mocked(useErrandNormberakning).mockReturnValue({
+      draft: {
+        calculationFromDate: '2026-09-01',
+        calculationToDate: '2026-09-30',
+        persons: [
+          { role: 'APPLICANT', included: true },
+          { role: 'CHILD', included: true },
+        ],
+        expenses: [{ appliedAmount: 5000, effectiveAmount: 5000 }],
+      },
+      isLoading: false,
+      refresh: vi.fn(),
+    });
+    withSaved(null);
+    withResult(-5220);
+    renderTab();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('beslut-meddelande')).toHaveTextContent(
+        /Bifall med barn till Test Testsson med 5\s220 kronor för september 2026\./
+      );
+    });
+  });
+
+  it('starts a bifall without barn from "Bifall månad"', async () => {
+    withSaved(null);
+    withResult(-5220);
+    renderTab();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('beslut-meddelande')).toHaveTextContent(/Bifall till Test Testsson/);
+    });
+  });
+
+  it('leaves the message alone when the beslut is already saved, or the normberäkning is no bifall', () => {
+    withSaved(SAVED);
+    withResult(-5220);
+    renderTab();
+    expect(screen.getByTestId('beslut-meddelande')).toHaveTextContent('Beslut');
+    expect(getDocumentTemplateContent).not.toHaveBeenCalledWith('drakel.fa.decision.bifall-manad');
   });
 
   it('lets Visa PDF show Lifecare’s print only of a saved, unchanged beslut', () => {

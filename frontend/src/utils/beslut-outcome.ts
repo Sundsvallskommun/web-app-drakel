@@ -1,4 +1,4 @@
-import { LifecareDecisionTypeView } from '@data-contracts/backend/data-contracts';
+import { DecisionPhrase, LifecareDecisionTypeView } from '@data-contracts/backend/data-contracts';
 import { NormberakningDraft, NormExpenseRow } from '@services/normberakning-service';
 
 import { isSurplus, NormResult } from './norm-result';
@@ -44,3 +44,20 @@ export const decisionTypeFor = (
   outcome: BeslutOutcome
 ): LifecareDecisionTypeView | undefined =>
   types.find((type) => normalizedName(type.name).endsWith(DECISION_TYPE_NAME_ENDING[outcome]));
+
+/** Whether a barn — living in the household or an umgängesbarn — is in the normberäkning. */
+export const hasChildren = (draft: NormberakningDraft | undefined): boolean =>
+  (draft?.persons ?? []).some(
+    (person) =>
+      !person.deleted && person.included === true && (person.role === 'CHILD' || person.role === 'VISITATION_CHILD')
+  );
+
+// The beslutsformuleringar a bifall's message starts from, by rubrik.
+const BIFALL_PHRASE = 'bifall månad';
+const BIFALL_WITH_CHILDREN_PHRASE = 'bifall månad med barn';
+
+/** The beslutsformulering a bifall starts from: "Bifall månad", or "Bifall månad MED BARN" when there are barn. */
+export const bifallPhraseFor = (phrases: DecisionPhrase[], withChildren: boolean): DecisionPhrase | undefined => {
+  const wanted = withChildren ? BIFALL_WITH_CHILDREN_PHRASE : BIFALL_PHRASE;
+  return phrases.find((phrase) => normalizedName(phrase.name) === wanted);
+};

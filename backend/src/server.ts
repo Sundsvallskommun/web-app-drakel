@@ -10,6 +10,7 @@ import { AdministratorController } from './controllers/administrator.controller'
 import { CountsController } from './controllers/counts.controller';
 import { DecisionController } from './controllers/decision.controller';
 import { DecisionNotificationController } from './controllers/decision-notification.controller';
+import { DecisionPhraseController } from './controllers/decision-phrase.controller';
 import { DocumentController } from './controllers/document.controller';
 import { DocumentTemplateController } from './controllers/document-template.controller';
 import { ErrandController } from './controllers/errand.controller';
@@ -61,6 +62,7 @@ const app = new App([
   FinalizeController,
   AdministratorController,
   AdminTemplateController,
+  DecisionPhraseController,
   PdfController,
   LifecareDocumentsController,
   LifecarePaymentsController,

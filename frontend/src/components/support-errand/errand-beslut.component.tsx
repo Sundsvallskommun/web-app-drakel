@@ -3,8 +3,10 @@
 import { PdfPreviewButton } from '@components/common/pdf-preview-button.component';
 import { LifecareDecisionReasonView } from '@data-contracts/backend/data-contracts';
 import { useBeslutRecommendation } from '@hooks/use-beslut-recommendation';
+import { useDecisionPhrases } from '@hooks/use-decision-phrases';
 import { useDecisionProposal } from '@hooks/use-decision-proposal';
 import { useErrandNormberakning } from '@hooks/use-errand-normberakning';
+import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
 import { useLifecareCalculation } from '@hooks/use-lifecare-calculation';
 import { useLifecareDecision } from '@hooks/use-lifecare-decision';
 import { useLifecareDecisionReasons } from '@hooks/use-lifecare-decision-reasons';
@@ -15,10 +17,18 @@ import { Alert } from '@sk-web-gui/alert';
 import { FormControl, FormLabel, Input, Select, Spinner } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { resolveBeslutAmount, resolveBeslutPeriod } from '@utils/beslut';
-import { allExpensesApproved, decisionTypeFor, outcomeFromNormResult } from '@utils/beslut-outcome';
+import {
+  allExpensesApproved,
+  bifallPhraseFor,
+  decisionTypeFor,
+  hasChildren,
+  outcomeFromNormResult,
+} from '@utils/beslut-outcome';
+import { fillBeslutPhraseMarkup, markupToPlainText, withPhraseAppended } from '@utils/beslut-phrase-markup';
 import { formatAmount } from '@utils/format-amount';
 import { groupDecisionReasons } from '@utils/group-decision-reasons';
 import { computeNormResult, fromLifecareSummary, isSurplus } from '@utils/norm-result';
+import { stakeholderDisplayName } from '@utils/stakeholder-name';
 import dayjs from 'dayjs';
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -96,6 +106,10 @@ export const ErrandBeslut: FC<{
   const { draft, isLoading: draftLoading } = useErrandNormberakning(errandId);
   const { recommendation, isLoading: recommendationLoading } = useBeslutRecommendation(errandId);
   const { types, isLoading: typesLoading, errorMessage: typesError } = useLifecareDecisionTypes(errandId);
+  const { phrases } = useDecisionPhrases();
+  const { stakeholders, isLoading: stakeholdersLoading } = useErrandStakeholders(errandId);
+  const applicant = stakeholders.find((stakeholder) => stakeholder.role === 'APPLICANT');
+  const applicantName = applicant ? stakeholderDisplayName(applicant) : '';
   const { decision: savedBeslut, isLoading: savedLoading, refresh } = useLifecareDecision(errandId);
   const { proposal } = useDecisionProposal(errandId);
   const { calculation } = useLifecareCalculation(errandId);
@@ -189,6 +203,32 @@ export const ErrandBeslut: FC<{
     selectedType?.outcome,
     savedBeslut?.amount ?? calculatedDeficit ?? proposal.estimatedAmount ?? recommendation?.amount
   );
+
+  // A new beslut the normberäkning makes a bifall starts from its beslutsformulering — "Bifall månad", or
+  // "Bifall månad MED BARN" with barn in the beräkning — filled from the errand. Only once, only into an
+  // empty message the handläggare has not touched, and only when everything it is filled from has loaded.
+  const bifallPhrase = normOutcome === 'BIFALL' ? bifallPhraseFor(phrases, hasChildren(draft)) : undefined;
+  const autoFilled = useRef<boolean>(false);
+  const messageEmpty = markupToPlainText(messageValue.markup ?? '').trim() === '';
+  const readyToFill = !savedLoading && !stakeholdersLoading && savedBeslut === null && !messageTouched && messageEmpty;
+  useEffect(() => {
+    if (autoFilled.current || !readyToFill || bifallPhrase === undefined || amount === undefined) {
+      return;
+    }
+    autoFilled.current = true;
+    void getDocumentTemplateContent(bifallPhrase.identifier).then((content) => {
+      if (content.error || content.data === undefined) {
+        return;
+      }
+      const filled = fillBeslutPhraseMarkup(content.data, {
+        applicantName,
+        amount,
+        periodFrom: fromDate || undefined,
+        periodTo: toDate || undefined,
+      });
+      setMessageValue(withPhraseAppended(EMPTY_MESSAGE, filled));
+    });
+  }, [readyToFill, bifallPhrase, applicantName, amount, fromDate, toDate]);
 
   // The förslag names an outcome (bifall, avslag, delvis bifall); shown in the handläggare's words.
   const recommendationLabel =
@@ -433,7 +473,8 @@ export const ErrandBeslut: FC<{
         : null}
         <LockFieldset locked={formLocked}>
           <BeslutMeddelande
-            errandId={errandId}
+            phrases={phrases}
+            applicantName={applicantName}
             amount={amount}
             periodFrom={fromDate || undefined}
             periodTo={toDate || undefined}

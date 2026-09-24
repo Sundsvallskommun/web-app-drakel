@@ -1,13 +1,20 @@
 /**
- * The four kinds of template the admin page manages. A template is placed by two metadata tags: `kind`
- * separates a full mall from an insertable frastext, and `code` ties it to a CM type — a journal entry
- * type or a document type. The two code catalogues do not overlap, which is what lets `target` be derived
- * from the code rather than stored as a third tag.
+ * The kinds of template the admin page manages. A template is placed by two metadata tags: `kind`
+ * separates a full mall from an insertable frastext or a beslutsformulering, and `code` ties it to a CM
+ * type — a journal entry type or a document type. The two code catalogues do not overlap, which is what
+ * lets `target` be derived from the code rather than stored as a third tag. A beslutsformulering belongs
+ * to the beslut rather than a CM type, so it carries the fixed code DECISION and its own kategori.
  */
-type TemplateTarget = 'journal' | 'document';
+type TemplateTarget = 'journal' | 'document' | 'decision';
 
-/** DOCUMENT is a full mall (replaces the body), PHRASE a frastext (inserted at the cursor). */
-type TemplateKind = 'DOCUMENT' | 'PHRASE';
+/**
+ * DOCUMENT is a full mall (replaces the body), PHRASE a frastext (inserted at the cursor), DECISION_PHRASE a
+ * beslutsformulering (picked by kategori and rubrik in the Beslut tab).
+ */
+type TemplateKind = 'DOCUMENT' | 'PHRASE' | 'DECISION_PHRASE';
+
+/** The code every beslutsformulering carries. */
+export const DECISION_PHRASE_CODE = 'DECISION';
 
 export interface TemplateCategory {
   id: string;
@@ -21,6 +28,7 @@ export const TEMPLATE_CATEGORIES = [
   { id: 'journalPhrase', target: 'journal', kind: 'PHRASE' },
   { id: 'documentDocument', target: 'document', kind: 'DOCUMENT' },
   { id: 'documentPhrase', target: 'document', kind: 'PHRASE' },
+  { id: 'decisionPhrase', target: 'decision', kind: 'DECISION_PHRASE' },
 ] as const satisfies readonly TemplateCategory[];
 
 /**

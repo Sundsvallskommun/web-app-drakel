@@ -11,6 +11,8 @@ export interface SaveTemplateInput {
   description?: string;
   code: string;
   kind: string;
+  /** A beslutsformulering's kategori. */
+  category?: string;
   content: string;
 }
 
@@ -40,4 +42,11 @@ export const deleteAdminTemplate = (identifier: string): Promise<ServiceResponse
   apiService
     .delete(`admin/templates/${encodeURIComponent(identifier)}`)
     .then(() => ({ data: true }))
+    .catch(toServiceError);
+
+/** Puts the default beslutsformuleringar Templating lacks there — never duplicating or overwriting one. */
+export const addDefaultDecisionPhrases = (): Promise<ServiceResponse<AdminTemplate[]>> =>
+  apiService
+    .post<ApiResponse<AdminTemplate[]>>('admin/templates/decision-phrases/defaults', {})
+    .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);

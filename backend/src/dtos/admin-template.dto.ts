@@ -1,7 +1,7 @@
 import { IsIn, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
-/** The kinds of template the admin page manages: a full mall or an insertable frastext. */
-export const TEMPLATE_KINDS = ['DOCUMENT', 'PHRASE'] as const;
+/** The kinds of template the admin page manages: a full mall, an insertable frastext, or a beslutsformulering. */
+export const TEMPLATE_KINDS = ['DOCUMENT', 'PHRASE', 'DECISION_PHRASE'] as const;
 
 /**
  * The fields sent when saving a mall or frastext. Leaving the identifier out creates a new template;
@@ -33,6 +33,13 @@ export class SaveTemplateDto {
 
   @IsIn(TEMPLATE_KINDS)
   kind!: (typeof TEMPLATE_KINDS)[number];
+
+  /** A beslutsformulering's kategori (Beslutsformulering – kategori); required for DECISION_PHRASE. */
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
+  @IsOptional()
+  category?: string;
 
   /** The template body as HTML from the rich-text editor. */
   @IsString()

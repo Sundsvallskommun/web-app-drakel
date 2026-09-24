@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { belongsToCategory, TEMPLATE_CATEGORIES } from './template-categories';
 
-const [journalTemplates, journalPhrases, documentTemplates] = TEMPLATE_CATEGORIES;
+const [journalTemplates, journalPhrases, documentTemplates, , decisionPhrases] = TEMPLATE_CATEGORIES;
 
 const JOURNAL_CODES = ['SERVICE_NOTE'];
 const DOCUMENT_CODES = ['LETTER'];
@@ -32,5 +32,11 @@ describe('belongsToCategory', () => {
   it('leaves out a template tagged with a type code the catalogue no longer has', () => {
     const retired = { code: 'RETIRED_TYPE', kind: 'DOCUMENT' };
     expect(belongsToCategory(retired, journalTemplates, JOURNAL_CODES)).toBe(false);
+  });
+
+  it('keeps beslutsformuleringar in their own category, under the DECISION code', () => {
+    const wording = { code: 'DECISION', kind: 'DECISION_PHRASE' };
+    expect(belongsToCategory(wording, decisionPhrases, ['DECISION'])).toBe(true);
+    expect(belongsToCategory({ code: 'DECISION', kind: 'PHRASE' }, decisionPhrases, ['DECISION'])).toBe(false);
   });
 });

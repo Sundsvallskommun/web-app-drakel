@@ -41,7 +41,8 @@
     "applicantNameMissing": "Sökandes namn kunde inte hämtas — namn-platshållaren lämnas oersatt.",
     "addFullfoljd": "Lägg till fullföljdshänvisning",
     "previewNeedsSave": "PDF:en visar beslutet som det är sparat i Lifecare. Spara för att se dina ändringar.",
-    "showPdf": "Visa PDF"
+    "showPdf": "Visa PDF",
+    "phraseLoadError": "Beslutsformuleringen kunde inte hämtas."
   },
   "payment": {
     "header": {

@@ -44,6 +44,11 @@ export interface SaveTemplateDto {
   /** @maxLength 255 */
   code: string;
   kind: SaveTemplateDtoKindEnum;
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  category?: string;
   /** @maxLength 1048576 */
   content: string;
 }
@@ -55,6 +60,7 @@ export interface AdminTemplate {
   description?: string;
   code: string;
   kind: string;
+  category?: string;
 }
 
 export interface AdminTemplateDetail {
@@ -65,6 +71,7 @@ export interface AdminTemplateDetail {
   description?: string;
   code: string;
   kind: string;
+  category?: string;
 }
 
 export interface AdminTemplatesApiResponse {
@@ -222,6 +229,17 @@ export interface DigitalMailboxStatus {
 
 export interface DigitalMailboxApiResponse {
   data: DigitalMailboxStatus;
+  message: string;
+}
+
+export interface DecisionPhrase {
+  identifier: string;
+  category: string;
+  name: string;
+}
+
+export interface DecisionPhrasesApiResponse {
+  data: DecisionPhrase[];
   message: string;
 }
 
@@ -1382,6 +1400,7 @@ export interface WarningsApiResponse {
 export enum SaveTemplateDtoKindEnum {
   DOCUMENT = "DOCUMENT",
   PHRASE = "PHRASE",
+  DECISION_PHRASE = "DECISION_PHRASE",
 }
 
 export enum DecisionRegistrationOutcomeEnum {

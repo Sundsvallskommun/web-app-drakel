@@ -1,6 +1,6 @@
 {
   "title": "Administration",
-  "intro": "Create and edit the templates and phrases caseworkers choose from when writing a journal note or a document. Changes apply to every caseworker.",
+  "intro": "Create and change the templates and phrases case workers choose from when writing a journal note, a document or a decision. Changes apply to all case workers.",
   "noAccess": "You do not have permission to administer.",
   "loadError": "The templates could not be loaded",
   "empty": "There are no templates of this kind yet.",
@@ -8,11 +8,13 @@
     "journalDocument": "Journal note templates",
     "journalPhrase": "Journal note phrases",
     "documentDocument": "Document templates",
-    "documentPhrase": "Document phrases"
+    "documentPhrase": "Document phrases",
+    "decisionPhrase": "Decision wording"
   },
   "create": {
     "template": "New template",
-    "phrase": "New phrase"
+    "phrase": "New phrase",
+    "decisionPhrase": "New decision wording"
   },
   "list": {
     "name": "Name",
@@ -21,7 +23,9 @@
     "actions": "Actions",
     "edit": "Edit",
     "delete": "Delete",
-    "openError": "The template could not be loaded"
+    "openError": "The template could not be loaded",
+    "heading": "Heading",
+    "category": "Category"
   },
   "editor": {
     "createTitle": "New template",
@@ -29,12 +33,17 @@
     "name": "Name",
     "type": {
       "journal": "Journal note type",
-      "document": "Document type"
+      "document": "Document type",
+      "decision": "Decision"
     },
     "selectType": "Select type",
     "content": "Text",
     "save": "Save",
-    "saveError": "The template could not be saved"
+    "saveError": "The template could not be saved",
+    "heading": "Heading",
+    "category": "Category",
+    "categoryPlaceholder": "Choose or type a new category",
+    "decisionPlaceholders": "¤ is filled with the applicant's name, ¥ with the amount and ※ with the period when the wording is added to the decision."
   },
   "delete": {
     "title": "Delete template",
@@ -68,5 +77,9 @@
       "target": "Concerns",
       "errand": "Errand"
     }
+  },
+  "defaults": {
+    "add": "Add the default wordings",
+    "error": "The default wordings could not be added"
   }
 }

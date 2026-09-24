@@ -61,8 +61,36 @@ const expenseRowIds = (rows: LifecareCalculationExpenseRaw[], bucket: ExpenseBuc
 const personRowId = (person: LifecareCalculationPersonRaw, index: number): string =>
   typeof person.personKey === 'number' && person.personKey > 0 ? String(person.personKey) : `new-${String(index + 1)}`;
 
-const toPersonRow = (person: LifecareCalculationPersonRaw, index: number): NormPersonRow => ({
+// Under this age a member is a barn in the household.
+const ADULT_AGE = 18;
+
+/** Whether the member is under 18 on the day — from Lifecare's birth date, `yyyy-MM-dd`. */
+const isMinorOn = (birthDate: unknown, day: string): boolean => {
+  if (typeof birthDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(birthDate) || day === '') {
+    return false;
+  }
+  const adultOn = `${String(Number(birthDate.slice(0, 4)) + ADULT_AGE)}${birthDate.slice(4)}`;
+  return adultOn > day;
+};
+
+/**
+ * The member's role the way careM's draft names it. Lifecare has no roles on a beräkning: the first member is
+ * the sökande, a bonusbarn is counted as an umgängesbarn, and anyone else under 18 at the start of the period
+ * as a barn.
+ */
+const roleOf = (person: LifecareCalculationPersonRaw, index: number, periodStart: string): NormPersonRow['role'] => {
+  if (index === 0) {
+    return 'APPLICANT';
+  }
+  if (person.isBonusChild === true) {
+    return 'VISITATION_CHILD';
+  }
+  return isMinorOn(person.birthDate, periodStart) ? 'CHILD' : undefined;
+};
+
+const toPersonRow = (person: LifecareCalculationPersonRaw, index: number, periodStart: string): NormPersonRow => ({
   id: personRowId(person, index),
+  role: roleOf(person, index, periodStart),
   position: index,
   origin: CASEWORKER_ORIGIN,
   personalNumber: person.personIdFormatted,
@@ -125,7 +153,7 @@ export const toLifecareDraftView = (forEdit: LifecareCalculationForEditRaw, appl
     calculationDate: dateOrUndefined(calculation.date),
     hasCustomHouseholdSize: calculation.hasCustomHouseholdSize,
     householdSize: typeof calculation.householdSize === 'number' ? calculation.householdSize : undefined,
-    persons: calculation.calculationPersons.map(toPersonRow),
+    persons: calculation.calculationPersons.map((person, index) => toPersonRow(person, index, calculation.startDate)),
     incomes: calculation.calculationIncomes.filter(keepsIncome).map((row, index) => toIncomeRow(row, index, forEdit.incomeTypes)),
     expenses: toExpenseRows(calculation.calculationExpenses, 'EXPENSE'),
     specialExpenses: toExpenseRows(calculation.calculationSpecialExpenses, 'SPECIAL_EXPENSE'),

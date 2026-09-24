@@ -1,13 +1,16 @@
 import authMiddleware from '@middlewares/auth.middleware';
 import { requirePermission } from '@middlewares/permission.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
+import DecisionPhraseDefaultsService from '@services/decision-phrase-defaults.service';
 import TemplatingService, { TemplateSummary } from '@services/templating.service';
+import { DECISION_PHRASE_KIND } from '@utils/decision-phrase';
 import { buildTemplateIdentifier } from '@utils/template-identifier';
-import { appTemplateMetadata, CODE_KEY, isAppTemplate, KIND_KEY, metadataValue } from '@utils/template-metadata';
+import { appTemplateMetadata, CATEGORY_KEY, CODE_KEY, isAppTemplate, KIND_KEY, metadataValue } from '@utils/template-metadata';
 import { Body, Controller, Delete, Get, OnUndefined, Param, Post, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
 import { SaveTemplateDto } from '@/dtos/admin-template.dto';
+import { HttpException } from '@/exceptions/HttpException';
 import { AdminTemplate, AdminTemplateApiResponse, AdminTemplatesApiResponse } from '@/responses/admin-template.response';
 
 // `satisfies` rather than a return type annotation: the value keeps its plain object-literal type, so the
@@ -20,12 +23,15 @@ const toAdminTemplate = (template: TemplateSummary) =>
     description: template.description,
     code: metadataValue(template, CODE_KEY) ?? '',
     kind: metadataValue(template, KIND_KEY) ?? '',
+    category: metadataValue(template, CATEGORY_KEY),
   }) satisfies AdminTemplate;
 
 /**
  * Manages the mallar and frastexter the handläggare pick from when writing a journalanteckning or a
- * dokument. Templates live in the shared Templating service and are tagged with metadata — `app` scopes
- * them to this app, `code` ties them to a CM type and `kind` separates a full mall from a frastext.
+ * dokument, and the beslutsformuleringar of the Beslut tab. Templates live in the shared Templating service
+ * and are tagged with metadata — `app` scopes them to this app, `code` ties them to a CM type, `kind`
+ * separates a full mall from a frastext or a beslutsformulering, and `category` holds a
+ * beslutsformulering's kategori.
  *
  * Only a superadmin gets here: a mall is shared by everyone in the municipality, so editing one is not
  * part of ordinary handläggning.
@@ -34,6 +40,7 @@ const toAdminTemplate = (template: TemplateSummary) =>
 @UseBefore(authMiddleware, requirePermission('canManageTemplates'))
 export class AdminTemplateController {
   private templatingService = new TemplatingService();
+  private decisionPhraseDefaults = new DecisionPhraseDefaultsService();
 
   @Get('/admin/templates')
   @OpenAPI({ summary: 'List every mall and frastext belonging to this app' })
@@ -57,6 +64,9 @@ export class AdminTemplateController {
   @ResponseSchema(AdminTemplatesApiResponse)
   @UseBefore(validationMiddleware(SaveTemplateDto, 'body'))
   async saveTemplate(@Body() input: SaveTemplateDto) {
+    if (input.kind === DECISION_PHRASE_KIND && !input.category) {
+      throw new HttpException(400, 'En beslutsformulering behöver en kategori.');
+    }
     // A template that has no identifier yet is a new one; an existing identifier is stored as a new
     // version of that template, which is what keeps a saved edit from turning into a duplicate entry.
     const identifier = input.identifier ?? buildTemplateIdentifier(input.code, input.kind, input.name);
@@ -65,8 +75,17 @@ export class AdminTemplateController {
       name: input.name,
       description: input.description,
       content: input.content,
-      metadata: appTemplateMetadata(input.code, input.kind),
+      metadata: appTemplateMetadata(input.code, input.kind, input.kind === DECISION_PHRASE_KIND ? input.category : undefined),
     });
+    const all = await this.templatingService.listTemplates();
+    return { data: all.filter(isAppTemplate).map(toAdminTemplate), message: 'success' };
+  }
+
+  @Post('/admin/templates/decision-phrases/defaults')
+  @OpenAPI({ summary: 'Add the default beslutsformuleringar Templating does not have yet (never duplicates or overwrites)' })
+  @ResponseSchema(AdminTemplatesApiResponse)
+  async addDefaultDecisionPhrases() {
+    await this.decisionPhraseDefaults.addMissing();
     const all = await this.templatingService.listTemplates();
     return { data: all.filter(isAppTemplate).map(toAdminTemplate), message: 'success' };
   }

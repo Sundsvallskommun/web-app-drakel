@@ -1,6 +1,6 @@
 {
   "title": "Administration",
-  "intro": "Här skapar och ändrar du de mallar och frastexter som handläggarna väljer bland när de skriver en journalanteckning eller ett dokument. Ändringarna gäller alla handläggare.",
+  "intro": "Här skapar och ändrar du de mallar och frastexter som handläggarna väljer bland när de skriver en journalanteckning, ett dokument eller ett beslut. Ändringarna gäller alla handläggare.",
   "noAccess": "Du har inte behörighet till administrationen.",
   "loadError": "Det gick inte att hämta mallarna",
   "empty": "Det finns inga mallar av den här sorten än.",
@@ -8,11 +8,13 @@
     "journalDocument": "Mallar för journalanteckning",
     "journalPhrase": "Frastexter för journalanteckning",
     "documentDocument": "Mallar för dokument",
-    "documentPhrase": "Frastexter för dokument"
+    "documentPhrase": "Frastexter för dokument",
+    "decisionPhrase": "Beslutsformulering"
   },
   "create": {
     "template": "Ny mall",
-    "phrase": "Ny frastext"
+    "phrase": "Ny frastext",
+    "decisionPhrase": "Ny beslutsformulering"
   },
   "list": {
     "name": "Namn",
@@ -21,7 +23,9 @@
     "actions": "Åtgärder",
     "edit": "Redigera",
     "delete": "Ta bort",
-    "openError": "Det gick inte att hämta mallen"
+    "openError": "Det gick inte att hämta mallen",
+    "heading": "Rubrik",
+    "category": "Kategori"
   },
   "editor": {
     "createTitle": "Ny mall",
@@ -29,12 +33,17 @@
     "name": "Namn",
     "type": {
       "journal": "Typ av journalanteckning",
-      "document": "Typ av dokument"
+      "document": "Typ av dokument",
+      "decision": "Beslut"
     },
     "selectType": "Välj typ",
     "content": "Text",
     "save": "Spara",
-    "saveError": "Det gick inte att spara mallen"
+    "saveError": "Det gick inte att spara mallen",
+    "heading": "Rubrik",
+    "category": "Kategori",
+    "categoryPlaceholder": "Välj eller skriv en ny kategori",
+    "decisionPlaceholders": "¤ fylls med sökandes namn, ¥ med beloppet och ※ med perioden när formuleringen läggs till i beslutet."
   },
   "delete": {
     "title": "Ta bort mall",
@@ -68,5 +77,9 @@
       "target": "Vad det gäller",
       "errand": "Ärende"
     }
+  },
+  "defaults": {
+    "add": "Lägg in standardfraserna",
+    "error": "Det gick inte att lägga in standardfraserna"
   }
 }

@@ -142,6 +142,30 @@ describe('toLifecareDraftView', () => {
   });
 });
 
+describe('members as barn', () => {
+  it('counts a bonusbarn, and anyone but the sökande under 18 at the start of the period, as a barn', () => {
+    const member = calculation().calculationPersons[0];
+    if (!member) {
+      throw new Error('the beräkning has no sökande');
+    }
+    const saved = calculation({
+      calculationPersons: [
+        { ...member, birthDate: '1988-02-09' },
+        { ...member, personId: '20141201T010', personKey: 2, birthDate: '2014-12-01' },
+        { ...member, personId: '20080831T020', personKey: 3, birthDate: '2008-08-31' },
+        { ...member, personId: '20100101T030', personKey: 4, birthDate: '2010-01-01', isBonusChild: true },
+      ],
+    });
+
+    expect(toLifecareDraftView(forEdit(saved), undefined).persons?.map(person => person.role)).toEqual([
+      'APPLICANT',
+      'CHILD',
+      undefined,
+      'VISITATION_CHILD',
+    ]);
+  });
+});
+
 describe('changing rows', () => {
   it('adds an income of a Lifecare type, by name', () => {
     const changed = addIncome(calculation(), forEdit().incomeTypes, { typeName: 'Lön efter skatt', applicantCaseworkerAmount: 5000 });

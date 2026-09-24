@@ -1,10 +1,13 @@
 import { formatApplicationMonth } from '@utils/application-month';
 import dayjs from 'dayjs';
 
-/** The placeholder characters a beslut phrase may carry, and what each is filled with. */
-const NAME_PLACEHOLDER = '¤';
-const AMOUNT_PLACEHOLDER = '¥';
-const PERIOD_PLACEHOLDER = '※';
+/**
+ * The placeholder characters a beslut phrase may carry, and what each is filled with: the sökandes name, the
+ * beslut's belopp and its period. The belopp is `¥` (not `§`) so it never collides with "12 kap. 1 §".
+ */
+export const NAME_PLACEHOLDER = '¤';
+export const AMOUNT_PLACEHOLDER = '¥';
+export const PERIOD_PLACEHOLDER = '※';
 
 /** What the errand says about the beslut, for filling a phrase. Anything missing leaves its placeholder. */
 export interface BeslutPhraseValues {

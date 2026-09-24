@@ -41,7 +41,8 @@
     "applicantNameMissing": "The applicant's name could not be fetched — the name placeholder is left unreplaced.",
     "addFullfoljd": "Add appeal instructions",
     "previewNeedsSave": "The PDF shows the decision as saved in Lifecare. Save to see your changes.",
-    "showPdf": "Show PDF"
+    "showPdf": "Show PDF",
+    "phraseLoadError": "The wording could not be read."
   },
   "payment": {
     "header": {

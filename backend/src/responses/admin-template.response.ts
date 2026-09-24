@@ -11,8 +11,10 @@ export class AdminTemplate {
   @IsString() @IsOptional() description?: string;
   /** The CM type code the template belongs to (journal entry type or document type). */
   @IsString() code!: string;
-  /** DOCUMENT = mall, PHRASE = frastext. */
+  /** DOCUMENT = mall, PHRASE = frastext, DECISION_PHRASE = beslutsformulering. */
   @IsString() kind!: string;
+  /** A beslutsformulering's kategori. */
+  @IsString() @IsOptional() category?: string;
 }
 
 /** A managed template including its decoded HTML content, ready for the rich-text editor. */

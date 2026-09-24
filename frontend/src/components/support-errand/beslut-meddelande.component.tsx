@@ -1,23 +1,17 @@
 'use client';
 
 import TextEditor from '@components/common/text-editor.component';
-import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
+import { DecisionPhrase } from '@data-contracts/backend/data-contracts';
+import { getDocumentTemplateContent } from '@services/document-template-service';
 import { Checkbox, Combobox, FormControl, FormLabel } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
-import { fillBeslutPhrase } from '@utils/fill-beslut-phrase';
-import { stakeholderDisplayName } from '@utils/stakeholder-name';
+import { fillBeslutPhraseMarkup, withPhraseAppended } from '@utils/beslut-phrase-markup';
+import { AMOUNT_PLACEHOLDER, NAME_PLACEHOLDER, PERIOD_PLACEHOLDER } from '@utils/fill-beslut-phrase';
 import { FC, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
-import {
-  ALL_CATEGORY_ID,
-  ALL_PHRASES,
-  AMOUNT_PLACEHOLDER,
-  BESLUT_PHRASE_GROUPS,
-  BeslutPhrase,
-  NAME_PLACEHOLDER,
-  PERIOD_PLACEHOLDER,
-} from './beslut-phrases';
+// The synthetic "Alla" category (first option) shows every rubrik regardless of kategori.
+const ALL_CATEGORIES = '';
 
 // A single-select combobox reports its value as a string; guard against the array shape just in case.
 const eventValue = (value: unknown): string =>
@@ -25,24 +19,18 @@ const eventValue = (value: unknown): string =>
   : Array.isArray(value) && typeof value[0] === 'string' ? value[0]
   : '';
 
-const escapeHtml = (text: string): string => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-/** Each line of the phrase becomes a Quill paragraph; an empty line renders as <p><br></p>. */
-const toMarkup = (text: string): string =>
-  text
-    .split('\n')
-    .map((line) => `<p>${line ? escapeHtml(line) : '<br>'}</p>`)
-    .join('');
-
 /**
  * Decision-message editor: a WYSIWYG TextEditor plus a two-level phrase picker — a kategori combobox and a
- * searchable rubrik combobox (both single-select). Selecting a rubrik appends its text to the bottom of
- * the editor, separated from the previous content by two empty rows, filled from the errand: `¤` with the
- * sökandes name, `¥` with the belopp and `※` with the period as the form holds them when the phrase is
- * added. A value the errand lacks leaves its placeholder, to be written by hand.
+ * searchable rubrik combobox (both single-select). The beslutsformuleringar are Templating's, kept on the admin
+ * page. Selecting a rubrik appends its text to the bottom of the editor, separated from the previous content by
+ * an empty row, filled from the errand: `¤` with the sökandes name, `¥` with the belopp and `※` with the period
+ * as the form holds them when the phrase is added. A value the errand lacks leaves its placeholder.
  */
 export const BeslutMeddelande: FC<{
-  errandId: string;
+  /** The beslutsformuleringar to pick from. */
+  phrases: DecisionPhrase[];
+  /** The sökandes name, filled in for `¤`; empty when it could not be read. */
+  applicantName: string;
   /** The decision-message content, owned by the parent so the Beslut tab's Spara can read it. */
   value: TextEditorValue;
   onChange: (value: TextEditorValue) => void;
@@ -56,42 +44,39 @@ export const BeslutMeddelande: FC<{
   /** The beslut's period (`YYYY-MM-DD`), filled in for `※`. */
   periodFrom?: string;
   periodTo?: string;
-}> = ({ errandId, value, onChange, addFullfoljd, onAddFullfoljdChange, onUserEdit, amount, periodFrom, periodTo }) => {
+}> = ({
+  phrases,
+  applicantName,
+  value,
+  onChange,
+  addFullfoljd,
+  onAddFullfoljdChange,
+  onUserEdit,
+  amount,
+  periodFrom,
+  periodTo,
+}) => {
   const { t } = useTranslation('decision');
-  const { stakeholders } = useErrandStakeholders(errandId);
-  const applicant = stakeholders.find((stakeholder) => stakeholder.role === 'APPLICANT');
-  const applicantName = applicant ? stakeholderDisplayName(applicant) : '';
-
-  // "Alla" first, then the real categories. The category names belong to the Swedish phrase texts, so they
-  // are shown as-is; only "Alla" is a UI word.
-  const categoryOptions = [
-    { id: ALL_CATEGORY_ID, name: t('message.allCategories') },
-    ...BESLUT_PHRASE_GROUPS.map((group) => ({ id: group.id, name: group.name })),
-  ];
-
-  const [categoryId, setCategoryId] = useState<string>(ALL_CATEGORY_ID);
+  const [category, setCategory] = useState<string>(ALL_CATEGORIES);
+  const [phraseError, setPhraseError] = useState<string>();
   // Bumped after every insert so the rubrik combobox remounts and clears — letting the same rubrik be
   // added again (a single-select combobox would otherwise stay on its current pick).
   const [insertNonce, setInsertNonce] = useState<number>(0);
 
-  const headings =
-    categoryId === ALL_CATEGORY_ID ? ALL_PHRASES : (
-      (BESLUT_PHRASE_GROUPS.find((group) => group.id === categoryId)?.phrases ?? [])
-    );
+  // The kategorier as the phrases name them, in the order they first appear. They belong to the Swedish
+  // phrase texts, so they are shown as-is; only "Alla" is a UI word.
+  const categories = [...new Set(phrases.map((phrase) => phrase.category))];
+  const headings = category === ALL_CATEGORIES ? phrases : phrases.filter((phrase) => phrase.category === category);
 
-  const addPhrase = (phrase: BeslutPhrase): void => {
-    const filledText = fillBeslutPhrase(phrase.text, { applicantName, amount, periodFrom, periodTo });
-    const phraseMarkup = toMarkup(filledText);
-    // An "empty" editor still has markup like <p></p> once it's been touched — replace it (rather than
-    // append) so the phrase doesn't end up after an empty first line. Otherwise add one empty line.
-    if ((value.plainText ?? '').trim().length === 0) {
-      onChange({ markup: phraseMarkup, plainText: filledText });
-    } else {
-      onChange({
-        markup: (value.markup ?? '') + '<p><br></p>' + phraseMarkup,
-        plainText: (value.plainText ?? '') + '\n\n' + filledText,
-      });
+  const addPhrase = async (phrase: DecisionPhrase): Promise<void> => {
+    setPhraseError(undefined);
+    const content = await getDocumentTemplateContent(phrase.identifier);
+    if (content.error || content.data === undefined) {
+      setPhraseError(t('message.phraseLoadError'));
+      return;
     }
+    const filled = fillBeslutPhraseMarkup(content.data, { applicantName, amount, periodFrom, periodTo });
+    onChange(withPhraseAppended(value, filled));
     onUserEdit?.();
     setInsertNonce((nonce) => nonce + 1);
   };
@@ -103,21 +88,19 @@ export const BeslutMeddelande: FC<{
           <FormControl id="beslut-fraskategori" className="w-full md:w-[28rem]">
             <FormLabel>{t('message.categoryLabel')}</FormLabel>
             <Combobox
-              value={categoryId}
+              value={category}
               placeholder={t('message.categoryPlaceholder')}
               searchPlaceholder={t('message.categorySearch')}
               onSelect={(event) => {
-                const next = eventValue(event.target.value);
-                if (next && next !== categoryId) {
-                  setCategoryId(next);
-                }
+                setCategory(eventValue(event.target.value));
               }}
             >
               <Combobox.Input className="w-full" />
               <Combobox.List>
-                {categoryOptions.map((option) => (
-                  <Combobox.Option key={option.id} value={option.id}>
-                    {option.name}
+                <Combobox.Option value={ALL_CATEGORIES}>{t('message.allCategories')}</Combobox.Option>
+                {categories.map((name) => (
+                  <Combobox.Option key={name} value={name}>
+                    {name}
                   </Combobox.Option>
                 ))}
               </Combobox.List>
@@ -127,20 +110,20 @@ export const BeslutMeddelande: FC<{
           <FormControl id="beslut-frasrubrik" className="w-full md:w-[36rem]">
             <FormLabel>{t('message.headingLabel')}</FormLabel>
             <Combobox
-              key={`${categoryId}-${insertNonce}`}
+              key={`${category}-${String(insertNonce)}`}
               placeholder={t('message.headingPlaceholder')}
               searchPlaceholder={t('message.headingSearch')}
               onSelect={(event) => {
-                const phrase = headings.find((candidate) => candidate.id === eventValue(event.target.value));
+                const phrase = headings.find((candidate) => candidate.identifier === eventValue(event.target.value));
                 if (phrase) {
-                  addPhrase(phrase);
+                  void addPhrase(phrase);
                 }
               }}
             >
               <Combobox.Input className="w-full" />
               <Combobox.List>
                 {headings.map((phrase) => (
-                  <Combobox.Option key={phrase.id} value={phrase.id}>
+                  <Combobox.Option key={phrase.identifier} value={phrase.identifier}>
                     {phrase.name}
                   </Combobox.Option>
                 ))}
@@ -149,6 +132,9 @@ export const BeslutMeddelande: FC<{
           </FormControl>
         </div>
 
+        {phraseError ?
+          <p className="m-0 text-error-surface-primary">{phraseError}</p>
+        : null}
         <p className="m-0 text-small text-dark-secondary">
           <Trans
             t={t}

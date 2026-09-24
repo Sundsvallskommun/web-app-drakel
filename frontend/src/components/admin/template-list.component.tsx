@@ -17,16 +17,20 @@ export const TemplateList: FC<{
   onDelete: (template: AdminTemplate) => void;
   /** The identifier currently being opened, so only that row's button shows the wait. */
   openingIdentifier?: string;
-}> = ({ templates, types, onEdit, onDelete, openingIdentifier }) => {
+  /** Shows each template's kategori instead of its type — for beslutsformuleringar. */
+  byCategory?: boolean;
+}> = ({ templates, types, onEdit, onDelete, openingIdentifier, byCategory = false }) => {
   const { t } = useTranslation('admin');
 
   const typeName = (code: string): string => types.find((type) => type.code === code)?.displayName ?? code;
+  const placeOf = (template: AdminTemplate): string =>
+    byCategory ? (template.category ?? '—') : typeName(template.code);
 
   return (
     <Table dense background>
       <Table.Header>
-        <Table.HeaderColumn>{t('list.name')}</Table.HeaderColumn>
-        <Table.HeaderColumn>{t('list.type')}</Table.HeaderColumn>
+        <Table.HeaderColumn>{byCategory ? t('list.heading') : t('list.name')}</Table.HeaderColumn>
+        <Table.HeaderColumn>{byCategory ? t('list.category') : t('list.type')}</Table.HeaderColumn>
         <Table.HeaderColumn>{t('list.version')}</Table.HeaderColumn>
         <Table.HeaderColumn>{t('list.actions')}</Table.HeaderColumn>
       </Table.Header>
@@ -34,7 +38,7 @@ export const TemplateList: FC<{
         {templates.map((template) => (
           <Table.Row key={template.identifier}>
             <Table.Column>{template.name}</Table.Column>
-            <Table.Column>{typeName(template.code)}</Table.Column>
+            <Table.Column>{placeOf(template)}</Table.Column>
             <Table.Column className="tabular-nums">{template.version ?? '—'}</Table.Column>
             <Table.Column>
               <span className="flex gap-8">

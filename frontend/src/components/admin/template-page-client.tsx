@@ -3,6 +3,7 @@
 import { AsyncContent } from '@components/common/async-content.component';
 import { useAdminTemplates } from '@hooks/use-admin-templates';
 import {
+  addDefaultDecisionPhrases,
   AdminTemplate,
   AdminTemplateDetail,
   deleteAdminTemplate,
@@ -13,14 +14,16 @@ import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { belongsToCategory, TEMPLATE_CATEGORIES } from './template-categories';
+import { belongsToCategory, DECISION_PHRASE_CODE, TEMPLATE_CATEGORIES } from './template-categories';
 import { TemplateEditorModal, TemplateTypeOption } from './template-editor-modal.component';
 import { TemplateList } from './template-list.component';
 
 /**
  * "Mallar och frastexter" — the texts handläggare pick from when writing a journalanteckning or a
- * dokument. One tab per category (mall or frastext, for journalanteckning or for dokument); each lists
- * its templates and opens the rich-text editor for a new or existing one.
+ * dokument, and the beslutsformuleringar of the Beslut tab. One tab per category (mall or frastext, for
+ * journalanteckning or for dokument, and beslutsformulering); each lists its templates and opens the
+ * rich-text editor for a new or existing one. The beslutsformuleringar the Beslut tab used to carry in code
+ * are put into Templating from here, once.
  *
  * A mall is shared by everyone in the municipality, so changing one is not part of ordinary handläggning.
  * The permission gate lives in AdminSection, which checks the page's own permission.
@@ -36,13 +39,40 @@ export const TemplatePageClient = () => {
   const [deleteTarget, setDeleteTarget] = useState<AdminTemplate>();
   const [deleting, setDeleting] = useState<boolean>(false);
   const [actionError, setActionError] = useState<string>();
+  const [addingDefaults, setAddingDefaults] = useState<boolean>(false);
 
   const selectedCategory = TEMPLATE_CATEGORIES[activeTab] ?? TEMPLATE_CATEGORIES[0];
-  const typesForTarget: TemplateTypeOption[] = selectedCategory.target === 'journal' ? journalTypes : documentTypes;
+  const isDecisionTab = selectedCategory.target === 'decision';
+  const typesByTarget: Record<typeof selectedCategory.target, TemplateTypeOption[]> = {
+    journal: journalTypes,
+    document: documentTypes,
+    decision: [{ code: DECISION_PHRASE_CODE, displayName: t('editor.type.decision') }],
+  };
+  const typesForTarget = typesByTarget[selectedCategory.target];
   const codesForTarget = typesForTarget.map((type) => type.code ?? '');
-  const visibleTemplates = templates.filter((template) =>
-    belongsToCategory(template, selectedCategory, codesForTarget)
-  );
+  const visibleTemplates = templates
+    .filter((template) => belongsToCategory(template, selectedCategory, codesForTarget))
+    // Beslutsformuleringar are read by kategori, as the Beslut tab offers them.
+    .sort((first, second) =>
+      isDecisionTab ?
+        (first.category ?? '').localeCompare(second.category ?? '', 'sv') || first.name.localeCompare(second.name, 'sv')
+      : 0
+    );
+  const decisionCategories = [
+    ...new Set(templates.map((template) => template.category).filter((name): name is string => !!name)),
+  ];
+
+  const addDefaults = async (): Promise<void> => {
+    setAddingDefaults(true);
+    setActionError(undefined);
+    const res = await addDefaultDecisionPhrases();
+    setAddingDefaults(false);
+    if (res.error) {
+      setActionError(t('defaults.error'));
+      return;
+    }
+    refresh();
+  };
 
   const openForEdit = async (template: AdminTemplate): Promise<void> => {
     setOpeningIdentifier(template.identifier);
@@ -75,6 +105,11 @@ export const TemplatePageClient = () => {
   const categoryPanel = (
     <div className="flex flex-col gap-16 pt-16">
       <div className="flex flex-wrap items-center justify-end gap-12">
+        {isDecisionTab ?
+          <Button variant="secondary" loading={addingDefaults} onClick={() => void addDefaults()}>
+            {t('defaults.add')}
+          </Button>
+        : null}
         <Button
           color="vattjom"
           variant="primary"
@@ -83,7 +118,13 @@ export const TemplatePageClient = () => {
             setCreating(true);
           }}
         >
-          {t(`create.${selectedCategory.kind === 'DOCUMENT' ? 'template' : 'phrase'}`)}
+          {t(
+            `create.${
+              isDecisionTab ? 'decisionPhrase'
+              : selectedCategory.kind === 'DOCUMENT' ? 'template'
+              : 'phrase'
+            }`
+          )}
         </Button>
       </div>
 
@@ -99,6 +140,7 @@ export const TemplatePageClient = () => {
           templates={visibleTemplates}
           types={typesForTarget}
           openingIdentifier={openingIdentifier}
+          byCategory={isDecisionTab}
           onEdit={(template) => void openForEdit(template)}
           onDelete={setDeleteTarget}
         />
@@ -134,6 +176,7 @@ export const TemplatePageClient = () => {
           category={selectedCategory}
           types={typesForTarget}
           template={editing}
+          decisionCategories={decisionCategories}
           onClose={() => {
             setCreating(false);
             setEditing(undefined);
