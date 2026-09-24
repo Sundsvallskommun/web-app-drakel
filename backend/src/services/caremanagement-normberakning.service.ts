@@ -2,7 +2,7 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 
-import { CalculationDraft, LifecareCalculation, NormExpenseRow, NormIncomeRow, NormPersonRow } from '@/data-contracts/caremanagement/data-contracts';
+import { CalculationDraft, NormExpenseRow, NormIncomeRow, NormPersonRow } from '@/data-contracts/caremanagement/data-contracts';
 import { NormHeaderInputDto, NormRowInputDto } from '@/dtos/normberakning.dto';
 
 import CitizenService from './citizen.service';
@@ -84,16 +84,10 @@ class CaremanagementNormberakningService {
     return this.apiService.post<NormRow>({ url: this.draftUrl(errandId, section, rowId, 'restore') });
   }
 
-  /**
-   * The applicant's committed Lifecare calculations. Scoped to the person (partyId), not the errand,
-   * so the list spans their earlier errands too. `from`/`to` default in caremanagement to the last 24
-   * months up to today. The order of the returned list is not specified by the API — callers sort.
-   */
-  async listCalculations(partyId: string): Promise<ApiResponse<LifecareCalculation[]>> {
-    return this.apiService.get<LifecareCalculation[]>({
-      url: caremanagementUrl('errands', 'financial-assistance', 'calculations'),
-      params: { partyId },
-    });
+  /** The first day of the draft's period, read as the draft is — without resolving personnummer for its persons. */
+  async readPeriodStart(errandId: string): Promise<string | undefined> {
+    const res = await this.apiService.get<CalculationDraft>({ url: this.draftUrl(errandId) });
+    return res.data?.calculationFromDate;
   }
 }
 

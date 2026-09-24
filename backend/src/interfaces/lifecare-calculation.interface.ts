@@ -86,6 +86,16 @@ export interface LifecareCalculationRaw {
   [field: string]: unknown;
 }
 
+/** A beräkning as `Calculation/ListCalculations` lists it: its period, date and sums, without rows. */
+export interface LifecareCalculationListItemRaw {
+  calculationId: number;
+  date: string;
+  startDate: string;
+  endDate: string;
+  isFinalized: boolean;
+  [field: string]: unknown;
+}
+
 /** An income or expense type in Lifecare's catalogue. */
 export interface LifecareCalculationTypeRaw {
   id: number;

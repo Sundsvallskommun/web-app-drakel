@@ -1,17 +1,23 @@
-import { LifecareCalculation } from '@/data-contracts/caremanagement/data-contracts';
+import { LifecareCalculationListItemRaw } from '@interfaces/lifecare-calculation.interface';
+
+/** Newer first: a later period, then — within the same period — a slutlig one, then the one made last. */
+const newerFirst = (first: LifecareCalculationListItemRaw, second: LifecareCalculationListItemRaw): number =>
+  second.startDate.localeCompare(first.startDate) ||
+  Number(second.isFinalized) - Number(first.isFinalized) ||
+  second.calculationId - first.calculationId;
 
 /**
- * Picks the calculation that precedes the errand's own period: the one with the latest `fromDate`
- * that still starts before `draftFromDate`.
- *
- * caremanagement's `listCalculations` does not specify an order, so the list is sorted here rather
- * than trusted. Without a draft start date there is nothing to be "before", so the most recent
- * calculation is returned instead.
+ * Picks the beräkning preceding the errand's own period from the insats's list in Lifecare: of those starting
+ * before `periodStart`, the latest period — within it a slutlig one before one still being worked on, then
+ * the newest. The errand's own beräkning is never its own predecessor. Without a period start the most recent
+ * other beräkning is taken.
  */
-export const pickPreviousCalculation = (calculations: LifecareCalculation[], draftFromDate?: string): LifecareCalculation | undefined => {
-  // The type predicate narrows fromDate to a string, so the comparisons below need no assertions.
-  const dated = calculations.filter((calculation): calculation is LifecareCalculation & { fromDate: string } => !!calculation.fromDate);
-  const candidates = draftFromDate ? dated.filter(calculation => calculation.fromDate < draftFromDate) : dated;
-
-  return candidates.sort((first, second) => (first.fromDate < second.fromDate ? 1 : -1))[0];
-};
+export const pickPreviousCalculation = (
+  calculations: LifecareCalculationListItemRaw[],
+  periodStart: string | undefined,
+  ownCalculationId: number | undefined,
+): LifecareCalculationListItemRaw | undefined =>
+  calculations
+    .filter(calculation => calculation.calculationId !== ownCalculationId && calculation.startDate !== '')
+    .filter(calculation => !periodStart || calculation.startDate < periodStart)
+    .sort(newerFirst)[0];

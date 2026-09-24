@@ -1,5 +1,6 @@
 import {
   LifecareCalculationForEditRaw,
+  LifecareCalculationListItemRaw,
   LifecareCalculationPersonRaw,
   LifecareCalculationProposalRaw,
   LifecareCalculationRaw,
@@ -28,6 +29,22 @@ class LifecareCalculationsService {
       module: PROFESSIONAL_WEB,
       path: 'api2/Calculation/GetProposalService',
       params: { businessType: SERVICE_BUSINESS_TYPE, businessId: String(serviceId) },
+    });
+    return res.data;
+  }
+
+  /** Every beräkning on the insats, newest first, without rows (capture 2026-09-24). */
+  public async listForService(serviceId: number): Promise<LifecareCalculationListItemRaw[]> {
+    const res = await this.apiService.get<LifecareCalculationListItemRaw[]>({
+      module: PROFESSIONAL_WEB,
+      path: 'api2/Calculation/ListCalculations',
+      params: {
+        businessType: SERVICE_BUSINESS_TYPE,
+        businessId: String(serviceId),
+        investigationId: '0',
+        serviceId: String(serviceId),
+        onlylatest: 'true',
+      },
     });
     return res.data;
   }

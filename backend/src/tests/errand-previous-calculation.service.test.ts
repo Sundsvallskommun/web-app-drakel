@@ -1,7 +1,7 @@
-import { LifecareCalculationRaw } from '@interfaces/lifecare-calculation.interface';
+import { LifecareCalculationListItemRaw, LifecareCalculationRaw } from '@interfaces/lifecare-calculation.interface';
+import CaremanagementErrandService from '@services/caremanagement-errand.service';
 import CaremanagementEventService from '@services/caremanagement-event.service';
 import CaremanagementNormberakningService from '@services/caremanagement-normberakning.service';
-import CaremanagementStakeholderService from '@services/caremanagement-stakeholder.service';
 import ErrandPreviousCalculationService from '@services/errand-previous-calculation.service';
 import LifecareCalculationsService from '@services/lifecare-calculations.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -63,31 +63,32 @@ const lifecareCalculation: LifecareCalculationRaw = {
   commonHouseholdCost: 2796,
 };
 
+const listed = (calculationId: number, startDate: string): LifecareCalculationListItemRaw => ({
+  calculationId,
+  date: '2026-09-23',
+  startDate,
+  endDate: '',
+  isFinalized: true,
+});
+
+const withCalculationId = (lifecareCalculationId?: number) =>
+  vi.spyOn(CaremanagementErrandService.prototype, 'getFinancialAssistanceView').mockResolvedValue({
+    data: { lifecareServiceId: 1, data: { lifecareCalculationId } },
+    message: 'success',
+  });
+
 describe('ErrandPreviousCalculationService', () => {
   beforeEach(() => {
-    vi.spyOn(CaremanagementStakeholderService.prototype, 'readStakeholders').mockResolvedValue({
-      data: [{ role: 'APPLICANT', externalId: 'party-1' }],
-      message: 'success',
-    });
-    vi.spyOn(CaremanagementNormberakningService.prototype, 'readDraft').mockResolvedValue({
-      data: { calculationFromDate: '2026-07-01' },
-      message: 'success',
-    });
     vi.spyOn(CaremanagementEventService.prototype, 'reportLifecareAccess').mockResolvedValue();
+    vi.spyOn(LifecareCalculationsService.prototype, 'listForService').mockResolvedValue([listed(31, '2026-09-01'), listed(1, '2026-01-01')]);
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('reads the previous beräkning from Lifecare and shows it as Lifecare counted it', async () => {
-    vi.spyOn(CaremanagementNormberakningService.prototype, 'listCalculations').mockResolvedValue({
-      data: [
-        { id: 1, fromDate: '2026-01-01' },
-        { id: 31, fromDate: '2026-09-01' },
-      ],
-      message: 'success',
-    });
+  it("finds the previous beräkning in the insats's list in Lifecare and shows it as Lifecare counted it", async () => {
+    withCalculationId(31);
     const read = vi.spyOn(LifecareCalculationsService.prototype, 'read').mockResolvedValue(lifecareCalculation);
 
     const previous = await new ErrandPreviousCalculationService().read('errand-1');
@@ -112,11 +113,19 @@ describe('ErrandPreviousCalculationService', () => {
     expect(previous?.persons).toEqual([{ name: 'Testsson, Test', amount: 23640, deviationFromDate: undefined, deviationToDate: undefined }]);
   });
 
-  it('has nothing to show when the applicant has no beräkning before the period', async () => {
-    vi.spyOn(CaremanagementNormberakningService.prototype, 'listCalculations').mockResolvedValue({
-      data: [{ id: 31, fromDate: '2026-09-01' }],
-      message: 'success',
-    });
+  it("takes the errand's period from careM's draft before the beräkning is saved in Lifecare", async () => {
+    withCalculationId(undefined);
+    vi.spyOn(CaremanagementNormberakningService.prototype, 'readPeriodStart').mockResolvedValue('2026-10-01');
+    const read = vi.spyOn(LifecareCalculationsService.prototype, 'read').mockResolvedValue(lifecareCalculation);
+
+    await new ErrandPreviousCalculationService().read('errand-1');
+
+    expect(read).toHaveBeenCalledWith(31);
+  });
+
+  it('has nothing to show when the insats has no beräkning before the period', async () => {
+    withCalculationId(undefined);
+    vi.spyOn(CaremanagementNormberakningService.prototype, 'readPeriodStart').mockResolvedValue('2026-01-01');
     const read = vi.spyOn(LifecareCalculationsService.prototype, 'read');
 
     expect(await new ErrandPreviousCalculationService().read('errand-1')).toBeNull();

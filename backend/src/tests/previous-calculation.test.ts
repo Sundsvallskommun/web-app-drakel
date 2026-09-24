@@ -1,36 +1,51 @@
+import { LifecareCalculationListItemRaw } from '@interfaces/lifecare-calculation.interface';
 import { pickPreviousCalculation } from '@utils/previous-calculation';
 import { describe, expect, it } from 'vitest';
 
-import { LifecareCalculation } from '@/data-contracts/caremanagement/data-contracts';
+const listed = (calculationId: number, startDate: string, isFinalized: boolean): LifecareCalculationListItemRaw => ({
+  calculationId,
+  date: '2026-09-23',
+  startDate,
+  endDate: '',
+  isFinalized,
+});
 
-const calculation = (id: number, fromDate?: string): LifecareCalculation => ({ id, fromDate });
+/** Calculation/ListCalculations for insats 1 (capture 2026-09-24), newest first. */
+const insats = [
+  listed(31, '2026-09-01', true),
+  listed(30, '2026-10-01', true),
+  listed(29, '2026-12-01', false),
+  listed(28, '2026-11-01', false),
+  listed(12, '2026-09-01', true),
+  listed(5, '2026-10-01', true),
+  listed(2, '2026-05-01', true),
+  listed(1, '2026-01-01', false),
+];
+
+const previousId = (periodStart: string | undefined, own?: number): number | undefined =>
+  pickPreviousCalculation(insats, periodStart, own)?.calculationId;
 
 describe('pickPreviousCalculation', () => {
-  it('picks the latest calculation that starts before the draft period', () => {
-    const calculations = [calculation(1, '2026-05-01'), calculation(2, '2026-07-01'), calculation(3, '2026-06-01')];
-
-    expect(pickPreviousCalculation(calculations, '2026-07-01')?.id).toBe(3);
+  it('picks the latest period before the errand’s own', () => {
+    expect(previousId('2026-12-01', 29)).toBe(28);
+    expect(previousId('2026-09-01', 31)).toBe(2);
   });
 
-  it('ignores calculations starting on or after the draft period', () => {
-    const calculations = [calculation(1, '2026-07-01'), calculation(2, '2026-08-01')];
-
-    expect(pickPreviousCalculation(calculations, '2026-07-01')).toBeUndefined();
+  it('prefers the newest of several beräkningar for the same period', () => {
+    expect(previousId('2026-10-01', 30)).toBe(31);
   });
 
-  it('falls back to the most recent calculation when the draft has no start date', () => {
-    const calculations = [calculation(1, '2026-05-01'), calculation(2, '2026-08-01')];
+  it('prefers a slutlig beräkning over one still being worked on in the same period', () => {
+    const samePeriod = [listed(40, '2026-08-01', false), listed(39, '2026-08-01', true)];
 
-    expect(pickPreviousCalculation(calculations, undefined)?.id).toBe(2);
+    expect(pickPreviousCalculation(samePeriod, '2026-09-01', undefined)?.calculationId).toBe(39);
   });
 
-  it('skips calculations without a start date rather than ordering them arbitrarily', () => {
-    const calculations = [calculation(1), calculation(2, '2026-05-01')];
-
-    expect(pickPreviousCalculation(calculations, '2026-07-01')?.id).toBe(2);
+  it('never takes the errand’s own beräkning, and takes the most recent other one without a period', () => {
+    expect(previousId(undefined, 29)).toBe(28);
   });
 
-  it('returns undefined for an empty list', () => {
-    expect(pickPreviousCalculation([], '2026-07-01')).toBeUndefined();
+  it('has nothing before the first period', () => {
+    expect(previousId('2026-01-01')).toBeUndefined();
   });
 });
