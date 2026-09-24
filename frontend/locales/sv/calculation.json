@@ -80,7 +80,10 @@
     "householdSize": "Hushållsstorlek",
     "sum": "Summa",
     "info": "Beloppen räknas i Lifecare när normberäkningen har sparats där.",
-    "householdAmount": "Belopp för {{size}} persons hushåll"
+    "familyMembers": "Antal personer",
+    "householdAmount_one": "Belopp för {{count}} persons hushåll",
+    "householdAmount_other": "Belopp för {{count}} personers hushåll",
+    "householdAmountUnknown": "Belopp för hushållet"
   },
   "warnings": {
     "acknowledge": "Kvittera",

@@ -46,6 +46,7 @@ const INCOME_WARNING_TYPES = new Set([
   'MISSING_SSBTEK',
   'NEW_INCOME',
   'INCOME_DROPPED',
+  'INCOME_NOT_TRANSFERABLE',
 ]);
 const EXPENSE_WARNING_TYPES = new Set(['NEW_EXPENSE', 'EXPENSE_REVIEW', 'EXPENSE_CAPPED']);
 const PERSON_WARNING_TYPES = new Set(['NEW_PERSON', 'HOUSEHOLD_CHANGE']);
@@ -357,7 +358,11 @@ export const ErrandNormberakning: FC<{
                       errandId={errandId}
                       hasCustomHouseholdSize={draft.hasCustomHouseholdSize}
                       householdSize={draft.householdSize}
-                      familyMembers={draft.familyMembers}
+                      familyMembers={
+                        // careM's draft does not count them; its included persons are the members.
+                        draft.familyMembers ??
+                        draft.persons?.filter((person) => person.included && !person.deleted).length
+                      }
                       amountForHouseholdSize={draft.amountForHouseholdSize}
                       commonHouseholdCost={draft.commonHouseholdCost}
                       onChanged={refreshAll}

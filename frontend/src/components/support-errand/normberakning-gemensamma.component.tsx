@@ -83,28 +83,36 @@ export const NormberakningGemensamma: FC<NormberakningGemensammaProps> = ({
         {t('sharedCosts.customHouseholdSize')}
       </Checkbox>
 
+      {/* As Lifecare lays it out: Antal personer (the members, never changed here) and Hushållsstorlek (open
+          only with Annan hushållsstorlek), then Lifecare's amount for a household of that size and the Summa. */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-24 items-end">
-        {hasCustomHouseholdSize ?
-          <FormControl id="household-size" className="w-[10rem]">
-            <FormLabel>{t('sharedCosts.householdSize')}</FormLabel>
-            <Input
-              size="sm"
-              inputMode="numeric"
-              value={size}
-              onChange={(event) => {
-                setSize(event.target.value);
-              }}
-              onBlur={() => {
-                const nextSize = parseSize(size);
-                if (nextSize !== undefined && nextSize !== householdSize) {
-                  void save(true, nextSize);
-                }
-              }}
-            />
-          </FormControl>
-        : <Field label={t('sharedCosts.householdSize')} value={shownSize == null ? '—' : String(shownSize)} />}
+        <FormControl id="family-members" className="w-[10rem]" disabled>
+          <FormLabel>{t('sharedCosts.familyMembers')}</FormLabel>
+          <Input size="sm" value={familyMembers?.toString() ?? ''} readOnly />
+        </FormControl>
+        <FormControl id="household-size" className="w-[10rem]" disabled={!hasCustomHouseholdSize}>
+          <FormLabel>{t('sharedCosts.householdSize')}</FormLabel>
+          <Input
+            size="sm"
+            inputMode="numeric"
+            value={hasCustomHouseholdSize ? size : (shownSize?.toString() ?? '')}
+            onChange={(event) => {
+              setSize(event.target.value);
+            }}
+            onBlur={() => {
+              const nextSize = parseSize(size);
+              if (hasCustomHouseholdSize && nextSize !== undefined && nextSize !== householdSize) {
+                void save(true, nextSize);
+              }
+            }}
+          />
+        </FormControl>
         <Field
-          label={t('sharedCosts.householdAmount', { size: shownSize ?? '—' })}
+          label={
+            shownSize == null ?
+              t('sharedCosts.householdAmountUnknown')
+            : t('sharedCosts.householdAmount', { count: shownSize })
+          }
           value={displayAmount(amountForHouseholdSize)}
         />
         <Field label={t('sharedCosts.sum')} value={displayAmount(commonHouseholdCost)} />

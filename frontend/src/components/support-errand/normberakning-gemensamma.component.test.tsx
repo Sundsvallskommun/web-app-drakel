@@ -24,8 +24,10 @@ describe('NormberakningGemensamma', () => {
       />
     );
 
+    expect(screen.getByLabelText('Antal personer')).toHaveValue('3');
+    expect(screen.getByLabelText('Antal personer')).toBeDisabled();
     expect(screen.getByLabelText('Hushållsstorlek')).toHaveValue('4');
-    expect(screen.getByText('Belopp för 4 persons hushåll')).toBeInTheDocument();
+    expect(screen.getByText('Belopp för 4 personers hushåll')).toBeInTheDocument();
     expect(screen.getByText(/^1\s?523/)).toBeInTheDocument();
   });
 
@@ -55,6 +57,14 @@ describe('NormberakningGemensamma', () => {
     await waitFor(() => {
       expect(updateNormHeader).toHaveBeenCalledWith('errand-1', { hasCustomHouseholdSize: true, householdSize: 4 });
     });
+  });
+
+  it('shows the members as the household size, locked, without an own size', () => {
+    render(<NormberakningGemensamma errandId="errand-1" familyMembers={1} onChanged={vi.fn()} />);
+
+    expect(screen.getByLabelText('Hushållsstorlek')).toHaveValue('1');
+    expect(screen.getByLabelText('Hushållsstorlek')).toBeDisabled();
+    expect(screen.getByText('Belopp för 1 persons hushåll')).toBeInTheDocument();
   });
 
   it('takes the own size off, so the members count again', async () => {

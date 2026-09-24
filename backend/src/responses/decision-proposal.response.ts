@@ -47,7 +47,6 @@ export class DecisionProposalView {
   /** The co-applicant's proposed orsak, from the same catalogue as the applicant's. */
   @IsString() @IsOptional() coApplicantReason?: string;
   @IsArray() @IsString({ each: true }) @IsOptional() reasonOptions?: string[];
-  @IsString() @IsOptional() phraseText?: string;
   @ValidateNested() @Type(() => PreviousDecisionView) @IsOptional() previousDecision?: PreviousDecisionView;
   @IsArray()
   @ValidateNested({ each: true })

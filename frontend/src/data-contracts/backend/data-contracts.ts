@@ -164,7 +164,6 @@ export interface DecisionProposalView {
   reason?: string;
   coApplicantReason?: string;
   reasonOptions?: string[];
-  phraseText?: string;
   previousDecision?: PreviousDecisionView;
   warnings?: DecisionProposalWarningView[];
 }

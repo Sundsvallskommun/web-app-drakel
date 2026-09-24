@@ -80,7 +80,10 @@
     "householdSize": "Household size",
     "sum": "Total",
     "info": "The amounts are counted in Lifecare once the calculation is saved there.",
-    "householdAmount": "Amount for a household of {{size}}"
+    "familyMembers": "Number of persons",
+    "householdAmount_one": "Amount for a household of {{count}}",
+    "householdAmount_other": "Amount for a household of {{count}}",
+    "householdAmountUnknown": "Amount for the household"
   },
   "warnings": {
     "acknowledge": "Acknowledge",

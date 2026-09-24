@@ -74,7 +74,6 @@ export interface DecisionProposal {
   /** The co-applicant's proposed orsak, from the same catalogue as the applicant's. */
   coApplicantReason?: string;
   reasonOptions?: string[];
-  phraseText?: string;
   previousDecision?: PreviousDecision;
   warnings?: DecisionProposalWarning[];
 }

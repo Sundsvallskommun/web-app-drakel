@@ -435,7 +435,7 @@ export interface FinancialAssistanceData {
    */
   lifecareDecisionId?: number;
   /**
-   * Reference to the Lifecare normberäkning (calculation) the errand concerns, set by Draken once the calculation is saved in Lifecare. A reference only: whether the calculation is final (slutlig) is Lifecare's status and is never stored here. finalize requires it for a granting outcome (BIFALL/DELAVSLAG).
+   * Reference to the Lifecare normberäkning (calculation) the errand concerns. Set by the daily prepare when it creates the proposal in Lifecare, or by Draken when it saves a calculation for an errand that has none; once set it is not replaced by the prepare step. Draken updates this calculation rather than creating another. A reference only: whether the calculation is final (slutlig) is Lifecare's status and is never stored here. finalize requires it for a granting outcome (BIFALL/DELAVSLAG).
    * @format int32
    */
   lifecareCalculationId?: number;
@@ -2469,6 +2469,15 @@ export interface SsbtekBasis {
   agencies?: Record<string, Record<string, any>>;
 }
 
+/** The number of monitorings on the errand */
+export interface MonitoringCount {
+  /**
+   * Number of monitorings on the errand
+   * @format int64
+   */
+  count?: number;
+}
+
 /** The errand number and the household's personal numbers. Fetched per process run so the personal numbers never become process variables; every read is recorded in the errand's event log. */
 export interface HouseholdIdentifiers {
   /** The errand's human-readable number — what a person searches for in Draken */
@@ -2477,15 +2486,6 @@ export interface HouseholdIdentifiers {
   applicantPersonId?: string;
   /** The co-applicant's personal number; null when there is no co-applicant or it could not be resolved */
   coApplicantPersonId?: string;
-}
-
-/** The number of monitorings on the errand */
-export interface MonitoringCount {
-  /**
-   * Number of monitorings on the errand
-   * @format int64
-   */
-  count?: number;
 }
 
 /** Self-describing snapshot of the form as it was rendered and answered. */
@@ -2649,8 +2649,6 @@ export interface DecisionProposal {
   reasonOptions?: string[];
   /** The proposed orsak for the co-applicant (medsökande): the previous Lifecare decision's co-applicant reason, or null when there is none. Picked from the same reasonOptions catalogue as the applicant's */
   coApplicantReason?: string;
-  /** The proposed frastext: on BIFALL/DELAVSLAG, "Bifall månad med barn" when children are in the calculation, else "Bifall månad utan barn". Null otherwise */
-  phraseText?: string;
   /** The applicant's most recent Lifecare decision, or null when none was found (or Lifecare could not be read) */
   previousDecision?: PreviousDecision;
   /** The DECISION-section warnings this proposal raised (reconciled on every read) */
@@ -3280,6 +3278,7 @@ export enum WarningTypeEnum {
   SSBTEK_READ_FAILED = "SSBTEK_READ_FAILED",
   INCOME_MISSING_PREVIOUS_PERIOD = "INCOME_MISSING_PREVIOUS_PERIOD",
   INCOME_TRANSFERRED_LATE = "INCOME_TRANSFERRED_LATE",
+  INCOME_NOT_TRANSFERABLE = "INCOME_NOT_TRANSFERABLE",
   FAMILY_DIFFERS_FROM_APPLICATION = "FAMILY_DIFFERS_FROM_APPLICATION",
   FAMILY_DEVIATING_PERIOD = "FAMILY_DEVIATING_PERIOD",
   COMMON_HOUSEHOLD_COST_CHECK = "COMMON_HOUSEHOLD_COST_CHECK",
