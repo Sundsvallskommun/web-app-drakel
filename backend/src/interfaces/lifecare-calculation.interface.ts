@@ -156,5 +156,7 @@ export interface LifecareCalculationForEditRaw extends LifecareCalculationCatalo
 /** `Calculation/PlacePersons`: the norm with its rows, and each member placed on a row with its amount. */
 export interface LifecarePlacedPersonsRaw {
   calculationPersons: LifecareCalculationPersonRaw[];
+  /** The norm the members were placed on, with its rows and gemensamma kostnader. */
+  norm?: LifecareCalculationRaw['norm'];
   [field: string]: unknown;
 }

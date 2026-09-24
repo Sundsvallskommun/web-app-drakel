@@ -2,14 +2,16 @@ import { HttpException } from '@exceptions/HttpException';
 import CaremanagementErrandService from '@services/caremanagement-errand.service';
 import CaremanagementMetadataService from '@services/caremanagement-metadata.service';
 import CaremanagementNormberakningService, { NormSection } from '@services/caremanagement-normberakning.service';
-import LifecareCalculationEditService, { CalculationChange } from '@services/lifecare-calculation-edit.service';
+import LifecareAccessLogService from '@services/lifecare-access-log.service';
+import LifecareCalculationEditService, { CalculationChange, toNormOptions } from '@services/lifecare-calculation-edit.service';
+import LifecareCalculationsService from '@services/lifecare-calculations.service';
 import { applicationMonthOf } from '@utils/application-month';
 import { toDropdownOption } from '@utils/dropdown-option';
 import {
   addExpense,
   addIncome,
   changeExpense,
-  changeHouseholdSize,
+  changeHeader,
   changeIncome,
   changePerson,
   removeExpense,
@@ -19,7 +21,7 @@ import {
 
 import { TypeOptionGroupEnum } from '@/data-contracts/caremanagement/data-contracts';
 import { NormHeaderInputDto, NormRowInputDto } from '@/dtos/normberakning.dto';
-import { NormberakningDraft, NormberakningTypes } from '@/responses/normberakning.response';
+import { NormberakningDraft, NormberakningTypes, NormTypeOption } from '@/responses/normberakning.response';
 
 // caremanagement returns one costTypes list grouped by Mina-sidor section (group = enum code). The
 // HOUSING section is Lifecare's boendekostnader (the Utgifter / EXPENSE bucket); the other sections
@@ -29,6 +31,7 @@ const HOUSING_GROUP = TypeOptionGroupEnum.HOUSING;
 /** Where the errand's beräkning is: careM's draft, or — once saved — Lifecare's beräkning with its id. */
 interface CalculationSource {
   lifecareCalculationId?: number;
+  lifecareServiceId?: number;
   applicationMonth?: string;
 }
 
@@ -49,6 +52,8 @@ class ErrandNormberakningService {
   private metadataService = new CaremanagementMetadataService();
   private draftService = new CaremanagementNormberakningService();
   private lifecare = new LifecareCalculationEditService();
+  private calculations = new LifecareCalculationsService();
+  private accessLog = new LifecareAccessLogService();
 
   async readDraft(errandId: string): Promise<NormberakningDraft> {
     const source = await this.sourceOf(errandId);
@@ -77,10 +82,11 @@ class ErrandNormberakningService {
     if (source.lifecareCalculationId !== undefined) {
       return this.lifecare.readTypes(source.lifecareCalculationId);
     }
-    const res = await this.metadataService.readFinancialAssistanceMetadata();
+    const [res, norms] = await Promise.all([this.metadataService.readFinancialAssistanceMetadata(), this.lifecareNorms(errandId, source)]);
     const costTypes = res.data?.costTypes ?? [];
     // Split the single costTypes list into the two normberäkning buckets via the Mina-sidor group.
     return {
+      norms,
       incomeTypes: (res.data?.incomeTypes ?? []).map(toDropdownOption),
       costTypes: costTypes.filter(type => type.group === HOUSING_GROUP).map(toDropdownOption),
       livingCostTypes: costTypes.filter(type => type.group !== HOUSING_GROUP).map(toDropdownOption),
@@ -88,13 +94,13 @@ class ErrandNormberakningService {
   }
 
   /**
-   * Changes the header: in careM's draft anything it holds; in Lifecare only the household size (Gemensamma
-   * kostnader) — the norm and period are Lifecare's.
+   * Changes the header: in careM's draft anything it holds; in Lifecare the norm and the household size
+   * (Gemensamma kostnader) — the period is Lifecare's.
    */
   async updateHeader(errandId: string, input: NormHeaderInputDto): Promise<void> {
     await this.changeRow(errandId, {
       caremanagement: () => this.draftService.updateHeader(errandId, input),
-      lifecare: calculation => changeHouseholdSize(calculation, input),
+      lifecare: (calculation, forEdit) => changeHeader(calculation, forEdit, input),
     });
   }
 
@@ -155,10 +161,28 @@ class ErrandNormberakningService {
     }
   }
 
+  /**
+   * The norms a beräkning on the insats can have, from Lifecare's underlag for a new one — the Norm list before
+   * the beräkning is in Lifecare. Best-effort: without them the norm cannot be changed, the rest still works.
+   */
+  private async lifecareNorms(errandId: string, source: CalculationSource): Promise<NormTypeOption[]> {
+    if (source.lifecareServiceId === undefined) {
+      return [];
+    }
+    try {
+      const proposal = await this.calculations.readProposal(source.lifecareServiceId);
+      await this.accessLog.logRead(errandId, { target: 'CALCULATION', description: 'Läste normer i Lifecare' });
+      return toNormOptions(proposal.norms);
+    } catch {
+      return [];
+    }
+  }
+
   private async sourceOf(errandId: string): Promise<CalculationSource> {
     const view = await this.errandService.getFinancialAssistanceView(errandId);
     return {
       lifecareCalculationId: view.data?.data?.lifecareCalculationId ?? undefined,
+      lifecareServiceId: typeof view.data?.lifecareServiceId === 'number' ? view.data.lifecareServiceId : undefined,
       applicationMonth: applicationMonthOf(view.data?.data),
     };
   }

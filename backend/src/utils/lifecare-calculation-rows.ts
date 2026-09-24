@@ -401,28 +401,49 @@ export const removePerson = (calculation: LifecareCalculationRaw, rowId: string)
   return { ...calculation, calculationPersons: calculation.calculationPersons.filter((_person, position) => position !== index) };
 };
 
-/**
- * Sets the beräkning's own household size (Annan hushållsstorlek), or takes it off so the members count. An
- * own size is saved for the household's coming beräkningar too — the web app's "Vill du spara och använda
- * annan hushållsstorlek för hushållet kommande beräkningar?" answered Ja.
- */
-export const changeHouseholdSize = (calculation: LifecareCalculationRaw, input: NormHeaderInputDto): LifecareCalculationRaw => {
-  if (
-    input.normId !== undefined ||
-    input.normType !== undefined ||
-    input.calculationFromDate !== undefined ||
-    input.calculationToDate !== undefined
-  ) {
-    throw new HttpException(422, 'Normen och perioden ändras i Lifecare. Från Drakel går bara hushållsstorleken att ändra.');
+/** Puts the beräkning on another of Lifecare's norms, every member taken off the old norm's rows. */
+const changeNorm = (calculation: LifecareCalculationRaw, forEdit: LifecareCalculationForEditRaw, normId: number): LifecareCalculationRaw => {
+  const norm = forEdit.norms.find(candidate => candidate.normId === normId);
+  if (!norm) {
+    throw new HttpException(422, 'Normen finns inte i Lifecare. Ladda om fliken.');
   }
-  const custom = input.hasCustomHouseholdSize ?? calculation.hasCustomHouseholdSize;
+  return {
+    ...calculation,
+    normId: norm.normId,
+    normText: norm.name,
+    calculationPersons: calculation.calculationPersons.map(person => ({ ...person, normRowId: 0, normRow: null, amount: 0 })),
+  };
+};
+
+/**
+ * Changes the beräkning's header from Drakel: its norm, and its own household size (Annan hushållsstorlek) or
+ * taking that off so the members count. The period is Lifecare's.
+ *
+ * A new norm has its own rows, so every member is taken off the old one's normintervall — Lifecare places them
+ * on the new norm when the beräkning is saved. An own household size is saved for the household's coming
+ * beräkningar too — the web app's "Vill du spara och använda annan hushållsstorlek för hushållet kommande
+ * beräkningar?" answered Ja.
+ */
+export const changeHeader = (
+  calculation: LifecareCalculationRaw,
+  forEdit: LifecareCalculationForEditRaw,
+  input: NormHeaderInputDto,
+): LifecareCalculationRaw => {
+  if (input.normType !== undefined || input.calculationFromDate !== undefined || input.calculationToDate !== undefined) {
+    throw new HttpException(422, 'Perioden ändras i Lifecare. Från Drakel går normen och hushållsstorleken att ändra.');
+  }
+  const withNorm = input.normId === undefined || input.normId === calculation.normId ? calculation : changeNorm(calculation, forEdit, input.normId);
+  if (input.hasCustomHouseholdSize === undefined && input.householdSize === undefined) {
+    return withNorm;
+  }
+  const custom = input.hasCustomHouseholdSize ?? withNorm.hasCustomHouseholdSize;
   if (custom && (input.householdSize === undefined || input.householdSize < 1)) {
     throw new HttpException(422, 'Ange hushållsstorleken.');
   }
   return {
-    ...calculation,
+    ...withNorm,
     hasCustomHouseholdSize: custom,
-    householdSize: custom ? input.householdSize : calculation.calculationPersons.filter(person => person.included).length,
+    householdSize: custom ? input.householdSize : withNorm.calculationPersons.filter(person => person.included).length,
     saveHouseholdSize: custom,
   };
 };
@@ -434,11 +455,11 @@ const sharedSizeOf = (calculation: LifecareCalculationRaw): { size: number; memb
   return { size: calculation.hasCustomHouseholdSize && own > 0 ? own : members, members };
 };
 
-/** Whether the household size or the members counted changed — the gemensamma kostnader then change too. */
+/** Whether the norm, the household size or the members counted changed — the gemensamma kostnader then change too. */
 export const householdSizeChanged = (before: LifecareCalculationRaw, after: LifecareCalculationRaw): boolean => {
   const previous = sharedSizeOf(before);
   const next = sharedSizeOf(after);
-  return previous.size !== next.size || previous.members !== next.members;
+  return before.normId !== after.normId || previous.size !== next.size || previous.members !== next.members;
 };
 
 /**

@@ -1265,6 +1265,7 @@ export interface NormTypeOption {
 }
 
 export interface NormberakningTypes {
+  norms: NormTypeOption[];
   incomeTypes: NormTypeOption[];
   costTypes: NormTypeOption[];
   livingCostTypes: NormTypeOption[];

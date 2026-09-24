@@ -15,7 +15,8 @@
     "norm": "Norm",
     "calculationDate": "Beräkningsdatum",
     "from": "Från",
-    "to": "Till"
+    "to": "Till",
+    "normError": "Normen kunde inte ändras"
   },
   "tabs": {
     "family": "Familj",

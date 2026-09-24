@@ -6,7 +6,7 @@ import { useCallback } from 'react';
 
 import { useServiceQuery } from './use-service-query';
 
-const NO_TYPES: NormberakningTypes = { incomeTypes: [], costTypes: [], livingCostTypes: [] };
+const NO_TYPES: NormberakningTypes = { norms: [], incomeTypes: [], costTypes: [], livingCostTypes: [] };
 
 /**
  * The income/cost types the add-row dropdowns offer for the errand. They follow where the beräkning is —

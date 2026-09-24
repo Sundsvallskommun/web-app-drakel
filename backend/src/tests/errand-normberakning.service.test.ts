@@ -191,13 +191,38 @@ describe('ErrandNormberakningService', () => {
     });
   });
 
-  it('refuses to change the norm or the period of a beräkning in Lifecare', async () => {
+  it('refuses to change the period of a beräkning in Lifecare, or to put it on a norm Lifecare does not have', async () => {
     withCalculationId(30);
     vi.spyOn(LifecareCalculationsService.prototype, 'readForEdit').mockResolvedValue(forEdit());
     const update = vi.spyOn(LifecareCalculationsService.prototype, 'update');
 
-    await expect(new ErrandNormberakningService().updateHeader('errand-1', { normId: 2 })).rejects.toMatchObject({ status: 422 });
+    await expect(new ErrandNormberakningService().updateHeader('errand-1', { calculationFromDate: '2026-09-02' })).rejects.toMatchObject({
+      status: 422,
+    });
+    await expect(new ErrandNormberakningService().updateHeader('errand-1', { normId: 99 })).rejects.toMatchObject({ status: 422 });
     expect(update).not.toHaveBeenCalled();
+  });
+
+  it('puts the beräkning on another norm in Lifecare, every member placed on the new norm', async () => {
+    withCalculationId(30);
+    vi.spyOn(LifecareCalculationsService.prototype, 'readForEdit').mockResolvedValue({
+      ...forEdit(),
+      norms: [
+        { normId: 1, name: 'Riksnorm 2026' },
+        { normId: 6, name: 'Specnorm' },
+      ],
+    });
+    const place = vi.spyOn(LifecareCalculationsService.prototype, 'placePersons').mockResolvedValue({
+      calculationPersons: saved.calculationPersons.map(person => ({ ...person, normRowId: 1, amount: 2000 })),
+    });
+    const update = vi.spyOn(LifecareCalculationsService.prototype, 'update').mockResolvedValue(saved);
+
+    await new ErrandNormberakningService().updateHeader('errand-1', { normId: 6 });
+
+    expect(place.mock.calls[0]?.[0]).toMatchObject({ normId: 6 });
+    expect(update.mock.calls[0]?.[1]).toMatchObject({ normId: 6, normText: 'Specnorm' });
+    const body = update.mock.calls[0]?.[1] as { calculationPersons: Record<string, unknown>[] };
+    expect(body.calculationPersons[0]).toMatchObject({ normRowId: 1, amount: 2000 });
   });
 
   it("tells finalize whether the household has an own size — Lifecare's once the beräkning is there, careM's before", async () => {
@@ -230,6 +255,7 @@ describe('ErrandNormberakningService', () => {
     vi.spyOn(LifecareCalculationsService.prototype, 'readForEdit').mockResolvedValue(forEdit());
 
     expect(await new ErrandNormberakningService().types('errand-1')).toEqual({
+      norms: [{ code: '1', displayName: 'Riksnorm 2026' }],
       incomeTypes: [{ code: '1', displayName: 'Lön efter skatt' }],
       costTypes: [{ code: '3', displayName: 'Boendekostnad' }],
       livingCostTypes: [],

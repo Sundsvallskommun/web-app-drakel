@@ -116,7 +116,8 @@ class LifecareCalculationsService {
       normId: calculation.normId,
       calculationPersons: calculation.calculationPersons.filter(person => person.included),
     });
-    const withNorm = withPlacedPersons(calculation, placed.calculationPersons);
+    // The norm comes back with its rows and gemensamma kostnader — the new one's, when the norm was changed.
+    const withNorm = { ...withPlacedPersons(calculation, placed.calculationPersons), norm: placed.norm ?? calculation.norm };
     const marked = await this.withJobStimuli(withNorm, jobStimulus);
     return { ...withNorm, hasApplicantJobStimuli: marked.hasApplicantJobStimuli, hasCoApplicantJobStimuli: marked.hasCoApplicantJobStimuli };
   }

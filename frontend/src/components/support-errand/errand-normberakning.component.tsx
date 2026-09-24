@@ -9,7 +9,7 @@ import { useNormberakningTypes } from '@hooks/use-normberakning-types';
 import { TypeOption } from '@services/normberakning-service';
 import { renderPdf } from '@services/pdf-service';
 import { Warning } from '@services/warning-service';
-import { DatePicker, FormControl, FormLabel, Input, Spinner, Tabs } from '@sk-web-gui/react';
+import { DatePicker, FormControl, FormLabel, Spinner, Tabs } from '@sk-web-gui/react';
 import { formatApplicationMonth } from '@utils/application-month';
 import { buildNormberakningHtml } from '@utils/build-normberakning-html';
 import { computeNormResult, fromLifecareSummary } from '@utils/norm-result';
@@ -21,6 +21,7 @@ import { ErrandSectionHeader } from './errand-section-header.component';
 import { LifecareCalculationSave } from './lifecare-calculation-save.component';
 import { LockedBanner, LockFieldset } from './lockable-section.component';
 import { NormResultSummary } from './norm-result.component';
+import { NormSelect } from './norm-select.component';
 import { NormberakningExpenses } from './normberakning-expenses.component';
 import { NormberakningFamilj } from './normberakning-familj.component';
 import { NormberakningGemensamma } from './normberakning-gemensamma.component';
@@ -210,11 +211,13 @@ export const ErrandNormberakning: FC<{
               <span className="block py-4">{formatApplicationMonth(draft.applicationMonth, i18n.language)}</span>
             </FilterField>
             <FilterField label={t('details.norm')} required className="w-[14rem]">
-              <Input
-                readOnly
-                size="sm"
-                value={(draft.normTypeDisplayNames ?? draft.normType ?? []).join(', ')}
-                placeholder="—"
+              <NormSelect
+                errandId={errandId}
+                normId={draft.normId}
+                normName={(draft.normTypeDisplayNames ?? draft.normType ?? []).join(', ')}
+                norms={types.norms}
+                disabled={closed}
+                onChanged={refreshAll}
               />
             </FilterField>
             <FilterField label={t('details.calculationDate')} required>

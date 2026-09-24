@@ -15,7 +15,8 @@
     "norm": "Norm",
     "calculationDate": "Calculation date",
     "from": "From",
-    "to": "To"
+    "to": "To",
+    "normError": "The norm could not be changed"
   },
   "tabs": {
     "family": "Family",

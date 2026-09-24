@@ -16,6 +16,10 @@ export type CalculationChange = (calculation: LifecareCalculationRaw, forEdit: L
 const toTypeOptions = (types: LifecareCalculationTypeRaw[]): NormTypeOption[] =>
   types.filter(type => type.isActive).map(type => ({ code: String(type.id), displayName: type.text }));
 
+/** Lifecare's norms as the Norm list offers them — the code is the normId. */
+export const toNormOptions = (norms: LifecareCalculationForEditRaw['norms']): NormTypeOption[] =>
+  norms.map(norm => ({ code: String(norm.normId), displayName: norm.name }));
+
 /**
  * The errand's beräkning once it is saved in Lifecare, read and changed there directly — Lifecare owns it
  * from then on. Every change goes the way Lifecare's web app saves one: read for edit, change, have Lifecare
@@ -54,6 +58,7 @@ class LifecareCalculationEditService {
   async readTypes(calculationId: number): Promise<NormberakningTypes> {
     const forEdit = await this.calculations.readForEdit(calculationId);
     return {
+      norms: toNormOptions(forEdit.norms),
       incomeTypes: toTypeOptions(forEdit.incomeTypes),
       costTypes: toTypeOptions(forEdit.expenseTypes),
       livingCostTypes: toTypeOptions(forEdit.specialExpenseTypes),
@@ -90,6 +95,10 @@ class LifecareCalculationEditService {
    * amount follows both, by Lifecare's own rules (`Calculation/GetAmount`).
    */
   private async withCountedAmounts(before: LifecareCalculationRaw, calculation: LifecareCalculationRaw): Promise<LifecareCalculationRaw> {
+    // On a new norm every member was just placed afresh, with the amount Lifecare placed them with.
+    if (before.normId !== calculation.normId) {
+      return calculation;
+    }
     const calculationPersons = await Promise.all(
       calculation.calculationPersons.map(async member =>
         needsRecount(before, member)

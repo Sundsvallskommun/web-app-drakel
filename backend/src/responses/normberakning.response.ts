@@ -136,6 +136,8 @@ export class NormTypeOption {
 
 /** The type catalogues the add-row dropdowns offer — Lifecare's own once the beräkning is saved there. */
 export class NormberakningTypes {
+  /** Lifecare's norms for the insats — the code is the normId. */
+  @IsArray() @ValidateNested({ each: true }) @Type(() => NormTypeOption) norms!: NormTypeOption[];
   @IsArray() @ValidateNested({ each: true }) @Type(() => NormTypeOption) incomeTypes!: NormTypeOption[];
   @IsArray() @ValidateNested({ each: true }) @Type(() => NormTypeOption) costTypes!: NormTypeOption[];
   @IsArray() @ValidateNested({ each: true }) @Type(() => NormTypeOption) livingCostTypes!: NormTypeOption[];
