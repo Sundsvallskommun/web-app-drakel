@@ -21,7 +21,7 @@ export interface LifecareCalculationPersonRaw {
 }
 
 /** A row of the norm — a normintervall with its monthly and daily amount, e.g. "Ensamstående 3940.00". */
-interface LifecareNormRowRaw {
+export interface LifecareNormRowRaw {
   rowId: number;
   name: string;
   monthlyAmount?: number;

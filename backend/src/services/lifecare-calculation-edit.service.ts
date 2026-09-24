@@ -102,11 +102,12 @@ class LifecareCalculationEditService {
       return calculation;
     }
     const calculationPersons = await Promise.all(
-      calculation.calculationPersons.map(async member =>
-        needsRecount(before, member)
-          ? { ...member, amount: await this.calculations.amountFor(member, calculation.startDate, calculation.endDate) }
-          : member,
-      ),
+      calculation.calculationPersons.map(async member => {
+        const normRow = calculation.norm?.rows?.find(row => row.rowId === member.normRowId);
+        return needsRecount(before, member) && normRow
+          ? { ...member, amount: await this.calculations.amountFor(member, normRow, calculation.startDate, calculation.endDate) }
+          : member;
+      }),
     );
     return { ...calculation, calculationPersons };
   }

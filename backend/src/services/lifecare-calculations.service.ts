@@ -5,6 +5,7 @@ import {
   LifecareCalculationListItemRaw,
   LifecareCalculationProposalRaw,
   LifecareCalculationRaw,
+  LifecareNormRowRaw,
   LifecareNormSharedRaw,
   LifecarePlacedPersonsRaw,
 } from '@interfaces/lifecare-calculation.interface';
@@ -84,17 +85,15 @@ class LifecareCalculationsService {
   }
 
   /**
-   * A member's amount on the norm for the period, as Lifecare counts it from the member's normintervall and
-   * days in the household — what the web app asks for a member before it saves (capture 2026-09-24, lifecare7:
-   * normintervall 11 on Riksnorm 2026 gave 3 820).
-   *
-   * The request names no norm: Lifecare counts on the norm of the session's latest `PlacePersons` — the same
-   * row id is a different amount on another norm. Call it right after placing the beräkning's members.
+   * A member's amount for the period, as Lifecare counts it from the member's normintervall and days in the
+   * household — what the web app asks for a member when its normintervall is picked (capture 2026-09-24,
+   * lifecare7). The norm row goes along whole, its norm and amounts included: "Barn 7-10 år" on Riksnorm 2026
+   * gave 3 820, on norm 3 1 947. Nothing depends on an earlier call.
    */
-  public async amountFor(person: Record<string, unknown>, startDate: string, endDate: string): Promise<number> {
+  public async amountFor(person: Record<string, unknown>, normRow: LifecareNormRowRaw, startDate: string, endDate: string): Promise<number> {
     const res = await this.apiService.post<{ amount: number }>(
       { module: PROFESSIONAL_WEB, path: 'api2/Calculation/GetAmount' },
-      { person, startDate, endDate },
+      { person, normRow, startDate, endDate },
     );
     return res.data.amount;
   }

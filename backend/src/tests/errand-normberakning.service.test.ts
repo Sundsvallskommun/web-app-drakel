@@ -134,6 +134,8 @@ describe('ErrandNormberakningService', () => {
     await new ErrandNormberakningService().updateRow('errand-1', 'persons', '1', { caseworkerDays: 10, normRowId: 2 });
 
     expect(amountFor.mock.calls[0]?.[0]).toMatchObject({ personId: '19880209T050', normRowId: 2, deviationDays: 10 });
+    // The norm row goes along whole, as the web app sends it (capture lifecare7).
+    expect(amountFor.mock.calls[0]?.[1]).toMatchObject({ rowId: 2, name: 'Ensamstående 3940.00', monthlyAmount: 3940 });
     const body = update.mock.calls[0]?.[1] as { calculationPersons: Record<string, unknown>[] };
     expect(body.calculationPersons[0]).toMatchObject({
       normRowId: 2,
