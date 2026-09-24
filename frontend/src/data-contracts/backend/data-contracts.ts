@@ -534,7 +534,6 @@ export interface FinalizeResult {
   decisionId?: string;
   paymentIds: string[];
   payeeWarnings: string[];
-  failedRpaTasks: string[];
   processMessageCorrelated: boolean;
   lifecareDecision?: DecisionRegistration;
   lifecarePayments: PaymentRegistration[];
@@ -782,6 +781,7 @@ export interface UpdateLifecareRecordDto {
   occurenceDate?: string;
   /** @pattern ^\d{2}:\d{2}$ */
   time?: string;
+  protected?: boolean;
 }
 
 export interface CreateLifecareJournalNoteDto {
@@ -914,6 +914,8 @@ export interface PaymentStatusView {
   applicationMonth?: string;
   effectuated: boolean;
   paymentDate?: string;
+  amount?: number;
+  status?: string;
   unavailable: boolean;
 }
 

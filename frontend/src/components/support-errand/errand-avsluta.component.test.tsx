@@ -20,7 +20,6 @@ const finalized = {
   decisionId: 'decision-1',
   paymentIds: ['payment-1'],
   payeeWarnings: [],
-  failedRpaTasks: [],
   processMessageCorrelated: true,
   lifecarePayments: [],
   failedChannels: [],

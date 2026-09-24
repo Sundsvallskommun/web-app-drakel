@@ -75,9 +75,9 @@
     "dateRequired": "Date *",
     "time": "Time",
     "text": "Text",
-    "create": "Create",
-    "writeProtected": "Save write-protected",
     "writeProtectedHint": "A write-protected record cannot be changed afterwards, here or in Lifecare.",
-    "saveChangeError": "Could not save the change"
+    "saveChangeError": "Could not save the change",
+    "saveAndProtect": "Save and write-protect",
+    "alwaysProtectedHint": "Lifecare always write-protects this type; it cannot be changed afterwards."
   }
 }

@@ -37,7 +37,6 @@ const toFinalizeResult = (
   decisionId: finalized?.decisionId,
   paymentIds: finalized?.paymentIds ?? [],
   payeeWarnings: finalized?.payeeWarnings ?? [],
-  failedRpaTasks: (finalized?.rpaTasks ?? []).filter(task => !task.enqueued).map(task => task.action ?? ''),
   processMessageCorrelated: finalized?.processMessageCorrelated ?? false,
   lifecareDecision,
   lifecarePayments,

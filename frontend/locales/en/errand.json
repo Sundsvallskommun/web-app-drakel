@@ -73,7 +73,6 @@
       "description": "The decision is saved, but this did not go through:",
       "failedChannels": "The decision could not be sent to: {{detail}}.",
       "payeeWarnings": "Payee: {{detail}}",
-      "failedRpaTasks": "Could not be queued for Lifecare: {{detail}}.",
       "processNotResumed": "The process was not told about the decision.",
       "paymentNotRegistered": "A payment is waiting to be registered in Lifecare: {{detail}} It can be registered from the Payment tab.",
       "paymentReceiptLost": "{{detail}}",

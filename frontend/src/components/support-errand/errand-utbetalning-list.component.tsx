@@ -58,7 +58,7 @@ export const ErrandUtbetalningList: FC<{
   const rows = [...payments].sort(byDateDesc);
 
   return (
-    <ContentBox title={t('payment.list.waitingTitle')}>
+    <ContentBox>
       <Table dense>
         <Table.Header>
           <Table.HeaderColumn>{t('payment.list.paymentDate')}</Table.HeaderColumn>

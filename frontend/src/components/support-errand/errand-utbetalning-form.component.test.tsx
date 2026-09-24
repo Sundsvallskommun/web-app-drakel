@@ -14,10 +14,6 @@ vi.mock('@services/payment-service', () => ({
   createPayment: vi.fn(),
 }));
 
-vi.mock('@services/lifecare-payment-service', () => ({
-  createLifecarePayee: vi.fn(),
-}));
-
 const APPLICANT = {
   id: 'stakeholder-1',
   personalNumber: '880209-T050',
@@ -78,15 +74,7 @@ const renderForm = ({
   optionsError,
   onSaved,
 }: { options?: LifecarePaymentOptionsView; optionsError?: string; onSaved?: () => void } = {}) =>
-  render(
-    <ErrandUtbetalningForm
-      errandId="errand-1"
-      options={options}
-      optionsError={optionsError}
-      onPayeeAdded={vi.fn()}
-      onSaved={onSaved}
-    />
-  );
+  render(<ErrandUtbetalningForm errandId="errand-1" options={options} optionsError={optionsError} onSaved={onSaved} />);
 
 describe('ErrandUtbetalningForm', () => {
   beforeEach(() => {
@@ -140,7 +128,6 @@ describe('ErrandUtbetalningForm', () => {
       <ErrandUtbetalningForm
         errandId="errand-1"
         options={{ ...LIFECARE_OPTIONS, payees: [...LIFECARE_OPTIONS.payees] }}
-        onPayeeAdded={vi.fn()}
       />
     );
 
@@ -158,13 +145,26 @@ describe('ErrandUtbetalningForm', () => {
   });
 
   it('opens clearing and account for a personkonto but leaves the postal address closed', async () => {
-    renderForm();
+    // No payee proposed, so the recipient is typed in and the betalsätt decides which fields open.
+    renderForm({ options: { ...LIFECARE_OPTIONS, proposal: { paymentDate: '2026-09-25' } } });
+    fireEvent.change(screen.getByLabelText(/^Betalsätt/), { target: { value: 'Personkonto' } });
 
     await waitFor(() => {
       expect(screen.getByLabelText(/^Clearing/)).toBeEnabled();
     });
     expect(screen.getByLabelText(/^Kontonummer/)).toBeEnabled();
     expect(screen.getByLabelText(/^C\/O adress/)).toBeDisabled();
+  });
+
+  it('locks the recipient fields to the chosen betalningsmottagare', async () => {
+    renderForm();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/^Betalsätt/)).toHaveValue('Personkonto');
+    });
+    expect(screen.getByLabelText(/^Betalsätt/)).toBeDisabled();
+    expect(screen.getByLabelText(/^Kontonummer/)).toBeDisabled();
+    expect(screen.getByLabelText(/^Namn/)).toBeDisabled();
   });
 
   it('carries the chosen payee across and closes clearing for a giro', async () => {

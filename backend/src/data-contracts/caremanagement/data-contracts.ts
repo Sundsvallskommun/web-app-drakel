@@ -58,10 +58,10 @@ export interface Violation {
 
 /** Request to create or replace a financial assistance payment on an errand. */
 export interface PaymentRequest {
-  /** Provenance, defaults to CASEWORKER when omitted. RPA POSTs LIFECARE (with lifecareId) to surface a payment read out of Lifecare onto the errand. */
+  /** Provenance, defaults to CASEWORKER when omitted. LIFECARE (with lifecareId) posts a payment read out of Lifecare onto the errand. */
   source?: PaymentRequestSourceEnum;
   /**
-   * The payment's id in Lifecare. Set by RPA when surfacing a LIFECARE-sourced payment (the idempotency key) or when stamping back the id of a registered caseworker payment.
+   * The payment's id in Lifecare. Set when posting a LIFECARE-sourced payment (the idempotency key) or when stamping back the id of a registered caseworker payment.
    * @minLength 0
    * @maxLength 64
    */
@@ -99,7 +99,7 @@ export interface PaymentRequest {
   accountingDate?: string;
   /** Whether the payment is excluded from being paid out */
   excludedFromPayment?: boolean;
-  /** The id of the payee row on the errand this payment pays to, as GET .../payees returns it. Send it when the caseworker picked an entry from that list — it is what lets the REGISTER_PAYMENT robot be handed the payee's Lifecare id instead of matching on name and account number. Omit it for a payee derived from the Lifecare payment history, which has no local row. */
+  /** The id of the payee row on the errand this payment pays to, as GET .../payees returns it. Send it when the caseworker picked an entry from that list — it is what lets Draken's BFF pick the payee by its Lifecare id instead of matching on name and account number. Omit it for a payee derived from the Lifecare payment history, which has no local row. */
   payeeId?: string;
   /**
    * The payee's id in Lifecare. Send it when the caseworker picked a payee Lifecare already has — the list read from Lifecare, or one just created there — so the payment can be registered against that payee by id instead of matching on name and account number.
@@ -183,13 +183,13 @@ export interface PaymentRequest {
 export interface Payment {
   /** The payment id */
   id?: string;
-  /** Provenance: CASEWORKER for one authored in Draken, LIFECARE for one read out of Lifecare by RPA and surfaced here on the errand. */
+  /** Provenance: CASEWORKER for one authored in Draken, LIFECARE for one read out of Lifecare and posted onto the errand. */
   source?: PaymentSourceEnum;
-  /** The payment's id in Lifecare once it exists there — null until RPA has registered a caseworker-authored payment; always set for a LIFECARE-sourced one. */
+  /** The payment's id in Lifecare once it exists there — null until a caseworker-authored payment has been registered there; always set for a LIFECARE-sourced one. */
   lifecareId?: string;
-  /** Lifecare's own message when the REGISTER_PAYMENT robot reported FAILED — shown to the caseworker as-is */
+  /** Lifecare's own message when the lifecare-result report said FAILED — shown to the caseworker as-is */
   lifecareDetail?: string;
-  /** Server-managed lifecycle status. DRAFT for a caseworker's saved draft; PENDING_REGISTRATION for one a decision created, waiting for the robot; REGISTERED once the REGISTER_PAYMENT robot has reported it into Lifecare (REGISTERED means it exists there, not that it has been paid out — whether it was effectuated is a separate question, asked through POST .../financial-assistance/payment-status); FAILED when the robot could not register it, with Lifecare's reason in lifecareDetail. */
+  /** Server-managed lifecycle status. DRAFT for a caseworker's saved draft; PENDING_REGISTRATION for one a decision created, waiting to be registered in Lifecare; REGISTERED once Draken's BFF has reported it registered (REGISTERED means it exists there, not that it has been paid out — whether it was effectuated is a separate question, asked through POST .../financial-assistance/payment-status); FAILED when it could not be registered, with Lifecare's reason in lifecareDetail. */
   status?: PaymentStatusEnum;
   /** The type of money paid out. Unconstrained — the value set comes from Lifecare and isn't known yet. */
   moneyType?: string;
@@ -215,7 +215,7 @@ export interface Payment {
   excludedFromPayment?: boolean;
   /** The id of the payee row on the errand this payment pays to, as GET .../payees returns it. Null for a payee derived from the Lifecare payment history (no local row) and for a manual payee deleted after the decision — the copied payee fields below are owned by the decision and stay either way. */
   payeeId?: string;
-  /** The payee's id in Lifecare, read from that payee row — set once the ADD_PAYEE robot has reported it back. The REGISTER_PAYMENT robot uses it to pick the payee in Lifecare by id instead of matching on name and account number. Null when the payee has no local row, or when the robot has not reported yet (lifecareStatus PENDING or FAILED on that payee). */
+  /** The payee's id in Lifecare, read from that payee row — set once the payee's creation in Lifecare has been reported back. Lets Draken's BFF pick the payee in Lifecare by id instead of matching on name and account number. Null when the payee has no local row, or when its creation has not been reported yet (lifecareStatus PENDING or FAILED on that payee). */
   lifecarePayeeId?: string;
   /** The stakeholder id of the payee */
   payeeStakeholderId?: string;
@@ -257,10 +257,10 @@ export interface Payment {
 
 /** Request to create or replace a financial assistance monitoring on an errand. */
 export interface MonitoringRequest {
-  /** Provenance, defaults to CASEWORKER when omitted. RPA POSTs LIFECARE (with lifecareId) to surface a monitoring read out of Lifecare onto the errand. */
+  /** Provenance, defaults to CASEWORKER when omitted. LIFECARE (with lifecareId) posts a monitoring read out of Lifecare onto the errand. */
   source?: MonitoringRequestSourceEnum;
   /**
-   * The monitoring's id in Lifecare. Set by RPA when surfacing a LIFECARE-sourced monitoring (the idempotency key) or when stamping back the id of a mirrored caseworker monitoring.
+   * The monitoring's id in Lifecare. Set when posting a LIFECARE-sourced monitoring (the idempotency key) or when stamping back the id of a caseworker monitoring written there.
    * @minLength 0
    * @maxLength 64
    */
@@ -295,9 +295,9 @@ export interface MonitoringRequest {
 export interface Monitoring {
   /** The monitoring id */
   id?: string;
-  /** Provenance: CASEWORKER for one authored in Draken (RPA mirrors it onto the person in Lifecare), LIFECARE for one read out of Lifecare by RPA and surfaced here on the errand. */
+  /** Provenance: CASEWORKER for one authored in Draken (Draken's BFF writes it onto the person in Lifecare), LIFECARE for one read out of Lifecare and posted onto the errand. */
   source?: MonitoringSourceEnum;
-  /** The monitoring's id in Lifecare once it exists there — null until RPA has mirrored a caseworker-authored monitoring; always set for a LIFECARE-sourced one. */
+  /** The monitoring's id in Lifecare once it exists there — null until a caseworker-authored monitoring has been written there; always set for a LIFECARE-sourced one. */
   lifecareId?: string;
   /** Short headline for the monitoring */
   title?: string;
@@ -633,6 +633,11 @@ export interface FinancialAssistanceData {
    * @format int32
    */
   lifecareDecisionId?: number;
+  /**
+   * The Lifecare normberäkning (calculation) id the errand concerns, set by the caseworker once the calculation is saved in Lifecare
+   * @format int32
+   */
+  lifecareCalculationId?: number;
   /** Children included in the application */
   children?: Child[];
   /** Costs applied for */
@@ -895,17 +900,6 @@ export interface Stakeholder {
   contactChannels?: ContactChannel[];
 }
 
-/** Request to enqueue a UiPath RPA task on an errand. */
-export interface RpaTaskRequest {
-  /**
-   * The RPA action — selects the Lifecare flow the robot runs
-   * @minLength 1
-   */
-  action: RpaTaskRequestActionEnum;
-  /** Optional extra hints for the robot, merged into the queue item SpecificContent. For REGISTER_PAYMENT, carries only the key 'paymentId' (the payment's id on the errand) — the robot fetches everything else via GET .../payments/{paymentId}, instead of putting payee names, account numbers or other personal data on the Orchestrator queue, the same reason RpaContext is fetched per queue item rather than riding along in it. ADD_PAYEE carries only the key 'payeeId' for the same reason. */
-  parameters?: Record<string, string>;
-}
-
 /** A referral/consultation on an errand, with the receiving authority, due date and status. */
 export interface Referral {
   /** Unique id */
@@ -1156,9 +1150,9 @@ export interface JournalEntry {
   id?: string;
   /** Errand id this journal entry belongs to */
   errandId?: string;
-  /** Provenance — CASEWORKER for a journal entry authored in Draken, LIFECARE for one read out of Lifecare by RPA and mirrored onto the errand */
+  /** Provenance — CASEWORKER for a journal entry authored in Draken, LIFECARE for one read out of Lifecare onto the errand */
   source?: string;
-  /** The journal entry's id in Lifecare's document list — set on LIFECARE-sourced mirrors (the RPA upsert key) */
+  /** The journal entry's id in Lifecare's document list — set on LIFECARE-sourced rows */
   lifecareId?: string;
   /** Journal entry type (Lifecare 'Typ'/Journaltyp). A municipality-configured value; see the metadata catalogue for a provisional set. */
   type?: string;
@@ -1270,9 +1264,9 @@ export interface Document {
   id?: string;
   /** Errand id this document belongs to */
   errandId?: string;
-  /** Provenance — CASEWORKER for a document authored in Draken, LIFECARE for one read out of Lifecare by RPA and mirrored onto the errand */
+  /** Provenance — CASEWORKER for a document authored in Draken, LIFECARE for one read out of Lifecare onto the errand */
   source?: string;
-  /** The document's id in Lifecare's document list — set on LIFECARE-sourced mirrors (the RPA upsert key) */
+  /** The document's id in Lifecare's document list — set on LIFECARE-sourced rows */
   lifecareId?: string;
   /** Document type (Lifecare 'Typ'/Dokumenttyp). A municipality-configured value; see the metadata catalogue for a provisional set. */
   type?: string;
@@ -1332,6 +1326,12 @@ export interface Decision {
    * @maxLength 4096
    */
   description?: string;
+  /**
+   * The co-applicant's orsak, when the household has a co-applicant and the decision carries one; description carries the applicant's.
+   * @minLength 0
+   * @maxLength 255
+   */
+  coApplicantReason?: string;
   /** Optional decision amount, in SEK. For a financial-assistance decision this is the granted amount (0 for a rejection); for a recommendation it is the recommended amount when the pipeline has computed one. */
   amount?: number;
   /**
@@ -1457,10 +1457,10 @@ export interface Warning {
   updated?: string;
 }
 
-/** The REGISTER_PAYMENT robot's report on registering a payment in Lifecare. */
+/** Draken's BFF's report on registering a payment in Lifecare. */
 export interface PaymentLifecareResult {
   /**
-   * What the robot ended up doing
+   * What the BFF ended up doing
    * @minLength 1
    */
   outcome: PaymentLifecareResultOutcomeEnum;
@@ -1520,9 +1520,9 @@ export interface PayeeOption {
   accountNumber?: string;
   /** Where the option comes from: LIFECARE (seen on a payment in the last 12 months) or MANUAL (added by hand on this errand) */
   source?: PayeeOptionSourceEnum;
-  /** For a MANUAL option, how far the ADD_PAYEE robot task has got: PENDING until the robot reports back, then SYNCED or FAILED. Null for a LIFECARE option, which is in Lifecare by definition */
+  /** For a MANUAL option, how far its creation in Lifecare has got: PENDING until it is reported back, then SYNCED or FAILED. Null for a LIFECARE option, which is in Lifecare by definition */
   lifecareStatus?: PayeeOptionLifecareStatusEnum;
-  /** The payee id Lifecare gave the robot, when it reported one */
+  /** The payee id Lifecare gave, when the lifecare-result report carried one */
   lifecarePayeeId?: string;
   /** Lifecare's own message when lifecareStatus is FAILED — shown to the caseworker as-is */
   lifecareDetail?: string;
@@ -1535,10 +1535,10 @@ export interface PayeeOption {
   created?: string;
 }
 
-/** The ADD_PAYEE robot's report on adding a payee to Lifecare. */
+/** The report on adding a payee to Lifecare. */
 export interface PayeeLifecareResult {
   /**
-   * What the robot ended up doing
+   * What ended up happening in Lifecare
    * @minLength 1
    */
   outcome: PayeeLifecareResultOutcomeEnum;
@@ -1554,116 +1554,6 @@ export interface PayeeLifecareResult {
    * @maxLength 1024
    */
   detail?: string;
-}
-
-/** One row from Lifecare's document list — journal notes (documentType 3) and regular documents (documentType 0) share this shape. */
-export interface LifecareDocumentRow {
-  /** The row's id in Lifecare's document list — the upsert key together with documentType. Rows without it are skipped. */
-  id?: string;
-  /** Title (Lifecare 'Rubrik'); becomes the mirrored heading */
-  title?: string;
-  /** Documented date (yyyy-MM-dd). Required — rows without a parseable date are reported FAILED. */
-  date?: string;
-  /** Documented time (HH:mm); optional, midnight when absent */
-  time?: string;
-  /** Type display text (Lifecare 'Typ'); becomes the mirrored type, falling back to typeCode */
-  type?: string;
-  /** Type code (Lifecare notes: 1 Journalanteckning; documents: e.g. 13 BE Brev, 14 BE Dokument) */
-  typeCode?: string;
-  /** Row discriminator: 3 = journal note, 0 = regular document. Other values are reported SKIPPED. */
-  documentType?: string;
-  /** Body as Lifecare returns it — HTML with entities. Decoded and stripped to plain text before storage. */
-  content?: string;
-  /** The signature of the last writer in Lifecare; becomes the mirrored author */
-  updateSignature?: string;
-  /** Lifecare's last-update date (yyyy-MM-dd, day precision only); informational */
-  updateDate?: string;
-  /** Lifecare's textual name for documentType; informational */
-  documentType_Name?: string;
-}
-
-/** The jobbstimulans periods from Lifecare's GetJobStimulusForService — the applicant's and, when present, the co-applicant's. */
-export interface LifecareJobStimulus {
-  /** The applicant's period set */
-  applicant?: LifecareJobStimulusParty;
-  /** The co-applicant's period set; null or an empty object when there is no co-applicant */
-  coApplicant?: LifecareJobStimulusParty;
-}
-
-/** One party's jobbstimulans periods. */
-export interface LifecareJobStimulusParty {
-  /** The party's periods */
-  periods?: LifecareJobStimulusPeriod[];
-}
-
-/** One jobbstimulans period. Lifecare's unstable jobStimulusId is intentionally absent. */
-export interface LifecareJobStimulusPeriod {
-  /** Period start (yyyy-MM-dd). Required — periods without a parseable date are reported FAILED. */
-  fromDate?: string;
-  /** Period end (yyyy-MM-dd); optional */
-  toDate?: string;
-  /** Lifecare's removal flag — a period marked for removal is dropped on ingest */
-  markedForRemoval?: boolean;
-}
-
-/** One bevakning row as Lifecare's ListRemindersByServiceId returns it. The stable reminderId is the upsert key. */
-export interface LifecareReminder {
-  /** Lifecare's stable reminder id — the idempotency key. Rows without it are skipped. */
-  reminderId?: string;
-  /** The monitoring date (yyyy-MM-dd). Required — rows without a parseable date are reported FAILED. */
-  reminderDate?: string;
-  /** Status code (Lifecare: 1 Pågår, 2 Klar, 3 Ej påbörjad, 4 Väntar — a snapshot, not a definition) */
-  status?: string;
-  /** Status display text; may be null */
-  statusText?: string;
-  /** Priority code (Lifecare: 1 Hög, 2 Normal, 3 Låg) */
-  priority?: string;
-  /** Priority display text; may be null */
-  priorityText?: string;
-  /** Reminder type code */
-  type?: string;
-  /** Reminder type display text; may be null */
-  typeText?: string;
-  /** The caseworker's free text */
-  text?: string;
-  /** The caseworker id in Lifecare */
-  caseworkerId?: string;
-  /** The caseworker's display name */
-  caseworkerName?: string;
-  /** What the reminder sits on (Lifecare: 7083 IFO.Insats, 7040 IFO.Aktualisering) */
-  objectType?: string;
-  /** Object type display name */
-  objectTypeName?: string;
-}
-
-/** RPA supplements delivery envelope — a near-raw dump of the Lifecare Professional Web responses for the errand's client. An omitted section means 'not fetched this run'; an empty section means 'fetched, nothing there'. Unknown fields are ignored. */
-export interface LifecareSupplements {
-  /** The robot's capture date (day precision — Lifecare's own timestamps carry no more) */
-  capturedAt?: string;
-  /** Rows from Lifecare's ListRemindersByServiceId (bevakningar). Upserted as LIFECARE-sourced monitorings on the errand, keyed per reminderId. */
-  reminders?: LifecareReminder[];
-  /** Rows from Lifecare's document list — journal notes (documentType 3) and regular documents (documentType 0) alike. CareManagement routes each row on documentType; the robot does not need to tell them apart. */
-  documents?: LifecareDocumentRow[];
-  /** The response from Lifecare's GetJobStimulusForService. Replaces the errand's full jobbstimulans period set — Lifecare regenerates all period ids on every save, so ids are never used as keys. */
-  jobStimulus?: LifecareJobStimulus;
-}
-
-/** Receipt for one delivered item in a supplements ingest. */
-export interface SupplementsIngestOutcome {
-  /** The envelope section the item came from */
-  section?: SupplementsIngestOutcomeSectionEnum;
-  /** The item's Lifecare id, when it has one */
-  lifecareId?: string;
-  /** What happened to the item */
-  outcome?: SupplementsIngestOutcomeOutcomeEnum;
-  /** Human-readable detail — the skip/failure reason, or a summary for REPLACED */
-  detail?: string;
-}
-
-/** Receipt for a supplements ingest — one outcome per delivered item. */
-export interface SupplementsIngestResult {
-  /** One outcome per delivered item, in delivery order */
-  results?: SupplementsIngestOutcome[];
 }
 
 /** The channels chosen for communicating the calculation and decision to the applicant. */
@@ -1686,6 +1576,12 @@ export interface FinalizeDecision {
    * @maxLength 4096
    */
   reason?: string;
+  /**
+   * The co-applicant's orsak, when the household has a co-applicant — picked from the same reasonOptions as reason. Stored on the decision as coApplicantReason.
+   * @minLength 0
+   * @maxLength 255
+   */
+  coApplicantReason?: string;
   /**
    * Start of the period the decision covers (the month applied for)
    * @format date
@@ -1748,7 +1644,7 @@ export interface FinalizePayment {
   invoiceNumber?: string;
 }
 
-/** Finalize a financial assistance errand: record the decision, hand the Lifecare write-backs to RPA and resume the process. */
+/** Finalize a financial assistance errand: record the decision and its payments and resume the process. */
 export interface FinalizeRequest {
   /** The decision */
   decision: FinalizeDecision;
@@ -1756,13 +1652,13 @@ export interface FinalizeRequest {
   communication: CommunicationChannels;
   /** The payments to register in Lifecare. Required (at least one) when the outcome carries an amount; must be empty for AVSLAG. */
   payments?: FinalizePayment[];
-  /** Whether the caseworker changed the household size (gemensamma kostnader) in the calculation draft. When true the robot answers 'Ja' to Lifecare's prompt about saving the changed common costs when it writes the normberäkning. Defaults to false. */
+  /** Whether the caseworker changed the household size (gemensamma kostnader) in the calculation draft. Recorded on the errand and served on the view. Defaults to false. */
   householdSizeChanged?: boolean;
 }
 
 /** The recipient of a payment and the payment method. */
 export interface Payee {
-  /** The id of the payee row this came from, as GET .../payees returns it — send it whenever the caseworker picked an entry from that list. It is what lets the REGISTER_PAYMENT robot be handed the payee's Lifecare id instead of matching on name and account number. Omit it for a payee that has no row: one derived from the Lifecare payment history carries a null id in the list. */
+  /** The id of the payee row this came from, as GET .../payees returns it — send it whenever the caseworker picked an entry from that list. It is what lets Draken's BFF pick the payee by its Lifecare id instead of matching on name and account number. Omit it for a payee that has no row: one derived from the Lifecare payment history carries a null id in the list. */
   id?: string;
   /**
    * Name of the payee as registered in Lifecare
@@ -1820,29 +1716,18 @@ export interface Payee {
   city?: string;
 }
 
-/** The receipt of a finalize — decision id, process correlation, RPA tasks and the communication channels to act on. */
+/** The receipt of a finalize — decision id, payment ids, process correlation, payee warnings and the communication channels to act on. */
 export interface FinalizeResponse {
   /** Id of the PAYMENT decision recorded on the errand */
   decisionId?: string;
-  /** The ids of the Payment rows the finalize created, in request order. The REGISTER_PAYMENT queue items carry these and nothing else - the robot reads each payment through GET .../payments/{paymentId}. */
+  /** The ids of the Payment rows the finalize created, in request order. Draken's BFF reads each through GET .../payments/{paymentId}, registers it in Lifecare and reports back through .../payments/{paymentId}/lifecare-result. */
   paymentIds?: string[];
+  /** Whether the PaymentDecisionReceived message reached the process. False means it did not reach it now — the errand stays AWAITING_DECISION and the message is queued and re-sent automatically (at most an hour apart, for three days). Draken should say so; correlating by hand through the process-messages endpoint is only needed if the retry gives up. */
   processMessageCorrelated?: boolean;
-  /** The RPA write-back tasks the finalize step tried to enqueue, one per Lifecare step */
-  rpaTasks?: RpaTask[];
   /** The communication channels chosen — the frontend sends the decision through these */
   communication?: CommunicationChannels;
-  /** Warnings about the payees the decision pays to — a payment cannot be registered in Lifecare against a payee that is not there yet. Present when a payment names a manually added payee whose ADD_PAYEE robot task has not reported SYNCED. Empty when every payee is in Lifecare. The finalize itself is not blocked by these; the decision, the payment rows and the queue items are created either way. */
+  /** Warnings about the payees the decision pays to — a payment cannot be registered in Lifecare against a payee that is not there yet. Present when a payment names a manually added payee careM has not seen reported SYNCED (payees/{payeeId}/lifecare-result). Empty when every payee is in Lifecare. The finalize itself is not blocked by these; the decision and the payment rows are created either way. */
   payeeWarnings?: string[];
-}
-
-/** One RPA write-back task the finalize step tried to enqueue. */
-export interface RpaTask {
-  /** The RPA action */
-  action?: string;
-  /** The queue item reference the Orchestrator knows the task by */
-  reference?: string;
-  /** Whether the task is on the queue (false when RPA is disabled or the enqueue failed) */
-  enqueued?: boolean;
 }
 
 /** What a caseworker sends to add or patch a person row (identity + caseworker-writable fields only). */
@@ -2141,6 +2026,10 @@ export interface PaymentStatusResponse {
   paymentDate?: string;
   /** Why the status is not effectuated, in words a caseworker can act on; empty when effectuated */
   detail?: string;
+  /** The last working day the errand's decided payments may wait (ISO date); absent without an errand or when the errand has no decided payments */
+  deadline?: string;
+  /** True when the payments are still not effectuated after the deadline, or the bifall has no decided payments at all — the process then notifies the caseworker. Never closes anything. */
+  overdue?: boolean;
 }
 
 /** Request to evaluate which financial assistance application a citizen should be offered. */
@@ -2901,7 +2790,7 @@ export interface FinancialAssistanceView {
   sectionApprovals?: SectionApprovals;
   /** The communication channels the caseworker chose when finalizing the errand (Besluta och utbetala), or null until then. The Draken BFF sends the decision through these; caremanagement only records the choice. */
   communication?: CommunicationChannels;
-  /** Whether the caseworker changed the household size (gemensamma kostnader) when finalizing — forwarded to the RPA normberäkning write. Null until the errand has been finalized. */
+  /** Whether the caseworker changed the household size (gemensamma kostnader) when finalizing. Null until the errand has been finalized. */
   householdSizeChanged?: boolean;
 }
 
@@ -2924,11 +2813,27 @@ export interface WarningCount {
   count?: number;
 }
 
-/** The context an RPA robot needs to act on an errand in Lifecare. Fetched per queue item so personal numbers never persist in the Orchestrator queue store; every read is recorded in the errand's event log. */
+/** A person's SSBTEK basis for a period, as the composite service answered it. */
+export interface SsbtekBasis {
+  /**
+   * Inclusive start of the period the basis covers
+   * @format date
+   */
+  from?: string;
+  /**
+   * Inclusive end of the period the basis covers
+   * @format date
+   */
+  to?: string;
+  /** The answer per responding agency (af, csn, fk, skv, so, tns, miv), forwarded verbatim from SSBTEK. Shapes differ per agency and are not modelled; an agency that did not answer may be absent or empty. */
+  agencies?: Record<string, Record<string, any>>;
+}
+
+/** The errand number and the household's personal numbers. Fetched per process run so the personal numbers never become process variables; every read is recorded in the errand's event log. */
 export interface RpaContext {
   /** The errand's human-readable number — what a person searches for in Draken */
   errandNumber?: string;
-  /** The applicant's personal number (12 characters, may contain letters). Null when it could not be resolved — treat as an error on the robot side. */
+  /** The applicant's personal number (12 characters, may contain letters). Null when it could not be resolved — treat as an error on the caller's side. */
   applicantPersonId?: string;
   /** The co-applicant's personal number; null when there is no co-applicant or it could not be resolved */
   coApplicantPersonId?: string;
@@ -2950,22 +2855,6 @@ export interface MonitoringCount {
    * @format int64
    */
   count?: number;
-}
-
-/** A jobbstimulans period on the errand, mirrored out of Lifecare. */
-export interface JobStimulusPeriod {
-  /** Whose period it is */
-  role?: JobStimulusPeriodRoleEnum;
-  /**
-   * Period start
-   * @format date
-   */
-  fromDate?: string;
-  /**
-   * Period end; null for an open period
-   * @format date
-   */
-  toDate?: string;
 }
 
 /** Self-describing snapshot of the form as it was rendered and answered. */
@@ -3153,22 +3042,6 @@ export interface PreviousDecision {
   amount?: number;
   /** The decision date (raw Lifecare string) */
   date?: string;
-}
-
-/** A person's SSBTEK basis for a period, as the composite service answered it. */
-export interface SsbtekBasis {
-  /**
-   * Inclusive start of the period the basis covers
-   * @format date
-   */
-  from?: string;
-  /**
-   * Inclusive end of the period the basis covers
-   * @format date
-   */
-  to?: string;
-  /** The answer per responding agency (af, csn, fk, skv, so, tns, miv), forwarded verbatim from SSBTEK. Shapes differ per agency and are not modelled; an agency that did not answer may be absent or empty. */
-  agencies?: Record<string, Record<string, any>>;
 }
 
 /** A child pre-filled from Lifecare for a financial assistance renewal. Carries only what Lifecare provides — personnummer and name; the citizen completes residence, school etc. on the form. */
@@ -3463,19 +3336,19 @@ export interface StatusDefinition {
   displayName?: string;
 }
 
-/** Provenance, defaults to CASEWORKER when omitted. RPA POSTs LIFECARE (with lifecareId) to surface a payment read out of Lifecare onto the errand. */
+/** Provenance, defaults to CASEWORKER when omitted. LIFECARE (with lifecareId) posts a payment read out of Lifecare onto the errand. */
 export enum PaymentRequestSourceEnum {
   CASEWORKER = "CASEWORKER",
   LIFECARE = "LIFECARE",
 }
 
-/** Provenance: CASEWORKER for one authored in Draken, LIFECARE for one read out of Lifecare by RPA and surfaced here on the errand. */
+/** Provenance: CASEWORKER for one authored in Draken, LIFECARE for one read out of Lifecare and posted onto the errand. */
 export enum PaymentSourceEnum {
   CASEWORKER = "CASEWORKER",
   LIFECARE = "LIFECARE",
 }
 
-/** Server-managed lifecycle status. DRAFT for a caseworker's saved draft; PENDING_REGISTRATION for one a decision created, waiting for the robot; REGISTERED once the REGISTER_PAYMENT robot has reported it into Lifecare (REGISTERED means it exists there, not that it has been paid out — whether it was effectuated is a separate question, asked through POST .../financial-assistance/payment-status); FAILED when the robot could not register it, with Lifecare's reason in lifecareDetail. */
+/** Server-managed lifecycle status. DRAFT for a caseworker's saved draft; PENDING_REGISTRATION for one a decision created, waiting to be registered in Lifecare; REGISTERED once Draken's BFF has reported it registered (REGISTERED means it exists there, not that it has been paid out — whether it was effectuated is a separate question, asked through POST .../financial-assistance/payment-status); FAILED when it could not be registered, with Lifecare's reason in lifecareDetail. */
 export enum PaymentStatusEnum {
   DRAFT = "DRAFT",
   PENDING_REGISTRATION = "PENDING_REGISTRATION",
@@ -3483,13 +3356,13 @@ export enum PaymentStatusEnum {
   FAILED = "FAILED",
 }
 
-/** Provenance, defaults to CASEWORKER when omitted. RPA POSTs LIFECARE (with lifecareId) to surface a monitoring read out of Lifecare onto the errand. */
+/** Provenance, defaults to CASEWORKER when omitted. LIFECARE (with lifecareId) posts a monitoring read out of Lifecare onto the errand. */
 export enum MonitoringRequestSourceEnum {
   CASEWORKER = "CASEWORKER",
   LIFECARE = "LIFECARE",
 }
 
-/** Provenance: CASEWORKER for one authored in Draken (RPA mirrors it onto the person in Lifecare), LIFECARE for one read out of Lifecare by RPA and surfaced here on the errand. */
+/** Provenance: CASEWORKER for one authored in Draken (Draken's BFF writes it onto the person in Lifecare), LIFECARE for one read out of Lifecare and posted onto the errand. */
 export enum MonitoringSourceEnum {
   CASEWORKER = "CASEWORKER",
   LIFECARE = "LIFECARE",
@@ -3662,21 +3535,6 @@ export enum PlanningSfiCourseEnum {
   D = "D",
 }
 
-/**
- * The RPA action — selects the Lifecare flow the robot runs
- * @minLength 1
- */
-export enum RpaTaskRequestActionEnum {
-  FETCH_SUPPLEMENTS = "FETCH_SUPPLEMENTS",
-  WRITE_NORMBERAKNING = "WRITE_NORMBERAKNING",
-  WRITE_DECISION = "WRITE_DECISION",
-  WRITE_JOURNAL = "WRITE_JOURNAL",
-  WRITE_DOCUMENT = "WRITE_DOCUMENT",
-  WRITE_MONITORING = "WRITE_MONITORING",
-  REGISTER_PAYMENT = "REGISTER_PAYMENT",
-  ADD_PAYEE = "ADD_PAYEE",
-}
-
 /** Status */
 export enum ReferralStatusEnum {
   SENT = "SENT",
@@ -3809,6 +3667,11 @@ export enum WarningTypeEnum {
   SSBTEK_READ_FAILED = "SSBTEK_READ_FAILED",
   INCOME_MISSING_PREVIOUS_PERIOD = "INCOME_MISSING_PREVIOUS_PERIOD",
   INCOME_TRANSFERRED_LATE = "INCOME_TRANSFERRED_LATE",
+  FAMILY_DIFFERS_FROM_APPLICATION = "FAMILY_DIFFERS_FROM_APPLICATION",
+  FAMILY_DEVIATING_PERIOD = "FAMILY_DEVIATING_PERIOD",
+  COMMON_HOUSEHOLD_COST_CHECK = "COMMON_HOUSEHOLD_COST_CHECK",
+  PREVIOUS_NORM_NOT_AVAILABLE = "PREVIOUS_NORM_NOT_AVAILABLE",
+  RECOVERY_CLAIM = "RECOVERY_CLAIM",
 }
 
 /** The Draken view section (tab) the warning belongs to — derived from the type: the decision proposal's types are DECISION, the payment warnings' are PAYMENT, everything else is CALCULATION */
@@ -3826,7 +3689,7 @@ export enum WarningStatusEnum {
 }
 
 /**
- * What the robot ended up doing
+ * What the BFF ended up doing
  * @minLength 1
  */
 export enum PaymentLifecareResultOutcomeEnum {
@@ -3841,7 +3704,7 @@ export enum PayeeOptionSourceEnum {
   MANUAL = "MANUAL",
 }
 
-/** For a MANUAL option, how far the ADD_PAYEE robot task has got: PENDING until the robot reports back, then SYNCED or FAILED. Null for a LIFECARE option, which is in Lifecare by definition */
+/** For a MANUAL option, how far its creation in Lifecare has got: PENDING until it is reported back, then SYNCED or FAILED. Null for a LIFECARE option, which is in Lifecare by definition */
 export enum PayeeOptionLifecareStatusEnum {
   PENDING = "PENDING",
   SYNCED = "SYNCED",
@@ -3849,29 +3712,12 @@ export enum PayeeOptionLifecareStatusEnum {
 }
 
 /**
- * What the robot ended up doing
+ * What ended up happening in Lifecare
  * @minLength 1
  */
 export enum PayeeLifecareResultOutcomeEnum {
   ADDED = "ADDED",
   ALREADY_EXISTS = "ALREADY_EXISTS",
-  FAILED = "FAILED",
-}
-
-/** The envelope section the item came from */
-export enum SupplementsIngestOutcomeSectionEnum {
-  Reminders = "reminders",
-  Documents = "documents",
-  JobStimulus = "jobStimulus",
-}
-
-/** What happened to the item */
-export enum SupplementsIngestOutcomeOutcomeEnum {
-  CREATED = "CREATED",
-  UPDATED = "UPDATED",
-  UNCHANGED = "UNCHANGED",
-  REPLACED = "REPLACED",
-  SKIPPED = "SKIPPED",
   FAILED = "FAILED",
 }
 
@@ -3997,12 +3843,6 @@ export enum AttachmentDocumentTypeEnum {
 export enum AttachmentSenderRoleEnum {
   CLIENT = "CLIENT",
   CASEWORKER = "CASEWORKER",
-}
-
-/** Whose period it is */
-export enum JobStimulusPeriodRoleEnum {
-  APPLICANT = "APPLICANT",
-  CO_APPLICANT = "CO_APPLICANT",
 }
 
 /** The input kind as rendered */

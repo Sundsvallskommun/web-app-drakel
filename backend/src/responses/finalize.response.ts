@@ -16,8 +16,6 @@ export class FinalizeResult {
   @IsArray() @IsString({ each: true }) paymentIds!: string[];
   /** Payees caremanagement warned about — a payment cannot be registered against a payee Lifecare lacks. */
   @IsArray() @IsString({ each: true }) payeeWarnings!: string[];
-  /** The Lifecare write-backs caremanagement could not queue (e.g. REGISTER_PAYMENT). */
-  @IsArray() @IsString({ each: true }) failedRpaTasks!: string[];
   /** Whether the process was told about the decision — false leaves it waiting for one. */
   @IsBoolean() processMessageCorrelated!: boolean;
   /** How registering the beslut in Lifecare went; absent when finalize recorded no beslut. */

@@ -1,7 +1,7 @@
 'use client';
 
 import { ServiceResponse } from '@interfaces/services';
-import { Button, Checkbox, DatePicker, FormControl, FormLabel, Input, Modal, Select } from '@sk-web-gui/react';
+import { Button, DatePicker, FormControl, FormLabel, Input, Modal, Select } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { todayDate } from '@utils/today-date';
 import dynamic from 'next/dynamic';
@@ -54,8 +54,8 @@ interface LifecareRecordCreateModalProps {
 /**
  * Writes a new record straight to the insats of the errand in Lifecare. The types are Lifecare's own,
  * read from its proposal for the insats. Picking a type fills the rubrik with its name, as Lifecare's own
- * editor does, until the handläggare writes a rubrik of their own. Skrivskydd starts from the type's own
- * default and can be changed before saving.
+ * editor does, until the handläggare writes a rubrik of their own. "Spara och skrivskydda" saves it
+ * write-protected; a type Lifecare always protects offers only that.
  *
  * Nothing is kept outside Lifecare, so the dialog stays open with the text intact until Lifecare has
  * accepted the record, and a refusal is shown in Lifecare's own words.
@@ -80,7 +80,6 @@ export const LifecareRecordCreateModal: FC<LifecareRecordCreateModalProps> = ({
   const [occurenceDate, setOccurenceDate] = useState<string>(todayDate());
   const [occurenceTime, setOccurenceTime] = useState<string>('');
   const [content, setContent] = useState<TextEditorValue>(EMPTY_CONTENT);
-  const [writeProtected, setWriteProtected] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string>();
 
@@ -115,10 +114,12 @@ export const LifecareRecordCreateModal: FC<LifecareRecordCreateModalProps> = ({
     if (recordType?.canChangeOccurenceDate === false) {
       setOccurenceDate(todayDate());
     }
-    setWriteProtected(recordType?.protectedByDefault ?? false);
   };
 
-  const submit = async (): Promise<void> => {
+  // A type Lifecare protects by itself is always saved write-protected, so it offers no plain Spara.
+  const alwaysProtected = pickedType?.protectedByDefault === true;
+
+  const submit = async (writeProtect: boolean): Promise<void> => {
     if (!canCreate) {
       return;
     }
@@ -130,7 +131,7 @@ export const LifecareRecordCreateModal: FC<LifecareRecordCreateModalProps> = ({
       occurenceDate,
       occurenceTime: withTime && occurenceTime ? occurenceTime : undefined,
       content: content.markup?.trim() ?? '',
-      protected: writeProtected,
+      protected: writeProtect || alwaysProtected,
     });
     setSaving(false);
     if (res.error) {
@@ -201,17 +202,9 @@ export const LifecareRecordCreateModal: FC<LifecareRecordCreateModalProps> = ({
           <DocumentEditor value={content} onChange={setContent} />
         </FormControl>
 
-        <div className="flex flex-col gap-4">
-          <Checkbox
-            checked={writeProtected}
-            onChange={(event) => {
-              setWriteProtected(event.target.checked);
-            }}
-          >
-            {t('form.writeProtected')}
-          </Checkbox>
-          <p className="m-0 text-small text-dark-secondary">{t('form.writeProtectedHint')}</p>
-        </div>
+        <p className="m-0 text-small text-dark-secondary">
+          {alwaysProtected ? t('form.alwaysProtectedHint') : t('form.writeProtectedHint')}
+        </p>
 
         {error ?
           <p className="text-error-surface-primary m-0">{error}</p>
@@ -221,8 +214,25 @@ export const LifecareRecordCreateModal: FC<LifecareRecordCreateModalProps> = ({
         <Button variant="secondary" onClick={onClose}>
           {t('common:cancel')}
         </Button>
-        <Button color="vattjom" variant="primary" loading={saving} disabled={!canCreate} onClick={() => void submit()}>
-          {t('form.create')}
+        {alwaysProtected ? null : (
+          <Button
+            color="vattjom"
+            variant="secondary"
+            loading={saving}
+            disabled={!canCreate}
+            onClick={() => void submit(false)}
+          >
+            {t('common:save')}
+          </Button>
+        )}
+        <Button
+          color="vattjom"
+          variant="primary"
+          loading={saving}
+          disabled={!canCreate}
+          onClick={() => void submit(true)}
+        >
+          {t('form.saveAndProtect')}
         </Button>
       </Modal.Footer>
     </Modal>

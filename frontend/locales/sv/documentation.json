@@ -75,9 +75,9 @@
     "dateRequired": "Datum *",
     "time": "Tid",
     "text": "Text",
-    "create": "Skapa",
-    "writeProtected": "Spara skrivskyddad",
     "writeProtectedHint": "En skrivskyddad post kan inte ändras efteråt, varken här eller i Lifecare.",
-    "saveChangeError": "Det gick inte att spara ändringen"
+    "saveChangeError": "Det gick inte att spara ändringen",
+    "saveAndProtect": "Spara och skrivskydda",
+    "alwaysProtectedHint": "Typen skrivskyddas alltid i Lifecare och kan inte ändras efteråt."
   }
 }

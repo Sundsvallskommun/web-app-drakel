@@ -120,6 +120,13 @@ describe('applyRecordEdit', () => {
     expect(updated.ownerId).toBe(7);
   });
 
+  it('write-protects the record only when the save asks for it', () => {
+    const record: LifecareEditableRecord = { documentId: 1, content: '<p>old</p>', protected: false };
+
+    expect(applyRecordEdit(record, { content: '<p>x</p>' }).protected).toBe(false);
+    expect(applyRecordEdit(record, { content: '<p>x</p>', protected: true }).protected).toBe(true);
+  });
+
   it('leaves the existing date and time when the edit omits them', () => {
     const updated = applyRecordEdit({ documentId: 1, occurenceDate: '2026-09-01', time: '08:00' }, { content: '<p>x</p>' });
 

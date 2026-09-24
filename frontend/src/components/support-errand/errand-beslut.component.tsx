@@ -16,6 +16,7 @@ import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { resolveBeslutAmount, resolveBeslutPeriod } from '@utils/beslut';
 import { formatAmount } from '@utils/format-amount';
 import { groupDecisionReasons } from '@utils/group-decision-reasons';
+import { computeNormResult } from '@utils/norm-result';
 import dayjs from 'dayjs';
 import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +27,7 @@ import { ContentBox } from './content-box.component';
 import { ErrandSectionHeader } from './errand-section-header.component';
 import { LabeledValue } from './labeled-value.component';
 import { LockedBanner, LockFieldset } from './lockable-section.component';
+import { NormResultLine } from './norm-result.component';
 
 const todayDate = (): string => dayjs().format('YYYY-MM-DD');
 
@@ -111,8 +113,8 @@ export const ErrandBeslut: FC<{
   const [fromDate, setFromDate] = useState<string>(period.fromDate);
   const [toDate, setToDate] = useState<string>(period.toDate);
   // The orsak (Lifecare's code) is saved with the beslut. Until the handläggare picks one, the saved
-  // beslut's orsak stands — or, for a type not yet saved, the beslutsförslag's, found by its wording among
-  // Lifecare's orsaker. The medsökandes is not saved: a household with a medsökande cannot be registered
+  // beslut's orsak stands — or, for a type not yet saved, the previous Lifecare beslut's (else the
+  // beslutsförslag's), found by its wording among Lifecare's orsaker. The medsökandes is not saved: a household with a medsökande cannot be registered
   // from Drakel yet.
   const [pickedReason, setPickedReason] = useState<string>();
   const [pickedCoApplicantReason, setPickedCoApplicantReason] = useState<string>();
@@ -123,7 +125,7 @@ export const ErrandBeslut: FC<{
   const prefillReason =
     savedBeslut && savedBeslut.decisionCode === selectedType?.code ?
       String(savedBeslut.reasonCode ?? '')
-    : reasonCodeNamed(proposal.reason);
+    : reasonCodeNamed(proposal.previousDecision?.reason ?? proposal.reason);
   const reason = pickedReason ?? prefillReason;
   const coApplicantReason = pickedCoApplicantReason ?? reasonCodeNamed(proposal.coApplicantReason);
   const [saveError, setSaveError] = useState<string>();
@@ -180,8 +182,12 @@ export const ErrandBeslut: FC<{
     savedBeslut?.amount ?? proposal.estimatedAmount ?? recommendation?.amount
   );
 
-  const recommendedType = types.find((type) => type.outcome !== undefined && type.outcome === recommendation?.value);
-  const recommendationLabel = recommendedType?.name ?? recommendation?.value ?? t('details.noRecommendation');
+  // The förslag names an outcome (bifall, avslag, delvis bifall); shown in the handläggare's words.
+  const normResult = computeNormResult(proposal);
+  const recommendationLabel =
+    proposedOutcome ?
+      t(`details.outcome.${proposedOutcome}`, { defaultValue: proposedOutcome })
+    : t('details.noRecommendation');
 
   // The beslut counts as dirty — and the central "Spara ärende" button lights up — while nothing is saved
   // in Lifecare yet (finalize needs a saved beslut, even one taken straight from the förslag), and after
@@ -301,6 +307,9 @@ export const ErrandBeslut: FC<{
       <ContentBox title={t('details.title')}>
         <LockFieldset locked={formLocked}>
           <div className="flex flex-col gap-24">
+            {normResult ?
+              <NormResultLine result={normResult} />
+            : null}
             {/* Datum and the period on one row, beslutstyp and orsak on the next. */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-24 gap-y-16">
               <FormControl id="beslut-datum" className="w-full">

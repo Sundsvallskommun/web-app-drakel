@@ -8,7 +8,7 @@
     "date": "Datum *",
     "decision": "Beslut *",
     "selectDecision": "Välj beslut",
-    "recommended": "Rekommenderat beslut: {{label}}",
+    "recommended": "Förslag: {{label}}",
     "noRecommendation": "— (ingen rekommendation från normberäkningen ännu)",
     "from": "Från",
     "to": "Till",
@@ -20,7 +20,12 @@
     "selectReason": "Välj orsak",
     "lockedInLifecare": "Beslutsmeddelandet är låst i Lifecare, så beslutet kan inte längre ändras här.",
     "typesError": "Beslutstyperna kunde inte hämtas från Lifecare: {{reason}}",
-    "saveErrorTitle": "Beslutet sparades inte i Lifecare"
+    "saveErrorTitle": "Beslutet sparades inte i Lifecare",
+    "outcome": {
+      "BIFALL": "Bifall",
+      "AVSLAG": "Avslag",
+      "DELAVSLAG": "Delvis bifall"
+    }
   },
   "message": {
     "title": "Beslutsmeddelande",
@@ -132,15 +137,15 @@
       "loadError": "Det gick inte att hämta utbetalningarna från Lifecare",
       "cancelled": "Makulerad",
       "registered": "Registrerad"
+    },
+    "statusRow": {
+      "paid": "Utbetald",
+      "notPaid": "Ej utbetald",
+      "unavailable": "Utbetalningsstatus kunde inte hämtas från Lifecare."
     }
   },
   "proposal": {
     "title": "Beslutsförslag",
-    "normSum": "Norm",
-    "expenseSum": "Utgifter",
-    "specialExpenseSum": "Särskilda kostnader",
-    "incomeSum": "Inkomster",
-    "estimatedAmount": "Beräknat bistånd",
     "previousTitle": "Föregående beslut",
     "previousType": "Typ",
     "previousReason": "Orsak",

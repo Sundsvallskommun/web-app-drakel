@@ -9,7 +9,6 @@ import { finalizeFollowUps } from './finalize-follow-ups';
 const clean = {
   paymentIds: ['payment-1'],
   payeeWarnings: [],
-  failedRpaTasks: [],
   processMessageCorrelated: true,
   lifecarePayments: [],
   failedChannels: [],
@@ -26,7 +25,6 @@ describe('finalizeFollowUps', () => {
         ...clean,
         failedChannels: ['Mina sidor', 'Brev'],
         payeeWarnings: ['Anna Andersson finns inte i Lifecare än'],
-        failedRpaTasks: ['REGISTER_PAYMENT'],
         processMessageCorrelated: false,
         lifecareDecision: {
           decisionId: 'decision-1',
@@ -45,7 +43,6 @@ describe('finalizeFollowUps', () => {
     ).toEqual([
       { key: 'failedChannels', detail: 'Mina sidor, Brev' },
       { key: 'payeeWarnings', detail: 'Anna Andersson finns inte i Lifecare än' },
-      { key: 'failedRpaTasks', detail: 'REGISTER_PAYMENT' },
       { key: 'processNotResumed' },
       { key: 'decisionNotRegistered', detail: 'Delvis bifall kan inte registreras i Lifecare från Drakel ännu.' },
       { key: 'paymentNotRegistered', detail: 'Saldot i Lifecare räcker inte.' },

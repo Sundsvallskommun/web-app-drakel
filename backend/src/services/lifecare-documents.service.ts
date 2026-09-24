@@ -10,6 +10,7 @@ import {
   LifecareEditableRecord,
   LifecareRecordCategory,
   LifecareRecordContentView,
+  LifecareRecordEditInput,
   LifecareRecordView,
   toLifecareRecord,
   toRecordContent,
@@ -152,18 +153,12 @@ class LifecareDocumentsService {
   }
 
   /** Saves an edit to a journalanteckning, if Lifecare still allows it to be changed. */
-  public async updateJournalNote(
-    id: string,
-    edit: { content: string; occurenceDate?: string; time?: string },
-  ): Promise<ApiResponse<LifecareRecordContentView>> {
+  public async updateJournalNote(id: string, edit: LifecareRecordEditInput): Promise<ApiResponse<LifecareRecordContentView>> {
     return this.updateRecord(JOURNAL_NOTE_ENDPOINTS, id, edit);
   }
 
   /** Saves an edit to a document, if Lifecare still allows it to be changed. */
-  public async updateDocument(
-    id: string,
-    edit: { content: string; occurenceDate?: string; time?: string },
-  ): Promise<ApiResponse<LifecareRecordContentView>> {
+  public async updateDocument(id: string, edit: LifecareRecordEditInput): Promise<ApiResponse<LifecareRecordContentView>> {
     return this.updateRecord(DOCUMENT_ENDPOINTS, id, edit);
   }
 
@@ -191,11 +186,7 @@ class LifecareDocumentsService {
    * the caller: a record finalised in Lifecare since the tab was opened is refused here, not silently
    * overwritten.
    */
-  private async updateRecord(
-    endpoints: RecordEndpoints,
-    id: string,
-    edit: { content: string; occurenceDate?: string; time?: string },
-  ): Promise<ApiResponse<LifecareRecordContentView>> {
+  private async updateRecord(endpoints: RecordEndpoints, id: string, edit: LifecareRecordEditInput): Promise<ApiResponse<LifecareRecordContentView>> {
     const record = await this.fetchEditable(endpoints, id);
     if (!isEditable(record)) {
       throw new HttpException(409, 'The record is finalised in Lifecare and can no longer be edited');

@@ -52,7 +52,7 @@ describe('LifecareDocumentCreateModal', () => {
     render(<LifecareDocumentCreateModal errandId="errand-1" onClose={vi.fn()} onCreated={onCreated} />);
 
     await fillIn('1');
-    fireEvent.click(screen.getByRole('button', { name: 'Skapa' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Spara' }));
 
     await waitFor(() => {
       expect(onCreated).toHaveBeenCalled();
@@ -63,13 +63,12 @@ describe('LifecareDocumentCreateModal', () => {
     );
   });
 
-  it('saves the document skrivskyddad when the handläggare ticks it', async () => {
+  it('saves the document write-protected with Spara och skrivskydda', async () => {
     vi.mocked(createLifecareDocument).mockResolvedValue({ data: null });
     render(<LifecareDocumentCreateModal errandId="errand-1" onClose={vi.fn()} onCreated={vi.fn()} />);
 
     await fillIn('1');
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Spara skrivskyddad' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Skapa' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Spara och skrivskydda' }));
 
     await waitFor(() => {
       expect(createLifecareDocument).toHaveBeenCalledWith('errand-1', expect.objectContaining({ protected: true }));
@@ -98,7 +97,7 @@ describe('LifecareDocumentCreateModal', () => {
     render(<LifecareDocumentCreateModal errandId="errand-1" onClose={vi.fn()} onCreated={onCreated} />);
 
     await fillIn('1');
-    fireEvent.click(screen.getByRole('button', { name: 'Skapa' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Spara' }));
 
     await waitFor(() => {
       expect(screen.getByText('Dokumenttypen finns inte i Lifecare')).toBeInTheDocument();

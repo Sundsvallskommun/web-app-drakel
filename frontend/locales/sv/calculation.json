@@ -111,5 +111,15 @@
       "balance": "Saldo",
       "totalSum": "Totalsumma"
     }
+  },
+  "result": {
+    "title": "Resultat",
+    "income": "Inkomster",
+    "norm": "Norm",
+    "expenses": "Utgifter",
+    "sum": "Summa",
+    "specialExpenses": "Levnadskostnader i övrigt",
+    "surplus": "Normöverskott",
+    "deficit": "Normunderskott"
   }
 }

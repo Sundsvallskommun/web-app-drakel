@@ -64,13 +64,15 @@ export const LifecareRecordModal: FC<{
     };
   }, [errandId, record.category, record.id]);
 
-  const save = async (): Promise<void> => {
+  /** Saves the edit; `writeProtect` also write-protects the record, after which Lifecare allows no change. */
+  const save = async (writeProtect: boolean): Promise<void> => {
     setSaving(true);
     setSaveError(false);
     const edit: LifecareRecordEdit = {
       content: content.markup?.trim() ?? '',
       occurenceDate: occurenceDate || undefined,
       time: time || undefined,
+      ...(writeProtect ? { protected: true } : {}),
     };
     const res = await updateLifecareRecord(errandId, record.category, record.id, edit);
     setSaving(false);
@@ -141,15 +143,26 @@ export const LifecareRecordModal: FC<{
           {editable ? t('common:cancel') : t('common:close')}
         </Button>
         {editable && (
-          <Button
-            color="vattjom"
-            variant="primary"
-            loading={saving}
-            disabled={isLoading || loadError}
-            onClick={() => void save()}
-          >
-            {t('common:save')}
-          </Button>
+          <>
+            <Button
+              color="vattjom"
+              variant="secondary"
+              loading={saving}
+              disabled={isLoading || loadError}
+              onClick={() => void save(false)}
+            >
+              {t('common:save')}
+            </Button>
+            <Button
+              color="vattjom"
+              variant="primary"
+              loading={saving}
+              disabled={isLoading || loadError}
+              onClick={() => void save(true)}
+            >
+              {t('form.saveAndProtect')}
+            </Button>
+          </>
         )}
       </Modal.Footer>
     </Modal>

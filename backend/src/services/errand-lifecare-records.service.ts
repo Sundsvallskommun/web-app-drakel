@@ -12,6 +12,7 @@ import {
   LifecareRecordBodyView,
   LifecareRecordCategory,
   LifecareRecordContentView,
+  LifecareRecordEditInput,
   LifecareRecordsView,
   LifecareRecordView,
   textRecordIds,
@@ -24,12 +25,6 @@ const APPLICANT_ROLE = 'APPLICANT';
 
 /** Body reads in flight at once — quick enough for a tab, without flooding Lifecare. */
 const BODY_READ_CONCURRENCY = 4;
-
-interface RecordEdit {
-  content: string;
-  occurenceDate?: string;
-  time?: string;
-}
 
 /**
  * The applicant's Lifecare journalanteckningar and documents, seen from an errand.
@@ -92,7 +87,7 @@ class ErrandLifecareRecordsService {
     return res.data;
   }
 
-  async updateJournalNote(errandId: string, id: string, edit: RecordEdit): Promise<LifecareRecordContentView> {
+  async updateJournalNote(errandId: string, id: string, edit: LifecareRecordEditInput): Promise<LifecareRecordContentView> {
     const res = await this.documentsService.updateJournalNote(id, edit);
     await this.accessLog.logWrite(errandId, LifecareAccessActionEnum.UPDATE, {
       target: 'JOURNAL_NOTE',
@@ -102,7 +97,7 @@ class ErrandLifecareRecordsService {
     return res.data;
   }
 
-  async updateDocument(errandId: string, id: string, edit: RecordEdit): Promise<LifecareRecordContentView> {
+  async updateDocument(errandId: string, id: string, edit: LifecareRecordEditInput): Promise<LifecareRecordContentView> {
     const res = await this.documentsService.updateDocument(id, edit);
     await this.accessLog.logWrite(errandId, LifecareAccessActionEnum.UPDATE, {
       target: 'DOCUMENT',

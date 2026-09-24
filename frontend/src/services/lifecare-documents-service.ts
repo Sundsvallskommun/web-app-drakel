@@ -58,6 +58,8 @@ export interface LifecareRecordEdit {
   content: string;
   occurenceDate?: string;
   time?: string;
+  /** Write-protects the record; Lifecare then allows no further change. */
+  protected?: boolean;
 }
 
 /** The BFF path segment for a record kind. */

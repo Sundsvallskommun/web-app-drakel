@@ -23,15 +23,11 @@ const FULL_PROPOSAL: DecisionProposal = {
 };
 
 describe('BeslutProposalBox', () => {
-  it('shows the parts the estimated amount is built from', () => {
+  it('leaves the sums to the Beslutsuppgifter, where the normberäkning result is shown', () => {
     render(<BeslutProposalBox proposal={FULL_PROPOSAL} />);
 
-    expect(screen.getByText('12000,00')).toBeInTheDocument();
-    expect(screen.getByText('2000,00')).toBeInTheDocument();
-    expect(screen.getByText('450,00')).toBeInTheDocument();
-    // Incomes are subtracted, so they read as a negative part of the sum.
-    expect(screen.getByText('−6000,00')).toBeInTheDocument();
-    expect(screen.getByText('8450,00')).toBeInTheDocument();
+    expect(screen.queryByText('12000,00')).not.toBeInTheDocument();
+    expect(screen.queryByText('8450,00')).not.toBeInTheDocument();
   });
 
   it('shows the previous Lifecare decision', () => {
@@ -43,7 +39,7 @@ describe('BeslutProposalBox', () => {
   });
 
   it('says so when the applicant has no earlier decision', () => {
-    render(<BeslutProposalBox proposal={{ estimatedAmount: 0 }} />);
+    render(<BeslutProposalBox proposal={{ explanation: 'Ingen norm kunde läsas från Lifecare.' }} />);
 
     expect(screen.getByText('Inget tidigare Lifecare-beslut hittades för den sökande.')).toBeInTheDocument();
   });

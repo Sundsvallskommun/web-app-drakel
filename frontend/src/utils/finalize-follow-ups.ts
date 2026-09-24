@@ -10,7 +10,6 @@ export interface FinalizeFollowUp {
   key:
     | 'failedChannels'
     | 'payeeWarnings'
-    | 'failedRpaTasks'
     | 'processNotResumed'
     | 'decisionNotRegistered'
     | 'decisionReceiptLost'
@@ -21,7 +20,7 @@ export interface FinalizeFollowUp {
 
 /**
  * What the handläggare still has to see to after a finalize: the channels the beslut could not reach, the
- * payees caremanagement warned about, the Lifecare write-backs it could not queue, a process that was
+ * payees caremanagement warned about, a process that was
  * never told about the decision, a beslut and each utbetalning that did not get registered in Lifecare —
  * or got registered without careM hearing of it. Empty when everything went through.
  */
@@ -33,9 +32,6 @@ export const finalizeFollowUps = (result: FinalizeResult): FinalizeFollowUp[] =>
   result.payeeWarnings.forEach((warning) => {
     followUps.push({ key: 'payeeWarnings', detail: warning });
   });
-  if (result.failedRpaTasks.length > 0) {
-    followUps.push({ key: 'failedRpaTasks', detail: result.failedRpaTasks.join(', ') });
-  }
   if (!result.processMessageCorrelated) {
     followUps.push({ key: 'processNotResumed' });
   }

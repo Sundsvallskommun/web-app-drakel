@@ -98,7 +98,14 @@ describe('ErrandLifecarePaymentsService', () => {
 
     const status = await new ErrandLifecarePaymentsService().paymentStatus('errand-1');
 
-    expect(status).toEqual({ applicationMonth: '2026-09', effectuated: true, paymentDate: '2026-09-21', unavailable: false });
+    expect(status).toEqual({
+      applicationMonth: '2026-09',
+      effectuated: true,
+      paymentDate: '2026-09-21',
+      amount: 1,
+      status: undefined,
+      unavailable: false,
+    });
   });
 
   it('reports the status as unavailable when Lifecare cannot be read', async () => {

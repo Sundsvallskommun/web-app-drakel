@@ -6,13 +6,12 @@ import { displayAmount } from '@utils/format-amount';
 import { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { ContentBox } from './content-box.component';
 import { LabeledValue } from './labeled-value.component';
 
 /**
  * "Att disponera": the insats's saldo as Lifecare counts it — what the beslut granted, what is already
  * booked and what is left. Lifecare's own figures, so an utbetalning made directly in Lifecare counts too.
- * No saldo means the beslut is not in Lifecare yet.
+ * No saldo means the beslut is not in Lifecare yet. Shown at the top of the Registrera utbetalning box.
  */
 export const LifecareBalanceBox: FC<{ balances: LifecareBalanceView[]; isLoading: boolean; failed: boolean }> = ({
   balances,
@@ -55,8 +54,9 @@ export const LifecareBalanceBox: FC<{ balances: LifecareBalanceView[]; isLoading
   };
 
   return (
-    <ContentBox title={t('payment.disposal.title')}>
-      <div className="flex flex-col gap-16">{content()}</div>
-    </ContentBox>
+    <div className="flex flex-col gap-16">
+      <h4 className="text-base font-bold m-0">{t('payment.disposal.title')}</h4>
+      {content()}
+    </div>
   );
 };

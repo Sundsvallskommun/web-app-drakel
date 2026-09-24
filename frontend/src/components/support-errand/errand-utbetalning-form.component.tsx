@@ -199,11 +199,9 @@ export const ErrandUtbetalningForm: FC<{
   options: LifecarePaymentOptionsView;
   /** Lifecare's own reason when it would not hand those lists over. */
   optionsError?: string;
-  /** Called after a betalningsmottagare was added in Lifecare, so the lists can be read again. */
-  onPayeeAdded: () => void;
   /** Called after the utbetalning has been registered, so the parent can refetch. */
   onSaved?: () => void;
-}> = ({ errandId, options, optionsError, onPayeeAdded, disabled = false, onSaved }) => {
+}> = ({ errandId, options, optionsError, disabled = false, onSaved }) => {
   const { t } = useTranslation('decision');
   const { stakeholders } = useErrandStakeholders(errandId);
   const { payees, paymentMethods, postings } = options;
@@ -220,6 +218,9 @@ export const ErrandUtbetalningForm: FC<{
   const paymentMethod = useWatch({ control, name: 'paymentMethod' });
   const payeeId = useWatch({ control, name: 'payeeId' });
   const editableFields = getEditableRecipientFields(paymentMethod);
+  // A chosen betalningsmottagare brings its betalsätt, account and address from Lifecare's register, so
+  // those fields are shown but cannot be changed here.
+  const recipientLocked = disabled || payeeId !== '';
   const chosenMethod = paymentMethods.find((method) => method.name === paymentMethod);
 
   // Re-prefill when Lifecare proposes something new. The lists are read again after a payee is added,
@@ -311,21 +312,15 @@ export const ErrandUtbetalningForm: FC<{
         </div>
 
         <PayeePicker
-          errandId={errandId}
           payees={payees}
-          paymentMethods={paymentMethods}
           value={payeeId}
           onChange={(id) => {
             setValue('payeeId', id);
           }}
-          onPayeeAdded={(payee) => {
-            onPayeeAdded();
-            setValue('payeeId', String(payee.id));
-          }}
           disabled={disabled}
         />
 
-        <FormField label={t('payment.form.paymentMethod')} required disabled={disabled}>
+        <FormField label={t('payment.form.paymentMethod')} required disabled={recipientLocked}>
           <Select {...register('paymentMethod')}>
             <Select.Option value="" />
             {paymentMethods.map((method) => (
@@ -336,30 +331,36 @@ export const ErrandUtbetalningForm: FC<{
           </Select>
         </FormField>
 
-        <FormField label={t('payment.form.name')} disabled={disabled}>
+        <FormField label={t('payment.form.name')} disabled={recipientLocked}>
           <Input {...register('name')} />
         </FormField>
-        <FormField label={t('payment.form.address')} disabled={disabled}>
+        <FormField label={t('payment.form.address')} disabled={recipientLocked}>
           <Input {...register('address')} />
         </FormField>
 
-        <FormField label={t('payment.form.careOf')} disabled={disabled || !editableFields.postalAddress}>
+        <FormField label={t('payment.form.careOf')} disabled={recipientLocked || !editableFields.postalAddress}>
           <Input {...register('careOf')} />
         </FormField>
         <div className="grid grid-cols-[12rem_1fr] gap-x-16">
-          <FormField label={t('payment.form.zipCode')} disabled={disabled || !editableFields.postalAddress}>
+          <FormField label={t('payment.form.zipCode')} disabled={recipientLocked || !editableFields.postalAddress}>
             <Input {...register('zipCode')} />
           </FormField>
-          <FormField label={t('payment.form.city')} disabled={disabled || !editableFields.postalAddress}>
+          <FormField label={t('payment.form.city')} disabled={recipientLocked || !editableFields.postalAddress}>
             <Input {...register('city')} />
           </FormField>
         </div>
 
         <div className="grid grid-cols-[10rem_1fr] gap-x-16">
-          <FormField label={t('payment.form.clearingNumber')} disabled={disabled || !editableFields.clearingNumber}>
+          <FormField
+            label={t('payment.form.clearingNumber')}
+            disabled={recipientLocked || !editableFields.clearingNumber}
+          >
             <Input {...register('clearingNumber')} />
           </FormField>
-          <FormField label={t('payment.form.accountNumber')} disabled={disabled || !editableFields.accountNumber}>
+          <FormField
+            label={t('payment.form.accountNumber')}
+            disabled={recipientLocked || !editableFields.accountNumber}
+          >
             <Input {...register('accountNumber')} />
           </FormField>
         </div>

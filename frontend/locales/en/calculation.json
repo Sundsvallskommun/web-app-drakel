@@ -111,5 +111,15 @@
       "balance": "Balance",
       "totalSum": "Total"
     }
+  },
+  "result": {
+    "title": "Result",
+    "income": "Income",
+    "norm": "Norm",
+    "expenses": "Expenses",
+    "sum": "Sum",
+    "specialExpenses": "Other living costs",
+    "surplus": "Norm surplus",
+    "deficit": "Norm deficit"
   }
 }

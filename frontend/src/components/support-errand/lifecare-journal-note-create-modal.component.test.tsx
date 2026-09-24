@@ -52,7 +52,7 @@ describe('LifecareJournalNoteCreateModal', () => {
     render(<LifecareJournalNoteCreateModal errandId="errand-1" onClose={vi.fn()} onCreated={onCreated} />);
 
     await fillIn();
-    fireEvent.click(screen.getByRole('button', { name: 'Skapa' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Spara' }));
 
     await waitFor(() => {
       expect(onCreated).toHaveBeenCalled();
@@ -70,9 +70,9 @@ describe('LifecareJournalNoteCreateModal', () => {
     await fillIn();
     fireEvent.change(screen.getByLabelText('Rubrik *'), { target: { value: 'Telefonsamtal' } });
     fireEvent.change(screen.getByLabelText('Tid'), { target: { value: '11:50' } });
-    // A rubrik of their own survives picking another type.
+    // A rubrik of their own survives picking another type — here one Lifecare always write-protects.
     fireEvent.change(screen.getByLabelText('Typ *'), { target: { value: '3' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Skapa' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Spara och skrivskydda' }));
 
     await waitFor(() => {
       expect(createLifecareJournalNote).toHaveBeenCalledWith(
@@ -82,27 +82,26 @@ describe('LifecareJournalNoteCreateModal', () => {
     });
   });
 
-  it('saves the note skrivskyddad when the handläggare ticks it', async () => {
+  it('saves the note write-protected with Spara och skrivskydda', async () => {
     vi.mocked(createLifecareJournalNote).mockResolvedValue({ data: null });
     render(<LifecareJournalNoteCreateModal errandId="errand-1" onClose={vi.fn()} onCreated={vi.fn()} />);
 
     await fillIn();
-    expect(screen.getByRole('checkbox', { name: 'Spara skrivskyddad' })).not.toBeChecked();
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Spara skrivskyddad' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Skapa' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Spara och skrivskydda' }));
 
     await waitFor(() => {
       expect(createLifecareJournalNote).toHaveBeenCalledWith('errand-1', expect.objectContaining({ protected: true }));
     });
   });
 
-  it('starts skrivskyddad for a note type Lifecare protects by default', async () => {
+  it('offers only Spara och skrivskydda for a note type Lifecare always protects', async () => {
     render(<LifecareJournalNoteCreateModal errandId="errand-1" onClose={vi.fn()} onCreated={vi.fn()} />);
 
     await fillIn();
     fireEvent.change(screen.getByLabelText('Typ *'), { target: { value: '3' } });
 
-    expect(screen.getByRole('checkbox', { name: 'Spara skrivskyddad' })).toBeChecked();
+    expect(screen.queryByRole('button', { name: 'Spara' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Spara och skrivskydda' })).toBeInTheDocument();
   });
 
   it('keeps the text and shows the reason Lifecare gave when it refuses the note', async () => {
@@ -111,7 +110,7 @@ describe('LifecareJournalNoteCreateModal', () => {
     render(<LifecareJournalNoteCreateModal errandId="errand-1" onClose={vi.fn()} onCreated={onCreated} />);
 
     await fillIn();
-    fireEvent.click(screen.getByRole('button', { name: 'Skapa' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Spara' }));
 
     await waitFor(() => {
       expect(screen.getByText('Datum ligger i framtiden')).toBeInTheDocument();
@@ -127,6 +126,6 @@ describe('LifecareJournalNoteCreateModal', () => {
       expect(screen.getByRole('option', { name: 'Journalanteckning' })).toBeInTheDocument();
     });
 
-    expect(screen.getByRole('button', { name: 'Skapa' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Spara' })).toBeDisabled();
   });
 });

@@ -11,6 +11,10 @@ export interface PaymentStatus {
   applicationMonth?: string;
   effectuated: boolean;
   paymentDate?: string;
+  /** The belopp of that utbetalning, when effectuated. */
+  amount?: number;
+  /** Lifecare's own status for that utbetalning, e.g. "Utbetald". */
+  status?: string;
   unavailable: boolean;
 }
 

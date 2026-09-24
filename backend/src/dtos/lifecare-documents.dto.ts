@@ -24,6 +24,11 @@ export class UpdateLifecareRecordDto {
   @Matches(/^\d{2}:\d{2}$/, { message: 'time must be HH:mm' })
   @IsOptional()
   time?: string;
+
+  /** Write-protects the record with this save; Lifecare then allows no further change. */
+  @IsBoolean()
+  @IsOptional()
+  protected?: boolean;
 }
 
 /**

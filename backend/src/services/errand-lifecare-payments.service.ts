@@ -53,7 +53,14 @@ class ErrandLifecarePaymentsService {
       const registered = await this.paymentsService.readLatestPayments(serviceId);
       await this.accessLog.logRead(errandId, { target: 'PAYMENTS', description: 'Läste utbetalningar i Lifecare' });
       const payment = paymentForMonth(registered, applicationMonth);
-      return { applicationMonth, effectuated: !!payment, paymentDate: payment?.payDate, unavailable: false };
+      return {
+        applicationMonth,
+        effectuated: !!payment,
+        paymentDate: payment?.payDate,
+        amount: payment?.amount,
+        status: payment?.statusText ?? undefined,
+        unavailable: false,
+      };
     } catch {
       // Lifecare being unreachable is a normal state for a status read — say so rather than fail.
       return { applicationMonth, effectuated: false, unavailable: true };

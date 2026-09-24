@@ -1,6 +1,6 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 /** Whether the Lifecare utbetalning for an errand's application month has been effectuated. */
 export class PaymentStatusView {
@@ -15,6 +15,14 @@ export class PaymentStatusView {
   @IsString()
   @IsOptional()
   paymentDate?: string;
+  /** The amount of that utbetalning, when effectuated. */
+  @IsNumber()
+  @IsOptional()
+  amount?: number;
+  /** Lifecare's own status for that utbetalning, e.g. "Utbetald", when effectuated. */
+  @IsString()
+  @IsOptional()
+  status?: string;
   /** True when the status could not be determined (missing applicant/month, or Lifecare unavailable). */
   @IsBoolean()
   unavailable!: boolean;

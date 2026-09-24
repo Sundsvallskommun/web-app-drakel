@@ -1,7 +1,4 @@
 import {
-  CreateLifecarePayeeDto,
-  LifecarePayeeApiResponse,
-  LifecarePayeeView,
   LifecarePaymentOptionsApiResponse,
   LifecarePaymentOptionsView,
   LifecareRegisteredPaymentsApiResponse,
@@ -17,21 +14,6 @@ export const getLifecarePaymentOptions = (errandId: string): Promise<ServiceResp
     .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);
 
-/**
- * Adds a betalningsmottagare straight in Lifecare. When Lifecare already has one paying to the same
- * account with the same betalsätt, that one comes back instead of a duplicate. A refusal carries
- * Lifecare's own reason in `message`.
- */
-export const createLifecarePayee = (
-  errandId: string,
-  input: CreateLifecarePayeeDto
-): Promise<ServiceResponse<LifecarePayeeView>> =>
-  apiService
-    .post<LifecarePayeeApiResponse>(`errands/${errandId}/lifecare-payees`, input)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
-
-/** The utbetalningar registered on the insats of the errand, read live from Lifecare. */
 export const getLifecarePayments = (errandId: string): Promise<ServiceResponse<LifecareRegisteredPaymentView[]>> =>
   apiService
     .get<LifecareRegisteredPaymentsApiResponse>(`errands/${errandId}/lifecare-payments`)

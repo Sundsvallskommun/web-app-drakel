@@ -64,10 +64,6 @@ describe('ErrandFinalizeService.finalize', () => {
         decisionId: 'decision-1',
         paymentIds: ['payment-1'],
         processMessageCorrelated: true,
-        rpaTasks: [
-          { action: 'WRITE_DECISION', enqueued: true },
-          { action: 'REGISTER_PAYMENT', enqueued: false },
-        ],
       },
       message: 'success',
     });
@@ -92,7 +88,6 @@ describe('ErrandFinalizeService.finalize', () => {
       decisionId: 'decision-1',
       paymentIds: ['payment-1'],
       payeeWarnings: [],
-      failedRpaTasks: ['REGISTER_PAYMENT'],
       processMessageCorrelated: true,
       lifecareDecision: { decisionId: 'decision-1', outcome: 'REGISTERED', lifecareId: '98' },
       lifecarePayments: [{ paymentId: 'payment-1', outcome: 'REGISTERED', lifecareId: '4' }],

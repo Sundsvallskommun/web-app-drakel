@@ -155,20 +155,28 @@ export const toRecordContent = (record: LifecareEditableRecord, category: Lifeca
   editable: isEditable(record),
 });
 
+/** The edits a handläggare can make to a Lifecare record. */
+export interface LifecareRecordEditInput {
+  content: string;
+  occurenceDate?: string;
+  time?: string;
+  /** Write-protects the record with this save. */
+  protected?: boolean;
+}
+
 /**
  * Applies a handläggare's edits onto Lifecare's editable object, ready to be posted back.
  *
  * Everything not named here is kept exactly as Lifecare returned it — the object is round-tripped,
  * not rebuilt, because Lifecare's update endpoints expect their own full object back.
  */
-export const applyRecordEdit = (
-  record: LifecareEditableRecord,
-  edit: { content: string; occurenceDate?: string; time?: string },
-): LifecareEditableRecord => ({
+export const applyRecordEdit = (record: LifecareEditableRecord, edit: LifecareRecordEditInput): LifecareEditableRecord => ({
   ...record,
   content: edit.content,
   ...(edit.occurenceDate ? { occurenceDate: edit.occurenceDate } : {}),
   ...(edit.time ? { time: edit.time, occurenceTime: edit.time } : {}),
+  // Only ever switched on: a record once write-protected in Lifecare is not opened again from here.
+  ...(edit.protected ? { protected: true } : {}),
 });
 
 /** Turns one Lifecare document row — from the list, or the row a create answers with — into the UI's view. */

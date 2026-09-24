@@ -8,7 +8,7 @@
     "date": "Date *",
     "decision": "Decision *",
     "selectDecision": "Select decision",
-    "recommended": "Recommended decision: {{label}}",
+    "recommended": "Proposal: {{label}}",
     "noRecommendation": "— (no recommendation from the norm calculation yet)",
     "from": "From",
     "to": "To",
@@ -20,7 +20,12 @@
     "selectReason": "Select a reason",
     "lockedInLifecare": "The decision message is locked in Lifecare, so the decision can no longer be changed here.",
     "typesError": "The decision types could not be fetched from Lifecare: {{reason}}",
-    "saveErrorTitle": "The decision was not saved in Lifecare"
+    "saveErrorTitle": "The decision was not saved in Lifecare",
+    "outcome": {
+      "BIFALL": "Approval",
+      "AVSLAG": "Rejection",
+      "DELAVSLAG": "Partial approval"
+    }
   },
   "message": {
     "title": "Decision message",
@@ -132,15 +137,15 @@
       "loadError": "The payments could not be read from Lifecare",
       "cancelled": "Cancelled",
       "registered": "Registered"
+    },
+    "statusRow": {
+      "paid": "Paid",
+      "notPaid": "Not paid",
+      "unavailable": "The payment status could not be fetched from Lifecare."
     }
   },
   "proposal": {
     "title": "Decision proposal",
-    "normSum": "Norm",
-    "expenseSum": "Expenses",
-    "specialExpenseSum": "Special costs",
-    "incomeSum": "Incomes",
-    "estimatedAmount": "Estimated assistance",
     "previousTitle": "Previous decision",
     "previousType": "Type",
     "previousReason": "Reason",
