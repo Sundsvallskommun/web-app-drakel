@@ -22,23 +22,25 @@ const model = (overrides: Partial<LifecareDocumentsListRaw['documentModels'][num
   protected: true,
   locked: false,
   documentType_Name: 'JournalNote',
+  typeCode: 3,
   ...overrides,
 });
 
 describe('toLifecareRecords', () => {
-  it('splits journalanteckningar from documents by Lifecare document type', () => {
+  it('shows type code 3 under Journal, 1 and 13 under Dokument, and no other code on either', () => {
     const raw: LifecareDocumentsListRaw = {
       documentModels: [
-        model({ id: 1, documentType_Name: 'JournalNote' }),
-        model({ id: 2, documentType_Name: 'Form', type: 'X Exempelblankett I' }),
-        model({ id: 3, documentType_Name: 'Pdf', type: 'Inkommen handling' }),
-        model({ id: 4, documentType_Name: 'JournalNote', type: 'Beslut' }),
+        model({ id: 1, typeCode: 3, documentType_Name: 'JournalNote', type: 'Beslut' }),
+        model({ id: 2, typeCode: 1, documentType_Name: 'Pdf', type: 'Inkommen handling' }),
+        model({ id: 3, typeCode: 13, documentType_Name: 'Regular', type: 'Avgifter Brev' }),
+        model({ id: 4, typeCode: 15, documentType_Name: 'Form', type: 'X Exempelblankett I' }),
+        model({ id: 5, typeCode: undefined }),
       ],
     };
 
     const { journalNotes, documents } = toLifecareRecords(raw);
 
-    expect(journalNotes.map(record => record.id)).toEqual(['1', '4']);
+    expect(journalNotes.map(record => record.id)).toEqual(['1']);
     expect(documents.map(record => record.id)).toEqual(['2', '3']);
   });
 

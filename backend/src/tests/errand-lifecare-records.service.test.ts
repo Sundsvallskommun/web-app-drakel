@@ -36,6 +36,7 @@ const listRow: LifecareDocumentModel = {
   protected: false,
   locked: false,
   documentType_Name: 'JournalNote',
+  typeCode: 3,
 };
 
 describe('ErrandLifecareRecordsService', () => {
@@ -71,8 +72,8 @@ describe('ErrandLifecareRecordsService', () => {
         documentModels: [
           { ...listRow, id: 1, documentType_Name: 'JournalNote' },
           { ...listRow, id: 2, documentType_Name: 'JournalNote' },
-          { ...listRow, id: 3, documentType_Name: 'Regular' },
-          { ...listRow, id: 4, documentType_Name: 'Pdf' },
+          { ...listRow, id: 3, documentType_Name: 'Regular', typeCode: 13 },
+          { ...listRow, id: 4, documentType_Name: 'Pdf', typeCode: 1 },
         ],
       },
       message: 'success',
@@ -94,9 +95,9 @@ describe('ErrandLifecareRecordsService', () => {
     vi.spyOn(LifecareDocumentsService.prototype, 'listForClient').mockResolvedValue({
       data: {
         documentModels: [
-          { ...listRow, id: 3, documentType_Name: 'Regular' },
-          { ...listRow, id: 4, documentType_Name: 'Pdf' },
-          { ...listRow, id: 5, documentType_Name: 'Form' },
+          { ...listRow, id: 3, documentType_Name: 'Regular', typeCode: 13 },
+          { ...listRow, id: 4, documentType_Name: 'Pdf', typeCode: 1 },
+          { ...listRow, id: 5, documentType_Name: 'Form', typeCode: 1 },
         ],
       },
       message: 'success',

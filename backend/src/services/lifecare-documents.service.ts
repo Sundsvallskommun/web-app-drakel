@@ -93,7 +93,7 @@ class LifecareDocumentsService {
       { module: PROFESSIONAL_WEB, path: 'api2/Document/CreateJournalNote/' },
       buildJournalNote(proposal, noteType, input),
     );
-    return toLifecareRecord(created.data);
+    return toLifecareRecord(created.data, 'JOURNAL_NOTE');
   }
 
   /**
@@ -124,7 +124,7 @@ class LifecareDocumentsService {
       { module: PROFESSIONAL_WEB, path: 'api2/Document/CreateDocument/' },
       buildDocument(proposal, documentType, input),
     );
-    return toLifecareRecord(created.data);
+    return toLifecareRecord(created.data, 'DOCUMENT');
   }
 
   /** Reads a journalanteckning with its body, for viewing or as the base of an edit. */

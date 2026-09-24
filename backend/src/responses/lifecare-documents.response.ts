@@ -24,6 +24,8 @@ export interface LifecareDocumentModel {
   protected: boolean;
   locked: boolean;
   documentType_Name: string;
+  /** Lifecare's code for the kind of record — which tab a row is shown under (see CATEGORY_BY_TYPE_CODE). */
+  typeCode?: number;
 }
 
 /** The whole `GetDocumentsListForClient` payload — only the part drakel reads. @public */
@@ -34,8 +36,23 @@ export interface LifecareDocumentsListRaw {
 /** Which side of the split a Lifecare row lands on. */
 export type LifecareRecordCategory = 'JOURNAL_NOTE' | 'DOCUMENT';
 
-/** Lifecare's own name for a journalanteckning row; everything else is treated as a document. */
-const JOURNAL_NOTE_TYPE = 'JournalNote';
+/**
+ * Which tab a Lifecare row is shown under, by its `typeCode`: 3 under Journal, 1 and 13 under Dokument. A row
+ * with any other code is not shown on either.
+ *
+ * TODO: verksamheten's split as of 2026-09-24. It may need updating once we understand better how Lifecare's
+ * type codes work — the codes are not documented, and in the insats's own list (`listDocumentsForService`,
+ * capture 2026-09-24) code 1 covered both "Journalanteckning" and "Inkommen handling".
+ */
+const CATEGORY_BY_TYPE_CODE: ReadonlyMap<number, LifecareRecordCategory> = new Map([
+  [3, 'JOURNAL_NOTE'],
+  [1, 'DOCUMENT'],
+  [13, 'DOCUMENT'],
+]);
+
+/** The tab a row is shown under, or undefined when it is shown on neither. */
+const categoryOf = (model: LifecareDocumentModel): LifecareRecordCategory | undefined =>
+  model.typeCode === undefined ? undefined : CATEGORY_BY_TYPE_CODE.get(model.typeCode);
 
 /** Rows with no written body: a blankett is built from form fields, a PDF is a file. */
 const NO_TEXT_BODY_TYPES = ['Form', 'Pdf'];
@@ -138,7 +155,7 @@ export class LifecareRecordBodiesApiResponse implements ApiResponse<LifecareReco
 /** The ids of the rows in one group that carry a written body worth showing. */
 export const textRecordIds = (raw: LifecareDocumentsListRaw | undefined, category: LifecareRecordCategory): string[] =>
   (raw?.documentModels ?? [])
-    .filter(model => (model.documentType_Name === JOURNAL_NOTE_TYPE ? 'JOURNAL_NOTE' : 'DOCUMENT') === category)
+    .filter(model => categoryOf(model) === category)
     .filter(model => !NO_TEXT_BODY_TYPES.includes(model.documentType_Name))
     .map(model => String(model.id));
 
@@ -180,9 +197,9 @@ export const applyRecordEdit = (record: LifecareEditableRecord, edit: LifecareRe
 });
 
 /** Turns one Lifecare document row — from the list, or the row a create answers with — into the UI's view. */
-export const toLifecareRecord = (model: LifecareDocumentModel): LifecareRecordView => ({
+export const toLifecareRecord = (model: LifecareDocumentModel, category: LifecareRecordCategory): LifecareRecordView => ({
   id: String(model.id),
-  category: model.documentType_Name === JOURNAL_NOTE_TYPE ? 'JOURNAL_NOTE' : 'DOCUMENT',
+  category,
   title: model.title,
   // Lifecare hands date and time apart; join them so the UI can format one value.
   dateTime: model.time ? `${model.date}T${model.time}` : model.date,
@@ -195,14 +212,17 @@ export const toLifecareRecord = (model: LifecareDocumentModel): LifecareRecordVi
 });
 
 /**
- * Splits Lifecare's flat document list into journalanteckningar and documents.
+ * Splits Lifecare's flat document list into journalanteckningar and documents by type code (see
+ * CATEGORY_BY_TYPE_CODE); a row of any other code is left out.
  *
  * The list is one person's whole record across every akt, newest first as Lifecare returns it; the
  * order is kept rather than re-sorted here, and the UI sorts if it wants to.
  */
 export const toLifecareRecords = (raw: LifecareDocumentsListRaw | undefined): LifecareRecordsView => {
-  const models = raw?.documentModels ?? [];
-  const records = models.map(toLifecareRecord);
+  const records = (raw?.documentModels ?? []).flatMap(model => {
+    const category = categoryOf(model);
+    return category ? [toLifecareRecord(model, category)] : [];
+  });
   return {
     journalNotes: records.filter(record => record.category === 'JOURNAL_NOTE'),
     documents: records.filter(record => record.category === 'DOCUMENT'),
