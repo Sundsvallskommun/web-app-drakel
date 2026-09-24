@@ -47,6 +47,10 @@ export class NormIncomeRow {
   @IsNumber() @IsOptional() applicantCaseworkerAmount?: number;
   @IsNumber() @IsOptional() applicantEffectiveAmount?: number;
   @IsString() @IsOptional() applicantAmountDate?: string;
+  /** What jobbstimulans takes off the sökandes gross in Lifecare — only on an income it applies to. */
+  @IsNumber() @IsOptional() applicantJobStimulusDeduction?: number;
+  /** The sökandes amount Lifecare counts once jobbstimulans is taken off — only on an income it applies to. */
+  @IsNumber() @IsOptional() applicantCountedAmount?: number;
   @IsNumber() @IsOptional() coapplicantProcessAmount?: number;
   @IsNumber() @IsOptional() coapplicantCaseworkerAmount?: number;
   @IsNumber() @IsOptional() coapplicantEffectiveAmount?: number;

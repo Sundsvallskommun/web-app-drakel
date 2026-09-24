@@ -1197,6 +1197,8 @@ export interface NormIncomeRow {
   applicantCaseworkerAmount?: number;
   applicantEffectiveAmount?: number;
   applicantAmountDate?: string;
+  applicantJobStimulusDeduction?: number;
+  applicantCountedAmount?: number;
   coapplicantProcessAmount?: number;
   coapplicantCaseworkerAmount?: number;
   coapplicantEffectiveAmount?: number;

@@ -44,8 +44,7 @@
     "normInterval": "Normintervall/Belopp",
     "empty": "Inga personer",
     "remove": "Ta bort {{name}} ur normberäkningen",
-    "wholePeriod": "Hela",
-    "selectNormInterval": "Välj normintervall",
+    "wholePeriod": "Alla",
     "includedFrom": "Ingår från",
     "includedTo": "Ingår till"
   },
@@ -58,7 +57,9 @@
     "coApplicantDate": "Datum M",
     "empty": "Inga inkomstrader",
     "fallbackType": "Inkomst",
-    "selectType": "Välj inkomsttyp"
+    "selectType": "Välj inkomsttyp",
+    "jobStimulusDeduction": "Jobbstimulans −{{amount}}",
+    "countedAmount": "Räknas {{amount}}"
   },
   "expenses": {
     "title": "Utgifter",
@@ -134,7 +135,7 @@
     "notYetSaved": "Normberäkningen är inte sparad i Lifecare än.",
     "savedAt": "Sparad i Lifecare {{date}} (beräkning {{id}}).",
     "finalized": "Normberäkningen är sparad som slutlig i Lifecare och kan inte ändras.",
-    "saveFinal": "Spara som slutlig",
+    "saveFinal": "Spara normberäkning som slutlig",
     "saveFinalConfirm": "En slutlig normberäkning kan inte ändras i Lifecare efteråt.",
     "saveFinalYes": "Ja, spara som slutlig",
     "changesSavedDirectly": "Ändringar sparas direkt i Lifecare."

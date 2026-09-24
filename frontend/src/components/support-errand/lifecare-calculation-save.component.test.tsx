@@ -35,13 +35,13 @@ describe('LifecareCalculationSave', () => {
     expect(saveLifecareCalculation).toHaveBeenCalledWith('errand-1', false);
   });
 
-  it('shows when and as which beräkning it was saved, and that changes now go straight to Lifecare', () => {
+  it('shows when and as which beräkning it was saved, and still offers both saves', () => {
     render(<LifecareCalculationSave errandId="errand-1" saved={SAVED} onSaved={vi.fn()} />);
 
     expect(
       screen.getByText(/Sparad i Lifecare 2026-09-24 \(beräkning 31\)\. Ändringar sparas direkt i Lifecare\./)
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Spara normberäkning' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Spara normberäkning' })).toBeEnabled();
   });
 
   it('shows why Lifecare or Drakel would not save it', async () => {
@@ -63,7 +63,7 @@ describe('LifecareCalculationSave', () => {
     const onSaved = vi.fn();
     render(<LifecareCalculationSave errandId="errand-1" saved={SAVED} onSaved={onSaved} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Spara som slutlig' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Spara normberäkning som slutlig' }));
     expect(saveLifecareCalculation).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Ja, spara som slutlig' }));
 
@@ -76,6 +76,7 @@ describe('LifecareCalculationSave', () => {
   it('allows no change once Lifecare holds it as slutlig', () => {
     render(<LifecareCalculationSave errandId="errand-1" saved={{ ...SAVED, finalized: true }} onSaved={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'Spara som slutlig' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Spara normberäkning' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Spara normberäkning som slutlig' })).toBeDisabled();
   });
 });

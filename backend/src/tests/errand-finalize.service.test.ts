@@ -1,9 +1,9 @@
 import CaremanagementDecisionService from '@services/caremanagement-decision.service';
 import CaremanagementErrandService from '@services/caremanagement-errand.service';
-import CaremanagementNormberakningService from '@services/caremanagement-normberakning.service';
 import DecisionNotificationService from '@services/decision-notification.service';
 import ErrandFinalizeService from '@services/errand-finalize.service';
 import ErrandLifecareDecisionService from '@services/errand-lifecare-decision.service';
+import ErrandNormberakningService from '@services/errand-normberakning.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HttpException } from '@/exceptions/HttpException';
@@ -29,7 +29,7 @@ describe('ErrandFinalizeService.finalize', () => {
 
   beforeEach(() => {
     vi.spyOn(ErrandLifecareDecisionService.prototype, 'read').mockResolvedValue(lifecareBeslut);
-    vi.spyOn(CaremanagementNormberakningService.prototype, 'readHouseholdSizeChanged').mockResolvedValue(false);
+    vi.spyOn(ErrandNormberakningService.prototype, 'householdSizeChanged').mockResolvedValue(false);
     vi.spyOn(CaremanagementErrandService.prototype, 'getFinancialAssistanceView').mockResolvedValue({
       data: { lifecareServiceId: 1 },
       message: 'success',

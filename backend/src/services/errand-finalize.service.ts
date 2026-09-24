@@ -1,7 +1,7 @@
 import CaremanagementDecisionService from '@services/caremanagement-decision.service';
-import CaremanagementNormberakningService from '@services/caremanagement-normberakning.service';
 import DecisionNotificationService from '@services/decision-notification.service';
 import ErrandLifecareDecisionService from '@services/errand-lifecare-decision.service';
+import ErrandNormberakningService from '@services/errand-normberakning.service';
 import { buildFinalizeRequest } from '@utils/finalize-request';
 import { logger } from '@utils/logger';
 
@@ -49,14 +49,14 @@ const toFinalizeResult = (
  */
 class ErrandFinalizeService {
   private decisionService = new CaremanagementDecisionService();
-  private normberakningService = new CaremanagementNormberakningService();
+  private normberakning = new ErrandNormberakningService();
   private notificationService = new DecisionNotificationService();
   private lifecareDecision = new ErrandLifecareDecisionService();
 
   async finalize(errandId: string, input: FinalizeErrandDto, author: string): Promise<FinalizeResult> {
     const [beslut, householdSizeChanged] = await Promise.all([
       this.lifecareDecision.read(errandId),
-      this.normberakningService.readHouseholdSizeChanged(errandId),
+      this.normberakning.householdSizeChanged(errandId),
     ]);
     const request = buildFinalizeRequest({
       beslut,

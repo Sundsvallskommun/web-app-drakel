@@ -75,7 +75,7 @@ export const FamiljPersonRow: FC<{
             }
           }}
         >
-          <Select.Option value="">{person.normInterval ?? t('family.selectNormInterval')}</Select.Option>
+          <Select.Option value="" />
           {normRows.map((row) => (
             <Select.Option key={row.id} value={String(row.id)}>
               {row.name}

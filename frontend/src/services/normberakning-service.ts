@@ -57,6 +57,10 @@ export interface NormIncomeRow {
   applicantCaseworkerAmount?: number;
   applicantEffectiveAmount?: number;
   applicantAmountDate?: string;
+  /** What jobbstimulans takes off the sökandes gross in Lifecare — only on an income it applies to. */
+  applicantJobStimulusDeduction?: number;
+  /** The sökandes amount Lifecare counts once jobbstimulans is taken off — only on an income it applies to. */
+  applicantCountedAmount?: number;
   coapplicantProcessAmount?: number;
   coapplicantCaseworkerAmount?: number;
   coapplicantEffectiveAmount?: number;

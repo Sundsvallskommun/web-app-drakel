@@ -59,6 +59,18 @@ class ErrandNormberakningService {
     return { ...draft.data, source: 'CAREM' };
   }
 
+  /**
+   * Whether the household has an own size (Annan hushållsstorlek) — what finalize tells careM as
+   * `householdSizeChanged`. Lifecare's beräkning once it is there, since the size is changed there; careM's
+   * draft before.
+   */
+  async householdSizeChanged(errandId: string): Promise<boolean> {
+    const source = await this.sourceOf(errandId);
+    return source.lifecareCalculationId !== undefined
+      ? this.lifecare.readHasCustomHouseholdSize(errandId, source.lifecareCalculationId)
+      : this.draftService.readHouseholdSizeChanged(errandId);
+  }
+
   /** The inkomst- and kostnadstyper a new row can have: Lifecare's once the beräkning is there, careM's before. */
   async types(errandId: string): Promise<NormberakningTypes> {
     const source = await this.sourceOf(errandId);

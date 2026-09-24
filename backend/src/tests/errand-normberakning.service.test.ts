@@ -200,6 +200,22 @@ describe('ErrandNormberakningService', () => {
     expect(update).not.toHaveBeenCalled();
   });
 
+  it("tells finalize whether the household has an own size — Lifecare's once the beräkning is there, careM's before", async () => {
+    withCalculationId(30);
+    vi.spyOn(LifecareCalculationsService.prototype, 'readForEdit').mockResolvedValue(forEdit({ ...saved, hasCustomHouseholdSize: true }));
+    const fromDraft = vi.spyOn(CaremanagementNormberakningService.prototype, 'readHouseholdSizeChanged').mockResolvedValue(false);
+
+    expect(await new ErrandNormberakningService().householdSizeChanged('errand-1')).toBe(true);
+    expect(fromDraft).not.toHaveBeenCalled();
+
+    vi.restoreAllMocks();
+    vi.spyOn(CaremanagementEventService.prototype, 'reportLifecareAccess').mockResolvedValue();
+    withCalculationId(undefined);
+    vi.spyOn(CaremanagementNormberakningService.prototype, 'readHouseholdSizeChanged').mockResolvedValue(true);
+
+    expect(await new ErrandNormberakningService().householdSizeChanged('errand-1')).toBe(true);
+  });
+
   it('refuses any change to a beräkning Lifecare holds as slutlig', async () => {
     withCalculationId(30);
     vi.spyOn(LifecareCalculationsService.prototype, 'readForEdit').mockResolvedValue(forEdit({ ...saved, isFinalized: true }));

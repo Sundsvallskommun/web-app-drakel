@@ -8,10 +8,10 @@ import { FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 /**
- * The foot of the Normberäkning tab. Before the beräkning is in Lifecare, "Spara normberäkning" creates it
- * there from careM's draft; after that every change is saved in Lifecare as it is made, so only "Spara som
- * slutlig" remains. Slutlig cannot be undone in Lifecare, so it asks first. A refusal is shown in Lifecare's
- * or Drakel's own words.
+ * The foot of the Normberäkning tab: "Spara normberäkning" and "Spara normberäkning som slutlig". Before the
+ * beräkning is in Lifecare, Spara creates it there from careM's draft; after that every change is also saved in
+ * Lifecare as it is made, and Spara saves the beräkning again as it stands. Slutlig cannot be undone in
+ * Lifecare, so it asks first. A refusal is shown in Lifecare's or Drakel's own words.
  */
 export const LifecareCalculationSave: FC<{
   errandId: string;
@@ -58,17 +58,15 @@ export const LifecareCalculationSave: FC<{
           : t('lifecare.notYetSaved')}
         </p>
         <div className="flex flex-wrap gap-12">
-          {saved ? null : (
-            <Button
-              color="vattjom"
-              variant="secondary"
-              loading={saving}
-              disabled={closed}
-              onClick={() => void save(false)}
-            >
-              {t('lifecare.save')}
-            </Button>
-          )}
+          <Button
+            color="vattjom"
+            variant="secondary"
+            loading={saving}
+            disabled={closed}
+            onClick={() => void save(false)}
+          >
+            {t('lifecare.save')}
+          </Button>
           <Button
             color="vattjom"
             variant="primary"

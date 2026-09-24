@@ -45,7 +45,6 @@
     "empty": "No persons",
     "remove": "Remove {{name}} from the calculation",
     "wholePeriod": "All",
-    "selectNormInterval": "Choose norm interval",
     "includedFrom": "Included from",
     "includedTo": "Included to"
   },
@@ -58,7 +57,9 @@
     "coApplicantDate": "Date CA",
     "empty": "No income rows",
     "fallbackType": "Income",
-    "selectType": "Select income type"
+    "selectType": "Select income type",
+    "jobStimulusDeduction": "Job stimulus −{{amount}}",
+    "countedAmount": "Counted {{amount}}"
   },
   "expenses": {
     "title": "Expenses",
@@ -134,7 +135,7 @@
     "notYetSaved": "The calculation is not saved in Lifecare yet.",
     "savedAt": "Saved in Lifecare {{date}} (calculation {{id}}).",
     "finalized": "The calculation is saved as final in Lifecare and cannot be changed.",
-    "saveFinal": "Save as final",
+    "saveFinal": "Save calculation as final",
     "saveFinalConfirm": "A final calculation cannot be changed in Lifecare afterwards.",
     "saveFinalYes": "Yes, save as final",
     "changesSavedDirectly": "Changes are saved directly in Lifecare."

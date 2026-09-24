@@ -15,6 +15,7 @@ import { RotateCcw, Trash2 } from 'lucide-react';
 import { FC, FocusEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { JobStimulusIncomeNote } from './job-stimulus-income-note.component';
 import { NormberakningSummaBox } from './normberakning-summa-box.component';
 import { NormberakningTableBox } from './normberakning-table-box.component';
 
@@ -242,6 +243,7 @@ const IncomeRow: FC<{
           }}
           onBlur={handleBlur}
         />
+        <JobStimulusIncomeNote deduction={row.applicantJobStimulusDeduction} counted={row.applicantCountedAmount} />
       </Table.Column>
       <Table.Column>
         <DatePicker

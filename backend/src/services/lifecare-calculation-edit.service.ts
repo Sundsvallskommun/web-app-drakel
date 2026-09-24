@@ -39,6 +39,17 @@ class LifecareCalculationEditService {
     return toLifecareDraftView(forEdit, applicationMonth);
   }
 
+  /** Whether the saved beräkning has an own household size (Annan hushållsstorlek) — read from Lifecare, logged. */
+  async readHasCustomHouseholdSize(errandId: string, calculationId: number): Promise<boolean> {
+    const forEdit = await this.calculations.readForEdit(calculationId);
+    await this.accessLog.logRead(errandId, {
+      target: 'CALCULATION',
+      description: 'Läste normberäkningen i Lifecare',
+      lifecareId: String(calculationId),
+    });
+    return forEdit.calculation.hasCustomHouseholdSize;
+  }
+
   /** Lifecare's own inkomst-, utgifts- and levnadskostnadstyper for the beräkning. */
   async readTypes(calculationId: number): Promise<NormberakningTypes> {
     const forEdit = await this.calculations.readForEdit(calculationId);

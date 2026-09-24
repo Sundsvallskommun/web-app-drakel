@@ -106,13 +106,20 @@ const toPersonRow = (person: LifecareCalculationPersonRaw, index: number, period
   normInterval: person.normRow ?? undefined,
 });
 
+/** A norm row the way Lifecare's list names it: its name and monthly amount — "Make/maka/sambo 3550.00". */
+const normRowLabel = (row: { name: string; monthlyAmount?: number }): string =>
+  typeof row.monthlyAmount === 'number' && !/\d+[.,]\d{2}$/.test(row.name) ? `${row.name} ${row.monthlyAmount.toFixed(2)}` : row.name;
+
 /** The norm's rows as the tab offers them for Normintervall/Belopp. */
 const toNormRowOptions = (calculation: LifecareCalculationRaw): NormRowOption[] =>
-  (calculation.norm?.rows ?? []).map(row => ({ id: row.rowId, name: row.name }));
+  (calculation.norm?.rows ?? []).map(row => ({ id: row.rowId, name: normRowLabel(row) }));
 
 const toIncomeRow = (row: LifecareCalculationIncomeRaw, index: number, types: LifecareCalculationTypeRaw[]): NormIncomeRow => {
   const applicant = enteredApplicantAmount(row, types);
+  // On an income jobbstimulans applies to, Lifecare counts less than the gross the handläggare entered.
+  const jobStimulusDeduction = applicant - row.amountApplicant;
   return {
+    ...(jobStimulusDeduction > 0 ? { applicantJobStimulusDeduction: jobStimulusDeduction, applicantCountedAmount: row.amountApplicant } : {}),
     id: String(row.incomeCode),
     position: index,
     origin: CASEWORKER_ORIGIN,

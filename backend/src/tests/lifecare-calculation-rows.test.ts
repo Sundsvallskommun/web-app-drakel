@@ -125,7 +125,11 @@ describe('toLifecareDraftView', () => {
       calculationIncomes: [income({ incomeCode: 1, incomeType: 'Lön efter skatt', amountApplicant: 3750, grossAmountApplicant: 5000 })],
     });
 
-    expect(toLifecareDraftView(forEdit(saved), undefined).incomes?.[0]?.applicantCaseworkerAmount).toBe(5000);
+    expect(toLifecareDraftView(forEdit(saved), undefined).incomes?.[0]).toMatchObject({
+      applicantCaseworkerAmount: 5000,
+      applicantJobStimulusDeduction: 1250,
+      applicantCountedAmount: 3750,
+    });
   });
 
   it('leaves out rows Lifecare drops, and names repeated utgifter apart', () => {
@@ -161,6 +165,24 @@ describe('members as barn', () => {
       'CHILD',
       undefined,
       'VISITATION_CHILD',
+    ]);
+  });
+});
+
+describe('the norm rows', () => {
+  it('names each as Lifecare’s list does: name and monthly amount', () => {
+    const withNorm = calculation({
+      norm: {
+        rows: [
+          { rowId: 1, name: 'Make/maka/sambo', monthlyAmount: 3550 },
+          { rowId: 2, name: 'Ensamstående 3940.00', monthlyAmount: 3940 },
+        ],
+      },
+    });
+
+    expect(toLifecareDraftView(forEdit(withNorm), undefined).normRows).toEqual([
+      { id: 1, name: 'Make/maka/sambo 3550.00' },
+      { id: 2, name: 'Ensamstående 3940.00' },
     ]);
   });
 });
