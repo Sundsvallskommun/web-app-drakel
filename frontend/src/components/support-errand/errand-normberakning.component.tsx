@@ -25,6 +25,7 @@ import { NormberakningExpenses } from './normberakning-expenses.component';
 import { NormberakningFamilj } from './normberakning-familj.component';
 import { NormberakningGemensamma } from './normberakning-gemensamma.component';
 import { NormberakningIncomes } from './normberakning-incomes.component';
+import { NormberakningJobStimulus } from './normberakning-job-stimulus.component';
 import { NormberakningWarnings } from './normberakning-warnings.component';
 import { PreviousNormberakningCheckbox } from './previous-normberakning-box.component';
 import { PreviousNormberakningProvider } from './previous-normberakning-context';
@@ -271,6 +272,12 @@ export const ErrandNormberakning: FC<{
                     onWarningsChanged={onWarningsChanged}
                     footer={<PreviousNormberakningIncomes />}
                   >
+                    <NormberakningJobStimulus
+                      errandId={errandId}
+                      calculationFrom={draft.calculationFromDate}
+                      calculationTo={draft.calculationToDate}
+                      onAdded={refreshAll}
+                    />
                     <NormberakningIncomes
                       errandId={errandId}
                       rows={draft.incomes ?? []}

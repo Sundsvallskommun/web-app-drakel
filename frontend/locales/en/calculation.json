@@ -138,5 +138,21 @@
     "saveFinalConfirm": "A final calculation cannot be changed in Lifecare afterwards.",
     "saveFinalYes": "Yes, save as final",
     "changesSavedDirectly": "Changes are saved directly in Lifecare."
+  },
+  "jobStimulus": {
+    "title": "Job stimulus",
+    "errorText": "Could not fetch job stimulus periods",
+    "emptyText": "No job stimulus periods.",
+    "fromDate": "From *",
+    "toDate": "To",
+    "add": "Add period",
+    "toDateHelp": "Leave To empty and Lifecare sets the end by its two-year rule. The period is added for the applicant directly in Lifecare, and the salary is counted down the next time the calculation is saved.",
+    "addError": "The period could not be added in Lifecare",
+    "person": "Person",
+    "from": "From",
+    "to": "To",
+    "ongoing": "Ongoing",
+    "appliesHeading": "Applies to the calculation period",
+    "appliesToPeriod": "Applies to the calculation period"
   }
 }

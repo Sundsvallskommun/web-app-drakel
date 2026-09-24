@@ -7,11 +7,11 @@ import { FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 /**
- * Adds a jobbstimulans period for the sökande, straight to the insats in Lifecare. The end may be left
- * empty: Lifecare then sets it by its own two-year rule.
+ * Adds a jobbstimulans period for the sökande, straight to the insats in Lifecare — one compact row under the
+ * periods. The end may be left empty: Lifecare then sets it by its own two-year rule.
  */
 export const JobStimulusAddForm: FC<{ errandId: string; onAdded: () => void }> = ({ errandId, onAdded }) => {
-  const { t } = useTranslation('application');
+  const { t } = useTranslation('calculation');
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
   const [saving, setSaving] = useState<boolean>(false);
@@ -33,20 +33,22 @@ export const JobStimulusAddForm: FC<{ errandId: string; onAdded: () => void }> =
   };
 
   return (
-    <div className="flex flex-col gap-12">
-      <div className="flex flex-wrap items-end gap-16">
-        <FormControl id="job-stimulus-from" className="w-full sm:w-[20rem]">
-          <FormLabel>{t('jobStimulus.fromDate')}</FormLabel>
+    <div className="flex flex-col gap-8">
+      <div className="flex flex-wrap items-end gap-12">
+        <FormControl id="job-stimulus-from" className="w-[16rem]">
+          <FormLabel className="text-small">{t('jobStimulus.fromDate')}</FormLabel>
           <DatePicker
+            size="sm"
             value={fromDate}
             onChange={(event) => {
               setFromDate(event.target.value);
             }}
           />
         </FormControl>
-        <FormControl id="job-stimulus-to" className="w-full sm:w-[20rem]">
-          <FormLabel>{t('jobStimulus.toDate')}</FormLabel>
+        <FormControl id="job-stimulus-to" className="w-[16rem]">
+          <FormLabel className="text-small">{t('jobStimulus.toDate')}</FormLabel>
           <DatePicker
+            size="sm"
             value={toDate}
             onChange={(event) => {
               setToDate(event.target.value);
@@ -54,6 +56,7 @@ export const JobStimulusAddForm: FC<{ errandId: string; onAdded: () => void }> =
           />
         </FormControl>
         <Button
+          size="sm"
           color="vattjom"
           variant="secondary"
           leftIcon={<Plus />}
@@ -66,7 +69,7 @@ export const JobStimulusAddForm: FC<{ errandId: string; onAdded: () => void }> =
       </div>
       <p className="m-0 text-small text-dark-secondary">{t('jobStimulus.toDateHelp')}</p>
       {error ?
-        <p className="m-0 text-error-surface-primary">{error}</p>
+        <p className="m-0 text-small text-error-surface-primary">{error}</p>
       : null}
     </div>
   );

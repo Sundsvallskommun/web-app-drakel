@@ -14,7 +14,6 @@ import { formatDateRange } from '@utils/date-range';
 import type { TFunction } from 'i18next';
 import {
   Banknote,
-  BriefcaseBusiness,
   CalendarCheck,
   FileCheck,
   FileText,
@@ -28,7 +27,6 @@ import { FC, ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ContentBox } from './content-box.component';
-import { ErrandJobStimulus } from './errand-job-stimulus.component';
 import { ErrandStakeholders } from './errand-stakeholders.component';
 import { LabeledValue } from './labeled-value.component';
 import { PersonCard } from './person-card.component';
@@ -337,10 +335,6 @@ export const ErrandApplicationData: FC<{ errand: Errand }> = ({ errand }) => {
     <div className="flex flex-col gap-24">
       <ApplicationAccordion title={t('data.sections.personalDetails')} icon={Users}>
         <ErrandStakeholders errandId={errand.id ?? ''} />
-      </ApplicationAccordion>
-
-      <ApplicationAccordion title={t('data.sections.jobStimulus')} icon={BriefcaseBusiness}>
-        <ErrandJobStimulus errandId={errand.id ?? ''} />
       </ApplicationAccordion>
 
       <AsyncContent isLoading={isLoading} errorText="" isEmpty={!data} emptyText={t('data.emptyText')}>

@@ -138,5 +138,21 @@
     "saveFinalConfirm": "En slutlig normberäkning kan inte ändras i Lifecare efteråt.",
     "saveFinalYes": "Ja, spara som slutlig",
     "changesSavedDirectly": "Ändringar sparas direkt i Lifecare."
+  },
+  "jobStimulus": {
+    "title": "Jobbstimulans",
+    "errorText": "Det gick inte att hämta jobbstimulansperioder",
+    "emptyText": "Inga jobbstimulansperioder.",
+    "fromDate": "Från *",
+    "toDate": "Till",
+    "add": "Lägg till period",
+    "toDateHelp": "Lämnas Till tomt sätter Lifecare slutdatum enligt tvåårsregeln. Perioden läggs till för sökande direkt i Lifecare, och lönen räknas ned med jobbstimulans nästa gång normberäkningen sparas.",
+    "addError": "Det gick inte att lägga till perioden i Lifecare",
+    "person": "Person",
+    "from": "Från",
+    "to": "Till",
+    "ongoing": "Pågår",
+    "appliesHeading": "Gäller beräkningsperioden",
+    "appliesToPeriod": "Gäller beräkningsperioden"
   }
 }
