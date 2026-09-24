@@ -732,6 +732,7 @@ export interface SaveLifecareDecisionDto {
   reasonCode?: number;
   /** @maxLength 1048576 */
   decisionMessage?: string;
+  writeProtect?: boolean;
 }
 
 export interface LifecareDocumentTypeView {

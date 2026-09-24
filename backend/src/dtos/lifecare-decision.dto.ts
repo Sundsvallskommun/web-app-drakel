@@ -1,4 +1,4 @@
-import { IsInt, IsNumber, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { IsBoolean, IsInt, IsNumber, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -41,4 +41,12 @@ export class SaveLifecareDecisionDto {
   @MaxLength(1048576)
   @IsOptional()
   decisionMessage?: string;
+
+  /**
+   * "Spara och skrivskydda beslut": saves the beslut write-protected in Lifecare (its meddelande locked), after
+   * which it can no longer be changed from Drakel.
+   */
+  @IsBoolean()
+  @IsOptional()
+  writeProtect?: boolean;
 }

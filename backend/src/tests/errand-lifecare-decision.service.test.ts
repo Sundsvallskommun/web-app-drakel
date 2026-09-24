@@ -125,6 +125,18 @@ describe('ErrandLifecareDecisionService', () => {
     expect(view.message).toBe('<p>Ändrat</p>');
   });
 
+  it('saves the beslut write-protected when asked, and only then', async () => {
+    withDecisionId(98);
+    const update = vi.spyOn(LifecareDecisionsService.prototype, 'update').mockResolvedValue({ ...saved, lockedMessage: true });
+
+    const view = await new ErrandLifecareDecisionService().save('errand-1', { ...bifall, writeProtect: true }, 'test');
+    await new ErrandLifecareDecisionService().save('errand-1', bifall, 'test');
+
+    expect(update.mock.calls[0]?.[1]).toMatchObject({ lockedMessage: true });
+    expect(update.mock.calls[1]?.[1]).toMatchObject({ lockedMessage: false });
+    expect(view.locked).toBe(true);
+  });
+
   it('lists the beslutstyper the insats offers in Lifecare, marking the ones Drakel registers', async () => {
     withDecisionId(undefined);
     vi.spyOn(CaremanagementErrandService.prototype, 'getFinancialAssistanceView').mockResolvedValue({

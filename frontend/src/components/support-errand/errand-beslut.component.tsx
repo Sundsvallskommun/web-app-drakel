@@ -29,6 +29,7 @@ import { useTranslation } from 'react-i18next';
 
 import { BeslutMeddelande } from './beslut-meddelande.component';
 import { BeslutProposalBox } from './beslut-proposal-box.component';
+import { BeslutWriteProtectButton } from './beslut-write-protect-button.component';
 import { ContentBox } from './content-box.component';
 import { ErrandSectionHeader } from './errand-section-header.component';
 import { LabeledValue } from './labeled-value.component';
@@ -253,7 +254,8 @@ export const ErrandBeslut: FC<{
     return message.length > 0 ? message : undefined;
   };
 
-  const save = async (): Promise<boolean> => {
+  /** Saves the beslut in Lifecare; `writeProtect` saves it write-protected ("Spara och skrivskydda beslut"). */
+  const saveBeslut = async (writeProtect: boolean): Promise<boolean> => {
     // Nothing to save without a chosen beslut (mirrors the old Spara button's disabled guard); the central
     // save can fire from the sidebar for other reasons, so we must not POST an empty decision.
     if (!selectedType) {
@@ -270,6 +272,7 @@ export const ErrandBeslut: FC<{
       amount: amount ?? 0,
       reasonCode: reason ? Number(reason) : undefined,
       decisionMessage,
+      writeProtect: writeProtect || undefined,
     });
     if (result.error) {
       // Lifecare's own reason, or why Drakel will not send the beslut, when there is one.
@@ -281,6 +284,9 @@ export const ErrandBeslut: FC<{
     refresh();
     return true;
   };
+
+  // The central "Spara ärende" saves the beslut as it is, without write-protecting it.
+  const save = (): Promise<boolean> => saveBeslut(false);
 
   // Expose the save to the parent's central "Spara ärende" button — but only while there's something to
   // save (a dirty, unlocked beslut), so opening the tab alone doesn't light the button up. A stable wrapper
@@ -479,6 +485,8 @@ export const ErrandBeslut: FC<{
           />
         </LockFieldset>
       </ContentBox>
+
+      <BeslutWriteProtectButton disabled={formLocked || !selectedType} onConfirm={() => saveBeslut(true)} />
     </div>
   );
 };

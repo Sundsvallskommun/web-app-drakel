@@ -144,5 +144,10 @@
     "previousPeriod": "Period",
     "previousAmount": "Belopp",
     "noPreviousDecision": "Inget tidigare Lifecare-beslut hittades för den sökande."
+  },
+  "writeProtect": {
+    "button": "Spara och skrivskydda beslut",
+    "confirm": "Ett skrivskyddat beslut kan inte ändras från Drakel efteråt.",
+    "yes": "Ja, spara och skrivskydda"
   }
 }

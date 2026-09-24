@@ -10,7 +10,7 @@ import { useLifecareDecisionReasons } from '@hooks/use-lifecare-decision-reasons
 import { useLifecareDecisionTypes } from '@hooks/use-lifecare-decision-types';
 import { getDocumentTemplateContent } from '@services/document-template-service';
 import { saveLifecareDecision } from '@services/lifecare-decision-service';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ErrandBeslut } from './errand-beslut.component';
@@ -297,6 +297,30 @@ describe('ErrandBeslut', () => {
     renderTab();
     expect(screen.getByTestId('beslut-meddelande')).toHaveTextContent('Beslut');
     expect(getDocumentTemplateContent).not.toHaveBeenCalledWith('drakel.fa.decision.bifall-manad');
+  });
+
+  it('saves the beslut write-protected once the handläggare confirms', async () => {
+    vi.mocked(saveLifecareDecision).mockResolvedValue({ data: { ...SAVED, locked: true } });
+    withSaved(SAVED);
+    renderTab();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Spara och skrivskydda beslut' }));
+    expect(saveLifecareDecision).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Ja, spara och skrivskydda' }));
+
+    await waitFor(() => {
+      expect(saveLifecareDecision).toHaveBeenCalledWith(
+        'errand-1',
+        expect.objectContaining({ decisionCode: 153, writeProtect: true })
+      );
+    });
+  });
+
+  it('offers no write-protect for a beslut Lifecare has already locked', () => {
+    withSaved({ ...SAVED, locked: true });
+    renderTab();
+
+    expect(screen.getByRole('button', { name: 'Spara och skrivskydda beslut' })).toBeDisabled();
   });
 
   it('lets Visa PDF show Lifecare’s print only of a saved, unchanged beslut', () => {

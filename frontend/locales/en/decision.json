@@ -144,5 +144,10 @@
     "previousPeriod": "Period",
     "previousAmount": "Amount",
     "noPreviousDecision": "No earlier Lifecare decision was found for the applicant."
+  },
+  "writeProtect": {
+    "button": "Save and write-protect decision",
+    "confirm": "A write-protected decision cannot be changed from Drakel afterwards.",
+    "yes": "Yes, save and write-protect"
   }
 }

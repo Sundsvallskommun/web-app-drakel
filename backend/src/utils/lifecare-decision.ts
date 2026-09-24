@@ -32,6 +32,11 @@ export interface LifecareDecisionInput {
   decisionMakerId: string;
   /** The beslutsdatum; Lifecare's own proposal (today) when left out. */
   date?: string;
+  /**
+   * Saves the beslut write-protected: its meddelande locked (`lockedMessage`), as Drakel reads a locked beslut.
+   * TODO: how Lifecare's web app write-protects a beslut is not captured — verify `lockedMessage` is the field.
+   */
+  writeProtect?: boolean;
 }
 
 /** Either the `Decision/Create` body, or why the beslut cannot be registered as it stands. */
@@ -113,6 +118,9 @@ const fillDecision = (base: LifecareDecisionRaw, proposal: LifecareDecisionPropo
   body.amount = input.amount ?? 0;
   body.coApplicant = NO_CO_APPLICANT;
   body.message = input.message ?? null;
+  if (input.writeProtect) {
+    body.lockedMessage = true;
+  }
   delete body.aktualiseringId;
   delete body.whereDidChildGoType;
   delete body.guardianType;

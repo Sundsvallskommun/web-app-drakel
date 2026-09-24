@@ -89,6 +89,7 @@ class ErrandLifecareDecisionService {
       amount: input.amount,
       reasonCode: input.reasonCode,
       message: input.decisionMessage,
+      writeProtect: input.writeProtect === true,
       decisionMakerId: LIFECARE_TEST_DECISION_MAKER || handlaggare,
     };
     const built = saved ? buildDecisionUpdate(saved, proposal, decisionInput) : buildDecisionCreate(proposal, decisionInput);
@@ -100,7 +101,7 @@ class ErrandLifecareDecisionService {
       const updated = await this.lifecareDecisions.update(saved.decisionId, built.body);
       await this.accessLog.logWrite(errandId, LifecareAccessActionEnum.UPDATE, {
         target: 'DECISION',
-        description: 'Ändrade beslutet i Lifecare',
+        description: input.writeProtect ? 'Ändrade och skrivskyddade beslutet i Lifecare' : 'Ändrade beslutet i Lifecare',
         lifecareId: String(saved.decisionId),
       });
       return toLifecareDecisionView(updated);
@@ -109,7 +110,7 @@ class ErrandLifecareDecisionService {
     const created = await this.createInLifecare(serviceId, built.body);
     await this.accessLog.logWrite(errandId, LifecareAccessActionEnum.CREATE, {
       target: 'DECISION',
-      description: 'Registrerade beslutet i Lifecare',
+      description: input.writeProtect ? 'Registrerade och skrivskyddade beslutet i Lifecare' : 'Registrerade beslutet i Lifecare',
       lifecareId: String(created),
     });
     await this.link(errandId, created);
