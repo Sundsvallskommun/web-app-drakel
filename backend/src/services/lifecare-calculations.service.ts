@@ -30,6 +30,16 @@ class LifecareCalculationsService {
     return res.data;
   }
 
+  /** A saved beräkning as Lifecare shows it: rows, period and its summering. */
+  public async read(calculationId: number): Promise<LifecareCalculationRaw> {
+    const res = await this.apiService.get<LifecareCalculationRaw>({
+      module: PROFESSIONAL_WEB,
+      path: 'api2/Calculation/GetCalculation',
+      params: { businessType: CALCULATION_BUSINESS_TYPE, businessId: String(calculationId) },
+    });
+    return res.data;
+  }
+
   /** A saved beräkning, whole — what `update` takes back — with the catalogues. */
   public async readForEdit(calculationId: number): Promise<LifecareCalculationForEditRaw> {
     const res = await this.apiService.get<LifecareCalculationForEditRaw>({

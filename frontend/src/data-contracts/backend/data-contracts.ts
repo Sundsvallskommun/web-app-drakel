@@ -1057,6 +1057,52 @@ export interface LookupsApiResponse {
   message: string;
 }
 
+export interface PreviousCalculationPerson {
+  name?: string;
+  amount?: number;
+  deviationFromDate?: string;
+  deviationToDate?: string;
+}
+
+export interface PreviousCalculationIncome {
+  type?: string;
+  amountApplicant?: number;
+  applicantSearchDate?: string;
+  amountCoApplicant?: number;
+  coApplicantSearchDate?: string;
+}
+
+export interface PreviousCalculationExpense {
+  type?: string;
+  appliedAmount?: number;
+  approvedAmount?: number;
+}
+
+export interface PreviousCalculationView {
+  id?: number;
+  norm?: string;
+  fromDate?: string;
+  toDate?: string;
+  incomeSum?: number;
+  expenseSum?: number;
+  specialExpenseSum?: number;
+  normSum?: number;
+  commonHouseholdCost?: number;
+  familyCost?: number;
+  balance?: number;
+  totalSum?: number;
+  isFinal?: boolean;
+  persons?: PreviousCalculationPerson[];
+  incomes?: PreviousCalculationIncome[];
+  expenses?: PreviousCalculationExpense[];
+  specialExpenses?: PreviousCalculationExpense[];
+}
+
+export interface PreviousCalculationApiResponse {
+  data?: PreviousCalculationView;
+  message: string;
+}
+
 export interface NormRowInputDto {
   typeId?: number;
   typeName?: string;
@@ -1173,53 +1219,6 @@ export interface NormberakningDraft {
 
 export interface NormberakningDraftApiResponse {
   data: NormberakningDraft;
-  message: string;
-}
-
-export interface PreviousCalculationPerson {
-  personId?: string;
-  name?: string;
-  amount?: number;
-  deviationFromDate?: string;
-  deviationToDate?: string;
-}
-
-export interface PreviousCalculationIncome {
-  type?: string;
-  amountApplicant?: number;
-  applicantSearchDate?: string;
-  amountCoApplicant?: number;
-  coApplicantSearchDate?: string;
-}
-
-export interface PreviousCalculationExpense {
-  type?: string;
-  appliedAmount?: number;
-  approvedAmount?: number;
-}
-
-export interface PreviousCalculationView {
-  id?: number;
-  norm?: string;
-  fromDate?: string;
-  toDate?: string;
-  incomeSum?: number;
-  expenseSum?: number;
-  specialExpenseSum?: number;
-  normSum?: number;
-  commonHouseholdCost?: number;
-  familyCost?: number;
-  balance?: number;
-  totalSum?: number;
-  isFinal?: boolean;
-  persons?: PreviousCalculationPerson[];
-  incomes?: PreviousCalculationIncome[];
-  expenses?: PreviousCalculationExpense[];
-  specialExpenses?: PreviousCalculationExpense[];
-}
-
-export interface PreviousCalculationApiResponse {
-  data?: PreviousCalculationView;
   message: string;
 }
 

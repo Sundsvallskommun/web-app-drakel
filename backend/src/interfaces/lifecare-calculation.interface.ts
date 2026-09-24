@@ -24,6 +24,9 @@ export interface LifecareCalculationIncomeRaw {
   incomeType: string;
   amountApplicant: number;
   amountCoApplicant: number;
+  /** The date the sökandes amount was looked up (SSBTEK), `yyyy-MM-dd` or empty. */
+  applicantSearchDate?: string;
+  coApplicantSearchDate?: string;
   [field: string]: unknown;
 }
 
@@ -73,6 +76,13 @@ export interface LifecareCalculationRaw {
   hasCustomHouseholdSize: boolean;
   isFinalized: boolean;
   updateTimestamp: string;
+  /** Lifecare's own sums, all positive: inkomster, utgifter, levnadskostnader i övrigt, norm and total. */
+  sumInk?: number;
+  sumUtg?: number;
+  sumSpec?: number;
+  sumNorm?: number;
+  totSum?: number;
+  commonHouseholdCost?: number;
   [field: string]: unknown;
 }
 

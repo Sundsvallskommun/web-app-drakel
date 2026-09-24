@@ -1,7 +1,8 @@
 'use client';
 
+import { PreviousCalculationView } from '@data-contracts/backend/data-contracts';
 import { ServiceError, useServiceQuery } from '@hooks/use-service-query';
-import { getPreviousNormberakning, PreviousCalculation } from '@services/normberakning-service';
+import { getPreviousNormberakning } from '@services/normberakning-service';
 import { createContext, FC, ReactNode, useCallback, useContext, useMemo, useState } from 'react';
 
 interface PreviousNormberakningContextValue {
@@ -9,14 +10,14 @@ interface PreviousNormberakningContextValue {
   isShown: boolean;
   setShown: (shown: boolean) => void;
   /** The preceding Lifecare calculation, or null when the applicant has none. */
-  calculation: PreviousCalculation | null;
+  calculation: PreviousCalculationView | null;
   isLoading: boolean;
   error?: ServiceError;
 }
 
 const PreviousNormberakningContext = createContext<PreviousNormberakningContextValue | undefined>(undefined);
 
-const NO_CALCULATION: PreviousCalculation | null = null;
+const NO_CALCULATION: PreviousCalculationView | null = null;
 
 /**
  * Holds the "Visa föregående normberäkning" toggle and the calculation it reveals, so that every
@@ -31,7 +32,7 @@ export const PreviousNormberakningProvider: FC<{ errandId: string; children: Rea
 }) => {
   const [isShown, setShown] = useState<boolean>(false);
   const fetchPrevious = useCallback(() => getPreviousNormberakning(errandId), [errandId]);
-  const { data, isLoading, error } = useServiceQuery<PreviousCalculation | null>(fetchPrevious, {
+  const { data, isLoading, error } = useServiceQuery<PreviousCalculationView | null>(fetchPrevious, {
     initialData: NO_CALCULATION,
     ready: !!errandId,
     enabled: isShown,

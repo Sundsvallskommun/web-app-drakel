@@ -1,6 +1,6 @@
 'use client';
 
-import { PreviousCalculationExpense } from '@services/normberakning-service';
+import { PreviousCalculationExpense } from '@data-contracts/backend/data-contracts';
 import { Table } from '@sk-web-gui/react';
 import { displayAmount } from '@utils/format-amount';
 import { FC, ReactNode } from 'react';
@@ -40,7 +40,7 @@ export const PreviousNormberakningFamilj: FC = () => {
           {persons.length === 0 ?
             <EmptyRow text={t('family.empty')} />
           : persons.map((person, index) => (
-              <Table.Row key={person.personId ?? index}>
+              <Table.Row key={`${person.name ?? 'person'}-${index}`}>
                 <Table.Column>{person.name ?? '—'}</Table.Column>
                 <Table.Column className="tabular-nums">{displayAmount(person.amount)}</Table.Column>
                 <Table.Column>{person.deviationFromDate ?? '—'}</Table.Column>

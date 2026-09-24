@@ -1,4 +1,5 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
+import { LifecareCalculationExpenseRaw, LifecareCalculationRaw } from '@interfaces/lifecare-calculation.interface';
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsInt, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
@@ -8,7 +9,6 @@ import { IsArray, IsBoolean, IsInt, IsNumber, IsOptional, IsString, ValidateNest
  * here can be edited from Draken.
  */
 export class PreviousCalculationPerson {
-  @IsString() @IsOptional() personId?: string;
   @IsString() @IsOptional() name?: string;
   @IsNumber() @IsOptional() amount?: number;
   @IsString() @IsOptional() deviationFromDate?: string;
@@ -73,3 +73,50 @@ export class PreviousCalculationApiResponse implements ApiResponse<PreviousCalcu
   data!: PreviousCalculationView | null;
   @IsString() message!: string;
 }
+
+/** Lifecare leaves an unset date empty; the view leaves it out. */
+const dateOrUndefined = (value: string | undefined): string | undefined => (value === '' ? undefined : value);
+
+const toPreviousExpense = (expense: LifecareCalculationExpenseRaw): PreviousCalculationExpense => ({
+  type: expense.expenseType,
+  appliedAmount: expense.appliedAmount,
+  approvedAmount: expense.approvedAmount,
+});
+
+/**
+ * Lifecare's `Calculation/GetCalculation` as the previous-beräkning view. The sums are Lifecare's own and
+ * positive; only the result (balance) keeps its sign, an underskott negative. Members go without their
+ * personnummer — the view has no use for it.
+ */
+export const toPreviousCalculationView = (calculation: LifecareCalculationRaw): PreviousCalculationView => ({
+  id: calculation.calculationId,
+  norm: calculation.normText ?? undefined,
+  fromDate: dateOrUndefined(calculation.startDate),
+  toDate: dateOrUndefined(calculation.endDate),
+  incomeSum: calculation.sumInk,
+  expenseSum: calculation.sumUtg,
+  specialExpenseSum: calculation.sumSpec,
+  normSum: calculation.sumNorm,
+  commonHouseholdCost: calculation.commonHouseholdCost,
+  familyCost: calculation.calculationSummary?.familyCost,
+  balance: calculation.calculationSummary?.balance,
+  totalSum: calculation.totSum,
+  isFinal: calculation.isFinalized,
+  persons: calculation.calculationPersons
+    .filter(person => person.included)
+    .map(person => ({
+      name: person.name,
+      amount: person.amount,
+      deviationFromDate: dateOrUndefined(person.deviationFromDate),
+      deviationToDate: dateOrUndefined(person.deviationToDate),
+    })),
+  incomes: calculation.calculationIncomes.map(income => ({
+    type: income.incomeType,
+    amountApplicant: income.amountApplicant,
+    applicantSearchDate: dateOrUndefined(income.applicantSearchDate),
+    amountCoApplicant: income.amountCoApplicant,
+    coApplicantSearchDate: dateOrUndefined(income.coApplicantSearchDate),
+  })),
+  expenses: calculation.calculationExpenses.map(toPreviousExpense),
+  specialExpenses: calculation.calculationSpecialExpenses.map(toPreviousExpense),
+});
