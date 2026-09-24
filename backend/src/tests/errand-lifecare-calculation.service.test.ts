@@ -162,6 +162,17 @@ describe('ErrandLifecareCalculationService', () => {
     expect(update).not.toHaveBeenCalled();
   });
 
+  it('gives the beräkning as Lifecare prints it, and nothing before it is saved', async () => {
+    withCalculationId(31);
+    const print = vi.spyOn(LifecareCalculationsService.prototype, 'printCalculation').mockResolvedValue(Buffer.from('%PDF-1.7'));
+
+    expect((await new ErrandLifecareCalculationService().pdf('errand-1')).toString('latin1')).toBe('%PDF-1.7');
+    expect(print).toHaveBeenCalledWith(31);
+
+    withCalculationId(undefined);
+    await expect(new ErrandLifecareCalculationService().pdf('errand-1')).rejects.toMatchObject({ status: 404 });
+  });
+
   it('has no beräkning to show before one is saved', async () => {
     withCalculationId(undefined);
 

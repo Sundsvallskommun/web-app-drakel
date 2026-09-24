@@ -716,6 +716,11 @@ export interface LifecareCalculationApiResponse {
   message: string;
 }
 
+export interface LifecareCalculationPdfApiResponse {
+  data: string;
+  message: string;
+}
+
 export interface SaveLifecareCalculationDto {
   finalize?: boolean;
 }

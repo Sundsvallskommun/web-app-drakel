@@ -1,3 +1,5 @@
+import { LIFECARE_CALCULATION_PRINT_TEMPLATE_ID } from '@config';
+import { HttpException } from '@exceptions/HttpException';
 import {
   LifecareCalculationForEditRaw,
   LifecareCalculationListItemRaw,
@@ -8,6 +10,7 @@ import {
 } from '@interfaces/lifecare-calculation.interface';
 import { LifecareJobStimulusRaw } from '@interfaces/lifecare-job-stimulus.interface';
 import { withPlacedPersons } from '@utils/lifecare-calculation';
+import { isPdf } from '@utils/pdf-signature';
 
 import LifecareApiService from './lifecare-api.service';
 
@@ -18,6 +21,11 @@ const SERVICE_BUSINESS_TYPE = '8';
 
 // Lifecare's businessType for "businessId is a beräkning".
 const CALCULATION_BUSINESS_TYPE = '3';
+
+// The print container's owner for a beräkning, as Lifecare's web app asks for it. The owner code is the one
+// the web app sends for every beräkning (URL from verksamheten, 2026-09-24); what it stands for is not known.
+const CALCULATION_OWNER_TYPE = 'BERAK';
+const CALCULATION_OWNER_CODE = '999999999';
 
 /** Lifecare's normberäkning endpoints, with paths and query strings copied from captures of its web app. */
 class LifecareCalculationsService {
@@ -120,6 +128,29 @@ class LifecareCalculationsService {
     const withNorm = { ...withPlacedPersons(calculation, placed.calculationPersons), norm: placed.norm ?? calculation.norm };
     const marked = await this.withJobStimuli(withNorm, jobStimulus);
     return { ...withNorm, hasApplicantJobStimuli: marked.hasApplicantJobStimuli, hasCoApplicantJobStimuli: marked.hasCoApplicantJobStimuli };
+  }
+
+  /**
+   * The beräkning rendered as PDF by Lifecare's own print template — what the handläggare previews. Not under
+   * api2: it is the page Lifecare's web app opens to print a beräkning (`RenderPdf/PrintContainer`, owner BERAK).
+   */
+  public async printCalculation(calculationId: number): Promise<Buffer> {
+    const res = await this.apiService.get<ArrayBuffer>({
+      module: PROFESSIONAL_WEB,
+      path: 'RenderPdf/PrintContainer',
+      params: {
+        templateId: LIFECARE_CALCULATION_PRINT_TEMPLATE_ID,
+        ownerType: CALCULATION_OWNER_TYPE,
+        ownerCode: CALCULATION_OWNER_CODE,
+        objectId: String(calculationId),
+      },
+      responseType: 'arraybuffer',
+    });
+    const pdf = Buffer.from(res.data);
+    if (!isPdf(pdf)) {
+      throw new HttpException(502, 'Lifecare skickade ingen PDF för normberäkningen');
+    }
+    return pdf;
   }
 
   /** Creates a beräkning on the insats. Not idempotent: a second call makes a second beräkning. */

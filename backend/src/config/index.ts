@@ -90,6 +90,8 @@ export const LIFECARE_TEST_DECISION_MAKER = env.LIFECARE_TEST_DECISION_MAKER ?? 
 // The Lifecare print template a beslut is rendered as PDF with — for the preview and for what is sent to
 // the sökande. The same template serves every beslut.
 export const LIFECARE_DECISION_PRINT_TEMPLATE_ID = env.LIFECARE_DECISION_PRINT_TEMPLATE_ID ?? '885bfb68-c97b-47c0-921d-ef00caaa2423';
+// The Lifecare print template a normberäkning is rendered as PDF with — the same template serves every beräkning.
+export const LIFECARE_CALCULATION_PRINT_TEMPLATE_ID = env.LIFECARE_CALCULATION_PRINT_TEMPLATE_ID ?? '7936e9ec-e32a-40cf-9dea-d95b16e021f0';
 // Messaging sender config for the beslut notification (Mina sidor / digital brevlåda / brev). Optional —
 // the send fails gracefully if unset, so a missing value never blocks BFF startup.
 export const MESSAGING_ORGANIZATION_NUMBER = env.MESSAGING_ORGANIZATION_NUMBER ?? '';

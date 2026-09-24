@@ -49,6 +49,21 @@ class ErrandLifecareCalculationService {
     return toLifecareCalculationView(saved.calculation);
   }
 
+  /** The errand's beräkning as Lifecare prints it; 404 while none is saved there. Reading it is logged. */
+  async pdf(errandId: string): Promise<Buffer> {
+    const calculationId = await this.calculationIdOf(errandId);
+    if (calculationId === undefined) {
+      throw new HttpException(404, 'Normberäkningen är inte sparad i Lifecare än.');
+    }
+    const pdf = await this.calculations.printCalculation(calculationId);
+    await this.accessLog.logRead(errandId, {
+      target: 'CALCULATION',
+      description: 'Läste normberäkningen som PDF i Lifecare',
+      lifecareId: String(calculationId),
+    });
+    return pdf;
+  }
+
   /**
    * Saves the beräkning in Lifecare. The first time it is created from careM's draft — Lifecare places the
    * members on the norm, marks who has jobbstimulans and counts it — and the errand is pointed at it. Once it

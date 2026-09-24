@@ -6,6 +6,7 @@ import {
   LifecareDecisionReasonRaw,
   LifecareSavedDecisionRaw,
 } from '@interfaces/lifecare-decision.interface';
+import { isPdf } from '@utils/pdf-signature';
 
 import LifecareApiService from './lifecare-api.service';
 
@@ -18,7 +19,6 @@ const SERVICE_BUSINESS_TYPE = '8';
 const DECISION_BUSINESS_TYPE = '4';
 
 // Every PDF starts with these bytes; anything else from the print endpoint is an error page.
-const PDF_SIGNATURE = '%PDF';
 
 /**
  * Lifecare's beslut endpoints, with paths and query strings copied from captures of its own web app
@@ -69,7 +69,7 @@ class LifecareDecisionsService {
       responseType: 'arraybuffer',
     });
     const pdf = Buffer.from(res.data);
-    if (pdf.subarray(0, PDF_SIGNATURE.length).toString('latin1') !== PDF_SIGNATURE) {
+    if (!isPdf(pdf)) {
       throw new HttpException(502, 'Lifecare skickade ingen PDF för beslutet');
     }
     return pdf;

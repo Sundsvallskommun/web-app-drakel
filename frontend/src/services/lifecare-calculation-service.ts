@@ -1,4 +1,8 @@
-import { LifecareCalculationApiResponse, LifecareCalculationView } from '@data-contracts/backend/data-contracts';
+import {
+  LifecareCalculationApiResponse,
+  LifecareCalculationPdfApiResponse,
+  LifecareCalculationView,
+} from '@data-contracts/backend/data-contracts';
 import { ServiceResponse } from '@interfaces/services';
 import { apiService, toServiceError } from '@services/api-service';
 
@@ -21,4 +25,11 @@ export const saveLifecareCalculation = (
   apiService
     .post<LifecareCalculationApiResponse>(`errands/${errandId}/lifecare-calculation`, { finalize })
     .then((res) => (res.data.data ? { data: res.data.data } : { error: true }))
+    .catch(toServiceError);
+
+/** The errand's normberäkning as Lifecare prints it — a PDF in base64. */
+export const getLifecareCalculationPdf = (errandId: string): Promise<ServiceResponse<string>> =>
+  apiService
+    .get<LifecareCalculationPdfApiResponse>(`errands/${errandId}/lifecare-calculation/pdf`)
+    .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);

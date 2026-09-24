@@ -6,6 +6,7 @@ import { useDecisionProposal } from '@hooks/use-decision-proposal';
 import { useErrandNormberakning } from '@hooks/use-errand-normberakning';
 import { useLifecareCalculation } from '@hooks/use-lifecare-calculation';
 import { useNormberakningTypes } from '@hooks/use-normberakning-types';
+import { getLifecareCalculationPdf } from '@services/lifecare-calculation-service';
 import { TypeOption } from '@services/normberakning-service';
 import { renderPdf } from '@services/pdf-service';
 import { Warning } from '@services/warning-service';
@@ -186,15 +187,19 @@ export const ErrandNormberakning: FC<{
           // Wrap so the preview button is one flex item — its fragment (Button + Modal) would otherwise
           // become two children of the action group.
           <div>
+            {/* Once the beräkning is in Lifecare, the preview is Lifecare's own print of it; before that, the
+                draft rendered by Drakel. */}
             <PdfPreviewButton
               loadPdf={() =>
-                renderPdf(
-                  buildNormberakningHtml(draft, {
-                    costTypeLabels: typeLabelMap(types.costTypes),
-                    livingCostTypeLabels: typeLabelMap(types.livingCostTypes),
-                    handlaggare,
-                  })
-                )
+                inLifecare ?
+                  getLifecareCalculationPdf(errandId)
+                : renderPdf(
+                    buildNormberakningHtml(draft, {
+                      costTypeLabels: typeLabelMap(types.costTypes),
+                      livingCostTypeLabels: typeLabelMap(types.livingCostTypes),
+                      handlaggare,
+                    })
+                  )
               }
               modalLabel={t('preview.modalLabel')}
             />

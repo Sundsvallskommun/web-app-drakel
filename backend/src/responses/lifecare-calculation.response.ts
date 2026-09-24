@@ -75,3 +75,9 @@ export const toLifecareCalculationView = (calculation: LifecareCalculationRaw): 
       : undefined,
   };
 };
+
+export class LifecareCalculationPdfApiResponse implements ApiResponse<string> {
+  /** The beräkning as Lifecare prints it, a PDF in base64. */
+  @IsString() data!: string;
+  @IsString() message!: string;
+}
