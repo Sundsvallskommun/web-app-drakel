@@ -31,13 +31,12 @@ const POLL_INTERVAL = 250;
 /**
  * Signs drakel in to Lifecare by driving a real browser.
  *
- * The identity provider serves a login page that builds itself with JavaScript: the HTML that
- * arrives is a shell of stylesheets and script, and the username and password fields are put there
- * by `encoder.js` and `numpad.js` once they run. An HTTP client sees a page with no password field
- * and no way forward — which is exactly where {@link ServiceAccountLifecareSession} stops. The
- * fields are not missing; they have not been built yet.
+ * A fallback, not the default: {@link ServiceAccountLifecareSession} signs in over plain HTTP by
+ * posting straight to the hidden `uid`/`otp` fields MobilityGuard's page script fills on submit.
+ * This stays for the day the identity provider changes into something only a browser can get
+ * through — turned on with LIFECARE_BROWSER_SIGN_IN.
  *
- * So this runs the page instead of reading it. Headless Chromium opens Lifecare's entry URL, lets
+ * It runs the page instead of reading it. Headless Chromium opens Lifecare's entry URL, lets
  * the login page assemble itself, fills it in, and waits for the SAML round trip to come back with
  * a session. The cookies are then lifted out of the browser and handed to the same cookie store
  * every other strategy fills, and the browser is closed. Everything above this — the transport, the

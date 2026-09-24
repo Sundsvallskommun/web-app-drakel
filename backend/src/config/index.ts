@@ -65,8 +65,8 @@ export const LIFECARE_USERNAME = env.LIFECARE_USERNAME ?? '';
 // field and the digits are clicked on the scrambled keypad — see BrowserLifecareSession.
 export const LIFECARE_PASSWORD = env.LIFECARE_PASSWORD ?? '';
 // Signs in by driving a headless browser instead of replaying the flow over HTTP — see
-// BrowserLifecareSession. Needed where the identity provider's login page builds its fields with
-// JavaScript, which an HTTP client cannot run. Costs a browser in the image and seconds per sign-in.
+// BrowserLifecareSession. The HTTP flow handles MobilityGuard's web login on its own, so this is a
+// fallback for an identity provider that changes under us. Costs a browser and seconds per sign-in.
 export const LIFECARE_BROWSER_SIGN_IN = env.LIFECARE_BROWSER_SIGN_IN === 'true';
 // Runs the sign-in browser visibly instead of headless, for watching the flow while developing.
 // Slowed down a little so the clicks are followable. Leave off in every real environment.

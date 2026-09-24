@@ -19,6 +19,17 @@ export interface LifecareForm {
 
 const FORM_PATTERN = /<form\b[^>]*>([\s\S]*?)<\/form>/gi;
 const INPUT_PATTERN = /<input\b[^>]*>/gi;
+const TEXTAREA_PATTERN = /<textarea\b([^>]*)>([\s\S]*?)<\/textarea>/gi;
+
+/**
+ * Where MobilityGuard's web login actually posts the credentials.
+ *
+ * Its visible username and password boxes sit outside the form, next to a scrambled on-screen
+ * keypad; on submit, `numpad.js` copies both values verbatim into these two hidden fields. The
+ * keypad's order never reaches the server, so filling the hidden fields is exactly what the page
+ * itself sends.
+ */
+const MOBILITYGUARD_CREDENTIAL_FIELDS = { username: 'uid', password: 'otp' } as const;
 
 /**
  * Reads one attribute off a tag, quoted with `"`, quoted with `'`, or not quoted at all.
@@ -77,15 +88,38 @@ const readForm = (wholeForm: string, body: string, pageUrl: string): LifecareFor
   for (const input of inputs) {
     fields[input.name] = input.value;
   }
+  // The identity provider hands the SAMLResponse back in textareas, not inputs.
+  for (const textarea of readTextareas(body)) {
+    fields[textarea.name] = textarea.value;
+  }
+
+  // An action of "" means the form posts back to the page it came from.
+  const resolvedAction = new URL(action === undefined || action === '' ? pageUrl : action, pageUrl).toString();
+
+  if (isMobilityGuardLogin(fields)) {
+    return {
+      action: resolvedAction,
+      fields,
+      passwordField: MOBILITYGUARD_CREDENTIAL_FIELDS.password,
+      usernameField: MOBILITYGUARD_CREDENTIAL_FIELDS.username,
+    };
+  }
 
   const passwordField = inputs.find(input => input.type === 'password')?.name;
   const candidates = inputs.filter(input => input.type !== 'password' && input.type !== 'hidden');
 
   return {
-    // An action of "" means the form posts back to the page it came from.
-    action: new URL(action === undefined || action === '' ? pageUrl : action, pageUrl).toString(),
+    action: resolvedAction,
     fields,
     passwordField,
     usernameField: passwordField === undefined ? undefined : findUsernameField(candidates),
   };
 };
+
+const isMobilityGuardLogin = (fields: Record<string, string>): boolean =>
+  MOBILITYGUARD_CREDENTIAL_FIELDS.username in fields && MOBILITYGUARD_CREDENTIAL_FIELDS.password in fields;
+
+const readTextareas = (body: string): { name: string; value: string }[] =>
+  [...body.matchAll(TEXTAREA_PATTERN)]
+    .map(match => ({ name: attribute(match[1] ?? '', 'name') ?? '', value: (match[2] ?? '').trim() }))
+    .filter(textarea => textarea.name !== '');

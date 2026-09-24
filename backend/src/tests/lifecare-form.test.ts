@@ -56,6 +56,44 @@ describe('extractForm', () => {
     expect(form?.fields.RelayState).toBe('state-42');
   });
 
+  it('reads an assertion delivered in textareas', () => {
+    // How MobilityGuard actually hands the SAMLResponse back. Reading inputs only posts an empty
+    // form to Lifecare, which answers with a 500.
+    const page = `
+      <form name="form-redirect" action="https://lifecare.test/HCW.Welfare.Common.IdentityPortalWeb/redirectAuth.aspx" method="post">
+        <div>
+          <textarea rows="10" cols="80" name="SAMLResponse" style="display:none">PHNhbWxwOl==</textarea>
+          <textarea rows="10" cols="80" name="RelayState" style="display:none">actor%3dActor_Professional</textarea>
+          <button type="submit">Vidare</button>
+        </div>
+      </form>`;
+
+    const form = extractForm(page, pageUrl);
+
+    expect(form?.passwordField).toBeUndefined();
+    expect(form?.fields).toEqual({ SAMLResponse: 'PHNhbWxwOl==', RelayState: 'actor%3dActor_Professional' });
+  });
+
+  it('puts the credentials in the hidden fields MobilityGuard posts them in', () => {
+    // The visible boxes and the scrambled keypad sit outside the form; the page's script copies
+    // their values into uid and otp on submit.
+    const page = `
+      <input type="text" name="userid" id="user-id" />
+      <input type="password" name="password" id="password" />
+      <form action="/mg-local/auth_webtoken" class="login-form" method="post" id="form">
+        <input type="hidden" name="uid" id="hidden-userid" >
+        <input type="hidden" name="otp" id="hidden-password" >
+        <input type="checkbox" style="display:none;" id="remember-me" value="true" name="PersistentLogin">
+        <input type="submit" class="button button--submit" value="Logga in" id="form-submit">
+      </form>`;
+
+    const form = extractForm(page, 'https://m02-mg-local.login.test/mg-local/login?type=webtoken');
+
+    expect(form?.action).toBe('https://m02-mg-local.login.test/mg-local/auth_webtoken');
+    expect(form?.usernameField).toBe('uid');
+    expect(form?.passwordField).toBe('otp');
+  });
+
   it('resolves a relative action against the page it came from', () => {
     const form = extractForm('<form action="continue"><input type="hidden" name="a" value="1" /></form>', pageUrl);
 
