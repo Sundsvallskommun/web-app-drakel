@@ -9,6 +9,7 @@ import { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ContentBox } from './content-box.component';
+import { JobStimulusAddForm } from './job-stimulus-add-form.component';
 import { LabeledValue } from './labeled-value.component';
 import { LifecareSourceBadge } from './lifecare-source-badge.component';
 
@@ -37,28 +38,32 @@ const PartyPeriods: FC<{ role: JobStimulusRole; periods: JobStimulusPeriod[] }> 
 };
 
 /**
- * The jobbstimulans periods imported from Lifecare, grouped per sökande and medsökande (read-only), in a
- * grey box marked "Från Lifecare".
+ * The jobbstimulans periods on the errand's insats, read straight from Lifecare and grouped per sökande
+ * and medsökande, in a grey box marked "Från Lifecare". A new period for the sökande is added straight to
+ * Lifecare from the form below the list.
  */
 export const ErrandJobStimulus: FC<{ errandId: string }> = ({ errandId }) => {
   const { t } = useTranslation('application');
-  const { periods, isLoading, error } = useErrandJobStimulus(errandId);
+  const { periods, isLoading, error, refresh } = useErrandJobStimulus(errandId);
 
   return (
     <ContentBox title={t('jobStimulus.title')} action={<LifecareSourceBadge source="LIFECARE" />}>
-      <AsyncContent
-        isLoading={isLoading}
-        error={error}
-        errorText={t('jobStimulus.errorText')}
-        isEmpty={periods.length === 0}
-        emptyText={t('jobStimulus.emptyText')}
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-32 gap-y-24">
-          {ROLES.map((role) => (
-            <PartyPeriods key={role} role={role} periods={periods.filter((period) => period.role === role)} />
-          ))}
-        </div>
-      </AsyncContent>
+      <div className="flex flex-col gap-24">
+        <AsyncContent
+          isLoading={isLoading}
+          error={error}
+          errorText={t('jobStimulus.errorText')}
+          isEmpty={periods.length === 0}
+          emptyText={t('jobStimulus.emptyText')}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-32 gap-y-24">
+            {ROLES.map((role) => (
+              <PartyPeriods key={role} role={role} periods={periods.filter((period) => period.role === role)} />
+            ))}
+          </div>
+        </AsyncContent>
+        <JobStimulusAddForm errandId={errandId} onAdded={refresh} />
+      </div>
     </ContentBox>
   );
 };

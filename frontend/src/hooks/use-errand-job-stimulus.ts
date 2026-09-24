@@ -9,13 +9,17 @@ interface UseErrandJobStimulusResult {
   periods: JobStimulusPeriod[];
   isLoading: boolean;
   error?: ServiceError;
+  refresh: () => void;
 }
 
 const NO_PERIODS: JobStimulusPeriod[] = [];
 
-/** Loads the jobbstimulans periods (applicant and co-applicant) imported from Lifecare for an errand. */
+/** Loads the jobbstimulans periods (sökande and medsökande) on the errand's insats, read from Lifecare. */
 export const useErrandJobStimulus = (errandId: string): UseErrandJobStimulusResult => {
   const fetchPeriods = useCallback(() => getJobStimulusPeriods(errandId), [errandId]);
-  const { data, isLoading, error } = useServiceQuery(fetchPeriods, { initialData: NO_PERIODS, enabled: !!errandId });
-  return { periods: data, isLoading, error };
+  const { data, isLoading, error, refresh } = useServiceQuery(fetchPeriods, {
+    initialData: NO_PERIODS,
+    enabled: !!errandId,
+  });
+  return { periods: data, isLoading, error, refresh };
 };

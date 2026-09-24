@@ -118,7 +118,12 @@
   "jobStimulus": {
     "title": "Jobbstimulansperioder",
     "errorText": "Det gick inte att hämta jobbstimulansperioder",
-    "emptyText": "Inga jobbstimulansperioder."
+    "emptyText": "Inga jobbstimulansperioder.",
+    "fromDate": "Från *",
+    "toDate": "Till",
+    "add": "Lägg till period",
+    "toDateHelp": "Lämnas Till tomt sätter Lifecare slutdatum enligt tvåårsregeln. Perioden läggs till för sökande direkt i Lifecare.",
+    "addError": "Det gick inte att lägga till perioden i Lifecare"
   },
   "labels": {
     "applicationType": {

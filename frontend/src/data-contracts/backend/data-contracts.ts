@@ -612,6 +612,7 @@ export interface FormSnapshotApiResponse {
 }
 
 export interface JobStimulusPeriod {
+  id?: number;
   role?: string;
   fromDate?: string;
   toDate?: string;
@@ -620,6 +621,13 @@ export interface JobStimulusPeriod {
 export interface JobStimulusPeriodsApiResponse {
   data: JobStimulusPeriod[];
   message: string;
+}
+
+export interface AddJobStimulusPeriodDto {
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  fromDate: string;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  toDate?: string;
 }
 
 export interface CreateJournalEntryDto {

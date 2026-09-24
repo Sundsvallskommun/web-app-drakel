@@ -118,7 +118,12 @@
   "jobStimulus": {
     "title": "Job stimulus periods",
     "errorText": "Could not fetch job stimulus periods",
-    "emptyText": "No job stimulus periods."
+    "emptyText": "No job stimulus periods.",
+    "fromDate": "From *",
+    "toDate": "To",
+    "add": "Add period",
+    "toDateHelp": "Leave To empty and Lifecare sets the end by its two-year rule. The period is added for the applicant straight in Lifecare.",
+    "addError": "The period could not be added in Lifecare"
   },
   "labels": {
     "applicationType": {
