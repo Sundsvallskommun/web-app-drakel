@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { computeNormResult, isSurplus } from './norm-result';
+import { computeNormResult, fromLifecareSummary, isSurplus } from './norm-result';
 
 describe('computeNormResult', () => {
   it('counts the way Lifecare’s Summering does', () => {
@@ -21,5 +21,31 @@ describe('computeNormResult', () => {
 
   it('has no result without a norm', () => {
     expect(computeNormResult({ incomeSum: 100 })).toBeUndefined();
+  });
+});
+
+describe('fromLifecareSummary', () => {
+  it('takes Lifecare’s own count of a saved beräkning, with its breakdown', () => {
+    const result = fromLifecareSummary({
+      income: 9500,
+      jobStimulus: 5000,
+      jobStimulusDeduction: 1250,
+      norm: 3393,
+      familyCost: 3393,
+      commonHouseholdCost: 0,
+      expenses: 5153,
+      sum: 954,
+      specialExpenses: 0,
+      result: 954,
+    });
+
+    expect(result).toMatchObject({ income: 9500, norm: 3393, sum: 954, result: 954 });
+    expect(result.details).toEqual({
+      jobStimulus: 5000,
+      jobStimulusDeduction: 1250,
+      familyCost: 3393,
+      commonHouseholdCost: 0,
+    });
+    expect(isSurplus(result)).toBe(true);
   });
 });

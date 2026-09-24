@@ -120,6 +120,18 @@
     "sum": "Sum",
     "specialExpenses": "Other living costs",
     "surplus": "Norm surplus",
-    "deficit": "Norm deficit"
+    "deficit": "Norm deficit",
+    "jobStimulus": "Job stimulus gross",
+    "jobStimulusDeduction": "Job stimulus deduction",
+    "familyCost": "Family",
+    "commonHouseholdCost": "Shared household costs"
+  },
+  "lifecare": {
+    "save": "Save calculation",
+    "saveError": "The calculation could not be saved in Lifecare",
+    "notSaved": "The calculation was not saved in Lifecare",
+    "notYetSaved": "The calculation is not saved in Lifecare yet.",
+    "savedAt": "Saved in Lifecare {{date}} (calculation {{id}}).",
+    "finalized": "The calculation is saved as final in Lifecare and cannot be changed."
   }
 }

@@ -3,6 +3,7 @@
 import { PdfPreviewButton } from '@components/common/pdf-preview-button.component';
 import { useDecisionProposal } from '@hooks/use-decision-proposal';
 import { useErrandNormberakning } from '@hooks/use-errand-normberakning';
+import { useLifecareCalculation } from '@hooks/use-lifecare-calculation';
 import { useNormberakningTypes } from '@hooks/use-normberakning-types';
 import { TypeOption } from '@services/normberakning-service';
 import { renderPdf } from '@services/pdf-service';
@@ -10,12 +11,13 @@ import { Warning } from '@services/warning-service';
 import { DatePicker, FormControl, FormLabel, Input, Spinner, Tabs } from '@sk-web-gui/react';
 import { formatApplicationMonth } from '@utils/application-month';
 import { buildNormberakningHtml } from '@utils/build-normberakning-html';
-import { computeNormResult } from '@utils/norm-result';
+import { computeNormResult, fromLifecareSummary } from '@utils/norm-result';
 import { FC, ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ContentBox } from './content-box.component';
 import { ErrandSectionHeader } from './errand-section-header.component';
+import { LifecareCalculationSave } from './lifecare-calculation-save.component';
 import { LockedBanner, LockFieldset } from './lockable-section.component';
 import { NormResultSummary } from './norm-result.component';
 import { NormberakningExpenses } from './normberakning-expenses.component';
@@ -98,9 +100,9 @@ const typeLabelMap = (options: TypeOption[]): Record<string, string> => {
 
 /**
  * The "Normberäkning" tab, laid out like Lifecare's Beräkning view (header + sub-tabs FAMILJ /
- * INKOMSTER / UTGIFTER / LEVNADSKOSTNADER I ÖVRIGT / GEMENSAMMA KOSTNADER). The draft mirrors Lifecare
- * FC: incomes and expenses are editable; the final result (Underskott/Överskott) is computed in Lifecare
- * and not exposed by the API yet.
+ * INKOMSTER / UTGIFTER / LEVNADSKOSTNADER I ÖVRIGT / GEMENSAMMA KOSTNADER). careM's draft is the
+ * handläggare's working copy; "Spara normberäkning" at the foot sends it to Lifecare, whose summering is
+ * then the result shown at the top.
  */
 export const ErrandNormberakning: FC<{
   errandId: string;
@@ -114,9 +116,12 @@ export const ErrandNormberakning: FC<{
   handlaggare?: string;
 }> = ({ errandId, warnings, onWarningsChanged, locked = false, headerSlot, handlaggare }) => {
   const { t, i18n } = useTranslation('calculation');
-  // careM's förslag carries the sums the result is made of, norm included.
+  // Once saved in Lifecare, Lifecare's own summering is the result; until then careM's förslag carries the
+  // sums the result is counted from.
   const { proposal } = useDecisionProposal(errandId);
-  const normResult = computeNormResult(proposal);
+  const lifecare = useLifecareCalculation(errandId);
+  const normResult =
+    lifecare.calculation?.summary ? fromLifecareSummary(lifecare.calculation.summary) : computeNormResult(proposal);
   const { draft, isLoading, error, refresh } = useErrandNormberakning(errandId);
   const types = useNormberakningTypes();
   const [activeTab, setActiveTab] = useState<number>(0);
@@ -332,6 +337,13 @@ export const ErrandNormberakning: FC<{
             <PreviousNormberakningCheckbox />
           </div>
         </div>
+
+        <LifecareCalculationSave
+          errandId={errandId}
+          saved={lifecare.calculation}
+          disabled={locked}
+          onSaved={lifecare.refresh}
+        />
       </div>
     </PreviousNormberakningProvider>
   );

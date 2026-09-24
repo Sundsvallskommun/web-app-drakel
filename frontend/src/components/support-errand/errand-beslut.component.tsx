@@ -5,6 +5,7 @@ import { LifecareDecisionReasonView } from '@data-contracts/backend/data-contrac
 import { useBeslutRecommendation } from '@hooks/use-beslut-recommendation';
 import { useDecisionProposal } from '@hooks/use-decision-proposal';
 import { useErrandNormberakning } from '@hooks/use-errand-normberakning';
+import { useLifecareCalculation } from '@hooks/use-lifecare-calculation';
 import { useLifecareDecision } from '@hooks/use-lifecare-decision';
 import { useLifecareDecisionReasons } from '@hooks/use-lifecare-decision-reasons';
 import { useLifecareDecisionTypes } from '@hooks/use-lifecare-decision-types';
@@ -16,7 +17,7 @@ import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { resolveBeslutAmount, resolveBeslutPeriod } from '@utils/beslut';
 import { formatAmount } from '@utils/format-amount';
 import { groupDecisionReasons } from '@utils/group-decision-reasons';
-import { computeNormResult } from '@utils/norm-result';
+import { computeNormResult, fromLifecareSummary } from '@utils/norm-result';
 import dayjs from 'dayjs';
 import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -99,6 +100,10 @@ export const ErrandBeslut: FC<{
   const { types, isLoading: typesLoading, errorMessage: typesError } = useLifecareDecisionTypes(errandId);
   const { decision: savedBeslut, isLoading: savedLoading, refresh } = useLifecareDecision(errandId);
   const { proposal } = useDecisionProposal(errandId);
+  const { calculation } = useLifecareCalculation(errandId);
+  // The normberäkning saved in Lifecare is the result, and its underskott what a bifall grants.
+  const normResult = calculation?.summary ? fromLifecareSummary(calculation.summary) : computeNormResult(proposal);
+  const calculatedDeficit = calculation?.summary ? Math.max(0, -calculation.summary.result) : undefined;
   // A beslut whose meddelande Lifecare has locked can no longer be changed from here.
   const formLocked = locked || savedBeslut?.locked === true;
 
@@ -179,11 +184,10 @@ export const ErrandBeslut: FC<{
 
   const amount = resolveBeslutAmount(
     selectedType?.outcome,
-    savedBeslut?.amount ?? proposal.estimatedAmount ?? recommendation?.amount
+    savedBeslut?.amount ?? calculatedDeficit ?? proposal.estimatedAmount ?? recommendation?.amount
   );
 
   // The förslag names an outcome (bifall, avslag, delvis bifall); shown in the handläggare's words.
-  const normResult = computeNormResult(proposal);
   const recommendationLabel =
     proposedOutcome ?
       t(`details.outcome.${proposedOutcome}`, { defaultValue: proposedOutcome })

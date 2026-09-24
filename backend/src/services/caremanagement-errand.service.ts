@@ -66,6 +66,14 @@ class CaremanagementErrandService {
     });
   }
 
+  /** Points the errand at its normberäkning in Lifecare — only the reference; the beräkning lives in Lifecare. */
+  async setLifecareCalculationId(errandId: string, lifecareCalculationId: number): Promise<void> {
+    await this.apiService.patch<unknown>({
+      url: caremanagementUrl('errands', 'financial-assistance', errandId, 'data'),
+      data: { lifecareCalculationId },
+    });
+  }
+
   async createErrand(errand: CreateErrandDto): Promise<ApiResponse<Errand>> {
     // caremanagement returns "201 Created" with a Location header and an empty body, so we resolve
     // the created errand by the id in that Location and return the full errand to the caller.

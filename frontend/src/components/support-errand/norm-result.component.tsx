@@ -32,8 +32,13 @@ export const NormResultLine: FC<{ result: NormResult }> = ({ result }) => {
   );
 };
 
-const SummaryRow: FC<{ label: string; amount: number; bold?: boolean }> = ({ label, amount, bold = false }) => (
-  <div className={cx('flex justify-between gap-24', bold && 'font-bold')}>
+const SummaryRow: FC<{ label: string; amount: number; bold?: boolean; indented?: boolean }> = ({
+  label,
+  amount,
+  bold = false,
+  indented = false,
+}) => (
+  <div className={cx('flex justify-between gap-24', bold && 'font-bold', indented && 'pl-16 text-dark-secondary')}>
     <span>{label}</span>
     <span className="tabular-nums">{formatAmount(amount)}</span>
   </div>
@@ -55,7 +60,27 @@ export const NormResultSummary: FC<{ result: NormResult }> = ({ result }) => {
         </p>
         <div className="flex flex-col gap-8">
           <SummaryRow label={t('result.income')} amount={result.income} />
+          {result.details ?
+            <>
+              <SummaryRow label={t('result.jobStimulus')} amount={result.details.jobStimulus} indented />
+              <SummaryRow
+                label={t('result.jobStimulusDeduction')}
+                amount={result.details.jobStimulusDeduction}
+                indented
+              />
+            </>
+          : null}
           <SummaryRow label={t('result.norm')} amount={-result.norm} />
+          {result.details ?
+            <>
+              <SummaryRow label={t('result.familyCost')} amount={result.details.familyCost} indented />
+              <SummaryRow
+                label={t('result.commonHouseholdCost')}
+                amount={result.details.commonHouseholdCost}
+                indented
+              />
+            </>
+          : null}
           <SummaryRow label={t('result.expenses')} amount={-result.expenses} />
           <SummaryRow label={t('result.sum')} amount={result.sum} bold />
           <SummaryRow label={t('result.specialExpenses')} amount={-result.specialExpenses} />

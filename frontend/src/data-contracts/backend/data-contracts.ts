@@ -684,6 +684,35 @@ export interface JournalEntryTypesApiResponse {
   message: string;
 }
 
+export interface LifecareCalculationSummaryView {
+  income: number;
+  jobStimulus: number;
+  jobStimulusDeduction: number;
+  norm: number;
+  familyCost: number;
+  commonHouseholdCost: number;
+  expenses: number;
+  sum: number;
+  specialExpenses: number;
+  result: number;
+}
+
+export interface LifecareCalculationView {
+  id: number;
+  normName?: string;
+  date: string;
+  startDate: string;
+  endDate: string;
+  finalized: boolean;
+  updated: string;
+  summary?: LifecareCalculationSummaryView;
+}
+
+export interface LifecareCalculationApiResponse {
+  data?: LifecareCalculationView;
+  message: string;
+}
+
 export interface SaveLifecareDecisionDto {
   decisionCode: number;
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */

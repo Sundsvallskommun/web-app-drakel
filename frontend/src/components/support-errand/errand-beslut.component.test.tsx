@@ -2,6 +2,7 @@ import { LifecareDecisionView } from '@data-contracts/backend/data-contracts';
 import { useBeslutRecommendation } from '@hooks/use-beslut-recommendation';
 import { useDecisionProposal } from '@hooks/use-decision-proposal';
 import { useErrandNormberakning } from '@hooks/use-errand-normberakning';
+import { useLifecareCalculation } from '@hooks/use-lifecare-calculation';
 import { useLifecareDecision } from '@hooks/use-lifecare-decision';
 import { useLifecareDecisionReasons } from '@hooks/use-lifecare-decision-reasons';
 import { useLifecareDecisionTypes } from '@hooks/use-lifecare-decision-types';
@@ -17,6 +18,7 @@ vi.mock('@hooks/use-beslut-recommendation', () => ({ useBeslutRecommendation: vi
 vi.mock('@hooks/use-lifecare-decision-types', () => ({ useLifecareDecisionTypes: vi.fn() }));
 vi.mock('@hooks/use-lifecare-decision-reasons', () => ({ useLifecareDecisionReasons: vi.fn() }));
 vi.mock('@hooks/use-lifecare-decision', () => ({ useLifecareDecision: vi.fn() }));
+vi.mock('@hooks/use-lifecare-calculation', () => ({ useLifecareCalculation: vi.fn() }));
 vi.mock('@hooks/use-decision-proposal', () => ({ useDecisionProposal: vi.fn() }));
 vi.mock('@services/lifecare-decision-service', () => ({
   saveLifecareDecision: vi.fn(),
@@ -92,6 +94,7 @@ describe('ErrandBeslut', () => {
       },
       isLoading: false,
     });
+    vi.mocked(useLifecareCalculation).mockReturnValue({ calculation: null, isLoading: false, refresh: vi.fn() });
     vi.mocked(saveLifecareDecision).mockReset();
     vi.mocked(getDocumentTemplateContent).mockResolvedValue({ data: '<p>Fullföljdshänvisning</p>' });
   });
@@ -194,6 +197,38 @@ describe('ErrandBeslut', () => {
     });
 
     expect(screen.getByText('Delvis bifall kan inte registreras i Lifecare från Drakel ännu.')).toBeInTheDocument();
+  });
+
+  it('grants the underskott of the normberäkning saved in Lifecare, and shows it in red', () => {
+    vi.mocked(useLifecareCalculation).mockReturnValue({
+      calculation: {
+        id: 31,
+        date: '2026-09-24',
+        startDate: '2026-09-01',
+        endDate: '2026-09-30',
+        finalized: false,
+        updated: '2026-09-24',
+        summary: {
+          income: 0,
+          jobStimulus: 0,
+          jobStimulusDeduction: 0,
+          norm: 5220,
+          familyCost: 3940,
+          commonHouseholdCost: 1280,
+          expenses: 454,
+          sum: -5674,
+          specialExpenses: 0,
+          result: -5674,
+        },
+      },
+      isLoading: false,
+      refresh: vi.fn(),
+    });
+    withSaved(null);
+    renderTab();
+
+    expect(screen.getByText('Normunderskott')).toBeInTheDocument();
+    expect(screen.getByText('5674,00')).toBeInTheDocument();
   });
 
   it('offers nothing to save once Lifecare has locked the beslut', () => {

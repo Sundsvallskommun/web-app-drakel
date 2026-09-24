@@ -120,6 +120,18 @@
     "sum": "Summa",
     "specialExpenses": "Levnadskostnader i övrigt",
     "surplus": "Normöverskott",
-    "deficit": "Normunderskott"
+    "deficit": "Normunderskott",
+    "jobStimulus": "Jobbstimulans brutto",
+    "jobStimulusDeduction": "Jobbstimulansavdrag",
+    "familyCost": "Familj",
+    "commonHouseholdCost": "Gemensamma kostnader"
+  },
+  "lifecare": {
+    "save": "Spara normberäkning",
+    "saveError": "Det gick inte att spara normberäkningen i Lifecare",
+    "notSaved": "Normberäkningen sparades inte i Lifecare",
+    "notYetSaved": "Normberäkningen är inte sparad i Lifecare än.",
+    "savedAt": "Sparad i Lifecare {{date}} (beräkning {{id}}).",
+    "finalized": "Normberäkningen är sparad som slutlig i Lifecare och kan inte ändras."
   }
 }
