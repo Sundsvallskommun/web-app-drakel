@@ -9,6 +9,7 @@ import {
   addExpense,
   addIncome,
   changeExpense,
+  changeHouseholdSize,
   changeIncome,
   changePerson,
   removeExpense,
@@ -74,9 +75,15 @@ class ErrandNormberakningService {
     };
   }
 
+  /**
+   * Changes the header: in careM's draft anything it holds; in Lifecare only the household size (Gemensamma
+   * kostnader) — the norm and period are Lifecare's.
+   */
   async updateHeader(errandId: string, input: NormHeaderInputDto): Promise<void> {
-    await this.inCaremanagementOnly(errandId, 'Normen och perioden');
-    await this.draftService.updateHeader(errandId, input);
+    await this.changeRow(errandId, {
+      caremanagement: () => this.draftService.updateHeader(errandId, input),
+      lifecare: calculation => changeHouseholdSize(calculation, input),
+    });
   }
 
   async addRow(errandId: string, section: NormSection, input: NormRowInputDto): Promise<void> {

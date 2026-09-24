@@ -336,8 +336,14 @@ export const ErrandNormberakning: FC<{
                     footer={<PreviousNormberakningGemensamma />}
                   >
                     <NormberakningGemensamma
+                      key={`${String(draft.hasCustomHouseholdSize)}-${String(draft.householdSize)}`}
+                      errandId={errandId}
                       hasCustomHouseholdSize={draft.hasCustomHouseholdSize}
                       householdSize={draft.householdSize}
+                      familyMembers={draft.familyMembers}
+                      amountForHouseholdSize={draft.amountForHouseholdSize}
+                      commonHouseholdCost={draft.commonHouseholdCost}
+                      onChanged={refreshAll}
                     />
                   </NormberakningTabPanel>
                 </Tabs.Content>

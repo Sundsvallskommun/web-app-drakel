@@ -5,7 +5,7 @@ import LifecareCalculationsService from '@services/lifecare-calculations.service
 import LifecareJobStimulusService from '@services/lifecare-job-stimulus.service';
 import LifecareServiceIdService from '@services/lifecare-service-id.service';
 import { buildCalculationUpdate, householdSizeOfSaved, withJobStimulusIncomes } from '@utils/lifecare-calculation';
-import { needsRecount, toLifecareDraftView, withEnteredIncomes } from '@utils/lifecare-calculation-rows';
+import { householdSizeChanged, needsRecount, sharedCostShare, toLifecareDraftView, withEnteredIncomes } from '@utils/lifecare-calculation-rows';
 
 import { LifecareAccessActionEnum } from '@/data-contracts/caremanagement/data-contracts';
 import { NormberakningDraft, NormberakningTypes, NormTypeOption } from '@/responses/normberakning.response';
@@ -62,7 +62,8 @@ class LifecareCalculationEditService {
     await this.accessLog.logRead(errandId, { target: 'CALCULATION', description: 'Läste beräkningsunderlag i Lifecare' });
 
     const changed = change(withEnteredIncomes(forEdit.calculation, forEdit.incomeTypes), forEdit);
-    const placed = await this.withCountedAmounts(forEdit.calculation, await this.calculations.placeAndMark(changed, jobStimulus));
+    const counted = await this.withCountedAmounts(forEdit.calculation, await this.calculations.placeAndMark(changed, jobStimulus));
+    const placed = await this.withSharedCost(forEdit.calculation, counted);
     const calculation = withJobStimulusIncomes(placed, forEdit.incomeTypes);
     const updated = await this.calculations.update(calculationId, buildCalculationUpdate(calculation, householdSizeOfSaved(calculation), finalize));
     await this.accessLog.logWrite(errandId, LifecareAccessActionEnum.UPDATE, {
@@ -86,6 +87,19 @@ class LifecareCalculationEditService {
       ),
     );
     return { ...calculation, calculationPersons };
+  }
+
+  /**
+   * Has Lifecare count the gemensamma kostnader again when the household size or the members counted changed
+   * (`Calculation/GetSharedCost`), and takes the members' share of them.
+   */
+  private async withSharedCost(before: LifecareCalculationRaw, calculation: LifecareCalculationRaw): Promise<LifecareCalculationRaw> {
+    const shared = householdSizeChanged(before, calculation) ? sharedCostShare(calculation) : undefined;
+    if (!shared) {
+      return calculation;
+    }
+    const amountForHouseholdSize = await this.calculations.sharedCost(calculation.startDate, calculation.endDate, shared.normShared);
+    return { ...calculation, amountForHouseholdSize, commonHouseholdCost: shared.share(amountForHouseholdSize) };
   }
 }
 

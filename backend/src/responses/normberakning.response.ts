@@ -109,6 +109,12 @@ export class NormberakningDraft {
   @IsIn(['CAREM', 'LIFECARE']) @IsOptional() source?: 'CAREM' | 'LIFECARE';
   /** Whether Lifecare holds the beräkning as slutlig — no further change is possible. */
   @IsBoolean() @IsOptional() finalized?: boolean;
+  /** The gemensamma kostnader of a household of the household size, before the members' share is taken — Lifecare's. */
+  @IsNumber() @IsOptional() amountForHouseholdSize?: number;
+  /** The members' share of the gemensamma kostnader (Summa) — Lifecare's. */
+  @IsNumber() @IsOptional() commonHouseholdCost?: number;
+  /** How many members the beräkning includes. */
+  @IsInt() @IsOptional() familyMembers?: number;
   /** The norm's rows a member can be placed on — only for a beräkning in Lifecare. */
   @IsArray() @ValidateNested({ each: true }) @Type(() => NormRowOption) @IsOptional() normRows?: NormRowOption[];
 }

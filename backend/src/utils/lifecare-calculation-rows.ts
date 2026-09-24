@@ -6,9 +6,10 @@ import {
   LifecareCalculationPersonRaw,
   LifecareCalculationRaw,
   LifecareCalculationTypeRaw,
+  LifecareNormSharedRaw,
 } from '@interfaces/lifecare-calculation.interface';
 
-import { NormRowInputDto } from '@/dtos/normberakning.dto';
+import { NormHeaderInputDto, NormRowInputDto } from '@/dtos/normberakning.dto';
 import { NormberakningDraft, NormExpenseRow, NormIncomeRow, NormPersonRow, NormRowOption } from '@/responses/normberakning.response';
 
 /**
@@ -164,6 +165,9 @@ export const toLifecareDraftView = (forEdit: LifecareCalculationForEditRaw, appl
     expenses: toExpenseRows(calculation.calculationExpenses, 'EXPENSE'),
     specialExpenses: toExpenseRows(calculation.calculationSpecialExpenses, 'SPECIAL_EXPENSE'),
     normRows: toNormRowOptions(calculation),
+    amountForHouseholdSize: calculation.amountForHouseholdSize,
+    commonHouseholdCost: calculation.commonHouseholdCost,
+    familyMembers: calculation.calculationPersons.filter(person => person.included).length,
     incomeSum: calculation.sumInk,
     expenseSum: calculation.sumUtg,
     specialExpenseSum: calculation.sumSpec,
@@ -377,4 +381,60 @@ export const removePerson = (calculation: LifecareCalculationRaw, rowId: string)
     throw new HttpException(422, 'Sökanden kan inte tas bort ur normberäkningen.');
   }
   return { ...calculation, calculationPersons: calculation.calculationPersons.filter((_person, position) => position !== index) };
+};
+
+/**
+ * Sets the beräkning's own household size (Annan hushållsstorlek), or takes it off so the members count. An
+ * own size is saved for the household's coming beräkningar too — the web app's "Vill du spara och använda
+ * annan hushållsstorlek för hushållet kommande beräkningar?" answered Ja.
+ */
+export const changeHouseholdSize = (calculation: LifecareCalculationRaw, input: NormHeaderInputDto): LifecareCalculationRaw => {
+  if (
+    input.normId !== undefined ||
+    input.normType !== undefined ||
+    input.calculationFromDate !== undefined ||
+    input.calculationToDate !== undefined
+  ) {
+    throw new HttpException(422, 'Normen och perioden ändras i Lifecare. Från Drakel går bara hushållsstorleken att ändra.');
+  }
+  const custom = input.hasCustomHouseholdSize ?? calculation.hasCustomHouseholdSize;
+  if (custom && (input.householdSize === undefined || input.householdSize < 1)) {
+    throw new HttpException(422, 'Ange hushållsstorleken.');
+  }
+  return {
+    ...calculation,
+    hasCustomHouseholdSize: custom,
+    householdSize: custom ? input.householdSize : calculation.calculationPersons.filter(person => person.included).length,
+    saveHouseholdSize: custom,
+  };
+};
+
+/** The household size the gemensamma kostnader are counted on: the own size when there is one, else the members. */
+const sharedSizeOf = (calculation: LifecareCalculationRaw): { size: number; members: number } => {
+  const members = calculation.calculationPersons.filter(person => person.included).length;
+  const own = typeof calculation.householdSize === 'number' ? calculation.householdSize : 0;
+  return { size: calculation.hasCustomHouseholdSize && own > 0 ? own : members, members };
+};
+
+/** Whether the household size or the members counted changed — the gemensamma kostnader then change too. */
+export const householdSizeChanged = (before: LifecareCalculationRaw, after: LifecareCalculationRaw): boolean => {
+  const previous = sharedSizeOf(before);
+  const next = sharedSizeOf(after);
+  return previous.size !== next.size || previous.members !== next.members;
+};
+
+/**
+ * The gemensamma kostnader for the household, from what Lifecare counts for a household of its size: the
+ * members' share of it — the amount × members ÷ household size (captures 2026-09-24: 2 030 × 3/4 = 1 523,
+ * 13 980 × 1/5 = 2 796). Undefined when the norm has no row for that size.
+ */
+export const sharedCostShare = (
+  calculation: LifecareCalculationRaw,
+): { normShared: LifecareNormSharedRaw; share: (amount: number) => number } | undefined => {
+  const { size, members } = sharedSizeOf(calculation);
+  const normShared = calculation.norm?.shared?.find(row => row.noOfMembers === size);
+  if (!normShared || size === 0) {
+    return undefined;
+  }
+  return { normShared, share: amount => Math.round((amount * members) / size) };
 };

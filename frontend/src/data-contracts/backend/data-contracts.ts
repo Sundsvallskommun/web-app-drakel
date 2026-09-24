@@ -1249,6 +1249,9 @@ export interface NormberakningDraft {
   updated?: string;
   source?: NormberakningDraftSourceEnum;
   finalized?: boolean;
+  amountForHouseholdSize?: number;
+  commonHouseholdCost?: number;
+  familyMembers?: number;
   normRows?: NormRowOption[];
 }
 

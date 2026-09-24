@@ -112,6 +112,12 @@ export interface NormberakningDraft {
   finalized?: boolean;
   /** The norm's rows a member can be put on — only for a beräkning in Lifecare. */
   normRows?: NormRowOption[];
+  /** Lifecare's gemensamma kostnader for a household of the household size — a beräkning in Lifecare only. */
+  amountForHouseholdSize?: number;
+  /** The members' share of the gemensamma kostnader (Summa) — a beräkning in Lifecare only. */
+  commonHouseholdCost?: number;
+  /** How many members the beräkning includes — a beräkning in Lifecare only. */
+  familyMembers?: number;
 }
 
 /** Fields sent when adding/editing a row (the union of the three sections' inputs). */
@@ -143,8 +149,8 @@ export interface NormRowInput {
 }
 
 /**
- * Fields sent when editing the draft header (norm, calculation dates, household size).
- * @public — header editing is not wired into the UI yet (the header is read-only for now).
+ * Fields sent when editing the header. Gemensamma kostnader sends the household size; once the beräkning is
+ * in Lifecare that is all that can be changed.
  */
 export interface NormHeaderInput {
   normId?: number;
@@ -241,10 +247,7 @@ export const restoreNormRow = (
     .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);
 
-/**
- * Updates the draft header (norm, calculation dates, household size).
- * @public — not wired into the UI yet (the header is read-only for now).
- */
+/** Updates the header — the household size from Gemensamma kostnader; in Lifecare once the beräkning is there. */
 export const updateNormHeader = (
   errandId: string,
   input: NormHeaderInput

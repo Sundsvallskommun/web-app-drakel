@@ -29,6 +29,14 @@ interface LifecareNormRowRaw {
   [field: string]: unknown;
 }
 
+/** The norm's gemensamma kostnader for a household of `noOfMembers` persons. */
+export interface LifecareNormSharedRaw {
+  normId: number;
+  noOfMembers: number;
+  monthlyAmount?: number;
+  [field: string]: unknown;
+}
+
 /** An income row: the sökandes and the medsökandes amount of one income type. */
 export interface LifecareCalculationIncomeRaw {
   incomeCode: number;
@@ -85,7 +93,7 @@ export interface LifecareCalculationRaw {
   calculationExpenses: LifecareCalculationExpenseRaw[];
   calculationSpecialExpenses: LifecareCalculationExpenseRaw[];
   /** The norm with its rows — what a member can be placed on. */
-  norm?: { rows?: LifecareNormRowRaw[] | null; [field: string]: unknown } | null;
+  norm?: { rows?: LifecareNormRowRaw[] | null; shared?: LifecareNormSharedRaw[] | null; [field: string]: unknown } | null;
   hasCustomHouseholdSize: boolean;
   isFinalized: boolean;
   updateTimestamp: string;
@@ -96,6 +104,10 @@ export interface LifecareCalculationRaw {
   sumNorm?: number;
   totSum?: number;
   commonHouseholdCost?: number;
+  /** The gemensamma kostnader of a household of the beräkning's household size, before its share is taken. */
+  amountForHouseholdSize?: number;
+  /** "Vill du spara och använda annan hushållsstorlek för hushållet kommande beräkningar?" — true is Ja. */
+  saveHouseholdSize?: boolean;
   [field: string]: unknown;
 }
 

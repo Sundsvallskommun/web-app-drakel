@@ -3,6 +3,7 @@ import {
   LifecareCalculationListItemRaw,
   LifecareCalculationProposalRaw,
   LifecareCalculationRaw,
+  LifecareNormSharedRaw,
   LifecarePlacedPersonsRaw,
 } from '@interfaces/lifecare-calculation.interface';
 import { LifecareJobStimulusRaw } from '@interfaces/lifecare-job-stimulus.interface';
@@ -84,6 +85,15 @@ class LifecareCalculationsService {
       { person, startDate, endDate },
     );
     return res.data.amount;
+  }
+
+  /** The gemensamma kostnader of a household of the norm row's size over the period, as Lifecare counts them. */
+  public async sharedCost(startDate: string, endDate: string, normShared: LifecareNormSharedRaw): Promise<number> {
+    const res = await this.apiService.post<number>(
+      { module: PROFESSIONAL_WEB, path: 'api2/Calculation/GetSharedCost' },
+      { startDate, endDate, normShared },
+    );
+    return res.data;
   }
 
   /** Marks which members have jobbstimulans during the beräkning's period, as the web app asks before saving. */

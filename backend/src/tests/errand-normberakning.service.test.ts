@@ -162,6 +162,44 @@ describe('ErrandNormberakningService', () => {
     expect(amountFor).not.toHaveBeenCalled();
   });
 
+  it('sets an own household size in Lifecare, saved for coming beräkningar, and counts the gemensamma kostnader', async () => {
+    withCalculationId(30);
+    // Norm 1's gemensamma kostnader by household size (capture 2026-09-24).
+    const norm = {
+      shared: [
+        { normId: 1, noOfMembers: 1, monthlyAmount: 1280 },
+        { normId: 1, noOfMembers: 4, monthlyAmount: 2030 },
+      ],
+    };
+    vi.spyOn(LifecareCalculationsService.prototype, 'readForEdit').mockResolvedValue(forEdit({ ...saved, norm }));
+    const sharedCost = vi.spyOn(LifecareCalculationsService.prototype, 'sharedCost').mockResolvedValue(2030);
+    const update = vi.spyOn(LifecareCalculationsService.prototype, 'update').mockResolvedValue(saved);
+
+    await new ErrandNormberakningService().updateHeader('errand-1', { hasCustomHouseholdSize: true, householdSize: 4 });
+
+    expect(sharedCost).toHaveBeenCalledWith('2026-09-01', '2026-09-30', { normId: 1, noOfMembers: 4, monthlyAmount: 2030 });
+    expect(update.mock.calls[0]?.[1]).toMatchObject({
+      hasCustomHouseholdSize: true,
+      householdSize: 4,
+      saveHouseholdSize: true,
+      amountForHouseholdSize: 2030,
+      // One member's share of a household of four: 2 030 × 1/4.
+      commonHouseholdCost: 508,
+      HasCustomHouseholdSize: true,
+      HouseholdSize: 4,
+      NumberOfFamilyMembers: 1,
+    });
+  });
+
+  it('refuses to change the norm or the period of a beräkning in Lifecare', async () => {
+    withCalculationId(30);
+    vi.spyOn(LifecareCalculationsService.prototype, 'readForEdit').mockResolvedValue(forEdit());
+    const update = vi.spyOn(LifecareCalculationsService.prototype, 'update');
+
+    await expect(new ErrandNormberakningService().updateHeader('errand-1', { normId: 2 })).rejects.toMatchObject({ status: 422 });
+    expect(update).not.toHaveBeenCalled();
+  });
+
   it('refuses any change to a beräkning Lifecare holds as slutlig', async () => {
     withCalculationId(30);
     vi.spyOn(LifecareCalculationsService.prototype, 'readForEdit').mockResolvedValue(forEdit({ ...saved, isFinalized: true }));

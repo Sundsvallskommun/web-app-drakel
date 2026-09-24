@@ -78,9 +78,9 @@
     "title": "Gemensamma kostnader",
     "customHouseholdSize": "Annan hushållsstorlek",
     "householdSize": "Hushållsstorlek",
-    "onePersonHouseholdAmount": "Belopp för 1 persons hushåll",
     "sum": "Summa",
-    "info": "Beloppen för gemensamma kostnader beräknas i Lifecare och exponeras inte av API:t ännu."
+    "info": "Beloppen räknas i Lifecare när normberäkningen har sparats där.",
+    "householdAmount": "Belopp för {{size}} persons hushåll"
   },
   "warnings": {
     "acknowledge": "Kvittera",

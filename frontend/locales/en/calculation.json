@@ -78,9 +78,9 @@
     "title": "Shared costs",
     "customHouseholdSize": "Different household size",
     "householdSize": "Household size",
-    "onePersonHouseholdAmount": "Amount for a 1-person household",
     "sum": "Total",
-    "info": "The amounts for shared costs are calculated in Lifecare and are not exposed by the API yet."
+    "info": "The amounts are counted in Lifecare once the calculation is saved there.",
+    "householdAmount": "Amount for a household of {{size}}"
   },
   "warnings": {
     "acknowledge": "Acknowledge",
