@@ -4,7 +4,17 @@ import {
   LifecareCalculationIncomeRaw,
   LifecareCalculationRaw,
 } from '@interfaces/lifecare-calculation.interface';
-import { addExpense, addIncome, changeExpense, changeIncome, removeExpense, toLifecareDraftView } from '@utils/lifecare-calculation-rows';
+import {
+  addExpense,
+  addIncome,
+  addPerson,
+  changeExpense,
+  changeIncome,
+  changePerson,
+  removeExpense,
+  removePerson,
+  toLifecareDraftView,
+} from '@utils/lifecare-calculation-rows';
 import { describe, expect, it } from 'vitest';
 
 const income = (overrides: Partial<LifecareCalculationIncomeRaw> = {}): LifecareCalculationIncomeRaw => ({
@@ -188,5 +198,35 @@ describe('changing rows', () => {
     expect(changeExpense(saved, 'E-3-2', { caseworkerAmount: 150 }).calculationExpenses.map(row => row.approvedAmount)).toEqual([5000, 150]);
     expect(removeExpense(saved, 'E-3').calculationExpenses.map(row => row.approvedAmount)).toEqual([0, 200]);
     expect(() => changeExpense(saved, 'S-3', { caseworkerAmount: 1 })).toThrow(expect.objectContaining({ status: 404 }));
+  });
+});
+
+describe('changing members', () => {
+  const child = {
+    personId: '20141201T010',
+    personKey: 2,
+    name: 'Testbarn Test, Testar',
+    normRow: null,
+    amount: 0,
+    included: true,
+    deviationFromDate: '',
+    deviationToDate: '',
+    personIdFormatted: '141201-T010',
+  };
+  const withChild = calculation({ calculationPersons: [...calculation().calculationPersons, child] });
+
+  it('sets whether a member is in the beräkning and the dates they are', () => {
+    const changed = changePerson(withChild, '2', { included: true, deviationFromDate: '2026-09-10T00:00:00+02:00', deviationToDate: '2026-09-20' });
+
+    expect(changed.calculationPersons[1]).toMatchObject({ included: true, deviationFromDate: '2026-09-10', deviationToDate: '2026-09-20' });
+  });
+
+  it('takes a member out of the beräkning, but never the sökande', () => {
+    expect(removePerson(withChild, '2').calculationPersons.map(person => person.personKey)).toEqual([1]);
+    expect(() => removePerson(withChild, '1')).toThrow(expect.objectContaining({ status: 422 }));
+  });
+
+  it('refuses to take in a person the beräkning already has', () => {
+    expect(() => addPerson(withChild, { ...child, personKey: 0 }, true)).toThrow(expect.objectContaining({ status: 422 }));
   });
 });

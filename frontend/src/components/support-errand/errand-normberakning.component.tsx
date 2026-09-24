@@ -1,6 +1,7 @@
 'use client';
 
 import { PdfPreviewButton } from '@components/common/pdf-preview-button.component';
+import { NormberakningDraftSourceEnum } from '@data-contracts/backend/data-contracts';
 import { useDecisionProposal } from '@hooks/use-decision-proposal';
 import { useErrandNormberakning } from '@hooks/use-errand-normberakning';
 import { useLifecareCalculation } from '@hooks/use-lifecare-calculation';
@@ -18,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { ContentBox } from './content-box.component';
 import { ErrandSectionHeader } from './errand-section-header.component';
 import { LifecareCalculationSave } from './lifecare-calculation-save.component';
+import { LifecareHouseholdBox } from './lifecare-household-box.component';
 import { LockedBanner, LockFieldset } from './lockable-section.component';
 import { NormResultSummary } from './norm-result.component';
 import { NormberakningExpenses } from './normberakning-expenses.component';
@@ -127,6 +129,7 @@ export const ErrandNormberakning: FC<{
   const types = useNormberakningTypes(errandId, draft?.source);
   // A beräkning Lifecare holds as slutlig cannot be changed, whatever the approval says.
   const closed = locked || draft?.finalized === true;
+  const inLifecare = draft?.source === NormberakningDraftSourceEnum.LIFECARE;
 
   // A row change moves the result too, and once the beräkning is in Lifecare that is Lifecare's summering.
   const refreshAll = (): void => {
@@ -255,7 +258,15 @@ export const ErrandNormberakning: FC<{
                     onWarningsChanged={onWarningsChanged}
                     footer={<PreviousNormberakningFamilj />}
                   >
-                    <NormberakningFamilj persons={draft.persons ?? []} />
+                    <NormberakningFamilj
+                      persons={draft.persons ?? []}
+                      errandId={errandId}
+                      editable={inLifecare && !closed}
+                      onChanged={refreshAll}
+                    />
+                    {inLifecare ?
+                      <LifecareHouseholdBox errandId={errandId} disabled={closed} onChanged={refreshAll} />
+                    : <p className="m-0 text-dark-secondary">{t('household.saveFirst')}</p>}
                   </NormberakningTabPanel>
                 </Tabs.Content>
               </Tabs.Item>

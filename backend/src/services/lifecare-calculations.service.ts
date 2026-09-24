@@ -1,5 +1,6 @@
 import {
   LifecareCalculationForEditRaw,
+  LifecareCalculationPersonRaw,
   LifecareCalculationProposalRaw,
   LifecareCalculationRaw,
   LifecarePlacedPersonsRaw,
@@ -80,6 +81,18 @@ class LifecareCalculationsService {
     const withNorm = withPlacedPersons(calculation, placed.calculationPersons);
     const marked = await this.withJobStimuli(withNorm, jobStimulus);
     return { ...withNorm, hasApplicantJobStimuli: marked.hasApplicantJobStimuli, hasCoApplicantJobStimuli: marked.hasCoApplicantJobStimuli };
+  }
+
+  /**
+   * A person as a new member of the beräkning — the row Lifecare's web app adds when a person is taken in
+   * (capture 2026-09-24). `body` names the beräkning's period, norm and date and the person.
+   */
+  public async proposalForPerson(body: Record<string, unknown>): Promise<LifecareCalculationPersonRaw> {
+    const res = await this.apiService.post<LifecareCalculationPersonRaw>(
+      { module: PROFESSIONAL_WEB, path: 'api2/Calculation/GetProposalForPerson' },
+      body,
+    );
+    return res.data;
   }
 
   /** Creates a beräkning on the insats. Not idempotent: a second call makes a second beräkning. */

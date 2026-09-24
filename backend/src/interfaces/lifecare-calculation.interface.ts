@@ -114,6 +114,8 @@ export interface LifecareCalculationProposalRaw extends LifecareCalculationCatal
 /** `Calculation/GetCalculationForEdit`: a saved beräkning in the shape `Calculation/Update` takes back. */
 export interface LifecareCalculationForEditRaw extends LifecareCalculationCataloguesRaw {
   calculation: LifecareCalculationRaw;
+  /** The earliest date a beräkning on the insats may concern — what `GetProposalForPerson` is asked with. */
+  calculationNotBeforeDate?: string;
 }
 
 /** `Calculation/PlacePersons`: the norm with its rows, and each member placed on a row with its amount. */

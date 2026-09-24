@@ -834,6 +834,44 @@ export interface CreateLifecareDocumentDto {
   protected?: boolean;
 }
 
+export interface FindHouseholdCandidatesDto {
+  /** @minLength 2 */
+  filter: string;
+}
+
+export interface HouseholdPersonDto {
+  personId: string;
+}
+
+export interface HouseholdPersonView {
+  personId: string;
+  personalNumber: string;
+  name: string;
+  relation?: string;
+  bonusChild: boolean;
+  inCalculation: boolean;
+}
+
+export interface LifecareHouseholdView {
+  persons: HouseholdPersonView[];
+}
+
+export interface LifecareHouseholdApiResponse {
+  data: LifecareHouseholdView;
+  message: string;
+}
+
+export interface HouseholdCandidateView {
+  personId: string;
+  personalNumber: string;
+  name: string;
+}
+
+export interface HouseholdCandidatesApiResponse {
+  data: HouseholdCandidateView[];
+  message: string;
+}
+
 export interface LifecarePaymentMethodView {
   code: number;
   name: string;

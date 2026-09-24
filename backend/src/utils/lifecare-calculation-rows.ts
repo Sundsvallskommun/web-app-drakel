@@ -57,8 +57,12 @@ const expenseRowIds = (rows: LifecareCalculationExpenseRaw[], bucket: ExpenseBuc
   });
 };
 
+/** A member's id on the beräkning: Lifecare's personKey, or its place for one not saved yet. */
+const personRowId = (person: LifecareCalculationPersonRaw, index: number): string =>
+  typeof person.personKey === 'number' && person.personKey > 0 ? String(person.personKey) : `new-${String(index + 1)}`;
+
 const toPersonRow = (person: LifecareCalculationPersonRaw, index: number): NormPersonRow => ({
-  id: typeof person.personKey === 'number' ? String(person.personKey) : String(index + 1),
+  id: personRowId(person, index),
   position: index,
   origin: CASEWORKER_ORIGIN,
   personalNumber: person.personIdFormatted,
@@ -280,3 +284,52 @@ export const changeExpense = (calculation: LifecareCalculationRaw, rowId: string
 /** Removes the expense row `rowId`: its amounts go to 0 and Lifecare drops it on save. */
 export const removeExpense = (calculation: LifecareCalculationRaw, rowId: string): LifecareCalculationRaw =>
   changeExpense(calculation, rowId, { appliedAmount: 0, caseworkerAmount: 0 });
+
+const personIndexOf = (calculation: LifecareCalculationRaw, rowId: string): number => {
+  const index = calculation.calculationPersons.findIndex((person, position) => personRowId(person, position) === rowId);
+  if (index < 0) {
+    throw notFound();
+  }
+  return index;
+};
+
+/** Sets whether the member `rowId` is in the beräkning, and the dates it is in the household (Ingår från/till). */
+export const changePerson = (calculation: LifecareCalculationRaw, rowId: string, input: NormRowInputDto): LifecareCalculationRaw => {
+  const index = personIndexOf(calculation, rowId);
+  return {
+    ...calculation,
+    calculationPersons: calculation.calculationPersons.map((person, position) =>
+      position === index
+        ? {
+            ...person,
+            included: input.included ?? person.included,
+            deviationFromDate: toLifecareDay(input.deviationFromDate),
+            deviationToDate: toLifecareDay(input.deviationToDate),
+          }
+        : person,
+    ),
+  };
+};
+
+/** Takes the member `rowId` out of the beräkning. The sökande — the first member — stays. */
+export const removePerson = (calculation: LifecareCalculationRaw, rowId: string): LifecareCalculationRaw => {
+  const index = personIndexOf(calculation, rowId);
+  if (index === 0) {
+    throw new HttpException(422, 'Sökanden kan inte tas bort ur normberäkningen.');
+  }
+  return { ...calculation, calculationPersons: calculation.calculationPersons.filter((_person, position) => position !== index) };
+};
+
+/**
+ * Takes a person into the beräkning — the row `GetProposalForPerson` gave, included, and marked as a bonusbarn
+ * the way the web app marks one (capture 2026-09-24).
+ */
+export const addPerson = (calculation: LifecareCalculationRaw, person: LifecareCalculationPersonRaw, bonusChild: boolean): LifecareCalculationRaw => {
+  if (calculation.calculationPersons.some(present => present.personId === person.personId)) {
+    throw new HttpException(422, `${person.name} finns redan i normberäkningen.`);
+  }
+  return {
+    ...calculation,
+    calculationPersons: [...calculation.calculationPersons, { ...person, included: true, isBonusChild: bonusChild ? true : '', deviationDays: '' }],
+  };
+};

@@ -5,7 +5,16 @@ import CaremanagementNormberakningService, { NormSection } from '@services/carem
 import LifecareCalculationEditService, { CalculationChange } from '@services/lifecare-calculation-edit.service';
 import { applicationMonthOf } from '@utils/application-month';
 import { toDropdownOption } from '@utils/dropdown-option';
-import { addExpense, addIncome, changeExpense, changeIncome, removeExpense, removeIncome } from '@utils/lifecare-calculation-rows';
+import {
+  addExpense,
+  addIncome,
+  changeExpense,
+  changeIncome,
+  changePerson,
+  removeExpense,
+  removeIncome,
+  removePerson,
+} from '@utils/lifecare-calculation-rows';
 
 import { TypeOptionGroupEnum } from '@/data-contracts/caremanagement/data-contracts';
 import { NormHeaderInputDto, NormRowInputDto } from '@/dtos/normberakning.dto';
@@ -21,6 +30,9 @@ interface CalculationSource {
   lifecareCalculationId?: number;
   applicationMonth?: string;
 }
+
+/** The change a section's row makes to a saved beräkning. */
+const bySection = (section: NormSection, changes: Record<NormSection, CalculationChange>): CalculationChange => changes[section];
 
 const notInLifecare = (what: string): HttpException =>
   new HttpException(422, `${what} går inte att ändra från Drakel när normberäkningen är sparad i Lifecare. Gör det i Lifecare.`);
@@ -68,27 +80,38 @@ class ErrandNormberakningService {
   }
 
   async addRow(errandId: string, section: NormSection, input: NormRowInputDto): Promise<void> {
-    await this.changeRow(errandId, section, {
+    await this.changeRow(errandId, {
       caremanagement: () => this.draftService.addRow(errandId, section, input),
-      lifecare:
-        section === 'incomes'
-          ? (calculation, forEdit) => addIncome(calculation, forEdit.incomeTypes, input)
-          : (calculation, forEdit) => addExpense(calculation, forEdit, input),
+      lifecare: bySection(section, {
+        // A person comes into a saved beräkning through the hushåll — see ErrandLifecareHouseholdService.
+        persons: () => {
+          throw new HttpException(422, 'Lägg till personer genom hushållet under Familj.');
+        },
+        incomes: (calculation, forEdit) => addIncome(calculation, forEdit.incomeTypes, input),
+        expenses: (calculation, forEdit) => addExpense(calculation, forEdit, input),
+      }),
     });
   }
 
   async updateRow(errandId: string, section: NormSection, rowId: string, input: NormRowInputDto): Promise<void> {
-    await this.changeRow(errandId, section, {
+    await this.changeRow(errandId, {
       caremanagement: () => this.draftService.updateRow(errandId, section, rowId, input),
-      lifecare:
-        section === 'incomes' ? calculation => changeIncome(calculation, rowId, input) : calculation => changeExpense(calculation, rowId, input),
+      lifecare: bySection(section, {
+        persons: calculation => changePerson(calculation, rowId, input),
+        incomes: calculation => changeIncome(calculation, rowId, input),
+        expenses: calculation => changeExpense(calculation, rowId, input),
+      }),
     });
   }
 
   async deleteRow(errandId: string, section: NormSection, rowId: string): Promise<void> {
-    await this.changeRow(errandId, section, {
+    await this.changeRow(errandId, {
       caremanagement: () => this.draftService.deleteRow(errandId, section, rowId),
-      lifecare: section === 'incomes' ? calculation => removeIncome(calculation, rowId) : calculation => removeExpense(calculation, rowId),
+      lifecare: bySection(section, {
+        persons: calculation => removePerson(calculation, rowId),
+        incomes: calculation => removeIncome(calculation, rowId),
+        expenses: calculation => removeExpense(calculation, rowId),
+      }),
     });
   }
 
@@ -97,18 +120,11 @@ class ErrandNormberakningService {
     await this.draftService.restoreRow(errandId, section, rowId);
   }
 
-  private async changeRow(
-    errandId: string,
-    section: NormSection,
-    change: { caremanagement: () => Promise<unknown>; lifecare: CalculationChange },
-  ): Promise<void> {
+  private async changeRow(errandId: string, change: { caremanagement: () => Promise<unknown>; lifecare: CalculationChange }): Promise<void> {
     const source = await this.sourceOf(errandId);
     if (source.lifecareCalculationId === undefined) {
       await change.caremanagement();
       return;
-    }
-    if (section === 'persons') {
-      throw notInLifecare('Hushållet');
     }
     await this.lifecare.change(errandId, source.lifecareCalculationId, change.lifecare);
   }
