@@ -518,25 +518,12 @@ export interface DecisionRegistration {
   detail?: string;
 }
 
-export interface PaymentRegistration {
-  paymentId: string;
-  outcome: PaymentRegistrationOutcomeEnum;
-  lifecareId?: string;
-  detail?: string;
-}
-
-export interface PaymentRegistrationApiResponse {
-  data: PaymentRegistration;
-  message: string;
-}
-
 export interface FinalizeResult {
   decisionId?: string;
   paymentIds: string[];
   payeeWarnings: string[];
   processMessageCorrelated: boolean;
   lifecareDecision?: DecisionRegistration;
-  lifecarePayments: PaymentRegistration[];
   failedChannels: string[];
 }
 
@@ -711,6 +698,10 @@ export interface LifecareCalculationView {
 export interface LifecareCalculationApiResponse {
   data?: LifecareCalculationView;
   message: string;
+}
+
+export interface SaveLifecareCalculationDto {
+  finalize?: boolean;
 }
 
 export interface SaveLifecareDecisionDto {
@@ -937,6 +928,34 @@ export interface CreateLifecarePayeeDto {
   clearing?: string;
   /** @maxLength 64 */
   accountNumber?: string;
+}
+
+export interface PaymentInputDto {
+  paymentDate?: string;
+  amount?: number;
+  applicationMonth?: string;
+  paymentMethod?: string;
+  payeeName?: string;
+  payeeAddress?: string;
+  payeeCareOf?: string;
+  payeeZipCode?: string;
+  payeeCity?: string;
+  clearingNumber?: string;
+  accountNumber?: string;
+  accountingCode?: string;
+  localPaymentNumber?: string;
+  invoiceNumber?: string;
+  usesOcr?: boolean;
+  messageLines?: string[];
+}
+
+export interface LifecarePaymentCreated {
+  lifecareId: string;
+}
+
+export interface LifecarePaymentCreatedApiResponse {
+  data: LifecarePaymentCreated;
+  message: string;
 }
 
 export interface PaymentStatusView {
@@ -1250,70 +1269,6 @@ export interface ErrandNotificationApiResponse {
   message: string;
 }
 
-export interface PaymentInputDto {
-  paymentDate?: string;
-  amount?: number;
-  applicationMonth?: string;
-  reportedOnStakeholderIds?: string[];
-  accountingDate?: string;
-  excludedFromPayment?: boolean;
-  payeeId?: string;
-  payeeStakeholderId?: string;
-  paymentMethod?: string;
-  payeeName?: string;
-  payeeAddress?: string;
-  payeeCareOf?: string;
-  payeeZipCode?: string;
-  payeeCity?: string;
-  clearingNumber?: string;
-  accountNumber?: string;
-  accountingCode?: string;
-  localPaymentNumber?: string;
-  invoiceNumber?: string;
-  usesOcr?: boolean;
-  messageLines?: string[];
-}
-
-export interface PaymentView {
-  id?: string;
-  source?: string;
-  lifecareId?: string;
-  status?: string;
-  lifecareDetail?: string;
-  paymentDate?: string;
-  amount?: number;
-  applicationMonth?: string;
-  reportedOnStakeholderIds?: string[];
-  accountingDate?: string;
-  excludedFromPayment?: boolean;
-  payeeStakeholderId?: string;
-  paymentMethod?: string;
-  payeeName?: string;
-  payeeAddress?: string;
-  payeeCareOf?: string;
-  payeeZipCode?: string;
-  payeeCity?: string;
-  clearingNumber?: string;
-  accountNumber?: string;
-  accountingCode?: string;
-  localPaymentNumber?: string;
-  invoiceNumber?: string;
-  usesOcr?: boolean;
-  messageLines?: string[];
-  created?: string;
-  modified?: string;
-}
-
-export interface PaymentsApiResponse {
-  data: PaymentView[];
-  message: string;
-}
-
-export interface PaymentApiResponse {
-  data?: PaymentView;
-  message: string;
-}
-
 export interface RenderPdfDto {
   /** @minLength 1 */
   html: string;
@@ -1393,12 +1348,6 @@ export enum SaveTemplateDtoKindEnum {
 }
 
 export enum DecisionRegistrationOutcomeEnum {
-  REGISTERED = "REGISTERED",
-  FAILED = "FAILED",
-  NOT_SENT = "NOT_SENT",
-}
-
-export enum PaymentRegistrationOutcomeEnum {
   REGISTERED = "REGISTERED",
   FAILED = "FAILED",
   NOT_SENT = "NOT_SENT",

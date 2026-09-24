@@ -225,6 +225,31 @@ export const withPlacedPersons = (calculation: LifecareCalculationRaw, placed: L
   }),
 });
 
+/**
+ * Counts jobbstimulans on the sökandes incomes, the way the web app sends it (capture 2026-09-24): on an
+ * income type jobbstimulans applies to, the draft's amount is the gross (`grossAmountApplicant`) and the
+ * counted amount is what is left once the type's percent is taken off — "Lön efter skatt" 5 000 at 25 %
+ * goes as 5 000 gross and 3 750 counted. Only when Lifecare has marked the sökande as having jobbstimulans
+ * in the period; otherwise the whole amount counts.
+ */
+export const withJobStimulusIncomes = (calculation: LifecareCalculationRaw, types: LifecareCalculationTypeRaw[]): LifecareCalculationRaw => {
+  if (calculation.hasApplicantJobStimuli !== true) {
+    return calculation;
+  }
+  return {
+    ...calculation,
+    calculationIncomes: calculation.calculationIncomes.map(row => {
+      const type = types.find(candidate => candidate.id === row.incomeCode);
+      if (!type?.isJobStimulus || !type.jobStimulusPercent || row.amountApplicant === 0) {
+        return row;
+      }
+      const gross = row.amountApplicant;
+      const counted = Math.round(gross * (100 - type.jobStimulusPercent)) / 100;
+      return { ...row, amountApplicant: counted, grossAmountApplicant: gross };
+    }),
+  };
+};
+
 /** The household size as the draft says it — the handläggare's own, or the members included. */
 export const householdSizeOf = (calculation: LifecareCalculationRaw, draft: CalculationDraftInput): HouseholdSize => {
   const members = calculation.calculationPersons.filter(person => person.included).length;
@@ -278,17 +303,20 @@ export const buildCalculationCreate = (calculation: LifecareCalculationRaw, hous
 };
 
 /**
- * The `Calculation/Update` body (capture 2026-09-24): the saved beräkning as read for edit, with the draft's
- * changes, members as the web app sends them, and the household size both where Lifecare read it and in the
- * PascalCase fields the web app appends.
+ * The `Calculation/Update` body (captures 2026-09-24): the saved beräkning as read for edit, with the draft's
+ * changes, members as the web app sends them, incomes marked changeable and valid, and the household size
+ * both where Lifecare read it and in the PascalCase fields the web app appends. `finalize` saves it as
+ * slutlig — the same call with `isFinalized` set, after which Lifecare allows no change.
  */
-export const buildCalculationUpdate = (calculation: LifecareCalculationRaw, household: HouseholdSize): Record<string, unknown> =>
+export const buildCalculationUpdate = (calculation: LifecareCalculationRaw, household: HouseholdSize, finalize = false): Record<string, unknown> =>
   withHouseholdFields(
     {
       ...calculation,
       calculationPersons: calculation.calculationPersons.map(asSentPerson),
+      calculationIncomes: calculation.calculationIncomes.map(row => ({ ...row, changeable: true, isValid: true })),
       householdSize: household.size,
       numberOfFamilyMembers: household.members,
+      isFinalized: finalize || calculation.isFinalized,
     },
     household,
   );

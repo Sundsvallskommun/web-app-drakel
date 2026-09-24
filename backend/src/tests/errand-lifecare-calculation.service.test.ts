@@ -129,6 +129,30 @@ describe('ErrandLifecareCalculationService', () => {
     expect(update.mock.calls[0]?.[1]).toMatchObject({ calculationId: 31, HouseholdSize: 1 });
   });
 
+  it('saves as slutlig with isFinalized on the same beräkning', async () => {
+    withCalculationId(31);
+    vi.spyOn(LifecareCalculationsService.prototype, 'readForEdit').mockResolvedValue({ ...proposal, calculation: saved });
+    const update = vi.spyOn(LifecareCalculationsService.prototype, 'update').mockResolvedValue({ ...saved, isFinalized: true });
+
+    const view = await new ErrandLifecareCalculationService().save('errand-1', true);
+
+    expect(update.mock.calls[0]?.[1]).toMatchObject({ calculationId: 31, isFinalized: true });
+    expect(view.finalized).toBe(true);
+  });
+
+  it('creates the beräkning first when saving as slutlig before it exists', async () => {
+    withCalculationId(undefined);
+    vi.spyOn(LifecareCalculationsService.prototype, 'create').mockResolvedValue(saved);
+    vi.spyOn(CaremanagementErrandService.prototype, 'setLifecareCalculationId').mockResolvedValue();
+    vi.spyOn(LifecareCalculationsService.prototype, 'readForEdit').mockResolvedValue({ ...proposal, calculation: saved });
+    const update = vi.spyOn(LifecareCalculationsService.prototype, 'update').mockResolvedValue({ ...saved, isFinalized: true });
+
+    await new ErrandLifecareCalculationService().save('errand-1', true);
+
+    expect(update.mock.calls[0]?.[0]).toBe(31);
+    expect(update.mock.calls[0]?.[1]).toMatchObject({ isFinalized: true });
+  });
+
   it('refuses to change a beräkning saved as slutlig', async () => {
     withCalculationId(31);
     vi.spyOn(LifecareCalculationsService.prototype, 'readForEdit').mockResolvedValue({ ...proposal, calculation: { ...saved, isFinalized: true } });

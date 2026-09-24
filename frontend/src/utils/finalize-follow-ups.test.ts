@@ -1,16 +1,12 @@
-import {
-  DecisionRegistrationOutcomeEnum,
-  PaymentRegistrationOutcomeEnum,
-} from '@data-contracts/backend/data-contracts';
+import { DecisionRegistrationOutcomeEnum } from '@data-contracts/backend/data-contracts';
 import { describe, expect, it } from 'vitest';
 
 import { finalizeFollowUps } from './finalize-follow-ups';
 
 const clean = {
-  paymentIds: ['payment-1'],
+  paymentIds: [],
   payeeWarnings: [],
   processMessageCorrelated: true,
-  lifecarePayments: [],
   failedChannels: [],
 };
 
@@ -31,21 +27,12 @@ describe('finalizeFollowUps', () => {
           outcome: DecisionRegistrationOutcomeEnum.NOT_SENT,
           detail: 'Delvis bifall kan inte registreras i Lifecare från Drakel ännu.',
         },
-        lifecarePayments: [
-          {
-            paymentId: 'payment-1',
-            outcome: PaymentRegistrationOutcomeEnum.NOT_SENT,
-            detail: 'Saldot i Lifecare räcker inte.',
-          },
-          { paymentId: 'payment-2', outcome: PaymentRegistrationOutcomeEnum.REGISTERED, lifecareId: '4' },
-        ],
       })
     ).toEqual([
       { key: 'failedChannels', detail: 'Mina sidor, Brev' },
       { key: 'payeeWarnings', detail: 'Anna Andersson finns inte i Lifecare än' },
       { key: 'processNotResumed' },
       { key: 'decisionNotRegistered', detail: 'Delvis bifall kan inte registreras i Lifecare från Drakel ännu.' },
-      { key: 'paymentNotRegistered', detail: 'Saldot i Lifecare räcker inte.' },
     ]);
   });
 });

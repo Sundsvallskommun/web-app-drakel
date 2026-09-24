@@ -132,6 +132,9 @@
     "notSaved": "Normberäkningen sparades inte i Lifecare",
     "notYetSaved": "Normberäkningen är inte sparad i Lifecare än.",
     "savedAt": "Sparad i Lifecare {{date}} (beräkning {{id}}).",
-    "finalized": "Normberäkningen är sparad som slutlig i Lifecare och kan inte ändras."
+    "finalized": "Normberäkningen är sparad som slutlig i Lifecare och kan inte ändras.",
+    "saveFinal": "Spara som slutlig",
+    "saveFinalConfirm": "En slutlig normberäkning kan inte ändras i Lifecare efteråt.",
+    "saveFinalYes": "Ja, spara som slutlig"
   }
 }

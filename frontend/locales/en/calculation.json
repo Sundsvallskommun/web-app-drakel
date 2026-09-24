@@ -132,6 +132,9 @@
     "notSaved": "The calculation was not saved in Lifecare",
     "notYetSaved": "The calculation is not saved in Lifecare yet.",
     "savedAt": "Saved in Lifecare {{date}} (calculation {{id}}).",
-    "finalized": "The calculation is saved as final in Lifecare and cannot be changed."
+    "finalized": "The calculation is saved as final in Lifecare and cannot be changed.",
+    "saveFinal": "Save as final",
+    "saveFinalConfirm": "A final calculation cannot be changed in Lifecare afterwards.",
+    "saveFinalYes": "Yes, save as final"
   }
 }

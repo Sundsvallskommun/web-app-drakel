@@ -74,8 +74,6 @@
       "failedChannels": "Beslutet kunde inte skickas till: {{detail}}.",
       "payeeWarnings": "Betalningsmottagare: {{detail}}",
       "processNotResumed": "Processen fick inte besked om beslutet.",
-      "paymentNotRegistered": "En utbetalning väntar på registrering i Lifecare: {{detail}} Den kan registreras från fliken Utbetalning.",
-      "paymentReceiptLost": "{{detail}}",
       "decisionNotRegistered": "Beslutet registrerades inte i Lifecare: {{detail}} Registrera det direkt i Lifecare.",
       "decisionReceiptLost": "{{detail}}"
     }

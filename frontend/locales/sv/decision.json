@@ -84,13 +84,14 @@
       "usesOcr": "OCR",
       "messageLines": "Meddelanderader",
       "addMessageLine": "Lägg till meddelanderad",
-      "next": "Nästa",
       "unknownStakeholder": "Okänd intressent",
       "messageLine": "Meddelanderad {{number}}",
-      "saveError": "Det gick inte att registrera utbetalningen",
+      "saveError": "Det gick inte att registrera utbetalningen i Lifecare",
       "saving": "Sparar…",
       "accountingCode": "Kontering",
-      "optionsLoadError": "Lifecare lämnade inte ut betalningsmottagare och betalsätt för insatsen: {{reason}}"
+      "optionsLoadError": "Lifecare lämnade inte ut betalningsmottagare och betalsätt för insatsen: {{reason}}",
+      "save": "Spara utbetalning i Lifecare",
+      "saved": "Utbetalningen är registrerad i Lifecare (id {{id}})."
     },
     "list": {
       "title": "Registrerade utbetalningar",
@@ -100,18 +101,7 @@
       "payee": "Mottagare",
       "paymentMethod": "Betalsätt",
       "statusHeading": "Status",
-      "empty": "Inga utbetalningar registrerade",
-      "status": {
-        "DRAFT": "Utkast",
-        "QUEUED": "Köad till robot",
-        "EFFECTUATED": "Verkställd",
-        "FAILED": "Misslyckades",
-        "PENDING_REGISTRATION": "Väntar på registrering",
-        "REGISTERED": "Registrerad i Lifecare"
-      },
-      "register": "Registrera i Lifecare",
-      "registerError": "Det gick inte att registrera utbetalningen i Lifecare",
-      "waitingTitle": "Väntar på registrering i Lifecare"
+      "empty": "Inga utbetalningar registrerade"
     },
     "disposal": {
       "title": "Att disponera",

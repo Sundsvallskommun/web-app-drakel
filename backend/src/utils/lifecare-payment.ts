@@ -7,7 +7,7 @@ import {
 } from '@interfaces/lifecare-payment.interface';
 import { ADDRESS_PAYEE_ID } from '@utils/lifecare-payee';
 
-import { Payment } from '@/data-contracts/caremanagement/data-contracts';
+import { PaymentInputDto } from '@/dtos/payment.dto';
 
 /** How many message rows a Lifecare utbetalning has (`messageRow1`–`messageRow7`). */
 const MESSAGE_ROWS = 7;
@@ -29,7 +29,7 @@ const toConcernMonth = (applicationMonth: string | undefined): string => (applic
  * The payee the utbetalning pays to must already be in Lifecare: `Payment/Create` copies the account
  * across rather than pointing at a payee, so a payee Lifecare lacks would be invented on the spot.
  */
-const payeeIsInLifecare = (underlag: LifecarePaymentForCreateRaw, payment: Payment, paymentMethodCode: number): boolean => {
+const payeeIsInLifecare = (underlag: LifecarePaymentForCreateRaw, payment: PaymentInputDto, paymentMethodCode: number): boolean => {
   const accountNumber = digitsOnly(payment.accountNumber);
   if (accountNumber === '') {
     // No account: only Lifecare's own "Adress" entry pays without one.
@@ -78,7 +78,7 @@ const pickBalance = (balances: LifecareBalanceRaw[]): LifecareBalanceRaw | strin
 };
 
 /**
- * Builds the `Payment/Create` body from Lifecare's underlag and careM's utbetalning, the way Lifecare's
+ * Builds the `Payment/Create` body from Lifecare's underlag and the handläggare's utbetalning, the way Lifecare's
  * web app does it (capture 2026-09-21): the underlag's own object in the same field order, with the
  * handläggare's choices filled in, the chosen payee's details copied flat, `aktualiseringId` taken out
  * and `creditAccount`/`simpleAccount` added.
@@ -90,7 +90,7 @@ const pickBalance = (balances: LifecareBalanceRaw[]): LifecareBalanceRaw | strin
  * does not have. With several konteringsrader every one of them goes back, the amount on the chosen
  * ändamål and 0 on the others (capture 2026-09-23).
  */
-export const buildPaymentCreate = (underlag: LifecarePaymentForCreateRaw, payment: Payment): PaymentCreate => {
+export const buildPaymentCreate = (underlag: LifecarePaymentForCreateRaw, payment: PaymentInputDto): PaymentCreate => {
   const amount = payment.amount;
   if (amount === undefined || amount <= 0) {
     return refuse('Utbetalningen saknar belopp.');

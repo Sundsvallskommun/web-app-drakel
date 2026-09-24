@@ -84,13 +84,14 @@
       "usesOcr": "OCR",
       "messageLines": "Message lines",
       "addMessageLine": "Add message line",
-      "next": "Next",
       "unknownStakeholder": "Unknown stakeholder",
       "messageLine": "Message line {{number}}",
-      "saveError": "Could not register the payment",
+      "saveError": "The payment could not be registered in Lifecare",
       "saving": "Saving…",
       "accountingCode": "Accounting code",
-      "optionsLoadError": "Lifecare did not provide payees and payment methods for the service: {{reason}}"
+      "optionsLoadError": "Lifecare did not provide payees and payment methods for the service: {{reason}}",
+      "save": "Save payment in Lifecare",
+      "saved": "The payment is registered in Lifecare (id {{id}})."
     },
     "list": {
       "title": "Registered payments",
@@ -100,18 +101,7 @@
       "payee": "Payee",
       "paymentMethod": "Payment method",
       "statusHeading": "Status",
-      "empty": "No payments registered",
-      "status": {
-        "DRAFT": "Draft",
-        "QUEUED": "Queued for robot",
-        "EFFECTUATED": "Effectuated",
-        "FAILED": "Failed",
-        "PENDING_REGISTRATION": "Pending registration",
-        "REGISTERED": "Registered in Lifecare"
-      },
-      "register": "Register in Lifecare",
-      "registerError": "The payment could not be registered in Lifecare",
-      "waitingTitle": "Waiting to be registered in Lifecare"
+      "empty": "No payments registered"
     },
     "disposal": {
       "title": "Available to disburse",

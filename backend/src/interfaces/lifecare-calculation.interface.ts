@@ -81,6 +81,10 @@ export interface LifecareCalculationTypeRaw {
   id: number;
   text: string;
   isActive: boolean;
+  /** An income jobbstimulans applies to, e.g. "Lön efter skatt". */
+  isJobStimulus?: boolean;
+  /** The share of such an income jobbstimulans leaves out, e.g. 25. */
+  jobStimulusPercent?: number;
   [field: string]: unknown;
 }
 

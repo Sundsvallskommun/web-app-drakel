@@ -1,6 +1,6 @@
 import { LifecarePayeeView, LifecarePaymentOptionsView } from '@data-contracts/backend/data-contracts';
 import { getErrandStakeholders } from '@services/errand-service/errand-service';
-import { createPayment } from '@services/payment-service';
+import { registerLifecarePayment } from '@services/lifecare-payment-service';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -10,8 +10,8 @@ vi.mock('@services/errand-service/errand-service', () => ({
   getErrandStakeholders: vi.fn(),
 }));
 
-vi.mock('@services/payment-service', () => ({
-  createPayment: vi.fn(),
+vi.mock('@services/lifecare-payment-service', () => ({
+  registerLifecarePayment: vi.fn(),
 }));
 
 const APPLICANT = {
@@ -80,8 +80,8 @@ describe('ErrandUtbetalningForm', () => {
   beforeEach(() => {
     vi.mocked(getErrandStakeholders).mockReset();
     vi.mocked(getErrandStakeholders).mockResolvedValue({ data: [APPLICANT] });
-    vi.mocked(createPayment).mockReset();
-    vi.mocked(createPayment).mockResolvedValue({ data: null });
+    vi.mocked(registerLifecarePayment).mockReset();
+    vi.mocked(registerLifecarePayment).mockResolvedValue({ data: { lifecareId: '4' } });
   });
 
   it('prefills date, month, amount and payee from the Lifecare proposal', async () => {
@@ -197,21 +197,21 @@ describe('ErrandUtbetalningForm', () => {
     });
   });
 
-  it('registers the utbetalning with the proposal values mapped to the API shape', async () => {
+  it('registers the utbetalning in Lifecare with the proposal values mapped to the API shape', async () => {
     const onSaved = vi.fn();
     renderForm({ onSaved });
     await waitFor(() => {
       expect(screen.getByLabelText(/^Belopp/)).toHaveValue('8450,00');
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Nästa' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Spara utbetalning i Lifecare' }));
 
     await waitFor(() => {
-      expect(createPayment).toHaveBeenCalledTimes(1);
+      expect(registerLifecarePayment).toHaveBeenCalledTimes(1);
     });
     // The comma decimal becomes a number, and the payee's name/account travel as their own fields —
     // Lifecare payees have no stakeholder id.
-    expect(createPayment).toHaveBeenCalledWith(
+    expect(registerLifecarePayment).toHaveBeenCalledWith(
       'errand-1',
       expect.objectContaining({
         amount: 8450,
@@ -223,8 +223,27 @@ describe('ErrandUtbetalningForm', () => {
         accountNumber: '1234567',
       })
     );
-    expect(vi.mocked(createPayment).mock.calls[0]?.[1]).not.toHaveProperty('payeeStakeholderId');
     expect(onSaved).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('status')).toHaveTextContent('id 4');
+  });
+
+  it("shows why the utbetalning was not registered, in the BFF's or Lifecare's words", async () => {
+    vi.mocked(registerLifecarePayment).mockResolvedValue({
+      error: true,
+      message: 'Saldot i Lifecare (0 kr) räcker inte till 8450 kr.',
+    });
+    const onSaved = vi.fn();
+    renderForm({ onSaved });
+    await waitFor(() => {
+      expect(screen.getByLabelText(/^Belopp/)).toHaveValue('8450,00');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Spara utbetalning i Lifecare' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('räcker inte');
+    });
+    expect(onSaved).not.toHaveBeenCalled();
   });
 
   it('opens lokalbetalningsnummer only for a betalsätt Lifecare says takes one', async () => {
@@ -248,10 +267,13 @@ describe('ErrandUtbetalningForm', () => {
     });
 
     fireEvent.change(screen.getByLabelText(/^Räkningsnummer/), { target: { value: '123' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Nästa' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Spara utbetalning i Lifecare' }));
 
     await waitFor(() => {
-      expect(createPayment).toHaveBeenCalledWith('errand-1', expect.objectContaining({ invoiceNumber: '123' }));
+      expect(registerLifecarePayment).toHaveBeenCalledWith(
+        'errand-1',
+        expect.objectContaining({ invoiceNumber: '123' })
+      );
     });
   });
 
@@ -262,10 +284,13 @@ describe('ErrandUtbetalningForm', () => {
     });
 
     fireEvent.change(screen.getByLabelText(/^Kontering/), { target: { value: '3' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Nästa' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Spara utbetalning i Lifecare' }));
 
     await waitFor(() => {
-      expect(createPayment).toHaveBeenCalledWith('errand-1', expect.objectContaining({ accountingCode: '3' }));
+      expect(registerLifecarePayment).toHaveBeenCalledWith(
+        'errand-1',
+        expect.objectContaining({ accountingCode: '3' })
+      );
     });
   });
 
@@ -294,13 +319,13 @@ describe('ErrandUtbetalningForm', () => {
   });
 
   it('reports a failed registration instead of silently doing nothing', async () => {
-    vi.mocked(createPayment).mockResolvedValue({ error: 'boom' });
+    vi.mocked(registerLifecarePayment).mockResolvedValue({ error: true });
     renderForm();
     await waitFor(() => {
       expect(screen.getByLabelText(/^Belopp/)).toHaveValue('8450,00');
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Nästa' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Spara utbetalning i Lifecare' }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('Det gick inte att registrera utbetalningen');

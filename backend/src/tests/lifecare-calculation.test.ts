@@ -5,6 +5,7 @@ import {
   buildCalculationUpdate,
   CalculationDraftInput,
   householdSizeOf,
+  withJobStimulusIncomes,
   withPlacedPersons,
 } from '@utils/lifecare-calculation';
 import { describe, expect, it } from 'vitest';
@@ -202,6 +203,28 @@ describe('building the bodies', () => {
     expect(body).not.toHaveProperty('numberOfFamilyMembers');
     expect(Object.keys(body).slice(-3)).toEqual(['HasCustomHouseholdSize', 'HouseholdSize', 'NumberOfFamilyMembers']);
     expect([body.HasCustomHouseholdSize, body.HouseholdSize, body.NumberOfFamilyMembers]).toEqual([false, 1, 1]);
+  });
+
+  it('saves as slutlig with the same Update, isFinalized set and every income changeable (capture 2026-09-24)', () => {
+    const calculation = { ...placed(), calculationId: 30 };
+    const body = buildCalculationUpdate(calculation, { custom: true, size: 4, members: 3 }, true);
+
+    expect(body.isFinalized).toBe(true);
+    expect(body.calculationIncomes).toEqual(expect.arrayContaining([expect.objectContaining({ changeable: true, isValid: true })]));
+    expect([body.HasCustomHouseholdSize, body.HouseholdSize, body.NumberOfFamilyMembers]).toEqual([true, 4, 3]);
+  });
+
+  it('counts jobbstimulans on the lön as the web app does: 5 000 gross, 3 750 counted at 25 %', () => {
+    const calculation = {
+      ...placed(),
+      hasApplicantJobStimuli: true,
+      calculationIncomes: [{ incomeCode: 1, incomeType: 'Lön efter skatt', amountApplicant: 5000, amountCoApplicant: 0 }],
+    };
+    const types = [{ id: 1, text: 'Lön efter skatt', isActive: true, isJobStimulus: true, jobStimulusPercent: 25 }];
+
+    expect(withJobStimulusIncomes(calculation, types).calculationIncomes[0]).toMatchObject({ amountApplicant: 3750, grossAmountApplicant: 5000 });
+    // Without jobbstimulans in the period the whole lön counts.
+    expect(withJobStimulusIncomes({ ...calculation, hasApplicantJobStimuli: false }, types).calculationIncomes[0]?.amountApplicant).toBe(5000);
   });
 
   it('sends a change with the household size where Lifecare read it and at the end', () => {

@@ -29,7 +29,6 @@ import { MetadataController } from './controllers/metadata.controller';
 import { NormberakningController } from './controllers/normberakning.controller';
 import { NoteController } from './controllers/note.controller';
 import { NotificationController } from './controllers/notification.controller';
-import { PaymentController } from './controllers/payment.controller';
 import { PdfController } from './controllers/pdf.controller';
 import { SectionApprovalController } from './controllers/section-approval.controller';
 import { UserController } from './controllers/user.controller';
@@ -48,7 +47,6 @@ const app = new App([
   NoteController,
   NormberakningController,
   WarningController,
-  PaymentController,
   SectionApprovalController,
   JournalController,
   JobStimulusController,

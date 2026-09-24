@@ -32,7 +32,7 @@ describe('LifecareCalculationSave', () => {
     await waitFor(() => {
       expect(onSaved).toHaveBeenCalled();
     });
-    expect(saveLifecareCalculation).toHaveBeenCalledWith('errand-1');
+    expect(saveLifecareCalculation).toHaveBeenCalledWith('errand-1', false);
   });
 
   it('shows when and as which beräkning it was saved', () => {
@@ -55,9 +55,25 @@ describe('LifecareCalculationSave', () => {
     });
   });
 
+  it('asks before saving as slutlig, since Lifecare allows no change after', async () => {
+    vi.mocked(saveLifecareCalculation).mockResolvedValue({ data: { ...SAVED, finalized: true } });
+    const onSaved = vi.fn();
+    render(<LifecareCalculationSave errandId="errand-1" saved={SAVED} onSaved={onSaved} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Spara som slutlig' }));
+    expect(saveLifecareCalculation).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Ja, spara som slutlig' }));
+
+    await waitFor(() => {
+      expect(onSaved).toHaveBeenCalled();
+    });
+    expect(saveLifecareCalculation).toHaveBeenCalledWith('errand-1', true);
+  });
+
   it('allows no change once Lifecare holds it as slutlig', () => {
     render(<LifecareCalculationSave errandId="errand-1" saved={{ ...SAVED, finalized: true }} onSaved={vi.fn()} />);
 
     expect(screen.getByRole('button', { name: 'Spara normberäkning' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Spara som slutlig' })).toBeDisabled();
   });
 });

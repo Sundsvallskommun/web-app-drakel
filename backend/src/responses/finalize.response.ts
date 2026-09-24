@@ -3,7 +3,6 @@ import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 import { DecisionRegistration } from '@/responses/decision-registration.response';
-import { PaymentRegistration } from '@/responses/payment-registration.response';
 
 /**
  * The outcome of "Besluta och utbetala". The errand is finalized whenever this comes back — what follows
@@ -12,7 +11,7 @@ import { PaymentRegistration } from '@/responses/payment-registration.response';
 export class FinalizeResult {
   /** The PAYMENT decision caremanagement recorded. */
   @IsString() @IsOptional() decisionId?: string;
-  /** The payment rows finalize created, in the order the drafts were sent. */
+  /** The payment rows finalize created — none, since utbetalningar are registered in Lifecare directly. */
   @IsArray() @IsString({ each: true }) paymentIds!: string[];
   /** Payees caremanagement warned about — a payment cannot be registered against a payee Lifecare lacks. */
   @IsArray() @IsString({ each: true }) payeeWarnings!: string[];
@@ -20,8 +19,6 @@ export class FinalizeResult {
   @IsBoolean() processMessageCorrelated!: boolean;
   /** How registering the beslut in Lifecare went; absent when finalize recorded no beslut. */
   @ValidateNested() @Type(() => DecisionRegistration) @IsOptional() lifecareDecision?: DecisionRegistration;
-  /** How registering each new utbetalning in Lifecare went. */
-  @IsArray() @ValidateNested({ each: true }) @Type(() => PaymentRegistration) lifecarePayments!: PaymentRegistration[];
   /** The channels the beslut could not be sent through. */
   @IsArray() @IsString({ each: true }) failedChannels!: string[];
 }

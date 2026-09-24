@@ -12,6 +12,7 @@ import {
   buildCalculationUpdate,
   CalculationDraftInput,
   householdSizeOf,
+  withJobStimulusIncomes,
   withPlacedPersons,
 } from '@utils/lifecare-calculation';
 import { isLifecareRefusal } from '@utils/lifecare-error';
@@ -57,8 +58,10 @@ class ErrandLifecareCalculationService {
   /**
    * Saves the draft in Lifecare: Lifecare places the members on the norm, marks who has jobbstimulans, and
    * counts the beräkning. Created the first time and the errand pointed at it, changed every time after.
+   * `finalize` saves it as slutlig; Lifecare then allows no change, so a new beräkning is created first when
+   * none exists.
    */
-  async save(errandId: string): Promise<LifecareCalculationView> {
+  async save(errandId: string, finalize = false): Promise<LifecareCalculationView> {
     const [serviceId, calculationId, draft] = await Promise.all([
       this.serviceIds.resolve(errandId),
       this.calculationIdOf(errandId),
@@ -80,17 +83,12 @@ class ErrandLifecareCalculationService {
     if (!filled.writable) {
       throw new HttpException(422, filled.reason);
     }
-    const calculation = await this.placeAndMark(filled.calculation, jobStimulus);
+    const catalogues = saved ?? proposal;
+    const calculation = withJobStimulusIncomes(await this.placeAndMark(filled.calculation, jobStimulus), catalogues.incomeTypes);
     const household = householdSizeOf(calculation, draftInput);
 
     if (calculationId !== undefined) {
-      const updated = await this.calculations.update(calculationId, buildCalculationUpdate(calculation, household));
-      await this.accessLog.logWrite(errandId, LifecareAccessActionEnum.UPDATE, {
-        target: 'CALCULATION',
-        description: 'Ändrade normberäkningen i Lifecare',
-        lifecareId: String(calculationId),
-      });
-      return toLifecareCalculationView(updated);
+      return this.updateInLifecare(errandId, calculationId, buildCalculationUpdate(calculation, household, finalize), finalize);
     }
 
     const created = await this.createInLifecare(serviceId, buildCalculationCreate(calculation, household));
@@ -100,7 +98,27 @@ class ErrandLifecareCalculationService {
       lifecareId: String(created.calculationId),
     });
     await this.link(errandId, created.calculationId);
-    return toLifecareCalculationView(created);
+    if (!finalize) {
+      return toLifecareCalculationView(created);
+    }
+    // Slutlig is a change to a saved beräkning, so the new one is read back in the shape Update takes.
+    const createdForEdit = await this.calculations.readForEdit(created.calculationId);
+    return this.updateInLifecare(errandId, created.calculationId, buildCalculationUpdate(createdForEdit.calculation, household, true), true);
+  }
+
+  private async updateInLifecare(
+    errandId: string,
+    calculationId: number,
+    body: Record<string, unknown>,
+    finalize: boolean,
+  ): Promise<LifecareCalculationView> {
+    const updated = await this.calculations.update(calculationId, body);
+    await this.accessLog.logWrite(errandId, LifecareAccessActionEnum.UPDATE, {
+      target: 'CALCULATION',
+      description: finalize ? 'Sparade normberäkningen som slutlig i Lifecare' : 'Ändrade normberäkningen i Lifecare',
+      lifecareId: String(calculationId),
+    });
+    return toLifecareCalculationView(updated);
   }
 
   /** Has Lifecare place the included members on the norm and mark who has jobbstimulans in the period. */

@@ -18,10 +18,9 @@ vi.mock('@services/section-approval-service', () => ({ getSectionApprovals: vi.f
 
 const finalized = {
   decisionId: 'decision-1',
-  paymentIds: ['payment-1'],
+  paymentIds: [],
   payeeWarnings: [],
   processMessageCorrelated: true,
-  lifecarePayments: [],
   failedChannels: [],
 };
 

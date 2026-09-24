@@ -2,7 +2,7 @@ import { LifecarePaymentForCreateRaw } from '@interfaces/lifecare-payment.interf
 import { buildPaymentCreate } from '@utils/lifecare-payment';
 import { describe, expect, it } from 'vitest';
 
-import { Payment } from '@/data-contracts/caremanagement/data-contracts';
+import { PaymentInputDto } from '@/dtos/payment.dto';
 
 // A short stand-in for the 245-space message field; it is carried through untouched either way.
 const BLANK_MESSAGE = '     ';
@@ -129,9 +129,8 @@ const underlag = (): LifecarePaymentForCreateRaw => ({
   ],
 });
 
-/** careM's utbetalning for the same payment as capture 2. */
-const payment: Payment = {
-  id: 'payment-1',
+/** The handläggare's utbetalning for the same payment as capture 2. */
+const payment = {
   amount: 1,
   paymentDate: '2026-09-21',
   applicationMonth: '2026-09',
@@ -141,7 +140,7 @@ const payment: Payment = {
   accountNumber: '11111111',
   payeeCity: 'Sundsvall',
   invoiceNumber: '123',
-};
+} satisfies PaymentInputDto;
 
 describe('buildPaymentCreate', () => {
   it('turns capture 1 into exactly the body of capture 2', () => {

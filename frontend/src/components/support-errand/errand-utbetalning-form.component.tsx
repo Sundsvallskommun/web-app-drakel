@@ -1,9 +1,9 @@
 'use client';
 
 import { FormField } from '@components/common/form-field.component';
-import { LifecarePaymentOptionsView, Stakeholder } from '@data-contracts/backend/data-contracts';
+import { LifecarePaymentOptionsView, PaymentInputDto, Stakeholder } from '@data-contracts/backend/data-contracts';
 import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
-import { createPayment, PaymentInput } from '@services/payment-service';
+import { registerLifecarePayment } from '@services/lifecare-payment-service';
 import { Button, Checkbox, DatePicker, FormControl, FormLabel, Input, Select } from '@sk-web-gui/react';
 import { formatAmount, parseAmount } from '@utils/format-amount';
 import { getEditableRecipientFields } from '@utils/payment-method';
@@ -80,16 +80,14 @@ const proposedFormValues = ({ proposal, postings }: LifecarePaymentOptionsView):
 });
 
 /**
- * The form as caremanagement's PaymentRequest. The fields the form keeps closed (bokföringsdatum, OCR)
- * are left out rather than sent empty. The payee goes as its fields — name, account and address, the way
- * Lifecare's own utbetalning copies them from the chosen payee — since Lifecare, not careM, holds the
- * payee register: there is no careM payee row or stakeholder id to point at.
+ * The form as the BFF's utbetalning input. The fields the form keeps closed (bokföringsdatum, OCR) are
+ * left out rather than sent empty. The payee goes as its fields — name, account and address, the way
+ * Lifecare's own utbetalning copies them from the chosen payee.
  */
-const toPaymentInput = (values: UtbetalningFormValues): PaymentInput => ({
+const toPaymentInput = (values: UtbetalningFormValues): PaymentInputDto => ({
   paymentDate: values.paymentDate || undefined,
   amount: parseAmount(values.amount),
   applicationMonth: values.applicationMonth || undefined,
-  reportedOnStakeholderIds: values.reportedOnStakeholderIds,
   paymentMethod: values.paymentMethod || undefined,
   payeeName: values.name || undefined,
   payeeAddress: values.address || undefined,
@@ -187,9 +185,9 @@ const MessageLinesField: FC<{
  * refuses a Bankgiro via Plusgiro utbetalning without it. Bokföringsdatum, "Utbetalas/bokförs ej" and OCR
  * stay disabled — the Lifecare rules that open them are not known yet, so enabling them would be a guess.
  *
- * "Nästa" registers the utbetalning through caremanagement's payments resource. It is stored as DRAFT
- * and queues nothing — the robot is started separately through the REGISTER_PAYMENT RPA task, so
- * saving never sets anything in motion.
+ * "Spara utbetalning i Lifecare" registers it there straight away — careM keeps no copy. The BFF refuses
+ * one it cannot make safely (a saldo that does not cover it, a likadan utbetalning already made) and
+ * Lifecare its own; either reason is shown as it came.
  */
 export const ErrandUtbetalningForm: FC<{
   errandId: string;
@@ -207,6 +205,7 @@ export const ErrandUtbetalningForm: FC<{
   const { payees, paymentMethods, postings } = options;
   const [saving, setSaving] = useState<boolean>(false);
   const [saveError, setSaveError] = useState<string>();
+  const [savedId, setSavedId] = useState<string>();
 
   const { register, control, handleSubmit, reset, setValue } = useForm<UtbetalningFormValues>({
     defaultValues: EMPTY_FORM_VALUES,
@@ -255,19 +254,20 @@ export const ErrandUtbetalningForm: FC<{
   const submit = handleSubmit(async (values) => {
     setSaving(true);
     setSaveError(undefined);
-    const result = await createPayment(errandId, toPaymentInput(values));
+    setSavedId(undefined);
+    const result = await registerLifecarePayment(errandId, toPaymentInput(values));
     setSaving(false);
-    if (result.error) {
-      setSaveError(t('payment.form.saveError'));
+    if (result.error || !result.data) {
+      setSaveError(result.message ?? t('payment.form.saveError'));
       return;
     }
+    setSavedId(result.data.lifecareId);
     onSaved?.();
   });
 
   return (
     // noValidate: the required markers mirror Lifecare's own form, but the browser must not block a
-    // save on them. caremanagement stores the utbetalning as DRAFT with every field optional, so a
-    // handläggare is meant to be able to save an incomplete one. Validation belongs to caremanagement.
+    // save on them — the BFF and Lifecare validate, and say what is missing in their own words.
     <form className="flex flex-col gap-24" noValidate onSubmit={(event) => void submit(event)}>
       {/* Without Lifecare's lists there is nothing to pick a mottagare, betalsätt or kontering from — say why. */}
       {optionsError ?
@@ -418,13 +418,18 @@ export const ErrandUtbetalningForm: FC<{
           {t('common:cancel')}
         </Button>
         <Button type="submit" variant="primary" color="primary" disabled={disabled || saving}>
-          {saving ? t('payment.form.saving') : t('payment.form.next')}
+          {saving ? t('payment.form.saving') : t('payment.form.save')}
         </Button>
       </div>
 
       {saveError ?
         <p className="m-0 text-error-surface-primary" role="alert">
           {saveError}
+        </p>
+      : null}
+      {savedId ?
+        <p className="m-0 text-success-surface-primary" role="status">
+          {t('payment.form.saved', { id: savedId })}
         </p>
       : null}
     </form>
