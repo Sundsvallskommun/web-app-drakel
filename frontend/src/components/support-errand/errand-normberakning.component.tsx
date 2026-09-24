@@ -9,7 +9,7 @@ import { useNormberakningTypes } from '@hooks/use-normberakning-types';
 import { TypeOption } from '@services/normberakning-service';
 import { renderPdf } from '@services/pdf-service';
 import { Warning } from '@services/warning-service';
-import { DatePicker, FormControl, FormLabel, Spinner, Tabs } from '@sk-web-gui/react';
+import { FormControl, FormLabel, Spinner, Tabs } from '@sk-web-gui/react';
 import { formatApplicationMonth } from '@utils/application-month';
 import { buildNormberakningHtml } from '@utils/build-normberakning-html';
 import { computeNormResult, fromLifecareSummary } from '@utils/norm-result';
@@ -220,14 +220,15 @@ export const ErrandNormberakning: FC<{
                 onChanged={refreshAll}
               />
             </FilterField>
-            <FilterField label={t('details.calculationDate')} required>
-              <DatePicker type="date" readOnly size="sm" value={draft.calculationDate ?? ''} />
+            {/* Datum and period are Lifecare's, so they read as values, like Avser ansökan. */}
+            <FilterField label={t('details.calculationDate')} className="w-auto">
+              <span className="block py-4 tabular-nums">{draft.calculationDate ?? '—'}</span>
             </FilterField>
-            <FilterField label={t('details.from')} required>
-              <DatePicker type="date" readOnly size="sm" value={draft.calculationFromDate ?? ''} />
+            <FilterField label={t('details.from')} className="w-auto">
+              <span className="block py-4 tabular-nums">{draft.calculationFromDate ?? '—'}</span>
             </FilterField>
-            <FilterField label={t('details.to')} required>
-              <DatePicker type="date" readOnly size="sm" value={draft.calculationToDate ?? ''} />
+            <FilterField label={t('details.to')} className="w-auto">
+              <span className="block py-4 tabular-nums">{draft.calculationToDate ?? '—'}</span>
             </FilterField>
           </div>
         </ContentBox>
