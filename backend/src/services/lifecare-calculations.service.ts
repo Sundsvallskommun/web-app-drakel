@@ -9,7 +9,7 @@ import {
   LifecarePlacedPersonsRaw,
 } from '@interfaces/lifecare-calculation.interface';
 import { LifecareJobStimulusRaw } from '@interfaces/lifecare-job-stimulus.interface';
-import { withPlacedPersons } from '@utils/lifecare-calculation';
+import { withNormRowNames, withPlacedPersons } from '@utils/lifecare-calculation';
 import { isPdf } from '@utils/pdf-signature';
 
 import LifecareApiService from './lifecare-api.service';
@@ -85,7 +85,11 @@ class LifecareCalculationsService {
 
   /**
    * A member's amount on the norm for the period, as Lifecare counts it from the member's normintervall and
-   * days in the household — what the web app asks for a member before it saves.
+   * days in the household — what the web app asks for a member before it saves (capture 2026-09-24, lifecare7:
+   * normintervall 11 on Riksnorm 2026 gave 3 820).
+   *
+   * The request names no norm: Lifecare counts on the norm of the session's latest `PlacePersons` — the same
+   * row id is a different amount on another norm. Call it right after placing the beräkning's members.
    */
   public async amountFor(person: Record<string, unknown>, startDate: string, endDate: string): Promise<number> {
     const res = await this.apiService.post<{ amount: number }>(
@@ -117,7 +121,11 @@ class LifecareCalculationsService {
    * Has Lifecare place the included members on the norm for the period and mark who has jobbstimulans in it —
    * what the web app asks before every save. Members left out are taken off the norm.
    */
-  public async placeAndMark(calculation: LifecareCalculationRaw, jobStimulus: LifecareJobStimulusRaw): Promise<LifecareCalculationRaw> {
+  public async placeAndMark(
+    calculation: LifecareCalculationRaw,
+    jobStimulus: LifecareJobStimulusRaw,
+    keepPlacements = true,
+  ): Promise<LifecareCalculationRaw> {
     const placed = await this.placePersons({
       startDate: calculation.startDate,
       endDate: calculation.endDate,
@@ -125,7 +133,10 @@ class LifecareCalculationsService {
       calculationPersons: calculation.calculationPersons.filter(person => person.included),
     });
     // The norm comes back with its rows and gemensamma kostnader — the new one's, when the norm was changed.
-    const withNorm = { ...withPlacedPersons(calculation, placed.calculationPersons), norm: placed.norm ?? calculation.norm };
+    const withNorm = withNormRowNames({
+      ...withPlacedPersons(calculation, placed.calculationPersons, keepPlacements),
+      norm: placed.norm ?? calculation.norm,
+    });
     const marked = await this.withJobStimuli(withNorm, jobStimulus);
     return { ...withNorm, hasApplicantJobStimuli: marked.hasApplicantJobStimuli, hasCoApplicantJobStimuli: marked.hasCoApplicantJobStimuli };
   }

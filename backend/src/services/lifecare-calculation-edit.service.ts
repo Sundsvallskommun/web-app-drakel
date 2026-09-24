@@ -78,7 +78,9 @@ class LifecareCalculationEditService {
     await this.accessLog.logRead(errandId, { target: 'CALCULATION', description: 'Läste beräkningsunderlag i Lifecare' });
 
     const changed = change(withEnteredIncomes(forEdit.calculation, forEdit.incomeTypes), forEdit);
-    const counted = await this.withCountedAmounts(forEdit.calculation, await this.calculations.placeAndMark(changed, jobStimulus));
+    // On a new norm Lifecare decides afresh which normintervall each member is on.
+    const keepPlacements = changed.normId === forEdit.calculation.normId;
+    const counted = await this.withCountedAmounts(forEdit.calculation, await this.calculations.placeAndMark(changed, jobStimulus, keepPlacements));
     const placed = await this.withSharedCost(forEdit.calculation, counted);
     const calculation = withJobStimulusIncomes(placed, forEdit.incomeTypes);
     const updated = await this.calculations.update(calculationId, buildCalculationUpdate(calculation, householdSizeOfSaved(calculation), finalize));

@@ -8,6 +8,7 @@ import {
   LifecareCalculationTypeRaw,
   LifecareNormSharedRaw,
 } from '@interfaces/lifecare-calculation.interface';
+import { normRowName } from '@utils/lifecare-calculation';
 
 import { NormHeaderInputDto, NormRowInputDto } from '@/dtos/normberakning.dto';
 import { NormberakningDraft, NormExpenseRow, NormIncomeRow, NormPersonRow, NormRowOption } from '@/responses/normberakning.response';
@@ -350,9 +351,6 @@ const personIndexOf = (calculation: LifecareCalculationRaw, rowId: string): numb
   return index;
 };
 
-/** A normintervall's name as a member carries it: the row's name without its amount — "Ensamstående". */
-const normRowName = (name: string): string => name.replace(/\s+\d+(?:[.,]\d+)?$/, '').trim();
-
 /**
  * Sets the member `rowId`'s days in the household and normintervall. No days means the whole period. The
  * amount is Lifecare's to count from these (see LifecareCalculationEditService); Ingår från/till stay as
@@ -401,7 +399,10 @@ export const removePerson = (calculation: LifecareCalculationRaw, rowId: string)
   return { ...calculation, calculationPersons: calculation.calculationPersons.filter((_person, position) => position !== index) };
 };
 
-/** Puts the beräkning on another of Lifecare's norms, every member taken off the old norm's rows. */
+/**
+ * Puts the beräkning on another of Lifecare's norms. The members go to Lifecare on their old rows, as the web app
+ * sends them; Lifecare keeps a row that fits the new norm and leaves the rest unplaced (see withPlacedPersons).
+ */
 const changeNorm = (calculation: LifecareCalculationRaw, forEdit: LifecareCalculationForEditRaw, normId: number): LifecareCalculationRaw => {
   const norm = forEdit.norms.find(candidate => candidate.normId === normId);
   if (!norm) {
@@ -411,7 +412,6 @@ const changeNorm = (calculation: LifecareCalculationRaw, forEdit: LifecareCalcul
     ...calculation,
     normId: norm.normId,
     normText: norm.name,
-    calculationPersons: calculation.calculationPersons.map(person => ({ ...person, normRowId: 0, normRow: null, amount: 0 })),
   };
 };
 
@@ -419,8 +419,8 @@ const changeNorm = (calculation: LifecareCalculationRaw, forEdit: LifecareCalcul
  * Changes the beräkning's header from Drakel: its norm, and its own household size (Annan hushållsstorlek) or
  * taking that off so the members count. The period is Lifecare's.
  *
- * A new norm has its own rows, so every member is taken off the old one's normintervall — Lifecare places them
- * on the new norm when the beräkning is saved. An own household size is saved for the household's coming
+ * On a new norm Lifecare decides which normintervall each member is on when the beräkning is saved; a member
+ * it leaves unplaced gets its normintervall picked by the handläggare. An own household size is saved for the household's coming
  * beräkningar too — the web app's "Vill du spara och använda annan hushållsstorlek för hushållet kommande
  * beräkningar?" answered Ja.
  */

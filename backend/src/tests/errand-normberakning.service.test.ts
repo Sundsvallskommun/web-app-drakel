@@ -203,7 +203,7 @@ describe('ErrandNormberakningService', () => {
     expect(update).not.toHaveBeenCalled();
   });
 
-  it('puts the beräkning on another norm in Lifecare, every member placed on the new norm', async () => {
+  it('puts the beräkning on another norm in Lifecare, every member where Lifecare places them on it', async () => {
     withCalculationId(30);
     vi.spyOn(LifecareCalculationsService.prototype, 'readForEdit').mockResolvedValue({
       ...forEdit(),
@@ -219,7 +219,8 @@ describe('ErrandNormberakningService', () => {
 
     await new ErrandNormberakningService().updateHeader('errand-1', { normId: 6 });
 
-    expect(place.mock.calls[0]?.[0]).toMatchObject({ normId: 6 });
+    // Sent on their old rows, as the web app does; Lifecare decides what fits the new norm.
+    expect(place.mock.calls[0]?.[0]).toMatchObject({ normId: 6, calculationPersons: [{ normRowId: 2 }] });
     expect(update.mock.calls[0]?.[1]).toMatchObject({ normId: 6, normText: 'Specnorm' });
     const body = update.mock.calls[0]?.[1] as { calculationPersons: Record<string, unknown>[] };
     expect(body.calculationPersons[0]).toMatchObject({ normRowId: 1, amount: 2000 });
@@ -239,6 +240,52 @@ describe('ErrandNormberakningService', () => {
     vi.spyOn(CaremanagementNormberakningService.prototype, 'readHouseholdSizeChanged').mockResolvedValue(true);
 
     expect(await new ErrandNormberakningService().householdSizeChanged('errand-1')).toBe(true);
+  });
+
+  it('takes the new norm’s rows and amounts Lifecare places the household on, each row named (capture lifecare8)', async () => {
+    withCalculationId(30);
+    vi.spyOn(LifecareCalculationsService.prototype, 'readForEdit').mockResolvedValue({
+      ...forEdit(),
+      norms: [
+        { normId: 1, name: 'Riksnorm 2026' },
+        { normId: 3, name: 'Norm 3' },
+      ],
+    });
+    vi.spyOn(LifecareCalculationsService.prototype, 'placePersons').mockResolvedValue({
+      calculationPersons: saved.calculationPersons.map(person => ({ ...person, normRowId: 1, normRow: null, amount: 4380 })),
+      norm: { rows: [{ rowId: 1, name: 'Make/maka/sambo 4380.00', monthlyAmount: 4380 }] },
+    });
+    const update = vi.spyOn(LifecareCalculationsService.prototype, 'update').mockResolvedValue(saved);
+
+    await new ErrandNormberakningService().updateHeader('errand-1', { normId: 3 });
+
+    const body = update.mock.calls[0]?.[1] as { calculationPersons: Record<string, unknown>[] };
+    expect(body.calculationPersons[0]).toMatchObject({ normRowId: 1, normRow: 'Make/maka/sambo', amount: 4380 });
+  });
+
+  it('leaves a member Lifecare does not place on the new norm without a normintervall, for the handläggare to pick', async () => {
+    withCalculationId(30);
+    vi.spyOn(LifecareCalculationsService.prototype, 'readForEdit').mockResolvedValue({
+      ...forEdit(),
+      norms: [
+        { normId: 1, name: 'Riksnorm 2026' },
+        { normId: 3, name: 'Matnorm 2026' },
+      ],
+    });
+    // capture lifecare7: on a new norm Lifecare answered every member unplaced.
+    vi.spyOn(LifecareCalculationsService.prototype, 'placePersons').mockResolvedValue({
+      calculationPersons: saved.calculationPersons.map(person => ({ ...person, normRowId: 0, normRow: null, amount: 0 })),
+    });
+    const amountFor = vi.spyOn(LifecareCalculationsService.prototype, 'amountFor');
+    const update = vi.spyOn(LifecareCalculationsService.prototype, 'update').mockResolvedValue(saved);
+
+    await new ErrandNormberakningService().updateHeader('errand-1', { normId: 3 });
+
+    const body = update.mock.calls[0]?.[1] as { calculationPersons: Record<string, unknown>[] };
+    // Sent unplaced the way the web app sends such a member: no normintervall at all.
+    expect(body.calculationPersons[0]).toMatchObject({ amount: 0 });
+    expect(body.calculationPersons[0]).not.toHaveProperty('normRowId');
+    expect(amountFor).not.toHaveBeenCalled();
   });
 
   it('refuses any change to a beräkning Lifecare holds as slutlig', async () => {

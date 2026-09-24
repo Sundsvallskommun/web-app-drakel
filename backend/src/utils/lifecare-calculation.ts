@@ -213,18 +213,42 @@ export const applyDraft = (
   return { writable: true, calculation };
 };
 
+/** A normintervall's name as a member carries it: the row's name without its amount — "Ensamstående". */
+export const normRowName = (name: string): string => name.replace(/\s+\d+(?:[.,]\d+)?$/, '').trim();
+
+/**
+ * The name of each placed member's normintervall, from the norm's rows. Lifecare's placement answers with the
+ * row but not its name, and the web app saves the name with the member (capture 2026-09-24, lifecare5).
+ */
+export const withNormRowNames = (calculation: LifecareCalculationRaw): LifecareCalculationRaw => ({
+  ...calculation,
+  calculationPersons: calculation.calculationPersons.map(member => {
+    const row = (member.normRowId ?? 0) > 0 ? calculation.norm?.rows?.find(candidate => candidate.rowId === member.normRowId) : undefined;
+    return row && !member.normRow ? { ...member, normRow: normRowName(row.name) } : member;
+  }),
+});
+
 /**
  * The members on the norm: one already on a normintervall keeps it and its amount — the handläggare may have
  * picked it — and one not yet placed takes the row and amount Lifecare placed it on. Members left out are
  * taken off the norm.
+ *
+ * On a new norm (`keepPlacements` false) every member takes what Lifecare placed it on, since the old norm's
+ * rows mean nothing on the new one: Lifecare places each member on the new norm's row for its age and relation
+ * (lifecare8: Riksnorm row 12 at 4 390 became row 8 at 2 342), and leaves unplaced one it finds no row for —
+ * for the handläggare to pick (lifecare7; a norm of a single row placed no one).
  */
-export const withPlacedPersons = (calculation: LifecareCalculationRaw, placed: LifecareCalculationPersonRaw[]): LifecareCalculationRaw => ({
+export const withPlacedPersons = (
+  calculation: LifecareCalculationRaw,
+  placed: LifecareCalculationPersonRaw[],
+  keepPlacements = true,
+): LifecareCalculationRaw => ({
   ...calculation,
   calculationPersons: calculation.calculationPersons.map(member => {
     if (!member.included) {
       return { ...member, normRowId: 0, normRow: null, amount: 0 };
     }
-    if ((member.normRowId ?? 0) > 0) {
+    if (keepPlacements && (member.normRowId ?? 0) > 0) {
       return member;
     }
     const placement = placed.find(candidate => candidate.personId === member.personId);
