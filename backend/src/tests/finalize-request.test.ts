@@ -34,7 +34,7 @@ describe('buildFinalizeRequest', () => {
     });
     expect(request.communication).toBe(communication);
     // The Utbetalning tab registers utbetalningar in Lifecare directly; careM gets none.
-    expect(request.payments).toEqual([]);
+    expect(request).not.toHaveProperty('payments');
     expect(request.householdSizeChanged).toBe(true);
   });
 
@@ -45,7 +45,7 @@ describe('buildFinalizeRequest', () => {
       householdSizeChanged: false,
     });
 
-    expect(request.payments).toEqual([]);
+    expect(request).not.toHaveProperty('payments');
     expect(request.decision.amount).toBe(0);
   });
 

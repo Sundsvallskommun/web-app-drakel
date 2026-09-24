@@ -111,13 +111,11 @@ export const ErrandNormberakning: FC<{
   errandId: string;
   warnings: Warning[];
   onWarningsChanged: () => void;
-  /** When the calculation section is approved, its content is locked for editing (but still readable). */
-  locked?: boolean;
-  /** Rendered to the right of the section heading (the "Markera som komplett" approval checkbox). */
-  headerSlot?: ReactNode;
+  /** Called after a change in Lifecare, so the tab's check can follow a beräkning saved as slutlig. */
+  onLifecareChanged?: () => void;
   /** The assigned handläggare, shown in the preview-PDF header. */
   handlaggare?: string;
-}> = ({ errandId, warnings, onWarningsChanged, locked = false, headerSlot, handlaggare }) => {
+}> = ({ errandId, warnings, onWarningsChanged, onLifecareChanged, handlaggare }) => {
   const { t, i18n } = useTranslation('calculation');
   // Once saved in Lifecare, Lifecare's own summering is the result; until then careM's förslag carries the
   // sums the result is counted from.
@@ -127,14 +125,15 @@ export const ErrandNormberakning: FC<{
     lifecare.calculation?.summary ? fromLifecareSummary(lifecare.calculation.summary) : computeNormResult(proposal);
   const { draft, isLoading, error, refresh } = useErrandNormberakning(errandId);
   const types = useNormberakningTypes(errandId, draft?.source);
-  // A beräkning Lifecare holds as slutlig cannot be changed, whatever the approval says.
-  const closed = locked || draft?.finalized === true;
+  // A beräkning Lifecare holds as slutlig cannot be changed.
+  const closed = draft?.finalized === true;
   const inLifecare = draft?.source === NormberakningDraftSourceEnum.LIFECARE;
 
   // A row change moves the result too, and once the beräkning is in Lifecare that is Lifecare's summering.
   const refreshAll = (): void => {
     refresh();
     lifecare.refresh();
+    onLifecareChanged?.();
   };
   const [activeTab, setActiveTab] = useState<number>(0);
 
@@ -147,14 +146,9 @@ export const ErrandNormberakning: FC<{
     <ErrandSectionHeader
       title={t('header.title')}
       description={t('header.description')}
-      action={
-        <div className="flex items-center gap-24 flex-wrap">
-          {headerSlot}
-          {previewAction}
-        </div>
-      }
+      action={<div className="flex items-center gap-24 flex-wrap">{previewAction}</div>}
     >
-      {locked ?
+      {closed ?
         <LockedBanner />
       : null}
     </ErrandSectionHeader>
@@ -358,12 +352,7 @@ export const ErrandNormberakning: FC<{
           </div>
         </div>
 
-        <LifecareCalculationSave
-          errandId={errandId}
-          saved={lifecare.calculation}
-          disabled={locked}
-          onSaved={refreshAll}
-        />
+        <LifecareCalculationSave errandId={errandId} saved={lifecare.calculation} onSaved={refreshAll} />
       </div>
     </PreviousNormberakningProvider>
   );

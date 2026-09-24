@@ -18,7 +18,7 @@ interface FinalizeRequestParts {
 /**
  * Builds the finalize payload from the beslut as it stands in Lifecare (outcome, period, amount, orsak and
  * beslutsmeddelande). No utbetalningar go with it: the Utbetalning tab registers them in Lifecare directly,
- * so careM holds none. The checks here are the ones caremanagement would otherwise answer with a bare 400,
+ * and careM finds a bifall's utbetalning there itself. The checks here are the ones caremanagement would otherwise answer with a bare 400,
  * phrased so the handläggare knows what to do.
  */
 export const buildFinalizeRequest = ({ beslut, communication, householdSizeChanged }: FinalizeRequestParts): FinalizeRequest => {
@@ -41,7 +41,6 @@ export const buildFinalizeRequest = ({ beslut, communication, householdSizeChang
       decisionMessage: beslut.message,
     },
     communication,
-    payments: [],
     householdSizeChanged,
   };
 };

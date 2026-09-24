@@ -55,6 +55,7 @@ const underlag: LifecarePaymentForCreateRaw = {
 };
 
 describe('LifecarePaymentRegistrationService', () => {
+  let link: ReturnType<typeof vi.spyOn<CaremanagementErrandService, 'addLifecarePaymentId'>>;
   const existing: LifecareRegisteredPaymentRaw = {
     paymentId: 4,
     amount: 1,
@@ -73,6 +74,7 @@ describe('LifecarePaymentRegistrationService', () => {
     vi.spyOn(LifecarePaymentsService.prototype, 'readLatestPayments').mockResolvedValue([]);
     vi.spyOn(LifecarePaymentsService.prototype, 'hasHouseholdOn').mockResolvedValue(true);
     vi.spyOn(CaremanagementEventService.prototype, 'reportLifecareAccess').mockResolvedValue();
+    link = vi.spyOn(CaremanagementErrandService.prototype, 'addLifecarePaymentId').mockResolvedValue();
   });
 
   afterEach(() => {
@@ -85,6 +87,8 @@ describe('LifecarePaymentRegistrationService', () => {
     const created = await new LifecarePaymentRegistrationService().register('errand-1', input);
 
     expect(created).toEqual({ lifecareId: '4' });
+    // careM is pointed at the utbetalning, so it finds a bifall's utbetalning by id.
+    expect(link).toHaveBeenCalledWith('errand-1', '4');
     expect(create.mock.calls[0]?.[0]).toBe(1);
     expect(create.mock.calls[0]?.[1]).toMatchObject({ amount: 1, concernedMonth: '202609', billingNumber: '123' });
   });
@@ -133,6 +137,14 @@ describe('LifecarePaymentRegistrationService', () => {
       status: 422,
       message: 'Lifecare godtog inte uppgifterna.',
     });
+  });
+
+  it('keeps the registration when careM cannot be pointed at the utbetalning', async () => {
+    vi.spyOn(LifecarePaymentsService.prototype, 'createPayment').mockResolvedValue({ paymentId: 4 });
+    link.mockRejectedValue(new HttpException(500, 'down'));
+
+    expect(await new LifecarePaymentRegistrationService().register('errand-1', input)).toEqual({ lifecareId: '4' });
+    expect(link).toHaveBeenCalledTimes(3);
   });
 
   it('says to check Lifecare when it did not answer, since whether it paid is unknown', async () => {

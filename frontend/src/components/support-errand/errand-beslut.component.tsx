@@ -15,11 +15,12 @@ import { Alert } from '@sk-web-gui/alert';
 import { FormControl, FormLabel, Input, Select, Spinner } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { resolveBeslutAmount, resolveBeslutPeriod } from '@utils/beslut';
+import { allExpensesApproved, decisionTypeFor, outcomeFromNormResult } from '@utils/beslut-outcome';
 import { formatAmount } from '@utils/format-amount';
 import { groupDecisionReasons } from '@utils/group-decision-reasons';
-import { computeNormResult, fromLifecareSummary } from '@utils/norm-result';
+import { computeNormResult, fromLifecareSummary, isSurplus } from '@utils/norm-result';
 import dayjs from 'dayjs';
-import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { BeslutMeddelande } from './beslut-meddelande.component';
@@ -27,7 +28,7 @@ import { BeslutProposalBox } from './beslut-proposal-box.component';
 import { ContentBox } from './content-box.component';
 import { ErrandSectionHeader } from './errand-section-header.component';
 import { LabeledValue } from './labeled-value.component';
-import { LockedBanner, LockFieldset } from './lockable-section.component';
+import { LockFieldset } from './lockable-section.component';
 import { NormResultLine } from './norm-result.component';
 
 const todayDate = (): string => dayjs().format('YYYY-MM-DD');
@@ -88,12 +89,9 @@ const ReasonField: FC<{
  */
 export const ErrandBeslut: FC<{
   errandId: string;
-  locked?: boolean;
-  /** Rendered to the right of the section heading (the "Markera som komplett" approval control). */
-  headerSlot?: ReactNode;
   /** Registers this tab's save with the parent so the central "Spara ärende" button runs it (null = nothing to save). */
   onRegisterSave?: (save: (() => Promise<boolean>) | null) => void;
-}> = ({ errandId, locked = false, headerSlot, onRegisterSave }) => {
+}> = ({ errandId, onRegisterSave }) => {
   const { t } = useTranslation('decision');
   const { draft, isLoading: draftLoading } = useErrandNormberakning(errandId);
   const { recommendation, isLoading: recommendationLoading } = useBeslutRecommendation(errandId);
@@ -105,7 +103,7 @@ export const ErrandBeslut: FC<{
   const normResult = calculation?.summary ? fromLifecareSummary(calculation.summary) : computeNormResult(proposal);
   const calculatedDeficit = calculation?.summary ? Math.max(0, -calculation.summary.result) : undefined;
   // A beslut whose meddelande Lifecare has locked can no longer be changed from here.
-  const formLocked = locked || savedBeslut?.locked === true;
+  const formLocked = savedBeslut?.locked === true;
 
   const period = useMemo(() => resolveBeslutPeriod(recommendation, draft), [recommendation, draft]);
   const today = useMemo(() => todayDate(), []);
@@ -148,12 +146,17 @@ export const ErrandBeslut: FC<{
   // derives it from the current draft, so it is a better answer than the stored recommendation, but a
   // handläggare's own saved beslut still wins.
   const prefillDate = savedBeslut?.date ?? recommendation?.decisionDate ?? today;
-  // careM proposes an outcome (BIFALL/AVSLAG). The Lifecare beslutstyp for it is preselected only when it
-  // is the only one — with several (12 kap 1, 7 §§ and 12 kap 2 § SoL, say) the handläggare picks the
-  // paragraph, since a guess would register the beslut under the wrong one.
-  const proposedOutcome = proposal.outcome ?? recommendation?.value;
+  // The normberäkning decides the outcome: a normöverskott is an avslag, a normunderskott a bifall when
+  // everything applied for is approved, else a delvis bifall — preselected as Lifecare's 12 kap 1, 7 §§
+  // bifall or avslag. Without a result careM's förslag stands, its beslutstyp preselected only when it is
+  // the only one for the outcome, since a guess could register the beslut under the wrong paragraph.
+  const normOutcome = normResult ? outcomeFromNormResult(normResult, allExpensesApproved(draft)) : undefined;
+  const proposedOutcome = normOutcome ?? proposal.outcome ?? recommendation?.value;
   const typesForOutcome = proposedOutcome ? types.filter((type) => type.outcome === proposedOutcome) : [];
-  const proposedType = typesForOutcome.length === 1 ? typesForOutcome[0] : undefined;
+  const proposedType =
+    normOutcome ? decisionTypeFor(types, normOutcome)
+    : typesForOutcome.length === 1 ? typesForOutcome[0]
+    : undefined;
   const prefillBeslutCode =
     savedBeslut ? String(savedBeslut.decisionCode)
     : proposedType ? String(proposedType.code)
@@ -266,13 +269,7 @@ export const ErrandBeslut: FC<{
     };
   }, [onRegisterSave, formLocked, beslutDirty]);
 
-  const header = (
-    <ErrandSectionHeader title={t('header.title')} description={t('header.description')} action={headerSlot}>
-      {locked ?
-        <LockedBanner />
-      : null}
-    </ErrandSectionHeader>
-  );
+  const header = <ErrandSectionHeader title={t('header.title')} description={t('header.description')} />;
 
   if (draftLoading || recommendationLoading || typesLoading || savedLoading) {
     return (
@@ -400,10 +397,13 @@ export const ErrandBeslut: FC<{
             </div>
 
             {/* Belopp is derived (0 for an avslag, otherwise the recommended amount), so it's shown
-                as a read-only value rather than an input field. */}
-            <LabeledValue label={t('details.amount')}>
-              <span className="font-bold">{formatAmount(amount ?? 0)}</span>
-            </LabeledValue>
+                as a read-only value rather than an input field. A normöverskott has nothing to bevilja,
+                so no belopp is shown then — the result line above already says it is an överskott. */}
+            {normResult && isSurplus(normResult) ? null : (
+              <LabeledValue label={t('details.amount')}>
+                <span className="font-bold">{formatAmount(amount ?? 0)}</span>
+              </LabeledValue>
+            )}
 
             {saved && <p className="text-dark-secondary m-0">{t('details.saved')}</p>}
           </div>
@@ -421,7 +421,7 @@ export const ErrandBeslut: FC<{
           <div>
             <PdfPreviewButton
               loadPdf={() => getLifecareDecisionPdf(errandId)}
-              label={t('common:preview')}
+              label={t('message.showPdf')}
               modalLabel={t('message.previewModalLabel')}
               disabled={!savedBeslut || beslutDirty}
             />

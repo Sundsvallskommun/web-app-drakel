@@ -7,10 +7,10 @@ import { useErrandAttachments } from '@hooks/use-errand-attachments';
 import { useErrandCounts } from '@hooks/use-errand-counts';
 import { useErrandForm } from '@hooks/use-errand-form';
 import { useErrandNotes } from '@hooks/use-errand-notes';
-import { useErrandSectionApprovals } from '@hooks/use-errand-section-approvals';
 import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
 import { useErrandWarnings } from '@hooks/use-errand-warnings';
 import { useLifecareReminders } from '@hooks/use-lifecare-reminders';
+import { useLifecareSectionStatus } from '@hooks/use-lifecare-section-status';
 import { Badge, Spinner, Tabs } from '@sk-web-gui/react';
 import { CLIENT_FILES_PDF } from '@utils/attachment-names';
 import { stakeholderDisplayName } from '@utils/stakeholder-name';
@@ -37,7 +37,6 @@ import { ErrandSidebar, SidebarSection } from './errand-sidebar.component';
 import { ErrandUtbetalning } from './errand-utbetalning.component';
 import { ErrandWarnings } from './errand-warnings.component';
 import { LifecareRecordSection } from './lifecare-record-section.component';
-import { SectionApprovalCheckbox } from './section-approval-checkbox.component';
 
 // Drafts are created with this sentinel title until the handläggare fills the errand in.
 const EMPTY_ERRAND_TITLE = 'Empty errand';
@@ -48,7 +47,7 @@ interface ErrandSubTab {
   content: ReactNode;
   /** Count shown as a badge after the label (e.g. number of attachments). */
   counter?: number;
-  /** Shows a green check next to the sub-tab label once the section is approved. */
+  /** Shows a green check next to the sub-tab label once Lifecare has the section as done. */
   approved?: boolean;
 }
 // Statuses an errand has once it is decided: finalize sets GRANTED/REJECTED, and CLOSED is the older end
@@ -109,14 +108,6 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     beslutSaveRef.current = beslutSave;
     setCanSaveBeslut(beslutSave !== null);
   }, []);
-  const saveAll = useCallback(async () => {
-    setSavingAll(true);
-    await save();
-    if (beslutSaveRef.current) {
-      await beslutSaveRef.current();
-    }
-    setSavingAll(false);
-  }, [save]);
   // The route param can be an errand NUMBER (not a UUID); caremanagement sub-resources require the
   // errand's UUID. Gate those fetches on the resolved errand.id so we never call them with a non-UUID.
   const resolvedErrandId = errand?.id ?? '';
@@ -131,12 +122,25 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   const showCalculationSections = !isNewApplication && !isSupplementaryApplication;
   const showDocumentation = !isNewApplication;
 
+  // The checks on Normberäkning, Beslut and Utbetalning follow Lifecare: a slutlig beräkning, a saved beslut
+  // and a registered utbetalning. Read with the errand so they show as it opens, and again after each change.
+  const { status: sectionStatus, refresh: refreshSectionStatus } = useLifecareSectionStatus(
+    resolvedErrandId,
+    showCalculationSections
+  );
+
+  const saveAll = useCallback(async () => {
+    setSavingAll(true);
+    await save();
+    if (beslutSaveRef.current && (await beslutSaveRef.current())) {
+      refreshSectionStatus();
+    }
+    setSavingAll(false);
+  }, [save, refreshSectionStatus]);
+
   // Lazy-load gating: most sections' data is only fetched when their tab/sidebar is actually open, so
   // opening an errand doesn't log a read of everything. When shown, the Ärende sub-tab order is
-  // 0 Ansökan · 1 Bilagor · 2 Normberäkning · 3 Beslut · 4 Utbetalning (the last three carry approval state).
-  // Approvals load eagerly (not gated on the active sub-tab) so the per-section "godkänd" checks show on
-  // the Normberäkning/Beslut/Utbetalning tabs the moment the errand opens.
-  const approvalsEnabled = showCalculationSections;
+  // 0 Ansökan · 1 Bilagor · 2 Normberäkning · 3 Beslut · 4 Utbetalning (the last three carry a Lifecare check).
   // Warnings load with the errand rather than on demand: the SSBTEK read-failure banner has to appear
   // as soon as the errand opens, and caremanagement exposes no unlogged way to ask whether that warning
   // exists. The trade-off is accepted — listing warnings is recorded in the errand's event log, unlike
@@ -166,9 +170,6 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     refresh: refreshAttachments,
   } = useErrandAttachments(resolvedErrandId);
 
-  // Section approvals back the per-section checkboxes, the tab "godkänd" checks and the "Besluta och
-  // utbetala" action — so they load eagerly with the errand (see approvalsEnabled above).
-  const { approvals, pendingSection, setApproval } = useErrandSectionApprovals(resolvedErrandId, approvalsEnabled);
   // Bevakningar live in Lifecare and are read from there; the list also gives the section its badge.
   const {
     reminders,
@@ -367,65 +368,34 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           [
             {
               label: t('detail.tabs.calculation'),
-              approved: !!approvals.calculation?.approved,
+              approved: sectionStatus.calculationFinalized,
               content: (
                 <ErrandTabPanel>
                   <ErrandNormberakning
                     errandId={apiErrandId}
                     warnings={openWarnings}
                     onWarningsChanged={refreshWarnings}
-                    locked={!!approvals.calculation?.approved}
+                    onLifecareChanged={refreshSectionStatus}
                     handlaggare={errand.assignedUserId}
-                    headerSlot={
-                      <SectionApprovalCheckbox
-                        label={t('detail.approval.calculation')}
-                        approval={approvals.calculation}
-                        disabled={pendingSection === 'CALCULATION'}
-                        onChange={(approved) => void setApproval('CALCULATION', approved)}
-                      />
-                    }
                   />
                 </ErrandTabPanel>
               ),
             },
             {
               label: t('detail.tabs.decision'),
-              approved: !!approvals.decision?.approved,
+              approved: sectionStatus.decisionSaved,
               content: (
                 <ErrandTabPanel>
-                  <ErrandBeslut
-                    errandId={apiErrandId}
-                    locked={!!approvals.decision?.approved}
-                    headerSlot={
-                      <SectionApprovalCheckbox
-                        label={t('detail.approval.decision')}
-                        approval={approvals.decision}
-                        disabled={pendingSection === 'DECISION'}
-                        onChange={(approved) => void setApproval('DECISION', approved)}
-                      />
-                    }
-                    onRegisterSave={registerBeslutSave}
-                  />
+                  <ErrandBeslut errandId={apiErrandId} onRegisterSave={registerBeslutSave} />
                 </ErrandTabPanel>
               ),
             },
             {
               label: t('detail.tabs.payment'),
-              approved: !!approvals.payment?.approved,
+              approved: sectionStatus.paymentRegistered,
               content: (
                 <ErrandTabPanel>
-                  <ErrandUtbetalning
-                    errandId={apiErrandId}
-                    locked={!!approvals.payment?.approved}
-                    headerSlot={
-                      <SectionApprovalCheckbox
-                        label={t('detail.approval.payment')}
-                        approval={approvals.payment}
-                        disabled={pendingSection === 'PAYMENT'}
-                        onChange={(approved) => void setApproval('PAYMENT', approved)}
-                      />
-                    }
-                  />
+                  <ErrandUtbetalning errandId={apiErrandId} onLifecareChanged={refreshSectionStatus} />
                 </ErrandTabPanel>
               ),
             },
@@ -510,7 +480,6 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                   refresh();
                   refreshAttachments();
                 }}
-                checkApprovals={showCalculationSections}
               />
             : null}
             {isSupplementaryApplication ?

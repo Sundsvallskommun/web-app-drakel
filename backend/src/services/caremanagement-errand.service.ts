@@ -74,6 +74,22 @@ class CaremanagementErrandService {
     });
   }
 
+  /**
+   * Points the errand at one more of its utbetalningar in Lifecare, so careM finds a bifall's utbetalning by id
+   * rather than by insats and month. careM replaces the list the patch names, so it goes whole.
+   */
+  async addLifecarePaymentId(errandId: string, lifecarePaymentId: string): Promise<void> {
+    const view = await this.getFinancialAssistanceView(errandId);
+    const known = view.data?.data?.lifecarePaymentIds ?? [];
+    if (known.includes(lifecarePaymentId)) {
+      return;
+    }
+    await this.apiService.patch<unknown>({
+      url: caremanagementUrl('errands', 'financial-assistance', errandId, 'data'),
+      data: { lifecarePaymentIds: [...known, lifecarePaymentId] },
+    });
+  }
+
   async createErrand(errand: CreateErrandDto): Promise<ApiResponse<Errand>> {
     // caremanagement returns "201 Created" with a Location header and an empty body, so we resolve
     // the created errand by the id in that Location and return the full errand to the caller.

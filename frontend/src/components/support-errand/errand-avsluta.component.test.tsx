@@ -1,6 +1,5 @@
 import { getDigitalMailbox } from '@services/decision-notification-service';
 import { finalizeErrand } from '@services/finalize-service';
-import { getSectionApprovals } from '@services/section-approval-service';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -14,18 +13,15 @@ vi.mock('@components/common/text-editor.component', () => ({
 
 vi.mock('@services/decision-notification-service', () => ({ getDigitalMailbox: vi.fn() }));
 vi.mock('@services/finalize-service', () => ({ finalizeErrand: vi.fn() }));
-vi.mock('@services/section-approval-service', () => ({ getSectionApprovals: vi.fn() }));
 
 const finalized = {
   decisionId: 'decision-1',
-  paymentIds: [],
-  payeeWarnings: [],
   processMessageCorrelated: true,
   failedChannels: [],
 };
 
-const openModal = async ({ onFinalized = vi.fn(), checkApprovals = false } = {}) => {
-  render(<ErrandAvsluta errandId="errand-1" onFinalized={onFinalized} checkApprovals={checkApprovals} />);
+const openModal = async ({ onFinalized = vi.fn() } = {}) => {
+  render(<ErrandAvsluta errandId="errand-1" onFinalized={onFinalized} />);
   fireEvent.click(screen.getByRole('button', { name: 'Besluta och utbetala' }));
   await waitFor(() => {
     expect(screen.getByLabelText('Meddelande')).toBeInTheDocument();
@@ -45,8 +41,6 @@ describe('ErrandAvsluta', () => {
   beforeEach(() => {
     vi.mocked(getDigitalMailbox).mockReset();
     vi.mocked(getDigitalMailbox).mockResolvedValue({ data: false });
-    vi.mocked(getSectionApprovals).mockReset();
-    vi.mocked(getSectionApprovals).mockResolvedValue({ data: {} });
     vi.mocked(finalizeErrand).mockReset();
     vi.mocked(finalizeErrand).mockResolvedValue({ data: finalized });
   });
@@ -101,17 +95,6 @@ describe('ErrandAvsluta', () => {
       digitalBrevlada: false,
       brev: false,
     });
-  });
-
-  it('holds the confirm button until every section is approved', async () => {
-    // caremanagement refuses a finalize with an unapproved section, so offering the button would only fail.
-    vi.mocked(getSectionApprovals).mockResolvedValue({
-      data: { calculation: { approved: true }, payment: { approved: false }, decision: { approved: true } },
-    });
-    await openModal({ checkApprovals: true });
-
-    expect(confirmButton()).toBeDisabled();
-    expect(screen.getByText('Utbetalning')).toBeInTheDocument();
   });
 
   it('keeps the dialog open with the reason when the finalize is refused', async () => {

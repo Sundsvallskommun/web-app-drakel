@@ -520,8 +520,6 @@ export interface DecisionRegistration {
 
 export interface FinalizeResult {
   decisionId?: string;
-  paymentIds: string[];
-  payeeWarnings: string[];
   processMessageCorrelated: boolean;
   lifecareDecision?: DecisionRegistration;
   failedChannels: string[];
@@ -1058,6 +1056,17 @@ export interface CreateLifecareReminderDto {
   status: number;
 }
 
+export interface LifecareSectionStatusView {
+  calculationFinalized: boolean;
+  decisionSaved: boolean;
+  paymentRegistered: boolean;
+}
+
+export interface LifecareSectionStatusApiResponse {
+  data: LifecareSectionStatusView;
+  message: string;
+}
+
 export interface MessageAttachment {
   id?: string;
   fileName?: string;
@@ -1327,33 +1336,6 @@ export interface ErrandNotificationApiResponse {
 export interface RenderPdfDto {
   /** @minLength 1 */
   html: string;
-}
-
-export interface SetSectionApprovalDto {
-  approved: boolean;
-}
-
-export interface SectionApproval {
-  section?: string;
-  approved?: boolean;
-  approvedBy?: string;
-  approvedAt?: string;
-}
-
-export interface SectionApprovals {
-  calculation?: SectionApproval;
-  payment?: SectionApproval;
-  decision?: SectionApproval;
-}
-
-export interface SectionApprovalsApiResponse {
-  data: SectionApprovals;
-  message: string;
-}
-
-export interface SectionApprovalApiResponse {
-  data: SectionApproval;
-  message: string;
 }
 
 export interface PermissionsResponse {

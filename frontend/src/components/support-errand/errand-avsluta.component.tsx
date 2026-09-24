@@ -3,12 +3,11 @@
 import TextEditor from '@components/common/text-editor.component';
 import { getDigitalMailbox } from '@services/decision-notification-service';
 import { finalizeErrand } from '@services/finalize-service';
-import { getSectionApprovals, SectionKey } from '@services/section-approval-service';
 import { Button, Checkbox, FormControl, FormLabel, Modal } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { FinalizeFollowUp, finalizeFollowUps } from '@utils/finalize-follow-ups';
 import { FC, useState } from 'react';
-import { Trans, useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 
 import { FinalizeFollowUps } from './finalize-follow-ups.component';
 
@@ -16,23 +15,19 @@ const EMPTY_MESSAGE: TextEditorValue = { markup: '', plainText: '' };
 
 /**
  * "Besluta och utbetala" action for the administration bar. On confirm the BFF finalizes the errand in
- * caremanagement from the saved beslut and utbetalning drafts — which records the decision, hands the
- * payments to Lifecare and moves the process on (the errand becomes GRANTED/REJECTED) — and then sends the
- * beslut through the chosen channels (Mina sidor / digital brevlåda / brev). The digital-brevlåda channel is
- * only offered when the applicant has a reachable mailbox.
- *
- * caremanagement refuses a finalize until every section is approved, so when `checkApprovals` is set
- * (renewal errands) the confirm button is held until they are. Anything that did not go through after the
- * errand was decided is listed in the dialog before it closes, since the errand cannot be finalized again.
+ * caremanagement from the beslut saved in Lifecare — which records the decision and moves the process on
+ * (the errand becomes GRANTED/REJECTED) — and then sends the beslut through the chosen channels (Mina sidor /
+ * digital brevlåda / brev). The digital-brevlåda channel is only offered when the applicant has a reachable
+ * mailbox. A refusal (no beslut or beräkning in Lifecare yet) is shown in careM's or the BFF's words. Anything
+ * that did not go through after the errand was decided is listed in the dialog before it closes, since the
+ * errand cannot be finalized again.
  */
 export const ErrandAvsluta: FC<{
   errandId: string;
   onFinalized: () => void;
-  checkApprovals?: boolean;
-}> = ({ errandId, onFinalized, checkApprovals = true }) => {
+}> = ({ errandId, onFinalized }) => {
   const { t } = useTranslation('errand');
   const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
-  const [unapproved, setUnapproved] = useState<SectionKey[]>([]);
   const [checking, setChecking] = useState<boolean>(false);
   const [working, setWorking] = useState<boolean>(false);
   const [error, setError] = useState<string>();
@@ -61,22 +56,6 @@ export const ErrandAvsluta: FC<{
     const available = !mailboxRes.error && mailboxRes.data === true;
     setMailboxAvailable(available);
     setDigitalBrevlada(available);
-
-    let pending: SectionKey[] = [];
-    if (checkApprovals) {
-      const res = await getSectionApprovals(errandId);
-      const approvals = res.data ?? {};
-      pending = (
-        [
-          ['CALCULATION', approvals.calculation],
-          ['PAYMENT', approvals.payment],
-          ['DECISION', approvals.decision],
-        ] as const
-      )
-        .filter(([, approval]) => !approval?.approved)
-        .map(([key]) => key);
-    }
-    setUnapproved(pending);
     setChecking(false);
     setConfirmOpen(true);
   };
@@ -157,20 +136,6 @@ export const ErrandAvsluta: FC<{
           </>
         : <>
             <Modal.Content className="flex flex-col gap-16">
-              {unapproved.length > 0 ?
-                <p className="m-0">
-                  <Trans
-                    t={t}
-                    i18nKey="decideAndPay.unapproved"
-                    count={unapproved.length}
-                    values={{
-                      sections: unapproved.map((section) => t(`decideAndPay.sections.${section}`)).join(', '),
-                    }}
-                    components={{ strong: <strong /> }}
-                  />
-                </p>
-              : null}
-
               <div className="flex flex-col gap-8">
                 <span className="text-small text-dark-secondary">{t('decideAndPay.sendVia')}</span>
                 <Checkbox
@@ -238,7 +203,7 @@ export const ErrandAvsluta: FC<{
                 variant="primary"
                 loading={working}
                 loadingText={t('decideAndPay.executing')}
-                disabled={messageMissing || unapproved.length > 0}
+                disabled={messageMissing}
                 onClick={() => void confirmAndFinalize()}
               >
                 {t('decideAndPay.button')}

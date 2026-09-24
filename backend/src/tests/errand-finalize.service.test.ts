@@ -61,15 +61,13 @@ describe('ErrandFinalizeService.finalize', () => {
     expect(finalize.mock.calls[0]?.[1]).toMatchObject({
       decision: { outcome: 'BIFALL', reason: 'Arbetslös', amount: 7900, decisionMessage: '<p>Beslut</p>' },
       communication: { minaSidor: true, digitalMailbox: false, letter: true },
-      // The Utbetalning tab registers utbetalningar in Lifecare directly; careM gets none.
-      payments: [],
     });
+    // The Utbetalning tab registers utbetalningar in Lifecare directly; careM gets none.
+    expect(finalize.mock.calls[0]?.[1]).not.toHaveProperty('payments');
     expect(receiptFinalized).toHaveBeenCalledWith('errand-1', 'decision-1', 98);
     expect(send).toHaveBeenCalledWith('errand-1', expect.objectContaining(channels), 'caseworker01');
     expect(result).toEqual({
       decisionId: 'decision-1',
-      paymentIds: [],
-      payeeWarnings: [],
       processMessageCorrelated: true,
       lifecareDecision: { decisionId: 'decision-1', outcome: 'REGISTERED', lifecareId: '98' },
       failedChannels: ['Brev'],

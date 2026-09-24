@@ -14,7 +14,6 @@ import { ErrandSectionHeader } from './errand-section-header.component';
 import { ErrandUtbetalningForm } from './errand-utbetalning-form.component';
 import { LifecareBalanceBox } from './lifecare-balance-box.component';
 import { LifecarePaymentList } from './lifecare-payment-list.component';
-import { LockedBanner } from './lockable-section.component';
 import { PaymentStatusRow } from './payment-status-row.component';
 
 // How many of the insats's utbetalningar the tab lists — the latest ones, newest first.
@@ -27,11 +26,9 @@ const LATEST_PAYMENT_COUNT = 5;
  */
 export const ErrandUtbetalning: FC<{
   errandId: string;
-  /** Whether the section is approved — only shows the locked banner, since the tab itself is read-only. */
-  locked?: boolean;
-  /** Rendered to the right of the section heading (the "Markera som komplett" approval control). */
-  headerSlot?: ReactNode;
-}> = ({ errandId, locked = false, headerSlot }) => {
+  /** Called after an utbetalning is registered in Lifecare, so the tab's check can follow. */
+  onLifecareChanged?: () => void;
+}> = ({ errandId, onLifecareChanged }) => {
   const { t } = useTranslation('decision');
   const { status, isLoading, error, refresh } = useErrandPayment(errandId);
   const lifecareOptions = useLifecarePaymentOptions(errandId);
@@ -41,6 +38,7 @@ export const ErrandUtbetalning: FC<{
     refresh();
     lifecareOptions.refresh();
     lifecarePayments.refresh();
+    onLifecareChanged?.();
   };
 
   const renderStatus = (): ReactNode => {
@@ -56,15 +54,7 @@ export const ErrandUtbetalning: FC<{
 
   return (
     <div className="flex flex-col gap-24">
-      <ErrandSectionHeader
-        title={t('payment.header.title')}
-        description={t('payment.header.description')}
-        action={headerSlot}
-      >
-        {locked ?
-          <LockedBanner />
-        : null}
-      </ErrandSectionHeader>
+      <ErrandSectionHeader title={t('payment.header.title')} description={t('payment.header.description')} />
 
       <ContentBox
         title={t('payment.statusTitle')}
@@ -88,7 +78,6 @@ export const ErrandUtbetalning: FC<{
           errandId={errandId}
           options={lifecareOptions.options}
           optionsError={lifecareOptions.errorMessage}
-          disabled={locked}
           onSaved={refreshAll}
         />
       </ContentBox>

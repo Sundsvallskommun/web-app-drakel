@@ -30,8 +30,6 @@ const toFinalizeResult = (
   failedChannels: string[],
 ): FinalizeResult => ({
   decisionId: finalized?.decisionId,
-  paymentIds: finalized?.paymentIds ?? [],
-  payeeWarnings: finalized?.payeeWarnings ?? [],
   processMessageCorrelated: finalized?.processMessageCorrelated ?? false,
   lifecareDecision,
   failedChannels,

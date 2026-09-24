@@ -56,205 +56,6 @@ export interface Violation {
   message?: string;
 }
 
-/** Request to create or replace a financial assistance payment on an errand. */
-export interface PaymentRequest {
-  /** Provenance, defaults to CASEWORKER when omitted. LIFECARE (with lifecareId) posts a payment read out of Lifecare onto the errand. */
-  source?: PaymentRequestSourceEnum;
-  /**
-   * The payment's id in Lifecare. Set when posting a LIFECARE-sourced payment (the idempotency key) or when stamping back the id of a registered caseworker payment.
-   * @minLength 0
-   * @maxLength 64
-   */
-  lifecareId?: string;
-  /**
-   * The type of money paid out. Unconstrained — the value set comes from Lifecare and isn't known yet.
-   * @minLength 0
-   * @maxLength 64
-   */
-  moneyType?: string;
-  /**
-   * The date the payment is/was made
-   * @format date
-   */
-  paymentDate?: string;
-  /** The payment amount */
-  amount?: number;
-  /**
-   * The application month the payment concerns
-   * @pattern ^\d{4}-(0[1-9]|1[0-2])$
-   */
-  applicationMonth?: string;
-  /**
-   * The accounting code (kontering) the bistånd is booked against. Free text: FamilyCare exposes no catalogue of accounting codes over the API.
-   * @minLength 0
-   * @maxLength 64
-   */
-  accountingCode?: string;
-  /** Stakeholder ids the payment is reported on */
-  reportedOnStakeholderIds?: string[];
-  /**
-   * The accounting date for the payment
-   * @format date
-   */
-  accountingDate?: string;
-  /** Whether the payment is excluded from being paid out */
-  excludedFromPayment?: boolean;
-  /** The id of the payee row on the errand this payment pays to, as GET .../payees returns it. Send it when the caseworker picked an entry from that list — it is what lets Draken's BFF pick the payee by its Lifecare id instead of matching on name and account number. Omit it for a payee derived from the Lifecare payment history, which has no local row. */
-  payeeId?: string;
-  /**
-   * The payee's id in Lifecare. Send it when the caseworker picked a payee Lifecare already has — the list read from Lifecare, or one just created there — so the payment can be registered against that payee by id instead of matching on name and account number.
-   * @minLength 0
-   * @maxLength 64
-   */
-  lifecarePayeeId?: string;
-  /**
-   * The stakeholder id of the payee
-   * @minLength 0
-   * @maxLength 64
-   */
-  payeeStakeholderId?: string;
-  /**
-   * How the payment is made. Unconstrained — the value set comes from Lifecare and isn't known yet.
-   * @minLength 0
-   * @maxLength 64
-   */
-  paymentMethod?: string;
-  /**
-   * The payee's name
-   * @minLength 0
-   * @maxLength 255
-   */
-  payeeName?: string;
-  /**
-   * The payee's address
-   * @minLength 0
-   * @maxLength 255
-   */
-  payeeAddress?: string;
-  /**
-   * The payee's c/o line
-   * @minLength 0
-   * @maxLength 255
-   */
-  payeeCareOf?: string;
-  /**
-   * The payee's zip code
-   * @minLength 0
-   * @maxLength 16
-   */
-  payeeZipCode?: string;
-  /**
-   * The payee's city
-   * @minLength 0
-   * @maxLength 255
-   */
-  payeeCity?: string;
-  /**
-   * The payee's bank clearing number
-   * @minLength 0
-   * @maxLength 64
-   */
-  clearingNumber?: string;
-  /**
-   * The payee's bank account number
-   * @minLength 0
-   * @maxLength 64
-   */
-  accountNumber?: string;
-  /**
-   * The local payment number, when applicable
-   * @minLength 0
-   * @maxLength 64
-   */
-  localPaymentNumber?: string;
-  /**
-   * The invoice number, when applicable
-   * @minLength 0
-   * @maxLength 64
-   */
-  invoiceNumber?: string;
-  /** Whether the payment uses OCR */
-  usesOcr?: boolean;
-  /** Free-text message lines printed on the payment */
-  messageLines?: string[];
-}
-
-/** A financial assistance payment (utbetalning) on an errand. */
-export interface Payment {
-  /** The payment id */
-  id?: string;
-  /** Provenance: CASEWORKER for one authored in Draken, LIFECARE for one read out of Lifecare and posted onto the errand. */
-  source?: PaymentSourceEnum;
-  /** The payment's id in Lifecare once it exists there — null until a caseworker-authored payment has been registered there; always set for a LIFECARE-sourced one. */
-  lifecareId?: string;
-  /** Lifecare's own message when the lifecare-result report said FAILED — shown to the caseworker as-is */
-  lifecareDetail?: string;
-  /** Server-managed lifecycle status. DRAFT for a caseworker's saved draft; PENDING_REGISTRATION for one a decision created, waiting to be registered in Lifecare; REGISTERED once Draken's BFF has reported it registered (REGISTERED means it exists there, not that it has been paid out — whether it was effectuated is a separate question, asked through POST .../financial-assistance/payment-status); FAILED when it could not be registered, with Lifecare's reason in lifecareDetail. */
-  status?: PaymentStatusEnum;
-  /** The type of money paid out. Unconstrained — the value set comes from Lifecare and isn't known yet. */
-  moneyType?: string;
-  /**
-   * The date the payment is/was made
-   * @format date
-   */
-  paymentDate?: string;
-  /** The payment amount */
-  amount?: number;
-  /** The application month the payment concerns, yyyy-MM */
-  applicationMonth?: string;
-  /** The accounting code (kontering) the bistånd is booked against. Free text: FamilyCare exposes no catalogue of accounting codes over the API. */
-  accountingCode?: string;
-  /** Stakeholder ids the payment is reported on */
-  reportedOnStakeholderIds?: string[];
-  /**
-   * The accounting date for the payment
-   * @format date
-   */
-  accountingDate?: string;
-  /** Whether the payment is excluded from being paid out */
-  excludedFromPayment?: boolean;
-  /** The id of the payee row on the errand this payment pays to, as GET .../payees returns it. Null for a payee derived from the Lifecare payment history (no local row) and for a manual payee deleted after the decision — the copied payee fields below are owned by the decision and stay either way. */
-  payeeId?: string;
-  /** The payee's id in Lifecare, read from that payee row — set once the payee's creation in Lifecare has been reported back. Lets Draken's BFF pick the payee in Lifecare by id instead of matching on name and account number. Null when the payee has no local row, or when its creation has not been reported yet (lifecareStatus PENDING or FAILED on that payee). */
-  lifecarePayeeId?: string;
-  /** The stakeholder id of the payee */
-  payeeStakeholderId?: string;
-  /** How the payment is made. Unconstrained — the value set comes from Lifecare and isn't known yet. */
-  paymentMethod?: string;
-  /** The payee's name */
-  payeeName?: string;
-  /** The payee's address */
-  payeeAddress?: string;
-  /** The payee's c/o line */
-  payeeCareOf?: string;
-  /** The payee's zip code */
-  payeeZipCode?: string;
-  /** The payee's city */
-  payeeCity?: string;
-  /** The payee's bank clearing number */
-  clearingNumber?: string;
-  /** The payee's bank account number */
-  accountNumber?: string;
-  /** The local payment number, when applicable */
-  localPaymentNumber?: string;
-  /** The invoice number, when applicable */
-  invoiceNumber?: string;
-  /** Whether the payment uses OCR */
-  usesOcr?: boolean;
-  /** Free-text message lines printed on the payment */
-  messageLines?: string[];
-  /**
-   * When the payment was created
-   * @format date-time
-   */
-  created?: string;
-  /**
-   * When the payment was last modified
-   * @format date-time
-   */
-  modified?: string;
-}
-
 /** Request to create or replace a financial assistance monitoring on an errand. */
 export interface MonitoringRequest {
   /** Provenance, defaults to CASEWORKER when omitted. LIFECARE (with lifecareId) posts a monitoring read out of Lifecare onto the errand. */
@@ -629,15 +430,17 @@ export interface FinancialAssistanceData {
    */
   attestedAt?: string;
   /**
-   * The Lifecare decision (beslut) id the errand concerns, set by the caseworker
+   * Reference to the Lifecare decision (beslut) the errand concerns, set by Draken once the beslut is saved in Lifecare. A reference only: whether the beslut is locked (skrivskyddat) is Lifecare's status and is never stored here. finalize requires it for every outcome.
    * @format int32
    */
   lifecareDecisionId?: number;
   /**
-   * The Lifecare normberäkning (calculation) id the errand concerns, set by the caseworker once the calculation is saved in Lifecare
+   * Reference to the Lifecare normberäkning (calculation) the errand concerns, set by Draken once the calculation is saved in Lifecare. A reference only: whether the calculation is final (slutlig) is Lifecare's status and is never stored here. finalize requires it for a granting outcome (BIFALL/DELAVSLAG).
    * @format int32
    */
   lifecareCalculationId?: number;
+  /** References to the Lifecare payments (utbetalningar) a bifall pays with. Set either by Draken once it has registered a payment in Lifecare, or by careM itself once payment-status has found the errand's payments paid in Lifecare on the errand's own insats. When given in a PATCH the list replaces the stored one; an empty list clears it. References only: whether a payment is registered or paid out is read from Lifecare, never stored here. When set, payment-status verifies exactly these ids against Lifecare, and no other errand can take them; finalize refuses an AVSLAG that carries any. */
+  lifecarePaymentIds?: string[];
   /** Children included in the application */
   children?: Child[];
   /** Costs applied for */
@@ -1433,7 +1236,7 @@ export interface Warning {
   type?: WarningTypeEnum;
   /** Swedish display name for the warning type */
   typeDisplayName?: string;
-  /** The Draken view section (tab) the warning belongs to — derived from the type: the decision proposal's types are DECISION, the payment warnings' are PAYMENT, everything else is CALCULATION */
+  /** The Draken view section (tab) the warning belongs to — derived from the type: the decision proposal's types are DECISION, the payment warnings' are PAYMENT, a LIFECARE_READ_FAILED is on the tab whose warnings depend on the failed read (its sourceKey), everything else is CALCULATION */
   section?: WarningSectionEnum;
   /** A stable key for the income the warning concerns (benefit/incomeType) — the dedup key */
   sourceKey?: string;
@@ -1455,27 +1258,6 @@ export interface Warning {
    * @format date-time
    */
   updated?: string;
-}
-
-/** Draken's BFF's report on registering a payment in Lifecare. */
-export interface PaymentLifecareResult {
-  /**
-   * What the BFF ended up doing
-   * @minLength 1
-   */
-  outcome: PaymentLifecareResultOutcomeEnum;
-  /**
-   * The payment id Lifecare gave, when it gave one — what CreatePaymentForService returns. Stored as the payment's lifecareId
-   * @minLength 0
-   * @maxLength 64
-   */
-  lifecarePaymentId?: string;
-  /**
-   * Lifecare's own message. Required when outcome is FAILED — it is shown to the caseworker as-is
-   * @minLength 0
-   * @maxLength 1024
-   */
-  detail?: string;
 }
 
 /** A betalningsmottagare to add by hand on an errand. */
@@ -1605,129 +1387,24 @@ export interface FinalizeDecision {
   decisionMessage?: string;
 }
 
-/** One payment to register in Lifecare for a granting decision. */
-export interface FinalizePayment {
-  /**
-   * The date the payment is to be made
-   * @format date
-   */
-  paymentDate: string;
-  /**
-   * The payment amount in SEK
-   * @min 0
-   */
-  amount: number;
-  /**
-   * The month the payment concerns (ISO year-month, yyyy-MM) — the month the process polls Lifecare payments for
-   * @pattern ^\d{4}-(0[1-9]|1[0-2])$
-   */
-  concernedMonth: string;
-  /** Who the payment goes to and how */
-  payee: Payee;
-  /**
-   * Optional accounting code (kontering) for the payment
-   * @minLength 0
-   * @maxLength 64
-   */
-  accountingCode?: string;
-  /**
-   * The payee's local payment number (lokalbetalningsnummer), for the payment methods Lifecare takes one for
-   * @minLength 0
-   * @maxLength 64
-   */
-  localPaymentNumber?: string;
-  /**
-   * The invoice number (räkningsnummer). Lifecare requires it for some payment methods, e.g. bankgiro via plusgiro.
-   * @minLength 0
-   * @maxLength 64
-   */
-  invoiceNumber?: string;
-}
-
-/** Finalize a financial assistance errand: record the decision and its payments and resume the process. */
+/** Finalize a financial assistance errand: record the decision and resume the process. Carries no payments - Draken registers them directly in Lifecare, and the process reads them from there. A payments field from an older client is ignored. */
 export interface FinalizeRequest {
   /** The decision */
   decision: FinalizeDecision;
   /** The channels chosen for sending the calculation and decision to the applicant */
   communication: CommunicationChannels;
-  /** The payments to register in Lifecare. Required (at least one) when the outcome carries an amount; must be empty for AVSLAG. */
-  payments?: FinalizePayment[];
   /** Whether the caseworker changed the household size (gemensamma kostnader) in the calculation draft. Recorded on the errand and served on the view. Defaults to false. */
   householdSizeChanged?: boolean;
 }
 
-/** The recipient of a payment and the payment method. */
-export interface Payee {
-  /** The id of the payee row this came from, as GET .../payees returns it — send it whenever the caseworker picked an entry from that list. It is what lets Draken's BFF pick the payee by its Lifecare id instead of matching on name and account number. Omit it for a payee that has no row: one derived from the Lifecare payment history carries a null id in the list. */
-  id?: string;
-  /**
-   * Name of the payee as registered in Lifecare
-   * @minLength 0
-   * @maxLength 255
-   */
-  name: string;
-  /**
-   * The Lifecare payment method, e.g. bank account, bankgiro, plusgiro or utbetalningskort
-   * @minLength 0
-   * @maxLength 64
-   */
-  paymentMethod: string;
-  /**
-   * Clearing number, when the payment method needs one
-   * @minLength 0
-   * @maxLength 16
-   */
-  clearing?: string;
-  /**
-   * Account, bankgiro or plusgiro number, when the payment method needs one
-   * @minLength 0
-   * @maxLength 64
-   */
-  accountNumber?: string;
-  /**
-   * The payee's id in Lifecare. Send it when the caseworker picked a payee Lifecare already has — the list read from Lifecare, or one just created there — so the payment can be registered against that payee by id instead of matching on name and account number.
-   * @minLength 0
-   * @maxLength 64
-   */
-  lifecarePayeeId?: string;
-  /**
-   * The payee's street address
-   * @minLength 0
-   * @maxLength 255
-   */
-  address?: string;
-  /**
-   * The payee's c/o line
-   * @minLength 0
-   * @maxLength 255
-   */
-  careOf?: string;
-  /**
-   * The payee's zip code
-   * @minLength 0
-   * @maxLength 16
-   */
-  zipCode?: string;
-  /**
-   * The payee's city
-   * @minLength 0
-   * @maxLength 255
-   */
-  city?: string;
-}
-
-/** The receipt of a finalize — decision id, payment ids, process correlation, payee warnings and the communication channels to act on. */
+/** The receipt of a finalize — decision id, process correlation and the communication channels to act on. */
 export interface FinalizeResponse {
   /** Id of the PAYMENT decision recorded on the errand */
   decisionId?: string;
-  /** The ids of the Payment rows the finalize created, in request order. Draken's BFF reads each through GET .../payments/{paymentId}, registers it in Lifecare and reports back through .../payments/{paymentId}/lifecare-result. */
-  paymentIds?: string[];
   /** Whether the PaymentDecisionReceived message reached the process. False means it did not reach it now — the errand stays AWAITING_DECISION and the message is queued and re-sent automatically (at most an hour apart, for three days). Draken should say so; correlating by hand through the process-messages endpoint is only needed if the retry gives up. */
   processMessageCorrelated?: boolean;
   /** The communication channels chosen — the frontend sends the decision through these */
   communication?: CommunicationChannels;
-  /** Warnings about the payees the decision pays to — a payment cannot be registered in Lifecare against a payee that is not there yet. Present when a payment names a manually added payee careM has not seen reported SYNCED (payees/{payeeId}/lifecare-result). Empty when every payee is in Lifecare. The finalize itself is not blocked by these; the decision and the payment rows are created either way. */
-  payeeWarnings?: string[];
 }
 
 /** What a caseworker sends to add or patch a person row (identity + caseworker-writable fields only). */
@@ -2004,9 +1681,10 @@ export interface NormExpenseRow {
 /** Request to read whether the Lifecare payment for an application month has been effectuated. */
 export interface PaymentStatusRequest {
   /**
-   * The errand whose decided payments to verify. When given, the status is effectuated only when every payment the
-   * decision registered is found in Lifecare, by its Lifecare id. Without it, any Lifecare payment for the applicant and
-   * application month counts — kept only for callers that predate the field.
+   * The errand whose payments to verify. When given, the check is errand-specific: the Lifecare payments linked to the
+   * errand (lifecarePaymentIds), else the payment rows an earlier finalize created, else the applicant's Lifecare
+   * payments on the errand's own insats for the application month that no other errand references. Without it, any
+   * Lifecare payment for the applicant and application month counts — kept only for callers that predate the field.
    */
   errandId?: string;
   /** The applicant's partyId (personId GUID) */
@@ -2020,15 +1698,15 @@ export interface PaymentStatusRequest {
 
 /** Whether the Lifecare payment for the application month has been effectuated. */
 export interface PaymentStatusResponse {
-  /** True when the decided payments (or, without an errand, a payment for the application month) are registered in Lifecare */
+  /** True when Lifecare reports the errand's payments paid (or, without an errand, a payment for the application month) */
   effectuated?: boolean;
   /** The date the payment was made (Lifecare PayDate), when effectuated */
   paymentDate?: string;
   /** Why the status is not effectuated, in words a caseworker can act on; empty when effectuated */
   detail?: string;
-  /** The last working day the errand's decided payments may wait (ISO date); absent without an errand or when the errand has no decided payments */
+  /** The last working day the errand's payments may wait, counted from the decision (ISO date); absent without an errand */
   deadline?: string;
-  /** True when the payments are still not effectuated after the deadline, or the bifall has no decided payments at all — the process then notifies the caseworker. Never closes anything. */
+  /** True when the payments are still not effectuated after the deadline — the process then notifies the caseworker. Never closes anything. */
   overdue?: boolean;
 }
 
@@ -2786,7 +2464,10 @@ export interface FinancialAssistanceView {
   data?: FinancialAssistanceData;
   /** The most recent automated recommendation on the errand (the latest RECOMMENDATION decision the caseworker reviews), or null when none has been produced. Carries the recommended value and, when the pipeline has computed it, the recommended amount/period to prefill the Decision form. */
   recommendation?: Decision;
-  /** The caseworker approval state of the three financial assistance view sections (calculation, payment, decision) — whether each has been verified as approved. Always present with all three sections. */
+  /**
+   * DEPRECATED - being retired. The caseworker check-offs of the three financial assistance view sections (calculation, payment, decision). They no longer gate finalize; the Lifecare statuses (final normberäkning, locked beslut, registered payment) replace them. Always present with all three sections while it remains.
+   * @deprecated
+   */
   sectionApprovals?: SectionApprovals;
   /** The communication channels the caseworker chose when finalizing the errand (Besluta och utbetala), or null until then. The Draken BFF sends the decision through these; caremanagement only records the choice. */
   communication?: CommunicationChannels;
@@ -2837,15 +2518,6 @@ export interface RpaContext {
   applicantPersonId?: string;
   /** The co-applicant's personal number; null when there is no co-applicant or it could not be resolved */
   coApplicantPersonId?: string;
-}
-
-/** The number of payments on the errand */
-export interface PaymentCount {
-  /**
-   * Number of payments on the errand
-   * @format int64
-   */
-  count?: number;
 }
 
 /** The number of monitorings on the errand */
@@ -3336,26 +3008,6 @@ export interface StatusDefinition {
   displayName?: string;
 }
 
-/** Provenance, defaults to CASEWORKER when omitted. LIFECARE (with lifecareId) posts a payment read out of Lifecare onto the errand. */
-export enum PaymentRequestSourceEnum {
-  CASEWORKER = "CASEWORKER",
-  LIFECARE = "LIFECARE",
-}
-
-/** Provenance: CASEWORKER for one authored in Draken, LIFECARE for one read out of Lifecare and posted onto the errand. */
-export enum PaymentSourceEnum {
-  CASEWORKER = "CASEWORKER",
-  LIFECARE = "LIFECARE",
-}
-
-/** Server-managed lifecycle status. DRAFT for a caseworker's saved draft; PENDING_REGISTRATION for one a decision created, waiting to be registered in Lifecare; REGISTERED once Draken's BFF has reported it registered (REGISTERED means it exists there, not that it has been paid out — whether it was effectuated is a separate question, asked through POST .../financial-assistance/payment-status); FAILED when it could not be registered, with Lifecare's reason in lifecareDetail. */
-export enum PaymentStatusEnum {
-  DRAFT = "DRAFT",
-  PENDING_REGISTRATION = "PENDING_REGISTRATION",
-  REGISTERED = "REGISTERED",
-  FAILED = "FAILED",
-}
-
 /** Provenance, defaults to CASEWORKER when omitted. LIFECARE (with lifecareId) posts a monitoring read out of Lifecare onto the errand. */
 export enum MonitoringRequestSourceEnum {
   CASEWORKER = "CASEWORKER",
@@ -3672,9 +3324,10 @@ export enum WarningTypeEnum {
   COMMON_HOUSEHOLD_COST_CHECK = "COMMON_HOUSEHOLD_COST_CHECK",
   PREVIOUS_NORM_NOT_AVAILABLE = "PREVIOUS_NORM_NOT_AVAILABLE",
   RECOVERY_CLAIM = "RECOVERY_CLAIM",
+  LIFECARE_READ_FAILED = "LIFECARE_READ_FAILED",
 }
 
-/** The Draken view section (tab) the warning belongs to — derived from the type: the decision proposal's types are DECISION, the payment warnings' are PAYMENT, everything else is CALCULATION */
+/** The Draken view section (tab) the warning belongs to — derived from the type: the decision proposal's types are DECISION, the payment warnings' are PAYMENT, a LIFECARE_READ_FAILED is on the tab whose warnings depend on the failed read (its sourceKey), everything else is CALCULATION */
 export enum WarningSectionEnum {
   CALCULATION = "CALCULATION",
   DECISION = "DECISION",
@@ -3686,16 +3339,6 @@ export enum WarningStatusEnum {
   OPEN = "OPEN",
   ACKNOWLEDGED = "ACKNOWLEDGED",
   CLOSED = "CLOSED",
-}
-
-/**
- * What the BFF ended up doing
- * @minLength 1
- */
-export enum PaymentLifecareResultOutcomeEnum {
-  REGISTERED = "REGISTERED",
-  ALREADY_EXISTS = "ALREADY_EXISTS",
-  FAILED = "FAILED",
 }
 
 /** Where the option comes from: LIFECARE (seen on a payment in the last 12 months) or MANUAL (added by hand on this errand) */

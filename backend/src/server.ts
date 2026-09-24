@@ -25,13 +25,13 @@ import { LifecareDocumentsController } from './controllers/lifecare-documents.co
 import { LifecareHouseholdController } from './controllers/lifecare-household.controller';
 import { LifecarePaymentsController } from './controllers/lifecare-payments.controller';
 import { LifecareRemindersController } from './controllers/lifecare-reminders.controller';
+import { LifecareSectionStatusController } from './controllers/lifecare-section-status.controller';
 import { MessageController } from './controllers/message.controller';
 import { MetadataController } from './controllers/metadata.controller';
 import { NormberakningController } from './controllers/normberakning.controller';
 import { NoteController } from './controllers/note.controller';
 import { NotificationController } from './controllers/notification.controller';
 import { PdfController } from './controllers/pdf.controller';
-import { SectionApprovalController } from './controllers/section-approval.controller';
 import { UserController } from './controllers/user.controller';
 import { WarningController } from './controllers/warning.controller';
 
@@ -48,7 +48,6 @@ const app = new App([
   NoteController,
   NormberakningController,
   WarningController,
-  SectionApprovalController,
   JournalController,
   JobStimulusController,
   DocumentController,
@@ -68,6 +67,7 @@ const app = new App([
   LifecareDecisionController,
   LifecareCalculationController,
   LifecareHouseholdController,
+  LifecareSectionStatusController,
   LifecareRemindersController,
 ]);
 

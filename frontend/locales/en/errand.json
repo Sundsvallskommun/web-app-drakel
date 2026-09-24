@@ -3,7 +3,7 @@
     "loadError": "Could not load the errand ({{error}})",
     "unknownError": "unknown error",
     "newErrandHeading": "Register new errand",
-    "approved": "Approved",
+    "approved": "Done in Lifecare",
     "tabs": {
       "errand": "Errand",
       "application": "Application",
@@ -20,11 +20,6 @@
     "summaryPdf": "Summary (PDF)",
     "attachmentsFromApplication": "Attachments from the application",
     "messageAttachmentsSummary": "Summary of attachments from messages",
-    "approval": {
-      "calculation": "Mark norm calculation as complete",
-      "decision": "Mark decision as complete",
-      "payment": "Mark payment as complete"
-    },
     "ssbtekReadFailed": "SSBTEK could not be read"
   },
   "administrationBar": {
@@ -52,8 +47,6 @@
     "preparing": "Preparing…",
     "executing": "Executing…",
     "finalizeError": "The errand could not be decided.",
-    "unapproved_one": "Approve the section <strong>{{sections}}</strong> before deciding and paying.",
-    "unapproved_other": "Approve the sections <strong>{{sections}}</strong> before deciding and paying.",
     "sendVia": "Send the decision via:",
     "channels": {
       "minaSidor": "Mina sidor",
@@ -61,18 +54,12 @@
       "letter": "Letter",
       "message": "Message"
     },
-    "sections": {
-      "CALCULATION": "Norm calculation",
-      "PAYMENT": "Payment",
-      "DECISION": "Decision"
-    },
     "messageLabel": "Message to the applicant",
     "messageRequired": "Write a message before deciding",
     "done": {
       "title": "The errand is decided",
       "description": "The decision is saved, but this did not go through:",
       "failedChannels": "The decision could not be sent to: {{detail}}.",
-      "payeeWarnings": "Payee: {{detail}}",
       "processNotResumed": "The process was not told about the decision.",
       "decisionNotRegistered": "The decision was not registered in Lifecare: {{detail}} Register it directly in Lifecare.",
       "decisionReceiptLost": "{{detail}}"

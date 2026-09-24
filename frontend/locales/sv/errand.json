@@ -3,7 +3,7 @@
     "loadError": "Det gick inte att hämta ärendet ({{error}})",
     "unknownError": "okänt fel",
     "newErrandHeading": "Registrera nytt ärende",
-    "approved": "Godkänd",
+    "approved": "Klar i Lifecare",
     "tabs": {
       "errand": "Ärende",
       "application": "Ansökan",
@@ -20,11 +20,6 @@
     "summaryPdf": "Sammanställning (PDF)",
     "attachmentsFromApplication": "Bilagor från ansökan",
     "messageAttachmentsSummary": "Sammanställning bilagor från meddelanden",
-    "approval": {
-      "calculation": "Markera normberäkning som komplett",
-      "decision": "Markera beslut som komplett",
-      "payment": "Markera utbetalning som komplett"
-    },
     "ssbtekReadFailed": "SSBTEK kunde inte läsas"
   },
   "administrationBar": {
@@ -52,8 +47,6 @@
     "preparing": "Förbereder…",
     "executing": "Verkställer…",
     "finalizeError": "Ärendet kunde inte beslutas.",
-    "unapproved_one": "Godkänn sektionen <strong>{{sections}}</strong> innan du beslutar och betalar ut.",
-    "unapproved_other": "Godkänn sektionerna <strong>{{sections}}</strong> innan du beslutar och betalar ut.",
     "sendVia": "Skicka beslutet via:",
     "channels": {
       "minaSidor": "Mina sidor",
@@ -61,18 +54,12 @@
       "letter": "Brev",
       "message": "Meddelande"
     },
-    "sections": {
-      "CALCULATION": "Normberäkning",
-      "PAYMENT": "Utbetalning",
-      "DECISION": "Beslut"
-    },
     "messageLabel": "Meddelande till sökande",
     "messageRequired": "Skriv ett meddelande innan du beslutar",
     "done": {
       "title": "Ärendet är beslutat",
       "description": "Beslutet är sparat, men det här gick inte igenom:",
       "failedChannels": "Beslutet kunde inte skickas till: {{detail}}.",
-      "payeeWarnings": "Betalningsmottagare: {{detail}}",
       "processNotResumed": "Processen fick inte besked om beslutet.",
       "decisionNotRegistered": "Beslutet registrerades inte i Lifecare: {{detail}} Registrera det direkt i Lifecare.",
       "decisionReceiptLost": "{{detail}}"

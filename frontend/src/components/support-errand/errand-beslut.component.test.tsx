@@ -74,6 +74,35 @@ const withSaved = (decision: LifecareDecisionView | null) => {
   vi.mocked(useLifecareDecision).mockReturnValue({ decision, isLoading: false, refresh: vi.fn() });
 };
 
+/** Lifecare's summering of the saved beräkning: a positive result is a normöverskott, a negative an underskott. */
+const withResult = (result: number) => {
+  vi.mocked(useLifecareCalculation).mockReturnValue({
+    calculation: {
+      id: 31,
+      normName: 'Riksnorm 2026',
+      date: '2026-09-24',
+      startDate: '2026-09-01',
+      endDate: '2026-09-30',
+      finalized: true,
+      updated: '2026-09-24',
+      summary: {
+        income: 0,
+        jobStimulus: 0,
+        jobStimulusDeduction: 0,
+        norm: 5220,
+        familyCost: 3940,
+        commonHouseholdCost: 1280,
+        expenses: 0,
+        sum: result,
+        specialExpenses: 0,
+        result,
+      },
+    },
+    isLoading: false,
+    refresh: vi.fn(),
+  });
+};
+
 /** Renders the tab and hands back the save it registers with the central "Spara ärende" button. */
 const renderTab = () => {
   const onRegisterSave = vi.fn();
@@ -146,11 +175,49 @@ describe('ErrandBeslut', () => {
     expect(screen.getByLabelText('Orsak')).toHaveValue('16');
   });
 
-  it('lets the preview show Lifecare’s print only of a saved, unchanged beslut', () => {
+  it('preselects the avslag and shows no belopp on a normöverskott', () => {
+    withSaved(null);
+    withResult(1200);
+    renderTab();
+
+    expect(screen.getByLabelText('Beslut *')).toHaveValue('152');
+    expect(screen.getByText('Förslag: Avslag')).toBeInTheDocument();
+    expect(screen.queryByText('Belopp att bevilja')).not.toBeInTheDocument();
+  });
+
+  it('preselects 12 kap 1, 7 §§ bifall for a delvis bifall, even with other bifall types offered', () => {
+    vi.mocked(useLifecareDecisionTypes).mockReturnValue({
+      types: [
+        ...TYPES,
+        {
+          code: 150,
+          name: 'EK Ekonomiskt bistånd 12 Kap 2 § SoL, bifall',
+          outcome: 'BIFALL',
+          requiresFromDate: true,
+          requiresToDate: true,
+        },
+      ],
+      isLoading: false,
+    });
+    vi.mocked(useErrandNormberakning).mockReturnValue({
+      draft: { expenses: [{ appliedAmount: 6000, effectiveAmount: 5000 }] },
+      isLoading: false,
+      refresh: vi.fn(),
+    });
+    withSaved(null);
+    withResult(-5220);
+    renderTab();
+
+    expect(screen.getByLabelText('Beslut *')).toHaveValue('153');
+    expect(screen.getByText('Förslag: Delvis bifall')).toBeInTheDocument();
+    expect(screen.getByText('Belopp att bevilja')).toBeInTheDocument();
+  });
+
+  it('lets Visa PDF show Lifecare’s print only of a saved, unchanged beslut', () => {
     withSaved(null);
     renderTab();
 
-    expect(screen.getByRole('button', { name: 'Förhandsgranska' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Visa PDF' })).toBeDisabled();
     expect(screen.getByText(/Spara för att se dina ändringar/)).toBeInTheDocument();
   });
 
