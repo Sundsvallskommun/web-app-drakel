@@ -16,8 +16,7 @@ type LifecareAccessTarget =
   | 'REMINDER'
   | 'DECISION'
   | 'JOB_STIMULUS'
-  | 'CALCULATION'
-  | 'HOUSEHOLD';
+  | 'CALCULATION';
 
 interface LoggedAccess {
   target: LifecareAccessTarget;

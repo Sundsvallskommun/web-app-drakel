@@ -179,12 +179,8 @@ export const applyDraft = (
     if (!draftPerson) {
       return member;
     }
-    return {
-      ...member,
-      included: draftPerson.included ?? false,
-      deviationFromDate: draftPerson.deviationFromDate ?? '',
-      deviationToDate: draftPerson.deviationToDate ?? '',
-    };
+    // Ingår från/till are Lifecare's: kept as Lifecare has them, empty on a new beräkning, never set from Drakel.
+    return { ...member, included: draftPerson.included ?? false };
   });
   if (!persons.some(person => person.included)) {
     return refuse('Ingen i hushållet ingår i normberäkningen.');
@@ -217,11 +213,21 @@ export const applyDraft = (
   return { writable: true, calculation };
 };
 
-/** The members Lifecare placed on the norm, with their row and amount; the rest are left off the norm. */
+/**
+ * The members on the norm: one already on a normintervall keeps it and its amount — the handläggare may have
+ * picked it — and one not yet placed takes the row and amount Lifecare placed it on. Members left out are
+ * taken off the norm.
+ */
 export const withPlacedPersons = (calculation: LifecareCalculationRaw, placed: LifecareCalculationPersonRaw[]): LifecareCalculationRaw => ({
   ...calculation,
   calculationPersons: calculation.calculationPersons.map(member => {
-    const placement = member.included ? placed.find(candidate => candidate.personId === member.personId) : undefined;
+    if (!member.included) {
+      return { ...member, normRowId: 0, normRow: null, amount: 0 };
+    }
+    if ((member.normRowId ?? 0) > 0) {
+      return member;
+    }
+    const placement = placed.find(candidate => candidate.personId === member.personId);
     return placement
       ? { ...member, normRowId: placement.normRowId, normRow: placement.normRow, amount: placement.amount }
       : { ...member, normRowId: 0, normRow: null, amount: 0 };
@@ -283,7 +289,7 @@ const asSentPerson = (person: LifecareCalculationPersonRaw): Record<string, unkn
     isValid: true,
     normSubscription: placed ? subscription(person.normRowId) : noRow,
     dateSubscriptions: [subscription(''), subscription('')],
-    daySubscription: subscription(null),
+    daySubscription: subscription(person.deviationDays ?? null),
   };
 };
 

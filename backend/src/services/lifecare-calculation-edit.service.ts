@@ -5,7 +5,7 @@ import LifecareCalculationsService from '@services/lifecare-calculations.service
 import LifecareJobStimulusService from '@services/lifecare-job-stimulus.service';
 import LifecareServiceIdService from '@services/lifecare-service-id.service';
 import { buildCalculationUpdate, householdSizeOfSaved, withJobStimulusIncomes } from '@utils/lifecare-calculation';
-import { toLifecareDraftView, withEnteredIncomes } from '@utils/lifecare-calculation-rows';
+import { needsRecount, toLifecareDraftView, withEnteredIncomes } from '@utils/lifecare-calculation-rows';
 
 import { LifecareAccessActionEnum } from '@/data-contracts/caremanagement/data-contracts';
 import { NormberakningDraft, NormberakningTypes, NormTypeOption } from '@/responses/normberakning.response';
@@ -62,7 +62,8 @@ class LifecareCalculationEditService {
     await this.accessLog.logRead(errandId, { target: 'CALCULATION', description: 'Läste beräkningsunderlag i Lifecare' });
 
     const changed = change(withEnteredIncomes(forEdit.calculation, forEdit.incomeTypes), forEdit);
-    const calculation = withJobStimulusIncomes(await this.calculations.placeAndMark(changed, jobStimulus), forEdit.incomeTypes);
+    const placed = await this.withCountedAmounts(forEdit.calculation, await this.calculations.placeAndMark(changed, jobStimulus));
+    const calculation = withJobStimulusIncomes(placed, forEdit.incomeTypes);
     const updated = await this.calculations.update(calculationId, buildCalculationUpdate(calculation, householdSizeOfSaved(calculation), finalize));
     await this.accessLog.logWrite(errandId, LifecareAccessActionEnum.UPDATE, {
       target: 'CALCULATION',
@@ -70,6 +71,21 @@ class LifecareCalculationEditService {
       lifecareId: String(calculationId),
     });
     return updated;
+  }
+
+  /**
+   * Has Lifecare count the amount of every member whose days in the household or normintervall changed — the
+   * amount follows both, by Lifecare's own rules (`Calculation/GetAmount`).
+   */
+  private async withCountedAmounts(before: LifecareCalculationRaw, calculation: LifecareCalculationRaw): Promise<LifecareCalculationRaw> {
+    const calculationPersons = await Promise.all(
+      calculation.calculationPersons.map(async member =>
+        needsRecount(before, member)
+          ? { ...member, amount: await this.calculations.amountFor(member, calculation.startDate, calculation.endDate) }
+          : member,
+      ),
+    );
+    return { ...calculation, calculationPersons };
   }
 }
 

@@ -14,7 +14,18 @@ export interface LifecareCalculationPersonRaw {
   included: boolean;
   deviationFromDate: string;
   deviationToDate: string;
+  /** The days of the period the member is in the household; null (or empty) for the whole period. */
+  deviationDays?: number | string | null;
   personIdFormatted: string;
+  [field: string]: unknown;
+}
+
+/** A row of the norm — a normintervall with its monthly and daily amount, e.g. "Ensamstående 3940.00". */
+interface LifecareNormRowRaw {
+  rowId: number;
+  name: string;
+  monthlyAmount?: number;
+  dailyAmount?: number;
   [field: string]: unknown;
 }
 
@@ -73,6 +84,8 @@ export interface LifecareCalculationRaw {
   calculationIncomes: LifecareCalculationIncomeRaw[];
   calculationExpenses: LifecareCalculationExpenseRaw[];
   calculationSpecialExpenses: LifecareCalculationExpenseRaw[];
+  /** The norm with its rows — what a member can be placed on. */
+  norm?: { rows?: LifecareNormRowRaw[] | null; [field: string]: unknown } | null;
   hasCustomHouseholdSize: boolean;
   isFinalized: boolean;
   updateTimestamp: string;

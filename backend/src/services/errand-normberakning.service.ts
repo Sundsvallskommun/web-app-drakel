@@ -83,9 +83,9 @@ class ErrandNormberakningService {
     await this.changeRow(errandId, {
       caremanagement: () => this.draftService.addRow(errandId, section, input),
       lifecare: bySection(section, {
-        // A person comes into a saved beräkning through the hushåll — see ErrandLifecareHouseholdService.
+        // Who is in the household is Lifecare's: a person is added there, not from Drakel.
         persons: () => {
-          throw new HttpException(422, 'Lägg till personer genom hushållet under Familj.');
+          throw new HttpException(422, 'Personer läggs till i hushållet i Lifecare.');
         },
         incomes: (calculation, forEdit) => addIncome(calculation, forEdit.incomeTypes, input),
         expenses: (calculation, forEdit) => addExpense(calculation, forEdit, input),

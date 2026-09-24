@@ -850,44 +850,6 @@ export interface CreateLifecareDocumentDto {
   protected?: boolean;
 }
 
-export interface FindHouseholdCandidatesDto {
-  /** @minLength 2 */
-  filter: string;
-}
-
-export interface HouseholdPersonDto {
-  personId: string;
-}
-
-export interface HouseholdPersonView {
-  personId: string;
-  personalNumber: string;
-  name: string;
-  relation?: string;
-  bonusChild: boolean;
-  inCalculation: boolean;
-}
-
-export interface LifecareHouseholdView {
-  persons: HouseholdPersonView[];
-}
-
-export interface LifecareHouseholdApiResponse {
-  data: LifecareHouseholdView;
-  message: string;
-}
-
-export interface HouseholdCandidateView {
-  personId: string;
-  personalNumber: string;
-  name: string;
-}
-
-export interface HouseholdCandidatesApiResponse {
-  data: HouseholdCandidateView[];
-  message: string;
-}
-
 export interface LifecarePaymentMethodView {
   code: number;
   name: string;
@@ -1189,7 +1151,7 @@ export interface NormRowInputDto {
   deviationFromDate?: string;
   deviationToDate?: string;
   normInterval?: string;
-  jobStimulusAmount?: number;
+  normRowId?: number;
   note?: string;
 }
 
@@ -1219,8 +1181,8 @@ export interface NormPersonRow {
   deviationFromDate?: string;
   deviationToDate?: string;
   normInterval?: string;
+  normRowId?: number;
   amount?: number;
-  jobStimulusAmount?: number;
   deleted?: boolean;
   note?: string;
 }
@@ -1260,6 +1222,11 @@ export interface NormExpenseRow {
   note?: string;
 }
 
+export interface NormRowOption {
+  id: number;
+  name: string;
+}
+
 export interface NormberakningDraft {
   errandId?: string;
   applicationMonth?: string;
@@ -1282,6 +1249,7 @@ export interface NormberakningDraft {
   updated?: string;
   source?: NormberakningDraftSourceEnum;
   finalized?: boolean;
+  normRows?: NormRowOption[];
 }
 
 export interface NormTypeOption {

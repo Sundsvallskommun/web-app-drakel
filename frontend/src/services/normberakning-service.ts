@@ -2,6 +2,7 @@ import {
   NormberakningDraftSourceEnum,
   NormberakningTypes,
   NormberakningTypesApiResponse,
+  NormRowOption,
   NormTypeOption,
   PreviousCalculationApiResponse,
   PreviousCalculationView,
@@ -38,7 +39,8 @@ export interface NormPersonRow {
   normInterval?: string;
   /** The member's own share of the norm — the Belopp column; carried over from the previous Lifecare calculation. */
   amount?: number;
-  jobStimulusAmount?: number;
+  /** The normintervall (norm row) the member is on, when the beräkning is Lifecare's. */
+  normRowId?: number;
   deleted?: boolean;
   note?: string;
 }
@@ -108,6 +110,8 @@ export interface NormberakningDraft {
   source?: NormberakningDraftSourceEnum;
   /** Whether Lifecare holds the beräkning as slutlig — no further change is possible. */
   finalized?: boolean;
+  /** The norm's rows a member can be put on — only for a beräkning in Lifecare. */
+  normRows?: NormRowOption[];
 }
 
 /** Fields sent when adding/editing a row (the union of the three sections' inputs). */
@@ -133,7 +137,8 @@ export interface NormRowInput {
   deviationFromDate?: string;
   deviationToDate?: string;
   normInterval?: string;
-  jobStimulusAmount?: number;
+  /** The normintervall (norm row) to put a member of a beräkning in Lifecare on. */
+  normRowId?: number;
   note?: string;
 }
 

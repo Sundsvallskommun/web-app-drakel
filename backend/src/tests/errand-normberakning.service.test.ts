@@ -123,6 +123,45 @@ describe('ErrandNormberakningService', () => {
     expect(addRow).not.toHaveBeenCalled();
   });
 
+  it("has Lifecare count a member's amount again when the days or the normintervall change", async () => {
+    withCalculationId(30);
+    vi.spyOn(LifecareCalculationsService.prototype, 'readForEdit').mockResolvedValue(
+      forEdit({ ...saved, norm: { rows: [{ rowId: 2, name: 'Ensamstående 3940.00', monthlyAmount: 3940, dailyAmount: 130 }] } }),
+    );
+    const amountFor = vi.spyOn(LifecareCalculationsService.prototype, 'amountFor').mockResolvedValue(1300);
+    const update = vi.spyOn(LifecareCalculationsService.prototype, 'update').mockResolvedValue(saved);
+
+    await new ErrandNormberakningService().updateRow('errand-1', 'persons', '1', { caseworkerDays: 10, normRowId: 2 });
+
+    expect(amountFor.mock.calls[0]?.[0]).toMatchObject({ personId: '19880209T050', normRowId: 2, deviationDays: 10 });
+    const body = update.mock.calls[0]?.[1] as { calculationPersons: Record<string, unknown>[] };
+    expect(body.calculationPersons[0]).toMatchObject({
+      normRowId: 2,
+      amount: 1300,
+      deviationDays: 10,
+      daySubscription: { da: 10, Jb: false, Kb: null, hb: null },
+    });
+  });
+
+  it('keeps a normintervall a member already has when the beräkning is saved again', async () => {
+    withCalculationId(30);
+    vi.spyOn(LifecareCalculationsService.prototype, 'readForEdit').mockResolvedValue(forEdit());
+    // Lifecare would place the sökande elsewhere; the row it is on stays.
+    vi.spyOn(LifecareCalculationsService.prototype, 'placePersons').mockResolvedValue({
+      calculationPersons: [
+        { ...saved.calculationPersons[0], normRowId: 1, normRow: 'Make/maka/sambo', amount: 3550 },
+      ] as typeof saved.calculationPersons,
+    });
+    const amountFor = vi.spyOn(LifecareCalculationsService.prototype, 'amountFor');
+    const update = vi.spyOn(LifecareCalculationsService.prototype, 'update').mockResolvedValue(saved);
+
+    await new ErrandNormberakningService().updateRow('errand-1', 'expenses', 'E-3', { appliedAmount: 5000, caseworkerAmount: 5000 });
+
+    const body = update.mock.calls[0]?.[1] as { calculationPersons: Record<string, unknown>[] };
+    expect(body.calculationPersons[0]).toMatchObject({ normRowId: 2, amount: 3940 });
+    expect(amountFor).not.toHaveBeenCalled();
+  });
+
   it('refuses any change to a beräkning Lifecare holds as slutlig', async () => {
     withCalculationId(30);
     vi.spyOn(LifecareCalculationsService.prototype, 'readForEdit').mockResolvedValue(forEdit({ ...saved, isFinalized: true }));

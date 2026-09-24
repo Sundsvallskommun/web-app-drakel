@@ -37,17 +37,17 @@
   },
   "family": {
     "title": "Persons covered",
-    "included": "Covered",
     "personalNumber": "Personal identity number",
-    "notIncluded": "Not covered",
     "name": "Name",
     "amount": "Amount",
-    "includedFrom": "Included from",
-    "includedTo": "Included to",
     "days": "Days",
     "normInterval": "Norm interval / amount",
     "empty": "No persons",
-    "remove": "Remove {{name}} from the calculation"
+    "remove": "Remove {{name}} from the calculation",
+    "wholePeriod": "All",
+    "selectNormInterval": "Choose norm interval",
+    "includedFrom": "Included from",
+    "includedTo": "Included to"
   },
   "incomes": {
     "title": "Income",
@@ -138,24 +138,5 @@
     "saveFinalConfirm": "A final calculation cannot be changed in Lifecare afterwards.",
     "saveFinalYes": "Yes, save as final",
     "changesSavedDirectly": "Changes are saved directly in Lifecare."
-  },
-  "household": {
-    "title": "Household in Lifecare",
-    "relation": "Relation",
-    "inCalculation": "In the calculation",
-    "included": "Included",
-    "include": "Include in the calculation",
-    "bonusChild": "Bonus child",
-    "empty": "Lifecare has no household for the applicant in the period.",
-    "loadError": "The household could not be read from Lifecare",
-    "includeError": "The person could not be included in the calculation",
-    "addBonusChild": "Add bonus child",
-    "searchPlaceholder": "Name or personal identity number",
-    "search": "Search",
-    "searchError": "Lifecare could not be searched",
-    "noCandidates": "Lifecare found no person.",
-    "addAsBonusChild": "Add as bonus child",
-    "addError": "The bonus child could not be added",
-    "saveFirst": "The household can be changed once the calculation is saved in Lifecare."
   }
 }

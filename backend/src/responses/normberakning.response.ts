@@ -28,9 +28,10 @@ export class NormPersonRow {
   @IsString() @IsOptional() deviationFromDate?: string;
   @IsString() @IsOptional() deviationToDate?: string;
   @IsString() @IsOptional() normInterval?: string;
+  /** The normintervall (norm row) the member is placed on, when the beräkning is Lifecare's. */
+  @IsInt() @IsOptional() normRowId?: number;
   /** The member's own share of the norm — the Belopp column; carried over from the previous Lifecare calculation. */
   @IsNumber() @IsOptional() amount?: number;
-  @IsNumber() @IsOptional() jobStimulusAmount?: number;
   @IsBoolean() @IsOptional() deleted?: boolean;
   @IsString() @IsOptional() note?: string;
 }
@@ -74,6 +75,12 @@ export class NormExpenseRow {
   @IsString() @IsOptional() note?: string;
 }
 
+/** A normintervall of the norm, as Normintervall/Belopp offers it — e.g. "Ensamstående 3940.00". */
+export class NormRowOption {
+  @IsInt() id!: number;
+  @IsString() name!: string;
+}
+
 export class NormberakningDraft {
   @IsString() @IsOptional() errandId?: string;
   @IsString() @IsOptional() applicationMonth?: string;
@@ -102,6 +109,8 @@ export class NormberakningDraft {
   @IsIn(['CAREM', 'LIFECARE']) @IsOptional() source?: 'CAREM' | 'LIFECARE';
   /** Whether Lifecare holds the beräkning as slutlig — no further change is possible. */
   @IsBoolean() @IsOptional() finalized?: boolean;
+  /** The norm's rows a member can be placed on — only for a beräkning in Lifecare. */
+  @IsArray() @ValidateNested({ each: true }) @Type(() => NormRowOption) @IsOptional() normRows?: NormRowOption[];
 }
 
 /** A selectable income or cost type: the code a row stores and the label shown. */

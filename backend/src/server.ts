@@ -23,7 +23,6 @@ import { JournalController } from './controllers/journal.controller';
 import { LifecareCalculationController } from './controllers/lifecare-calculation.controller';
 import { LifecareDecisionController } from './controllers/lifecare-decision.controller';
 import { LifecareDocumentsController } from './controllers/lifecare-documents.controller';
-import { LifecareHouseholdController } from './controllers/lifecare-household.controller';
 import { LifecarePaymentsController } from './controllers/lifecare-payments.controller';
 import { LifecareRemindersController } from './controllers/lifecare-reminders.controller';
 import { LifecareSectionStatusController } from './controllers/lifecare-section-status.controller';
@@ -68,7 +67,6 @@ const app = new App([
   LifecarePaymentsController,
   LifecareDecisionController,
   LifecareCalculationController,
-  LifecareHouseholdController,
   LifecareSectionStatusController,
   LifecareRemindersController,
 ]);

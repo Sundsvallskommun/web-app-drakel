@@ -1,7 +1,6 @@
 import {
   LifecareCalculationForEditRaw,
   LifecareCalculationListItemRaw,
-  LifecareCalculationPersonRaw,
   LifecareCalculationProposalRaw,
   LifecareCalculationRaw,
   LifecarePlacedPersonsRaw,
@@ -75,6 +74,18 @@ class LifecareCalculationsService {
     return res.data;
   }
 
+  /**
+   * A member's amount on the norm for the period, as Lifecare counts it from the member's normintervall and
+   * days in the household — what the web app asks for a member before it saves.
+   */
+  public async amountFor(person: Record<string, unknown>, startDate: string, endDate: string): Promise<number> {
+    const res = await this.apiService.post<{ amount: number }>(
+      { module: PROFESSIONAL_WEB, path: 'api2/Calculation/GetAmount' },
+      { person, startDate, endDate },
+    );
+    return res.data.amount;
+  }
+
   /** Marks which members have jobbstimulans during the beräkning's period, as the web app asks before saving. */
   public async withJobStimuli(calculation: Record<string, unknown>, jobStimulus: LifecareJobStimulusRaw): Promise<LifecareCalculationRaw> {
     const res = await this.apiService.post<LifecareCalculationRaw>(
@@ -98,18 +109,6 @@ class LifecareCalculationsService {
     const withNorm = withPlacedPersons(calculation, placed.calculationPersons);
     const marked = await this.withJobStimuli(withNorm, jobStimulus);
     return { ...withNorm, hasApplicantJobStimuli: marked.hasApplicantJobStimuli, hasCoApplicantJobStimuli: marked.hasCoApplicantJobStimuli };
-  }
-
-  /**
-   * A person as a new member of the beräkning — the row Lifecare's web app adds when a person is taken in
-   * (capture 2026-09-24). `body` names the beräkning's period, norm and date and the person.
-   */
-  public async proposalForPerson(body: Record<string, unknown>): Promise<LifecareCalculationPersonRaw> {
-    const res = await this.apiService.post<LifecareCalculationPersonRaw>(
-      { module: PROFESSIONAL_WEB, path: 'api2/Calculation/GetProposalForPerson' },
-      body,
-    );
-    return res.data;
   }
 
   /** Creates a beräkning on the insats. Not idempotent: a second call makes a second beräkning. */

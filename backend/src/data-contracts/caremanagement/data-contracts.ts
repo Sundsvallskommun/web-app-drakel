@@ -1446,8 +1446,6 @@ export interface NormPersonInput {
    * @maxLength 64
    */
   normInterval?: string;
-  /** The job stimulus amount applied to the member */
-  jobStimulusAmount?: number;
   /** Free-text note */
   note?: string;
 }
@@ -1502,8 +1500,6 @@ export interface NormPersonRow {
   normInterval?: string;
   /** The member's own share of the norm (the Belopp column of Lifecare's Beräkning view); carried over from the previous calculation, the norm itself is computed in Lifecare */
   amount?: number;
-  /** The job stimulus amount applied to the member */
-  jobStimulusAmount?: number;
   /** Whether the row is soft-deleted (excluded from the calculation, not resurrected by the daily refresh) */
   deleted?: boolean;
   /** Free-text note */
@@ -1682,8 +1678,7 @@ export interface NormExpenseRow {
 export interface PaymentStatusRequest {
   /**
    * The errand whose payments to verify. When given, the check is errand-specific: the Lifecare payments linked to the
-   * errand (lifecarePaymentIds), else the payment rows an earlier finalize created, else the applicant's Lifecare
-   * payments on the errand's own insats for the application month that no other errand references. Without it, any
+   * errand (lifecarePaymentIds), else the applicant's Lifecare payments on the errand's own insats for the application month that no other errand references. Without it, any
    * Lifecare payment for the applicant and application month counts — kept only for callers that predate the field.
    */
   errandId?: string;
@@ -2040,27 +2035,6 @@ export interface UpdateDocument {
    * @maxLength 64
    */
   modifiedBy?: string;
-}
-
-/** Set the approval state of a financial assistance view section. */
-export interface SectionApprovalRequest {
-  /** Whether the section is approved (true) or its approval withdrawn (false) */
-  approved: boolean;
-}
-
-/** A caseworker's approval of one section of the financial assistance view (calculation / payment / decision). */
-export interface SectionApproval {
-  /** The section this approval concerns */
-  section?: SectionApprovalSectionEnum;
-  /** Whether the section has been verified as approved by a caseworker */
-  approved?: boolean;
-  /** The caseworker who approved the section (null while not approved) */
-  approvedBy?: string;
-  /**
-   * When the section was approved (null while not approved)
-   * @format date-time
-   */
-  approvedAt?: string;
 }
 
 /** Caseworker edit of the calculation header — norm, calculation dates and custom household size. */
@@ -2464,25 +2438,10 @@ export interface FinancialAssistanceView {
   data?: FinancialAssistanceData;
   /** The most recent automated recommendation on the errand (the latest RECOMMENDATION decision the caseworker reviews), or null when none has been produced. Carries the recommended value and, when the pipeline has computed it, the recommended amount/period to prefill the Decision form. */
   recommendation?: Decision;
-  /**
-   * DEPRECATED - being retired. The caseworker check-offs of the three financial assistance view sections (calculation, payment, decision). They no longer gate finalize; the Lifecare statuses (final normberäkning, locked beslut, registered payment) replace them. Always present with all three sections while it remains.
-   * @deprecated
-   */
-  sectionApprovals?: SectionApprovals;
   /** The communication channels the caseworker chose when finalizing the errand (Besluta och utbetala), or null until then. The Draken BFF sends the decision through these; caremanagement only records the choice. */
   communication?: CommunicationChannels;
   /** Whether the caseworker changed the household size (gemensamma kostnader) when finalizing. Null until the errand has been finalized. */
   householdSizeChanged?: boolean;
-}
-
-/** The caseworker approval state of the three financial assistance view sections (calculation, payment, decision). */
-export interface SectionApprovals {
-  /** Approval of the calculation (calculation) section */
-  calculation?: SectionApproval;
-  /** Approval of the payment (payment) section */
-  payment?: SectionApproval;
-  /** Approval of the decision (decision) section */
-  decision?: SectionApproval;
 }
 
 /** The number of active (OPEN/ACKNOWLEDGED) income warnings on the errand */
@@ -2511,7 +2470,7 @@ export interface SsbtekBasis {
 }
 
 /** The errand number and the household's personal numbers. Fetched per process run so the personal numbers never become process variables; every read is recorded in the errand's event log. */
-export interface RpaContext {
+export interface HouseholdIdentifiers {
   /** The errand's human-readable number — what a person searches for in Draken */
   errandNumber?: string;
   /** The applicant's personal number (12 characters, may contain letters). Null when it could not be resolved — treat as an error on the caller's side. */
@@ -2670,9 +2629,11 @@ export interface DecisionProposal {
   periodTo?: string;
   /** The calculation's application month (YYYY-MM) */
   concernedMonth?: string;
-  /** The estimated bistånd: normSum + expenseSum + specialExpenseSum − incomeSum, all from the calculation draft except the norm. The draft carries no norm sum, so it is taken from the applicant's most recent Lifecare calculation before the application month (previous household norm); the final amount is what Lifecare computes when the calculation is committed. Null when no previous norm is known (see explanation) */
+  /** The bistånd the outcome is decided on; positive is an underskott, zero or negative an överskott. When the normberäkning is saved in Lifecare (lifecareCalculationId) this is its result as Lifecare computed it (-balance) — amountBasis LIFECARE_CALCULATION. Before that, or when the saved calculation cannot be read, it is estimated: normSum + expenseSum + specialExpenseSum − incomeSum, all from the calculation draft except the norm, which is taken from the applicant's most recent Lifecare calculation before the application month — amountBasis ESTIMATE. Null when no previous norm is known (see explanation) */
   estimatedAmount?: number;
-  /** The norm sum the estimate is based on (the previous Lifecare calculation's norm). Null when unknown */
+  /** Where estimatedAmount (and thereby outcome) comes from: LIFECARE_CALCULATION = the normberäkning saved in Lifecare, ESTIMATE = the draft plus the previous calculation's norm. Null when there is no amount */
+  amountBasis?: DecisionProposalAmountBasisEnum;
+  /** The norm sum: the saved Lifecare calculation's norm (LIFECARE_CALCULATION), or the previous Lifecare calculation's norm the estimate is based on (ESTIMATE). Null when unknown */
   normSum?: number;
   /** The draft's income sum (effective amounts) */
   incomeSum?: number;
@@ -3441,13 +3402,6 @@ export enum EligibilityResponseReasonCodeEnum {
   ALL_TYPES_TEST = "ALL_TYPES_TEST",
 }
 
-/** The section this approval concerns */
-export enum SectionApprovalSectionEnum {
-  CALCULATION = "CALCULATION",
-  PAYMENT = "PAYMENT",
-  DECISION = "DECISION",
-}
-
 /** The norm type */
 export enum NormHeaderInputNormTypeEnum {
   NATIONAL_NORM = "NATIONAL_NORM",
@@ -3514,6 +3468,12 @@ export enum DecisionProposalOutcomeEnum {
   BIFALL = "BIFALL",
   DELAVSLAG = "DELAVSLAG",
   AVSLAG = "AVSLAG",
+}
+
+/** Where estimatedAmount (and thereby outcome) comes from: LIFECARE_CALCULATION = the normberäkning saved in Lifecare, ESTIMATE = the draft plus the previous calculation's norm. Null when there is no amount */
+export enum DecisionProposalAmountBasisEnum {
+  LIFECARE_CALCULATION = "LIFECARE_CALCULATION",
+  ESTIMATE = "ESTIMATE",
 }
 
 /** Stable code for the Mina-sidor form section the type is shown under; null for income */
@@ -3614,17 +3574,4 @@ export enum UpdateWarningParamsStatusEnum {
   OPEN = "OPEN",
   ACKNOWLEDGED = "ACKNOWLEDGED",
   CLOSED = "CLOSED",
-}
-
-/** The section to approve */
-export enum SetSectionApprovalParamsSectionEnum {
-  CALCULATION = "CALCULATION",
-  PAYMENT = "PAYMENT",
-  DECISION = "DECISION",
-}
-
-export enum SetSectionApprovalParamsEnum {
-  CALCULATION = "CALCULATION",
-  PAYMENT = "PAYMENT",
-  DECISION = "DECISION",
 }

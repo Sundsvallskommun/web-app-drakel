@@ -37,17 +37,17 @@
   },
   "family": {
     "title": "Personer som omfattas",
-    "included": "Omfattas",
     "personalNumber": "Personnummer",
-    "notIncluded": "Omfattas inte",
     "name": "Namn",
     "amount": "Belopp",
-    "includedFrom": "Ingår från",
-    "includedTo": "Ingår till",
     "days": "Dagar",
     "normInterval": "Normintervall/Belopp",
     "empty": "Inga personer",
-    "remove": "Ta bort {{name}} ur normberäkningen"
+    "remove": "Ta bort {{name}} ur normberäkningen",
+    "wholePeriod": "Hela",
+    "selectNormInterval": "Välj normintervall",
+    "includedFrom": "Ingår från",
+    "includedTo": "Ingår till"
   },
   "incomes": {
     "title": "Inkomster",
@@ -138,24 +138,5 @@
     "saveFinalConfirm": "En slutlig normberäkning kan inte ändras i Lifecare efteråt.",
     "saveFinalYes": "Ja, spara som slutlig",
     "changesSavedDirectly": "Ändringar sparas direkt i Lifecare."
-  },
-  "household": {
-    "title": "Hushåll i Lifecare",
-    "relation": "Relation",
-    "inCalculation": "I normberäkningen",
-    "included": "Ingår",
-    "include": "Ta med i normberäkningen",
-    "bonusChild": "Bonusbarn",
-    "empty": "Lifecare har inget hushåll för sökanden under perioden.",
-    "loadError": "Det gick inte att hämta hushållet från Lifecare",
-    "includeError": "Det gick inte att ta med personen i normberäkningen",
-    "addBonusChild": "Lägg till bonusbarn",
-    "searchPlaceholder": "Namn eller personnummer",
-    "search": "Sök",
-    "searchError": "Det gick inte att söka i Lifecare",
-    "noCandidates": "Lifecare hittade ingen person.",
-    "addAsBonusChild": "Lägg till som bonusbarn",
-    "addError": "Det gick inte att lägga till bonusbarnet",
-    "saveFirst": "Hushållet kan ändras när normberäkningen är sparad i Lifecare."
   }
 }

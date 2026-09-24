@@ -19,7 +19,6 @@ import { useTranslation } from 'react-i18next';
 import { ContentBox } from './content-box.component';
 import { ErrandSectionHeader } from './errand-section-header.component';
 import { LifecareCalculationSave } from './lifecare-calculation-save.component';
-import { LifecareHouseholdBox } from './lifecare-household-box.component';
 import { LockedBanner, LockFieldset } from './lockable-section.component';
 import { NormResultSummary } from './norm-result.component';
 import { NormberakningExpenses } from './normberakning-expenses.component';
@@ -255,12 +254,10 @@ export const ErrandNormberakning: FC<{
                     <NormberakningFamilj
                       persons={draft.persons ?? []}
                       errandId={errandId}
+                      normRows={draft.normRows}
                       editable={inLifecare && !closed}
                       onChanged={refreshAll}
                     />
-                    {inLifecare ?
-                      <LifecareHouseholdBox errandId={errandId} disabled={closed} onChanged={refreshAll} />
-                    : <p className="m-0 text-dark-secondary">{t('household.saveFirst')}</p>}
                   </NormberakningTabPanel>
                 </Tabs.Content>
               </Tabs.Item>

@@ -7,7 +7,6 @@ import {
 import {
   addExpense,
   addIncome,
-  addPerson,
   changeExpense,
   changeIncome,
   changePerson,
@@ -239,18 +238,28 @@ describe('changing members', () => {
   };
   const withChild = calculation({ calculationPersons: [...calculation().calculationPersons, child] });
 
-  it('sets whether a member is in the beräkning and the dates they are', () => {
-    const changed = changePerson(withChild, '2', { included: true, deviationFromDate: '2026-09-10T00:00:00+02:00', deviationToDate: '2026-09-20' });
+  it("sets a member's days and normintervall, leaving Ingår från/till as Lifecare has them", () => {
+    const withNorm = {
+      ...withChild,
+      norm: { rows: [{ rowId: 12, name: 'Barn 11-14 4390.00', monthlyAmount: 4390, dailyAmount: 144 }] },
+      calculationPersons: withChild.calculationPersons.map(person => ({ ...person, deviationFromDate: '2026-09-05' })),
+    };
 
-    expect(changed.calculationPersons[1]).toMatchObject({ included: true, deviationFromDate: '2026-09-10', deviationToDate: '2026-09-20' });
+    const changed = changePerson(withNorm, '2', { caseworkerDays: 10, normRowId: 12 });
+
+    expect(changed.calculationPersons[1]).toMatchObject({
+      deviationDays: 10,
+      normRowId: 12,
+      normRow: 'Barn 11-14',
+      deviationFromDate: '2026-09-05',
+    });
+    // No days means the whole period.
+    expect(changePerson(withNorm, '2', {}).calculationPersons[1]?.deviationDays).toBeNull();
+    expect(() => changePerson(withNorm, '2', { normRowId: 99 })).toThrow(expect.objectContaining({ status: 422 }));
   });
 
   it('takes a member out of the beräkning, but never the sökande', () => {
     expect(removePerson(withChild, '2').calculationPersons.map(person => person.personKey)).toEqual([1]);
     expect(() => removePerson(withChild, '1')).toThrow(expect.objectContaining({ status: 422 }));
-  });
-
-  it('refuses to take in a person the beräkning already has', () => {
-    expect(() => addPerson(withChild, { ...child, personKey: 0 }, true)).toThrow(expect.objectContaining({ status: 422 }));
   });
 });

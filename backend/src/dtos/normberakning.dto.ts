@@ -30,7 +30,8 @@ export class NormRowInputDto {
   @IsString() @IsOptional() deviationFromDate?: string;
   @IsString() @IsOptional() deviationToDate?: string;
   @IsString() @IsOptional() normInterval?: string;
-  @IsNumber() @IsOptional() jobStimulusAmount?: number;
+  /** The normintervall (Lifecare norm row) a member of a beräkning in Lifecare is put on. */
+  @IsInt() @IsOptional() normRowId?: number;
   // Shared
   @IsString() @IsOptional() note?: string;
 }

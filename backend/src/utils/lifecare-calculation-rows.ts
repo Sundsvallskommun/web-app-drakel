@@ -9,7 +9,7 @@ import {
 } from '@interfaces/lifecare-calculation.interface';
 
 import { NormRowInputDto } from '@/dtos/normberakning.dto';
-import { NormberakningDraft, NormExpenseRow, NormIncomeRow, NormPersonRow } from '@/responses/normberakning.response';
+import { NormberakningDraft, NormExpenseRow, NormIncomeRow, NormPersonRow, NormRowOption } from '@/responses/normberakning.response';
 
 /**
  * A beräkning saved in Lifecare, shown and edited in the shape of careM's draft so the Normberäkning tab
@@ -100,8 +100,14 @@ const toPersonRow = (person: LifecareCalculationPersonRaw, index: number, period
   deviationFromDate: dateOrUndefined(person.deviationFromDate),
   deviationToDate: dateOrUndefined(person.deviationToDate),
   effectiveDays: typeof person.deviationDays === 'number' ? person.deviationDays : undefined,
+  caseworkerDays: typeof person.deviationDays === 'number' ? person.deviationDays : undefined,
+  normRowId: (person.normRowId ?? 0) > 0 ? person.normRowId : undefined,
   normInterval: person.normRow ?? undefined,
 });
+
+/** The norm's rows as the tab offers them for Normintervall/Belopp. */
+const toNormRowOptions = (calculation: LifecareCalculationRaw): NormRowOption[] =>
+  (calculation.norm?.rows ?? []).map(row => ({ id: row.rowId, name: row.name }));
 
 const toIncomeRow = (row: LifecareCalculationIncomeRaw, index: number, types: LifecareCalculationTypeRaw[]): NormIncomeRow => {
   const applicant = enteredApplicantAmount(row, types);
@@ -157,6 +163,7 @@ export const toLifecareDraftView = (forEdit: LifecareCalculationForEditRaw, appl
     incomes: calculation.calculationIncomes.filter(keepsIncome).map((row, index) => toIncomeRow(row, index, forEdit.incomeTypes)),
     expenses: toExpenseRows(calculation.calculationExpenses, 'EXPENSE'),
     specialExpenses: toExpenseRows(calculation.calculationSpecialExpenses, 'SPECIAL_EXPENSE'),
+    normRows: toNormRowOptions(calculation),
     incomeSum: calculation.sumInk,
     expenseSum: calculation.sumUtg,
     specialExpenseSum: calculation.sumSpec,
@@ -321,22 +328,46 @@ const personIndexOf = (calculation: LifecareCalculationRaw, rowId: string): numb
   return index;
 };
 
-/** Sets whether the member `rowId` is in the beräkning, and the dates it is in the household (Ingår från/till). */
+/** A normintervall's name as a member carries it: the row's name without its amount — "Ensamstående". */
+const normRowName = (name: string): string => name.replace(/\s+\d+(?:[.,]\d+)?$/, '').trim();
+
+/**
+ * Sets the member `rowId`'s days in the household and normintervall. No days means the whole period. The
+ * amount is Lifecare's to count from these (see LifecareCalculationEditService); Ingår från/till stay as
+ * Lifecare has them.
+ */
 export const changePerson = (calculation: LifecareCalculationRaw, rowId: string, input: NormRowInputDto): LifecareCalculationRaw => {
   const index = personIndexOf(calculation, rowId);
+  const row = input.normRowId === undefined ? undefined : calculation.norm?.rows?.find(candidate => candidate.rowId === input.normRowId);
+  if (input.normRowId !== undefined && !row) {
+    throw new HttpException(422, 'Normintervallet finns inte i normen. Ladda om fliken.');
+  }
   return {
     ...calculation,
     calculationPersons: calculation.calculationPersons.map((person, position) =>
       position === index
         ? {
             ...person,
-            included: input.included ?? person.included,
-            deviationFromDate: toLifecareDay(input.deviationFromDate),
-            deviationToDate: toLifecareDay(input.deviationToDate),
+            deviationDays: input.caseworkerDays ?? null,
+            ...(row ? { normRowId: row.rowId, normRow: normRowName(row.name) } : {}),
           }
         : person,
     ),
   };
+};
+
+/**
+ * Whether a member already on the beräkning has other days or another normintervall than before — its amount
+ * then has to be counted again. A member just taken in has the amount Lifecare placed it with.
+ */
+export const needsRecount = (before: LifecareCalculationRaw, member: LifecareCalculationPersonRaw): boolean => {
+  const previous = before.calculationPersons.find(candidate => candidate.personId === member.personId);
+  return (
+    previous !== undefined &&
+    member.included &&
+    (member.normRowId ?? 0) > 0 &&
+    (previous.normRowId !== member.normRowId || (previous.deviationDays ?? null) !== (member.deviationDays ?? null))
+  );
 };
 
 /** Takes the member `rowId` out of the beräkning. The sökande — the first member — stays. */
@@ -346,18 +377,4 @@ export const removePerson = (calculation: LifecareCalculationRaw, rowId: string)
     throw new HttpException(422, 'Sökanden kan inte tas bort ur normberäkningen.');
   }
   return { ...calculation, calculationPersons: calculation.calculationPersons.filter((_person, position) => position !== index) };
-};
-
-/**
- * Takes a person into the beräkning — the row `GetProposalForPerson` gave, included, and marked as a bonusbarn
- * the way the web app marks one (capture 2026-09-24).
- */
-export const addPerson = (calculation: LifecareCalculationRaw, person: LifecareCalculationPersonRaw, bonusChild: boolean): LifecareCalculationRaw => {
-  if (calculation.calculationPersons.some(present => present.personId === person.personId)) {
-    throw new HttpException(422, `${person.name} finns redan i normberäkningen.`);
-  }
-  return {
-    ...calculation,
-    calculationPersons: [...calculation.calculationPersons, { ...person, included: true, isBonusChild: bonusChild ? true : '', deviationDays: '' }],
-  };
 };
