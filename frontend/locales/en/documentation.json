@@ -79,5 +79,10 @@
     "saveChangeError": "Could not save the change",
     "saveAndProtect": "Save and write-protect",
     "alwaysProtectedHint": "Lifecare always write-protects this type; it cannot be changed afterwards."
+  },
+  "treserva": {
+    "button": "Journal from Treserva",
+    "description": "The journal migrated from Treserva opens as a PDF in a new tab.",
+    "error": "The journal from Treserva could not be read"
   }
 }

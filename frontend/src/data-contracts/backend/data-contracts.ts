@@ -1327,6 +1327,11 @@ export interface RenderPdfDto {
   html: string;
 }
 
+export interface TreservaJournalApiResponse {
+  data: string;
+  message: string;
+}
+
 export interface PermissionsResponse {
   canEditErrands: boolean;
   canManageTemplates: boolean;

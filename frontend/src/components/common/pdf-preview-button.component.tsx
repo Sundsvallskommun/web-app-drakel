@@ -2,15 +2,10 @@
 
 import { ServiceResponse } from '@interfaces/services';
 import { Button, Modal, Spinner } from '@sk-web-gui/react';
+import { base64PdfToObjectUrl } from '@utils/pdf-object-url';
 import { ScanEye } from 'lucide-react';
 import { FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-
-/** Converts a base64 PDF to an object URL so it can be shown in an <iframe>. */
-const base64ToObjectUrl = (base64: string): string => {
-  const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
-  return window.URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-};
 
 /**
  * "Förhandsgranska PDF"-knapp: hämtar en PDF (via `loadPdf`) och visar den i en modal. Inget sparas.
@@ -49,7 +44,7 @@ export const PdfPreviewButton: FC<{
       setOpen(true);
       return;
     }
-    setUrl(base64ToObjectUrl(res.data));
+    setUrl(base64PdfToObjectUrl(res.data));
     setOpen(true);
   };
 

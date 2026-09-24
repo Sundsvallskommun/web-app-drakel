@@ -17,6 +17,7 @@ import { LifecareRecordModal } from './lifecare-record-modal.component';
 import { RecordActionsMenu } from './record-actions-menu.component';
 import { RecordCard, RecordCardDetail } from './record-card.component';
 import { RecordList } from './record-list.component';
+import { TreservaJournalButton } from './treserva-journal-button.component';
 
 type RecordCategory = LifecareRecord['category'];
 
@@ -94,6 +95,12 @@ export const LifecareRecordSection: FC<{ errandId: string; category: RecordCateg
           </Button>
         }
       />
+
+      {/* The journal migrated from Treserva comes first on the Journal tab. TODO(treserva-journal): a MOCK
+          until the migrated data is in Lifecare — see TreservaJournalButton. */}
+      {category === 'JOURNAL_NOTE' ?
+        <TreservaJournalButton errandId={errandId} />
+      : null}
 
       <SearchField
         className="w-full sm:w-[32rem]"

@@ -79,5 +79,10 @@
     "saveChangeError": "Det gick inte att spara ändringen",
     "saveAndProtect": "Spara och skrivskydda",
     "alwaysProtectedHint": "Typen skrivskyddas alltid i Lifecare och kan inte ändras efteråt."
+  },
+  "treserva": {
+    "button": "Journal från Treserva",
+    "description": "Journalen som flyttats över från Treserva öppnas som PDF i en ny flik.",
+    "error": "Journalen från Treserva kunde inte hämtas"
   }
 }

@@ -32,6 +32,7 @@ import { NormberakningController } from './controllers/normberakning.controller'
 import { NoteController } from './controllers/note.controller';
 import { NotificationController } from './controllers/notification.controller';
 import { PdfController } from './controllers/pdf.controller';
+import { TreservaJournalController } from './controllers/treserva-journal.controller';
 import { UserController } from './controllers/user.controller';
 import { WarningController } from './controllers/warning.controller';
 
@@ -68,6 +69,7 @@ const app = new App([
   LifecareDecisionController,
   LifecareCalculationController,
   LifecareSectionStatusController,
+  TreservaJournalController,
   LifecareRemindersController,
 ]);
 
