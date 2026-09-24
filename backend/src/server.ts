@@ -35,6 +35,7 @@ import { PdfController } from './controllers/pdf.controller';
 import { SsbtekController } from './controllers/ssbtek.controller';
 import { TreservaJournalController } from './controllers/treserva-journal.controller';
 import { UserController } from './controllers/user.controller';
+import { UserSettingsController } from './controllers/user-settings.controller';
 import { WarningController } from './controllers/warning.controller';
 
 validateEnv();
@@ -73,6 +74,7 @@ const app = new App([
   TreservaJournalController,
   LifecareRemindersController,
   SsbtekController,
+  UserSettingsController,
 ]);
 
 app.listen();

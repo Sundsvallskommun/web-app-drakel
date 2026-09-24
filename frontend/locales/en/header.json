@@ -5,5 +5,9 @@
   "logoLink": "Go to the overview",
   "newErrand": "New errand",
   "notifications": "Notifications",
-  "ssbtek": "Fetch from SSBTEK"
+  "ssbtek": "Fetch from SSBTEK",
+  "settings": {
+    "label": "Settings",
+    "ssbtekInNewTab": "Open SSBTEK in a new tab"
+  }
 }

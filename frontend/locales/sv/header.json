@@ -5,5 +5,9 @@
   "logoLink": "Till översikten",
   "newErrand": "Nytt ärende",
   "notifications": "Notiser",
-  "ssbtek": "Hämta från SSBTEK"
+  "ssbtek": "Hämta från SSBTEK",
+  "settings": {
+    "label": "Inställningar",
+    "ssbtekInNewTab": "Öppna SSBTEK i ny flik"
+  }
 }

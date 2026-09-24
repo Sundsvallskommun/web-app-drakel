@@ -8,6 +8,8 @@ import { Check, ChevronRight, FileText, Languages, LogOut } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 
+import { SettingsMenuItem } from './settings-menu-item.component';
+
 /** Submenu listing the available UI languages; the current one is checked. */
 const LanguageMenuItem = () => {
   const { t } = useTranslation();
@@ -90,7 +92,7 @@ const LogoutMenuItem = () => {
 
 /**
  * Menu groups for the header UserMenu: administration (only for those whose AD groups open at least one
- * of its pages), language and logout.
+ * of its pages), the handläggare's settings, language and logout.
  */
 export const useUserMenuGroups = () => {
   const { t } = useTranslation();
@@ -104,6 +106,7 @@ export const useUserMenuGroups = () => {
       showOnMobile: true,
       elements: [
         ...(canAdminister ? [{ label: t('admin:title'), element: () => <AdminMenuItem /> }] : []),
+        { label: t('header:settings.label'), element: () => <SettingsMenuItem /> },
         { label: t('common:language'), element: () => <LanguageMenuItem /> },
         { label: t('common:logout'), element: () => <LogoutMenuItem /> },
       ],

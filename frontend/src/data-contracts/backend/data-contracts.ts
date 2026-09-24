@@ -1407,6 +1407,19 @@ export interface UserApiResponse {
   message: string;
 }
 
+export interface UpdateUserSettingsDto {
+  ssbtekOpenInNewWindow: boolean;
+}
+
+export interface UserSettingsView {
+  ssbtekOpenInNewWindow: boolean;
+}
+
+export interface UserSettingsApiResponse {
+  data: UserSettingsView;
+  message: string;
+}
+
 export interface UpdateWarningStatusDto {
   status: UpdateWarningStatusDtoStatusEnum;
 }

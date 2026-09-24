@@ -128,6 +128,24 @@ export interface Monitoring {
   updated?: string;
 }
 
+/** Settings for one user (AD account). A user who has never saved any settings gets the defaults. */
+export interface UserSettings {
+  /** The user's AD account (lower case) */
+  adAccount?: string;
+  /** Whether the SSBTEK view opens in a new window. Defaults to true. */
+  ssbtekOpenInNewWindow: boolean;
+  /**
+   * Created timestamp, null while the user runs on defaults
+   * @format date-time
+   */
+  created?: string;
+  /**
+   * Modified timestamp, null while the user runs on defaults
+   * @format date-time
+   */
+  modified?: string;
+}
+
 /** NamespaceConfig model */
 export interface NamespaceConfig {
   /**
