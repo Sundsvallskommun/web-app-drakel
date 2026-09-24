@@ -1197,7 +1197,7 @@ export interface NormIncomeRow {
   applicantCaseworkerAmount?: number;
   applicantEffectiveAmount?: number;
   applicantAmountDate?: string;
-  applicantJobStimulusDeduction?: number;
+  applicantJobStimulus?: boolean;
   applicantCountedAmount?: number;
   coapplicantProcessAmount?: number;
   coapplicantCaseworkerAmount?: number;
@@ -1254,6 +1254,7 @@ export interface NormberakningDraft {
   amountForHouseholdSize?: number;
   commonHouseholdCost?: number;
   familyMembers?: number;
+  applicantJobStimulus?: boolean;
   normRows?: NormRowOption[];
 }
 

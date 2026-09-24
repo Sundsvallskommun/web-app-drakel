@@ -122,14 +122,16 @@ describe('toLifecareDraftView', () => {
 
   it('shows the gross the handläggare entered on an income jobbstimulans applies to', () => {
     const saved = calculation({
-      calculationIncomes: [income({ incomeCode: 1, incomeType: 'Lön efter skatt', amountApplicant: 3750, grossAmountApplicant: 5000 })],
+      hasApplicantJobStimuli: true,
+      calculationIncomes: [income({ incomeCode: 1, incomeType: 'Lön efter skatt', amountApplicant: 3750, grossAmountApplicant: 5000 }), income()],
     });
 
-    expect(toLifecareDraftView(forEdit(saved), undefined).incomes?.[0]).toMatchObject({
-      applicantCaseworkerAmount: 5000,
-      applicantJobStimulusDeduction: 1250,
-      applicantCountedAmount: 3750,
-    });
+    const view = toLifecareDraftView(forEdit(saved), undefined);
+
+    // Brutto S 5 000, Belopp S 3 750 — as Lifecare shows an income jobbstimulans applies to.
+    expect(view.applicantJobStimulus).toBe(true);
+    expect(view.incomes?.[0]).toMatchObject({ applicantCaseworkerAmount: 5000, applicantJobStimulus: true, applicantCountedAmount: 3750 });
+    expect(view.incomes?.[1]?.applicantJobStimulus).toBeUndefined();
   });
 
   it('leaves out rows Lifecare drops, and names repeated utgifter apart', () => {

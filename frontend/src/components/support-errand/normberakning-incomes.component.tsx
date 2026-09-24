@@ -15,7 +15,6 @@ import { RotateCcw, Trash2 } from 'lucide-react';
 import { FC, FocusEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { JobStimulusIncomeNote } from './job-stimulus-income-note.component';
 import { NormberakningSummaBox } from './normberakning-summa-box.component';
 import { NormberakningTableBox } from './normberakning-table-box.component';
 
@@ -41,6 +40,8 @@ interface NormberakningIncomesProps {
   rows: NormIncomeRow[];
   incomeSum?: number;
   incomeTypes: TypeOption[];
+  /** Whether the sökande has jobbstimulans in the period — the table then has a Brutto S column, as in Lifecare. */
+  applicantJobStimulus?: boolean;
   onChanged: () => void;
 }
 
@@ -48,12 +49,16 @@ interface NormberakningIncomesProps {
  * INKOMSTER section — one row per income type with an applicant (S) and co-applicant (M) side. The
  * process amount is read-only (system/SSBTEK, shown as the input placeholder); the handläggare amount +
  * date + note are editable. Handläggare can also add their own rows and soft-delete/restore rows.
+ *
+ * When the sökande has jobbstimulans in the period, the table has a Brutto S column the way Lifecare's has: on
+ * an income jobbstimulans applies to, the gross is entered there and Belopp S is what Lifecare counts from it.
  */
 export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({
   errandId,
   rows,
   incomeSum,
   incomeTypes,
+  applicantJobStimulus = false,
   onChanged,
 }) => {
   const { t } = useTranslation('calculation');
@@ -93,6 +98,9 @@ export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({
       <Table dense>
         <Table.Header>
           <Table.HeaderColumn>{t('table.type')}</Table.HeaderColumn>
+          {applicantJobStimulus ?
+            <Table.HeaderColumn>{t('incomes.applicantGross')}</Table.HeaderColumn>
+          : null}
           <Table.HeaderColumn>{t('incomes.applicantAmount')}</Table.HeaderColumn>
           <Table.HeaderColumn>{t('incomes.applicantDate')}</Table.HeaderColumn>
           <Table.HeaderColumn>{t('incomes.coApplicantAmount')}</Table.HeaderColumn>
@@ -112,6 +120,7 @@ export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({
                 key={row.id ?? index}
                 errandId={errandId}
                 row={row}
+                showGross={applicantJobStimulus}
                 onAction={(action) => void runRowAction(action)}
               />
             ))
@@ -120,6 +129,7 @@ export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({
             <DraftIncomeRow
               key={`draft-${draft.key}`}
               errandId={errandId}
+              showGross={applicantJobStimulus}
               typeName={draft.typeName}
               onCommitted={() => {
                 removeDraft(draft.key);
@@ -163,8 +173,10 @@ export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({
 const IncomeRow: FC<{
   errandId: string;
   row: NormIncomeRow;
+  /** Whether the table has the Brutto S column. */
+  showGross: boolean;
   onAction: (action: () => Promise<{ error?: unknown; message?: string }>) => void;
-}> = ({ errandId, row, onAction }) => {
+}> = ({ errandId, row, showGross, onAction }) => {
   const { t } = useTranslation('calculation');
   const [applicantAmount, setApplicantAmount] = useState<string>(row.applicantCaseworkerAmount?.toString() ?? '');
   const [applicantDate, setApplicantDate] = useState<string>(toDateInput(row.applicantAmountDate));
@@ -180,6 +192,9 @@ const IncomeRow: FC<{
         <Table.Column>
           <span className="line-through">{row.typeName ?? t('incomes.fallbackType')}</span>
         </Table.Column>
+        {showGross ?
+          <Table.Column>—</Table.Column>
+        : null}
         <Table.Column>—</Table.Column>
         <Table.Column>—</Table.Column>
         <Table.Column>—</Table.Column>
@@ -231,19 +246,40 @@ const IncomeRow: FC<{
       <Table.Column>
         <span className="font-bold">{row.typeName ?? t('incomes.fallbackType')}</span>
       </Table.Column>
+      {/* On an income jobbstimulans applies to, the handläggare enters the gross (Brutto S) and Belopp S is
+          what Lifecare counts from it; on any other income Belopp S is entered as always. */}
+      {showGross ?
+        <Table.Column>
+          {row.applicantJobStimulus ?
+            <Input
+              size="sm"
+              className="max-w-[9rem]"
+              inputMode="decimal"
+              aria-label={t('incomes.applicantGross')}
+              value={applicantAmount}
+              onChange={(event) => {
+                setApplicantAmount(event.target.value);
+              }}
+              onBlur={handleBlur}
+            />
+          : null}
+        </Table.Column>
+      : null}
       <Table.Column>
-        <Input
-          size="sm"
-          className="max-w-[9rem]"
-          inputMode="decimal"
-          placeholder={displayAmount(row.applicantProcessAmount)}
-          value={applicantAmount}
-          onChange={(event) => {
-            setApplicantAmount(event.target.value);
-          }}
-          onBlur={handleBlur}
-        />
-        <JobStimulusIncomeNote deduction={row.applicantJobStimulusDeduction} counted={row.applicantCountedAmount} />
+        {row.applicantJobStimulus ?
+          <span className="tabular-nums">{displayAmount(row.applicantCountedAmount)}</span>
+        : <Input
+            size="sm"
+            className="max-w-[9rem]"
+            inputMode="decimal"
+            placeholder={displayAmount(row.applicantProcessAmount)}
+            value={applicantAmount}
+            onChange={(event) => {
+              setApplicantAmount(event.target.value);
+            }}
+            onBlur={handleBlur}
+          />
+        }
       </Table.Column>
       <Table.Column>
         <DatePicker
@@ -314,11 +350,13 @@ const IncomeRow: FC<{
  */
 const DraftIncomeRow: FC<{
   errandId: string;
+  /** Whether the table has the Brutto S column — a new row's amount is entered under Belopp S. */
+  showGross: boolean;
   typeName: string;
   onCommitted: () => void;
   onRemove: () => void;
   onError: (message: string) => void;
-}> = ({ errandId, typeName, onCommitted, onRemove, onError }) => {
+}> = ({ errandId, showGross, typeName, onCommitted, onRemove, onError }) => {
   const { t } = useTranslation('calculation');
   const [applicantAmount, setApplicantAmount] = useState<string>('');
   const [applicantDate, setApplicantDate] = useState<string>('');
@@ -367,6 +405,9 @@ const DraftIncomeRow: FC<{
       <Table.Column>
         <span className="font-bold">{typeName}</span>
       </Table.Column>
+      {showGross ?
+        <Table.Column />
+      : null}
       <Table.Column>
         <Input
           size="sm"

@@ -47,8 +47,11 @@ export class NormIncomeRow {
   @IsNumber() @IsOptional() applicantCaseworkerAmount?: number;
   @IsNumber() @IsOptional() applicantEffectiveAmount?: number;
   @IsString() @IsOptional() applicantAmountDate?: string;
-  /** What jobbstimulans takes off the sökandes gross in Lifecare — only on an income it applies to. */
-  @IsNumber() @IsOptional() applicantJobStimulusDeduction?: number;
+  /**
+   * Whether jobbstimulans applies to the sökandes side of this income: the handläggare's amount is then the
+   * gross (Brutto S) and `applicantCountedAmount` what Lifecare counts (Belopp S).
+   */
+  @IsBoolean() @IsOptional() applicantJobStimulus?: boolean;
   /** The sökandes amount Lifecare counts once jobbstimulans is taken off — only on an income it applies to. */
   @IsNumber() @IsOptional() applicantCountedAmount?: number;
   @IsNumber() @IsOptional() coapplicantProcessAmount?: number;
@@ -119,6 +122,8 @@ export class NormberakningDraft {
   @IsNumber() @IsOptional() commonHouseholdCost?: number;
   /** How many members the beräkning includes. */
   @IsInt() @IsOptional() familyMembers?: number;
+  /** Whether the sökande has jobbstimulans in the period — the incomes then show a Brutto S column, as in Lifecare. */
+  @IsBoolean() @IsOptional() applicantJobStimulus?: boolean;
   /** The norm's rows a member can be placed on — only for a beräkning in Lifecare. */
   @IsArray() @ValidateNested({ each: true }) @Type(() => NormRowOption) @IsOptional() normRows?: NormRowOption[];
 }

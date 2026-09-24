@@ -114,12 +114,20 @@ const normRowLabel = (row: { name: string; monthlyAmount?: number }): string =>
 const toNormRowOptions = (calculation: LifecareCalculationRaw): NormRowOption[] =>
   (calculation.norm?.rows ?? []).map(row => ({ id: row.rowId, name: normRowLabel(row) }));
 
-const toIncomeRow = (row: LifecareCalculationIncomeRaw, index: number, types: LifecareCalculationTypeRaw[]): NormIncomeRow => {
+/**
+ * An income as the tab shows it. When the sökande has jobbstimulans in the period, an income it applies to is
+ * entered as a gross (Brutto S) and Lifecare counts the amount (Belopp S) from it, as in Lifecare's own view.
+ */
+const toIncomeRow = (
+  row: LifecareCalculationIncomeRaw,
+  index: number,
+  types: LifecareCalculationTypeRaw[],
+  applicantHasJobStimulus: boolean,
+): NormIncomeRow => {
   const applicant = enteredApplicantAmount(row, types);
-  // On an income jobbstimulans applies to, Lifecare counts less than the gross the handläggare entered.
-  const jobStimulusDeduction = applicant - row.amountApplicant;
+  const jobStimulusApplies = applicantHasJobStimulus && findType(types, row.incomeCode)?.isJobStimulus === true;
   return {
-    ...(jobStimulusDeduction > 0 ? { applicantJobStimulusDeduction: jobStimulusDeduction, applicantCountedAmount: row.amountApplicant } : {}),
+    ...(jobStimulusApplies ? { applicantJobStimulus: true, applicantCountedAmount: row.amountApplicant } : {}),
     id: String(row.incomeCode),
     position: index,
     origin: CASEWORKER_ORIGIN,
@@ -168,7 +176,10 @@ export const toLifecareDraftView = (forEdit: LifecareCalculationForEditRaw, appl
     hasCustomHouseholdSize: calculation.hasCustomHouseholdSize,
     householdSize: typeof calculation.householdSize === 'number' ? calculation.householdSize : undefined,
     persons: calculation.calculationPersons.map((person, index) => toPersonRow(person, index, calculation.startDate)),
-    incomes: calculation.calculationIncomes.filter(keepsIncome).map((row, index) => toIncomeRow(row, index, forEdit.incomeTypes)),
+    applicantJobStimulus: calculation.hasApplicantJobStimuli === true,
+    incomes: calculation.calculationIncomes
+      .filter(keepsIncome)
+      .map((row, index) => toIncomeRow(row, index, forEdit.incomeTypes, calculation.hasApplicantJobStimuli === true)),
     expenses: toExpenseRows(calculation.calculationExpenses, 'EXPENSE'),
     specialExpenses: toExpenseRows(calculation.calculationSpecialExpenses, 'SPECIAL_EXPENSE'),
     normRows: toNormRowOptions(calculation),

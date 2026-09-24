@@ -58,8 +58,7 @@
     "empty": "No income rows",
     "fallbackType": "Income",
     "selectType": "Select income type",
-    "jobStimulusDeduction": "Job stimulus −{{amount}}",
-    "countedAmount": "Counted {{amount}}"
+    "applicantGross": "Gross S"
   },
   "expenses": {
     "title": "Expenses",

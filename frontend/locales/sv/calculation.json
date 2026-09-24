@@ -58,8 +58,7 @@
     "empty": "Inga inkomstrader",
     "fallbackType": "Inkomst",
     "selectType": "Välj inkomsttyp",
-    "jobStimulusDeduction": "Jobbstimulans −{{amount}}",
-    "countedAmount": "Räknas {{amount}}"
+    "applicantGross": "Brutto S"
   },
   "expenses": {
     "title": "Utgifter",

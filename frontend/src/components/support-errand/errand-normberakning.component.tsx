@@ -283,6 +283,7 @@ export const ErrandNormberakning: FC<{
                       rows={draft.incomes ?? []}
                       incomeSum={draft.incomeSum}
                       incomeTypes={types.incomeTypes}
+                      applicantJobStimulus={draft.applicantJobStimulus}
                       onChanged={refreshAll}
                     />
                   </NormberakningTabPanel>

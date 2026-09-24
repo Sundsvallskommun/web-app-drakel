@@ -57,8 +57,8 @@ export interface NormIncomeRow {
   applicantCaseworkerAmount?: number;
   applicantEffectiveAmount?: number;
   applicantAmountDate?: string;
-  /** What jobbstimulans takes off the sökandes gross in Lifecare — only on an income it applies to. */
-  applicantJobStimulusDeduction?: number;
+  /** Whether jobbstimulans applies to the sökandes side: the handläggare amount is then the gross (Brutto S). */
+  applicantJobStimulus?: boolean;
   /** The sökandes amount Lifecare counts once jobbstimulans is taken off — only on an income it applies to. */
   applicantCountedAmount?: number;
   coapplicantProcessAmount?: number;
@@ -116,6 +116,8 @@ export interface NormberakningDraft {
   finalized?: boolean;
   /** The norm's rows a member can be put on — only for a beräkning in Lifecare. */
   normRows?: NormRowOption[];
+  /** Whether the sökande has jobbstimulans in the period — the incomes then show Brutto S, as in Lifecare. */
+  applicantJobStimulus?: boolean;
   /** Lifecare's gemensamma kostnader for a household of the household size — a beräkning in Lifecare only. */
   amountForHouseholdSize?: number;
   /** The members' share of the gemensamma kostnader (Summa) — a beräkning in Lifecare only. */
