@@ -73,7 +73,10 @@ const fillIncomes = (
     if (income.deleted || (applicant === 0 && coApplicant === 0)) {
       continue;
     }
-    const type = types.find(candidate => candidate.id === income.typeId);
+    // By name first: careM's own type codes do not always equal Lifecare's incomeCode ("Lön efter skatt").
+    const type =
+      types.find(candidate => income.typeName !== undefined && sameName(candidate.text, income.typeName)) ??
+      types.find(candidate => candidate.id === income.typeId);
     if (!type) {
       unknown.push(income.typeName ?? String(income.typeId));
       continue;

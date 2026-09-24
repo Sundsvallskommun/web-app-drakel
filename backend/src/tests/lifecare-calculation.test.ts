@@ -128,6 +128,15 @@ describe('applyDraft', () => {
     expect(calculation.calculationSpecialExpenses.map(row => [row.expenseType, row.approvedAmount])).toEqual([['Tandvård', 300]]);
   });
 
+  it("finds an income by its name when careM's type code is not Lifecare's (Lön efter skatt)", () => {
+    const withLon = { ...draft(), incomes: [{ typeId: 9, typeName: 'Lön efter skatt', applicantEffectiveAmount: 5000 }] };
+
+    const filled = applyDraft(blank(), [], withLon, catalogues, '2026-09-24');
+    if (!filled.writable) throw new Error(filled.reason);
+
+    expect(filled.calculation.calculationIncomes.map(row => [row.incomeCode, row.amountApplicant])).toEqual([[1, 5000]]);
+  });
+
   it('takes the sökande as Lifecare’s first member when no personnummer matches, as with a reserve number', () => {
     const withoutNumbers = { ...draft(), persons: draft().persons?.map(member => ({ ...member, personalNumber: undefined })) };
 
