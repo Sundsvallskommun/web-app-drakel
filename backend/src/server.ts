@@ -9,7 +9,6 @@ import { AdminTemplateController } from './controllers/admin-template.controller
 import { AdministratorController } from './controllers/administrator.controller';
 import { CountsController } from './controllers/counts.controller';
 import { DecisionController } from './controllers/decision.controller';
-import { DecisionNotificationController } from './controllers/decision-notification.controller';
 import { DecisionPhraseController } from './controllers/decision-phrase.controller';
 import { DocumentController } from './controllers/document.controller';
 import { DocumentTemplateController } from './controllers/document-template.controller';
@@ -60,7 +59,6 @@ const app = new App([
   NotificationController,
   FormSnapshotController,
   ActualisationController,
-  DecisionNotificationController,
   FinalizeController,
   AdministratorController,
   AdminTemplateController,

@@ -1,8 +1,7 @@
 import { TextEditorValue } from '@sk-web-gui/text-editor';
+import { escapeHtml } from '@utils/escape-html';
 
 import { BeslutPhraseValues, fillBeslutPhrase } from './fill-beslut-phrase';
-
-const escapeHtml = (text: string): string => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /** The text of an editor's HTML, paragraph by paragraph — what the message's plain text is kept as. */
 export const markupToPlainText = (markup: string): string =>

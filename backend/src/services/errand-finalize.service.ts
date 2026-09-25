@@ -12,11 +12,13 @@ import { DecisionRegistration } from '@/responses/decision-registration.response
 import { FinalizeResult } from '@/responses/finalize.response';
 
 // The labels the beslut dialog uses for the channels, reported back when a channel could not be sent.
-const ALL_CHANNEL_LABELS = { minaSidor: 'Mina sidor', digitalBrevlada: 'Digital brevlåda', brev: 'Brev' } as const;
+const ALL_CHANNEL_LABELS = { meddelande: 'Meddelande', brev: 'Brev' } as const;
 
+// careM has no meddelande channel: the meddelande goes into the errand's own conversation, which careM already
+// holds. Digital brevlåda is not offered.
 const toCommunicationChannels = (input: FinalizeErrandDto): CommunicationChannels => ({
   minaSidor: !!input.minaSidor,
-  digitalMailbox: !!input.digitalBrevlada,
+  digitalMailbox: false,
   letter: !!input.brev,
 });
 

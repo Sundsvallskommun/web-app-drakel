@@ -30,12 +30,12 @@ describe('DecisionNotificationService.send', () => {
     const saveOnErrand = vi
       .spyOn(CaremanagementAttachmentService.prototype, 'createAttachment')
       .mockResolvedValue({ data: null, message: 'success' });
-    const minaSidor = vi.spyOn(CaremanagementMessageService.prototype, 'createMessage').mockResolvedValue({ data: null, message: 'success' });
+    const conversation = vi.spyOn(CaremanagementMessageService.prototype, 'createMessage').mockResolvedValue({ data: null, message: 'success' });
     const letter = vi.spyOn(MessagingService.prototype, 'sendLetter').mockResolvedValue();
 
     const failed = await new DecisionNotificationService().send(
       'errand-1',
-      { minaSidor: true, brev: true, message: MESSAGE, includeDecision: true, includeCalculation: true },
+      { meddelande: true, brev: true, message: MESSAGE, includeDecision: true, includeCalculation: true },
       'caseworker01',
       [ownFile],
     );
@@ -43,7 +43,7 @@ describe('DecisionNotificationService.send', () => {
     expect(failed).toEqual([]);
     expect(saveOnErrand).toHaveBeenCalledWith('errand-1', expect.objectContaining({ originalname: 'beslut-EB-26090039.pdf' }), 'DECISION');
     const sentFiles = ['beslut-EB-26090039.pdf', 'normberakning-EB-26090039.pdf', 'hyresavi.pdf'];
-    expect(minaSidor).toHaveBeenCalledWith(
+    expect(conversation).toHaveBeenCalledWith(
       'errand-1',
       { direction: 'OUTBOUND', body: MESSAGE, author: 'caseworker01' },
       sentFiles.map(name => expect.objectContaining({ originalname: name }) as unknown),

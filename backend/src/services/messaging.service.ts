@@ -1,9 +1,7 @@
-import { ApiResponse } from '@interfaces/api-service.interface';
 import ApiService from '@services/api.service';
 
 import {
   MESSAGING_DEPARTMENT,
-  MESSAGING_ORGANIZATION_NUMBER,
   MESSAGING_SUPPORT_EMAIL,
   MESSAGING_SUPPORT_PHONE,
   MESSAGING_SUPPORT_TEXT,
@@ -12,17 +10,13 @@ import {
 } from '@/config';
 import { getApiBase } from '@/config/api-config';
 import {
-  DigitalMailAttachmentContentTypeEnum,
-  DigitalMailRequest,
-  DigitalMailRequestContentTypeEnum,
   LetterAttachmentContentTypeEnum,
   LetterAttachmentDeliveryModeEnum,
   LetterRequest,
   LetterRequestContentTypeEnum,
-  Mailbox,
 } from '@/data-contracts/messaging/data-contracts';
 
-/** A PDF sent with a digital mail or a letter. */
+/** A PDF enclosed in a letter. */
 interface MessagingPdf {
   filename: string;
   /** The PDF, base64-encoded. */
@@ -30,8 +24,7 @@ interface MessagingPdf {
 }
 
 /**
- * Sends the beslut to the applicant through the Messaging service: Mina sidor (web message), digital
- * brevlåda (digital mail) and brev (letter/snail mail), and checks whether a person has a digital mailbox.
+ * Sends the beslut to the applicant as a brev (letter/snail mail) through the Messaging service.
  * Reached through the API gateway (bearer token via {@link ApiService}). Sender/department/support config
  * comes from the environment.
  */
@@ -51,34 +44,13 @@ class MessagingService {
     };
   }
 
-  /** Whether the party has a reachable digital mailbox (so the "Digital brevlåda" channel is offered). */
-  async hasDigitalMailbox(partyId: string): Promise<boolean> {
-    const url = `${this.base()}/${MESSAGING_ORGANIZATION_NUMBER}/mailboxes`;
-    const res: ApiResponse<Mailbox[]> = await this.apiService.post<Mailbox[]>({ url, data: [partyId] });
-    return (res.data ?? []).some(mailbox => mailbox.partyId === partyId && mailbox.reachable === true);
-  }
-
-  /** Digital brevlåda — a digital mail with the PDFs attached. */
-  async sendDigitalMail(partyId: string, subject: string, body: string, pdfs: MessagingPdf[]): Promise<void> {
-    const request: DigitalMailRequest = {
-      party: { partyIds: [partyId] },
-      sender: { supportInfo: this.supportInfo() },
-      subject,
-      department: MESSAGING_DEPARTMENT,
-      contentType: DigitalMailRequestContentTypeEnum.TextPlain,
-      body,
-      attachments: pdfs.map(pdf => ({ ...pdf, contentType: DigitalMailAttachmentContentTypeEnum.ApplicationPdf })),
-    };
-    await this.apiService.post({ url: `${this.base()}/digital-mail`, data: request });
-  }
-
-  /** Brev — a physical letter (snail mail) with the PDFs enclosed. */
+  /** Brev — a physical letter (snail mail) with the PDFs enclosed. The body is HTML, as the editor wrote it. */
   async sendLetter(partyId: string, subject: string, body: string, pdfs: MessagingPdf[]): Promise<void> {
     const request: LetterRequest = {
       party: { partyIds: [partyId] },
       subject,
       sender: { supportInfo: this.supportInfo() },
-      contentType: LetterRequestContentTypeEnum.TextPlain,
+      contentType: LetterRequestContentTypeEnum.TextHtml,
       body,
       department: MESSAGING_DEPARTMENT,
       attachments: pdfs.map(pdf => ({

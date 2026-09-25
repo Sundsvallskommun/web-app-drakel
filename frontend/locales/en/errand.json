@@ -51,10 +51,11 @@
     "sendVia": "Send via",
     "channels": {
       "minaSidor": "Mina sidor",
-      "digitalMailbox": "Digital mailbox",
+      "minaSidorNotSent": "Mina sidor does not work yet: the choice is saved on the errand, but nothing is sent there.",
+      "message": "Message",
       "letter": "Letter"
     },
-    "messageLabel": "Message",
+    "messageLabel": "Message text",
     "messageRequired": "Write a message before you send",
     "done": {
       "title": "The errand is decided",

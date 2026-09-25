@@ -51,10 +51,11 @@
     "sendVia": "Skicka via",
     "channels": {
       "minaSidor": "Mina sidor",
-      "digitalMailbox": "Digital brevlåda",
+      "minaSidorNotSent": "Mina sidor fungerar inte än: valet sparas på ärendet, men inget skickas dit.",
+      "message": "Meddelande",
       "letter": "Brev"
     },
-    "messageLabel": "Meddelande",
+    "messageLabel": "Meddelandetext",
     "messageRequired": "Skriv ett meddelande innan du skickar",
     "done": {
       "title": "Ärendet är beslutat",

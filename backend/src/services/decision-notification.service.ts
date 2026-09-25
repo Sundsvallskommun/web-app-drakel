@@ -20,8 +20,9 @@ interface Channel {
 
 /**
  * Sends a beslut to the applicant: takes Lifecare's own print of the beslut as PDF, saves it on the errand as a
- * DECISION attachment and sends it through the chosen Messaging channels (Mina sidor / digital brevlåda /
- * brev). caremanagement records which channels were chosen but sends nothing itself — this is the BFF's job.
+ * DECISION attachment and sends it through the chosen channels: meddelande (a message in the errand's conversation)
+ * and brev (a letter through Messaging). Mina sidor (a party asset) is recorded in caremanagement but not sent yet.
+ * caremanagement records which channels were chosen but sends nothing itself — this is the BFF's job.
  */
 class DecisionNotificationService {
   private lifecareDecision = new ErrandLifecareDecisionService();
@@ -35,12 +36,6 @@ class DecisionNotificationService {
   private async resolveApplicantPartyId(errandId: string): Promise<string | undefined> {
     const stakeholders = await this.stakeholderService.readStakeholders(errandId);
     return (stakeholders.data ?? []).find(stakeholder => stakeholder.role === 'APPLICANT')?.externalId;
-  }
-
-  /** Whether the applicant has a reachable digital mailbox (false when there is no applicant to ask about). */
-  async hasDigitalMailbox(errandId: string): Promise<boolean> {
-    const partyId = await this.resolveApplicantPartyId(errandId);
-    return partyId ? this.messagingService.hasDigitalMailbox(partyId) : false;
   }
 
   /** The PDFs that go with the message: Lifecare's beslut and beräkning when kept, and the handläggare's own files. */
@@ -75,22 +70,17 @@ class DecisionNotificationService {
     const pdfs = attachments.map(file => ({ filename: file.originalname, content: file.buffer.toString('base64') }));
     const body = input.message;
 
-    // The applicant's partyId is only needed by the digital brevlåda / brev channels; Mina sidor goes
-    // through the errand's e-service conversation, which doesn't need it.
+    // The applicant's partyId is only needed by the brev channel; the meddelande goes into the errand's own
+    // conversation, which doesn't need it.
     const partyId = (await this.resolveApplicantPartyId(errandId)) ?? '';
 
     const allChannels: Channel[] = [
       {
-        selected: !!input.minaSidor,
-        label: 'Mina sidor',
+        selected: !!input.meddelande,
+        label: 'Meddelande',
         send: async () => {
           await this.messageService.createMessage(errandId, { direction: 'OUTBOUND', body, author }, attachments);
         },
-      },
-      {
-        selected: !!input.digitalBrevlada,
-        label: 'Digital brevlåda',
-        send: () => this.messagingService.sendDigitalMail(partyId, DECISION_SUBJECT, body, pdfs),
       },
       {
         selected: !!input.brev,

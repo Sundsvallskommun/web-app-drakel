@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HttpException } from '@/exceptions/HttpException';
 
-const channels = { minaSidor: true, digitalBrevlada: false, brev: true, message: 'Hej,', includeDecision: true, includeCalculation: true };
+const channels = { minaSidor: true, meddelande: true, brev: true, message: '<p>Hej,</p>', includeDecision: true, includeCalculation: true };
 
 /** The beslut the handläggare saved, as it stands in Lifecare. */
 const lifecareBeslut = {
@@ -98,6 +98,6 @@ describe('ErrandFinalizeService.finalize', () => {
 
     const result = await new ErrandFinalizeService().finalize('errand-1', channels, 'caseworker01');
 
-    expect(result.failedChannels).toEqual(['Mina sidor', 'Brev']);
+    expect(result.failedChannels).toEqual(['Meddelande', 'Brev']);
   });
 });
