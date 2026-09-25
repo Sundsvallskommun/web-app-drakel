@@ -44,19 +44,18 @@
     "confirm": "Assign"
   },
   "decideAndPay": {
-    "button": "Decide and pay",
+    "button": "Send calculation and decision",
     "preparing": "Preparing…",
-    "executing": "Executing…",
+    "executing": "Sending…",
     "finalizeError": "The errand could not be decided.",
-    "sendVia": "Send the decision via:",
+    "sendVia": "Send via",
     "channels": {
       "minaSidor": "Mina sidor",
       "digitalMailbox": "Digital mailbox",
-      "letter": "Letter",
-      "message": "Message"
+      "letter": "Letter"
     },
-    "messageLabel": "Message to the applicant",
-    "messageRequired": "Write a message before deciding",
+    "messageLabel": "Message",
+    "messageRequired": "Write a message before you send",
     "done": {
       "title": "The errand is decided",
       "description": "The decision is saved, but this did not go through:",
@@ -64,6 +63,20 @@
       "processNotResumed": "The process was not told about the decision.",
       "decisionNotRegistered": "The decision was not registered in Lifecare: {{detail}} Register it directly in Lifecare.",
       "decisionReceiptLost": "{{detail}}"
+    },
+    "send": "Send",
+    "attachments": {
+      "title": "Documents sent",
+      "help": "You can add files to send from Lifecare or your computer",
+      "decision": "Decision (Lifecare)",
+      "calculation": "Calculation (Lifecare)",
+      "remove": "Remove {{name}}",
+      "none": "No documents are sent.",
+      "addDecision": "Add the decision",
+      "addCalculation": "Add the calculation",
+      "fromLifecare": "From Lifecare",
+      "fromComputer": "From your computer",
+      "lifecareNotSupported": "Attaching other documents from Lifecare does not work in caremanagement yet. Files from your computer must be PDF."
     }
   },
   "actualisation": {

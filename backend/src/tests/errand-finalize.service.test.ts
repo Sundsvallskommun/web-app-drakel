@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LifecareDecisionRegistrationOutcomeEnum, NormberakningDraftSourceEnum } from '@/data-contracts/caremanagement/data-contracts';
 import { HttpException } from '@/exceptions/HttpException';
 
-const channels = { minaSidor: true, digitalBrevlada: false, brev: true };
+const channels = { minaSidor: true, digitalBrevlada: false, brev: true, message: 'Hej,', includeDecision: true, includeCalculation: true };
 const communication = { minaSidor: true, digitalMailbox: false, letter: true };
 
 const FINALIZE_URL = caremanagementUrl('errands', 'financial-assistance', 'errand-1', 'finalize');
@@ -50,7 +50,7 @@ describe('ErrandFinalizeService.finalize', () => {
     expect(get).toHaveBeenCalledWith({ url: NORMBERAKNING_URL });
     // Exactly this: no decision (careM reads the beslut from Lifecare) and no utbetalningar.
     expect(post).toHaveBeenCalledWith({ url: FINALIZE_URL, data: { communication, householdSizeChanged: true } });
-    expect(send).toHaveBeenCalledWith('errand-1', channels, 'caseworker01');
+    expect(send).toHaveBeenCalledWith('errand-1', channels, 'caseworker01', []);
     expect(result).toEqual({
       decisionId: 'decision-1',
       processMessageCorrelated: true,

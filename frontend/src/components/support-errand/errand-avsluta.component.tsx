@@ -1,45 +1,46 @@
 'use client';
 
-import TextEditor from '@components/common/text-editor.component';
 import { getDigitalMailbox } from '@services/decision-notification-service';
 import { finalizeErrand } from '@services/finalize-service';
-import { Button, Checkbox, FormControl, FormLabel, Modal } from '@sk-web-gui/react';
-import { TextEditorValue } from '@sk-web-gui/text-editor';
+import { getNormberakningDraft } from '@services/normberakning-service';
+import { useUserStore } from '@services/user-service/user-service';
+import { Button, Checkbox, FormControl, FormLabel, Modal, Textarea } from '@sk-web-gui/react';
+import { buildDecisionMessage } from '@utils/decision-message';
 import { FinalizeFollowUp, finalizeFollowUps } from '@utils/finalize-follow-ups';
 import { FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useShallow } from 'zustand/react/shallow';
 
 import { FinalizeFollowUps } from './finalize-follow-ups.component';
+import { DecisionAttachments, SendDecisionAttachments } from './send-decision-attachments.component';
 
-const EMPTY_MESSAGE: TextEditorValue = { markup: '', plainText: '' };
+const ALL_LIFECARE_DOCUMENTS: DecisionAttachments = { includeDecision: true, includeCalculation: true, files: [] };
 
 /**
- * "Besluta och utbetala" action for the administration bar. On confirm the BFF finalizes the errand in
- * caremanagement from the beslut saved in Lifecare — which records the decision and moves the process on
- * (the errand becomes GRANTED/REJECTED) — and then sends the beslut through the chosen channels (Mina sidor /
- * digital brevlåda / brev). The digital-brevlåda channel is only offered when the applicant has a reachable
- * mailbox. A refusal (no beslut or beräkning in Lifecare yet) is shown in careM's or the BFF's words. Anything
- * that did not go through after the errand was decided is listed in the dialog before it closes, since the
- * errand cannot be finalized again.
+ * "Skicka beräkning och beslut" for the administration bar. The dialog proposes a message to the sökande — for the
+ * ansökan's month, signed by the handläggare — which they edit, and the documents that go with it: the beslut and
+ * the beräkning from Lifecare, which they can take out, and PDFs from their computer. On Skicka the BFF finalizes the
+ * errand in caremanagement from the beslut saved in Lifecare, then sends the message through the chosen channels
+ * (Mina sidor and brev to begin with; digital brevlåda when the sökande has one). A refusal is shown in careM's or
+ * the BFF's words. Anything that did not go through after the errand was decided is listed before the dialog closes,
+ * since the errand cannot be finalized again.
  */
 export const ErrandAvsluta: FC<{
   errandId: string;
   onFinalized: () => void;
 }> = ({ errandId, onFinalized }) => {
   const { t } = useTranslation('errand');
+  const caseworkerName = useUserStore(useShallow((state) => state.user.name));
   const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
   const [checking, setChecking] = useState<boolean>(false);
   const [working, setWorking] = useState<boolean>(false);
   const [error, setError] = useState<string>();
-  // Channels (all on by default); digital brevlåda is only shown/used when the applicant has a mailbox.
   const [minaSidor, setMinaSidor] = useState<boolean>(true);
-  const [digitalBrevlada, setDigitalBrevlada] = useState<boolean>(true);
+  const [digitalBrevlada, setDigitalBrevlada] = useState<boolean>(false);
   const [brev, setBrev] = useState<boolean>(true);
   const [mailboxAvailable, setMailboxAvailable] = useState<boolean>(false);
-  // The message channel starts off: the other channels send the beslut that already exists, while this
-  // one sends something the handläggare has to write, and defaulting it on would press them to write it.
-  const [sendMessage, setSendMessage] = useState<boolean>(false);
-  const [message, setMessage] = useState<TextEditorValue>(EMPTY_MESSAGE);
+  const [message, setMessage] = useState<string>('');
+  const [attachments, setAttachments] = useState<DecisionAttachments>(ALL_LIFECARE_DOCUMENTS);
   // Set once the errand is decided but something after that did not go through.
   const [followUps, setFollowUps] = useState<FinalizeFollowUp[]>([]);
   const decided = followUps.length > 0;
@@ -49,32 +50,34 @@ export const ErrandAvsluta: FC<{
     setError(undefined);
     setMinaSidor(true);
     setBrev(true);
-    setSendMessage(false);
-    setMessage(EMPTY_MESSAGE);
+    setDigitalBrevlada(false);
+    setAttachments(ALL_LIFECARE_DOCUMENTS);
 
-    const mailboxRes = await getDigitalMailbox(errandId);
-    const available = !mailboxRes.error && mailboxRes.data === true;
-    setMailboxAvailable(available);
-    setDigitalBrevlada(available);
+    const [mailboxRes, draftRes] = await Promise.all([getDigitalMailbox(errandId), getNormberakningDraft(errandId)]);
+    setMailboxAvailable(!mailboxRes.error && mailboxRes.data === true);
+    setMessage(buildDecisionMessage(draftRes.data?.applicationMonth, caseworkerName));
     setChecking(false);
     setConfirmOpen(true);
   };
 
-  // Ticking the box is a statement of intent to send something, so an empty editor is a slip rather than
-  // a choice — holding the button is kinder than deciding the errand with an empty message attached.
-  const messageMissing = sendMessage && (message.plainText ?? '').trim() === '';
+  const messageMissing = message.trim() === '';
+  const noChannel = !minaSidor && !brev && !(digitalBrevlada && mailboxAvailable);
 
-  const confirmAndFinalize = async (): Promise<void> => {
+  const send = async (): Promise<void> => {
     setWorking(true);
     setError(undefined);
-    // The written message is not carried anywhere yet: the finalize payload has no field for it, and
-    // neither caremanagement nor Messaging has been asked to take one. The control is here so
-    // verksamheten can judge the placement and the wording before it is wired.
-    const result = await finalizeErrand(errandId, {
-      minaSidor,
-      digitalBrevlada: digitalBrevlada && mailboxAvailable,
-      brev,
-    });
+    const result = await finalizeErrand(
+      errandId,
+      {
+        minaSidor,
+        digitalBrevlada: digitalBrevlada && mailboxAvailable,
+        brev,
+        message,
+        includeDecision: attachments.includeDecision,
+        includeCalculation: attachments.includeCalculation,
+      },
+      attachments.files
+    );
     setWorking(false);
     if (result.error || !result.data) {
       // Nothing was finalized; the BFF's message says why (caremanagement's own reason on a conflict).
@@ -121,7 +124,7 @@ export const ErrandAvsluta: FC<{
         show={confirmOpen}
         onClose={closeModal}
         label={t('decideAndPay.button')}
-        className={sendMessage && !decided ? 'w-[72rem] max-w-[90vw]' : undefined}
+        className={decided ? undefined : 'w-[72rem] max-w-[90vw]'}
       >
         {decided ?
           <>
@@ -135,9 +138,9 @@ export const ErrandAvsluta: FC<{
             </Modal.Footer>
           </>
         : <>
-            <Modal.Content className="flex flex-col gap-16">
+            <Modal.Content className="flex flex-col gap-24">
               <div className="flex flex-col gap-8">
-                <span className="text-small text-dark-secondary">{t('decideAndPay.sendVia')}</span>
+                <span className="text-small font-bold">{t('decideAndPay.sendVia')}</span>
                 <Checkbox
                   checked={minaSidor}
                   onChange={(event) => {
@@ -164,34 +167,29 @@ export const ErrandAvsluta: FC<{
                 >
                   {t('decideAndPay.channels.letter')}
                 </Checkbox>
-                <Checkbox
-                  checked={sendMessage}
-                  onChange={(event) => {
-                    setSendMessage(event.target.checked);
-                  }}
-                >
-                  {t('decideAndPay.channels.message')}
-                </Checkbox>
               </div>
 
-              {sendMessage ?
-                <FormControl id="decide-and-pay-message" className="w-full">
-                  <FormLabel>{t('decideAndPay.messageLabel')}</FormLabel>
-                  <TextEditor
-                    className="text-editor-with-toolbar w-full"
-                    value={message}
-                    onChange={(event) => {
-                      setMessage(event.target.value);
-                    }}
-                  />
-                  {messageMissing ?
-                    <p className="m-0 mt-8 text-small text-dark-secondary">{t('decideAndPay.messageRequired')}</p>
-                  : null}
-                </FormControl>
-              : null}
+              <FormControl id="send-decision-message" className="w-full">
+                <FormLabel>{t('decideAndPay.messageLabel')}</FormLabel>
+                <Textarea
+                  className="w-full"
+                  rows={9}
+                  value={message}
+                  onChange={(event) => {
+                    setMessage(event.target.value);
+                  }}
+                />
+                {messageMissing ?
+                  <p className="m-0 mt-8 text-small text-dark-secondary">{t('decideAndPay.messageRequired')}</p>
+                : null}
+              </FormControl>
+
+              <SendDecisionAttachments value={attachments} onChange={setAttachments} />
 
               {error ?
-                <p className="text-error-surface-primary m-0">{error}</p>
+                <p className="text-error-surface-primary m-0" role="alert">
+                  {error}
+                </p>
               : null}
             </Modal.Content>
             <Modal.Footer>
@@ -203,10 +201,10 @@ export const ErrandAvsluta: FC<{
                 variant="primary"
                 loading={working}
                 loadingText={t('decideAndPay.executing')}
-                disabled={messageMissing}
-                onClick={() => void confirmAndFinalize()}
+                disabled={messageMissing || noChannel}
+                onClick={() => void send()}
               >
-                {t('decideAndPay.button')}
+                {t('decideAndPay.send')}
               </Button>
             </Modal.Footer>
           </>

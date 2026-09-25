@@ -1,3 +1,4 @@
+import { UploadedFileLike } from '@services/caremanagement-attachment.service';
 import CaremanagementDecisionService from '@services/caremanagement-decision.service';
 import CaremanagementHouseholdSizeService from '@services/caremanagement-household-size.service';
 import DecisionNotificationService from '@services/decision-notification.service';
@@ -32,19 +33,19 @@ class ErrandFinalizeService {
   private householdSize = new CaremanagementHouseholdSizeService();
   private notificationService = new DecisionNotificationService();
 
-  async finalize(errandId: string, input: FinalizeErrandDto, author: string): Promise<FinalizeResult> {
+  async finalize(errandId: string, input: FinalizeErrandDto, author: string, files: UploadedFileLike[] = []): Promise<FinalizeResult> {
     const householdSizeChanged = await this.householdSize.readHouseholdSizeChanged(errandId);
     // careM's refusals (400, 409, 422, 502 …) pass through with careM's own sentence — e.g. "Spara beslutet innan du
     // beslutar och betalar ut." — and stop the finalize before anything is sent.
     const finalized = (await this.decisionService.finalize(errandId, buildFinalizeRequest(input, householdSizeChanged))).data;
-    const failedChannels = await this.sendBeslut(errandId, input, author);
+    const failedChannels = await this.sendBeslut(errandId, input, author, files);
     return toFinalizeResult(finalized, failedChannels);
   }
 
   /** Sends the beslut, reporting every selected channel as failed when the send could not even start. */
-  private async sendBeslut(errandId: string, input: FinalizeErrandDto, author: string): Promise<string[]> {
+  private async sendBeslut(errandId: string, input: FinalizeErrandDto, author: string, files: UploadedFileLike[]): Promise<string[]> {
     try {
-      return await this.notificationService.send(errandId, input, author);
+      return await this.notificationService.send(errandId, input, author, files);
     } catch {
       logger.warn(`Finalized errand ${errandId} but could not send the beslut`);
       return selectedChannelLabels(input);

@@ -173,6 +173,40 @@ export interface DecisionProposalApiResponse {
   message: string;
 }
 
+export interface LifecareCalculationSummaryView {
+  income: number;
+  jobStimulus: number;
+  jobStimulusDeduction: number;
+  norm: number;
+  familyCost: number;
+  commonHouseholdCost: number;
+  expenses: number;
+  sum: number;
+  specialExpenses: number;
+  result: number;
+}
+
+export interface LifecareCalculationView {
+  id: number;
+  normName?: string;
+  date: string;
+  startDate: string;
+  endDate: string;
+  finalized: boolean;
+  updated: string;
+  summary?: LifecareCalculationSummaryView;
+}
+
+export interface LifecareCalculationApiResponse {
+  data?: LifecareCalculationView;
+  message: string;
+}
+
+export interface LifecareCalculationPdfApiResponse {
+  data: string;
+  message: string;
+}
+
 export interface LifecareDecisionView {
   id: number;
   decisionCode: number;
@@ -528,6 +562,16 @@ export interface DecisionNotificationDto {
   brev?: boolean;
 }
 
+export interface FinalizeErrandDto {
+  /** @maxLength 8192 */
+  message: string;
+  includeDecision: boolean;
+  includeCalculation: boolean;
+  minaSidor?: boolean;
+  digitalBrevlada?: boolean;
+  brev?: boolean;
+}
+
 export interface DecisionRegistration {
   decisionId: string;
   outcome: DecisionRegistrationOutcomeEnum;
@@ -683,40 +727,6 @@ export interface JournalEntryApiResponse {
 
 export interface JournalEntryTypesApiResponse {
   data: JournalEntryType[];
-  message: string;
-}
-
-export interface LifecareCalculationSummaryView {
-  income: number;
-  jobStimulus: number;
-  jobStimulusDeduction: number;
-  norm: number;
-  familyCost: number;
-  commonHouseholdCost: number;
-  expenses: number;
-  sum: number;
-  specialExpenses: number;
-  result: number;
-}
-
-export interface LifecareCalculationView {
-  id: number;
-  normName?: string;
-  date: string;
-  startDate: string;
-  endDate: string;
-  finalized: boolean;
-  updated: string;
-  summary?: LifecareCalculationSummaryView;
-}
-
-export interface LifecareCalculationApiResponse {
-  data?: LifecareCalculationView;
-  message: string;
-}
-
-export interface LifecareCalculationPdfApiResponse {
-  data: string;
   message: string;
 }
 
