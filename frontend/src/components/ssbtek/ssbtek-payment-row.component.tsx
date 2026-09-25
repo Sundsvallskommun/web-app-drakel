@@ -15,7 +15,7 @@ import { SsbtekPaymentParts } from './ssbtek-payment-parts.component';
  * The number of data columns in the payment table — all but the open/close column — which the opened delförmåner
  * span, so they line up under the first data column. One more with Person.
  */
-const SSBTEK_PAYMENT_DATA_COLUMN_COUNT = 8;
+const SSBTEK_PAYMENT_DATA_COLUMN_COUNT = 9;
 
 /** The grey an opened payment and its delförmåner share, as in Figma. */
 const OPENED_ROW_BACKGROUND = 'bg-background-color-mixin-1';
@@ -48,6 +48,7 @@ export const SsbtekPaymentRow: FC<{ payment: SsbtekPayment; showPerson: boolean 
             />
           : null}
         </Table.Column>
+        <Table.Column className="tabular-nums whitespace-nowrap">{payment.personalNumber ?? '—'}</Table.Column>
         {showPerson ?
           <Table.Column>{ssbtekPersonLabel(payment, t)}</Table.Column>
         : null}

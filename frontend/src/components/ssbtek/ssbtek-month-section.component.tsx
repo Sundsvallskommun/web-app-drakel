@@ -52,6 +52,7 @@ export const SsbtekMonthSection: FC<{ label: string; payments: SsbtekPayment[]; 
             <Table.HeaderColumn>
               <span className="sr-only">{t('parts.column')}</span>
             </Table.HeaderColumn>
+            <Table.HeaderColumn>{t('columns.personalNumber')}</Table.HeaderColumn>
             {showPerson ?
               <Table.HeaderColumn>{t('columns.person')}</Table.HeaderColumn>
             : null}

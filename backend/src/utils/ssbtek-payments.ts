@@ -5,16 +5,33 @@ import { forsakringskassanPayments } from './ssbtek-fk-payments';
 import { pensionPayments } from './ssbtek-pension-payments';
 import { unemploymentPayments } from './ssbtek-unemployment-payments';
 
-/**
- * What careM answered for the medsökande: their SSBTEK basis, that the errand has no medsökande, or that it has
- * one but SSBTEK could not be read for them.
- */
-export type CoApplicantBasis = { kind: 'READ'; basis: SsbtekBasis } | { kind: 'NONE' } | { kind: 'UNAVAILABLE' };
+/** The sökandes SSBTEK basis, and their personnummer when it could be looked up. */
+export interface ApplicantBasis {
+  basis: SsbtekBasis;
+  personalNumber?: string;
+}
 
-/** What careM answered for one of the ansökan's children: their SSBTEK basis, or none when it could not be read. */
+/**
+ * What careM answered for the medsökande: their SSBTEK basis (and personnummer), that the errand has no medsökande,
+ * or that it has one but SSBTEK could not be read for them.
+ */
+export type CoApplicantBasis = { kind: 'READ'; basis: SsbtekBasis; personalNumber?: string } | { kind: 'NONE' } | { kind: 'UNAVAILABLE' };
+
+/**
+ * What careM answered for one of the ansökan's children: their SSBTEK basis, or none when it could not be read —
+ * and their personnummer when it could be looked up.
+ */
 export interface ChildBasis {
   name?: string;
+  personalNumber?: string;
   basis?: SsbtekBasis;
+}
+
+/** Whom a basis was read for, as each of its payments says it. */
+interface HouseholdMember {
+  person: SsbtekPerson;
+  childName?: string;
+  personalNumber?: string;
 }
 
 /** The household in the order the table lists a day's payments: sökande, medsökande, children. */
@@ -48,27 +65,29 @@ const byPaidOnNewestFirst = (first: SsbtekPayment, second: SsbtekPayment): numbe
  * Försäkringskassan, Pensionsmyndigheten and the a-kassor. Only the fields the payment table shows are read, so
  * nothing identifying in the verbatim agency answers — personnummer, names, addresses — leaves the BFF.
  */
-const paymentsOf = (basis: SsbtekBasis, person: SsbtekPerson, childName?: string): SsbtekPayment[] => {
+const paymentsOf = (basis: SsbtekBasis, member: HouseholdMember): SsbtekPayment[] => {
   const agencies = basis.agencies ?? {};
   return [...forsakringskassanPayments(agencies.fk), ...pensionPayments(agencies.fk), ...unemploymentPayments(agencies.so)]
     .filter(payment => isInPeriod(payment, basis.from, basis.to))
-    .map(payment => ({ ...payment, person, childName }));
+    .map(payment => ({ ...payment, ...member }));
 };
 
-/** The children's payments, each child's tagged with its name. */
+/** The children's payments, each child's tagged with its name and personnummer. */
 const childrensPayments = (children: ChildBasis[]): SsbtekPayment[] =>
-  children.flatMap(child => (child.basis ? paymentsOf(child.basis, 'CHILD', child.name) : []));
+  children.flatMap(child =>
+    child.basis ? paymentsOf(child.basis, { person: 'CHILD', childName: child.name, personalNumber: child.personalNumber }) : [],
+  );
 
 /**
  * The household's payments in the period — the sökandes and, when the errand has them, the medsökandes and the
  * children's — newest first.
  */
-export const toSsbtekPaymentsView = (applicant: SsbtekBasis, coApplicant: CoApplicantBasis, children: ChildBasis[]): SsbtekPaymentsView => ({
-  from: applicant.from,
-  to: applicant.to,
+export const toSsbtekPaymentsView = (applicant: ApplicantBasis, coApplicant: CoApplicantBasis, children: ChildBasis[]): SsbtekPaymentsView => ({
+  from: applicant.basis.from,
+  to: applicant.basis.to,
   payments: [
-    ...paymentsOf(applicant, 'APPLICANT'),
-    ...(coApplicant.kind === 'READ' ? paymentsOf(coApplicant.basis, 'CO_APPLICANT') : []),
+    ...paymentsOf(applicant.basis, { person: 'APPLICANT', personalNumber: applicant.personalNumber }),
+    ...(coApplicant.kind === 'READ' ? paymentsOf(coApplicant.basis, { person: 'CO_APPLICANT', personalNumber: coApplicant.personalNumber }) : []),
     ...childrensPayments(children),
   ].sort(byPaidOnNewestFirst),
   hasCoApplicant: coApplicant.kind !== 'NONE',

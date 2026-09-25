@@ -1360,6 +1360,7 @@ export interface SsbtekPaymentPart {
 export interface SsbtekPayment {
   person: SsbtekPaymentPersonEnum;
   childName?: string;
+  personalNumber?: string;
   source: string;
   benefit: string;
   paidOn?: string;

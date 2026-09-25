@@ -19,6 +19,7 @@ const VIEW: SsbtekPaymentsView = {
   payments: [
     {
       person: APPLICANT,
+      personalNumber: '199001011234',
       source: 'FK',
       benefit: 'Bostadsbidrag',
       paidOn: '2026-09-25',
@@ -71,6 +72,7 @@ describe('SsbtekPayments', () => {
     expect(within(row).getByText('2026-09-25')).toBeInTheDocument();
     expect(within(row).getByText('Månad')).toBeInTheDocument();
     expect(within(row).getByText('4500,00 kr')).toBeInTheDocument();
+    expect(within(row).getByText('199001011234')).toBeInTheDocument();
     expect(within(row).getByText('2026-09-01 – 2026-09-30')).toBeInTheDocument();
   });
 
@@ -104,8 +106,8 @@ describe('SsbtekPayments', () => {
   });
 
   it.each([
-    { hasCoApplicant: false, columns: 9 },
-    { hasCoApplicant: true, columns: 10 },
+    { hasCoApplicant: false, columns: 10 },
+    { hasCoApplicant: true, columns: 11 },
   ])(
     'gives each of the $columns columns a width, so the months line up (medsökande: $hasCoApplicant)',
     async ({ hasCoApplicant, columns }) => {
