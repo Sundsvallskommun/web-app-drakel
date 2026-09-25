@@ -59,6 +59,15 @@ class CaremanagementStakeholderService {
     };
   }
 
+  /** The partyIds of the errand's sökande and medsökande — for looking up who they are, e.g. their personnummer. */
+  async readHouseholdPartyIds(errandId: string): Promise<{ applicant?: string; coApplicant?: string }> {
+    const stakeholders = (await this.fetchStakeholders(errandId)).data ?? [];
+    return {
+      applicant: stakeholders.find(stakeholder => stakeholder.role === APPLICANT_ROLE)?.externalId,
+      coApplicant: stakeholders.find(stakeholder => stakeholder.role === CO_APPLICANT_ROLE)?.externalId,
+    };
+  }
+
   private async fetchStakeholders(errandId: string): Promise<ApiResponse<Stakeholder[]>> {
     return this.apiService.get<Stakeholder[]>({
       url: caremanagementUrl('errands', errandId, 'stakeholders'),

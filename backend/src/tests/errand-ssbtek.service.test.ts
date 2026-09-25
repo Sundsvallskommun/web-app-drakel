@@ -1,5 +1,7 @@
 import CaremanagementErrandService from '@services/caremanagement-errand.service';
 import CaremanagementSsbtekService from '@services/caremanagement-ssbtek.service';
+import CaremanagementStakeholderService from '@services/caremanagement-stakeholder.service';
+import CitizenService from '@services/citizen.service';
 import ErrandSsbtekService from '@services/errand-ssbtek.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -35,6 +37,10 @@ describe('ErrandSsbtekService', () => {
       message: 'success',
     });
     withChildren([]);
+    vi.spyOn(CaremanagementStakeholderService.prototype, 'readHouseholdPartyIds').mockResolvedValue({ applicant: 'applicant-party' });
+    vi.spyOn(CitizenService.prototype, 'getPersonnumber').mockImplementation(partyId =>
+      Promise.resolve(({ 'applicant-party': '199001011234', 'child-1': '201503033456' } as Record<string, string>)[partyId] ?? null),
+    );
   });
 
   afterEach(() => {
@@ -120,5 +126,33 @@ describe('ErrandSsbtekService', () => {
 
     expect(view).toMatchObject({ hasChildren: true, unavailableChildren: ['Alva Testsson'] });
     expect(view.payments.map(payment => payment.person)).toEqual(['APPLICANT']);
+  });
+
+  it("tags the payments with the personnummer Citizen gives for the sökandes and a child's partyId", async () => {
+    withChildren([{ partyId: 'child-1', firstName: 'Alva', lastName: 'Testsson' }]);
+    vi.spyOn(CaremanagementSsbtekService.prototype, 'readBasis').mockImplementation((_errandId, person) =>
+      person === 'CO_APPLICANT'
+        ? Promise.reject(new HttpException(404, 'Not found'))
+        : Promise.resolve(answer(person === 'CHILD' ? 'Underhållsstöd' : 'Bostadsbidrag')),
+    );
+
+    const view = await new ErrandSsbtekService().readPayments('EB-26090036', PERIOD);
+
+    expect(view.payments.map(payment => [payment.person, payment.personalNumber])).toEqual([
+      ['APPLICANT', '199001011234'],
+      ['CHILD', '201503033456'],
+    ]);
+  });
+
+  it('still lists the payments, without personnummer, when the household cannot be looked up', async () => {
+    vi.spyOn(CaremanagementStakeholderService.prototype, 'readHouseholdPartyIds').mockRejectedValue(new HttpException(502, 'careM svarade inte'));
+    vi.spyOn(CaremanagementSsbtekService.prototype, 'readBasis').mockImplementation((_errandId, person) =>
+      person === 'APPLICANT' ? Promise.resolve(answer('Bostadsbidrag')) : Promise.reject(new HttpException(404, 'Not found')),
+    );
+
+    const view = await new ErrandSsbtekService().readPayments('EB-26090036', PERIOD);
+
+    expect(view.payments).toHaveLength(1);
+    expect(view.payments[0]?.personalNumber).toBeUndefined();
   });
 });

@@ -30,6 +30,8 @@ export class SsbtekPayment {
   @IsIn(SSBTEK_PERSONS) person!: SsbtekPerson;
   /** The child's name as the ansökan gives it, when the payment is a child's. */
   @IsOptional() @IsString() childName?: string;
+  /** The personnummer of whom it was paid to, from Citizen; left out when it could not be looked up. */
+  @IsOptional() @IsString() personalNumber?: string;
   /** The agency that paid: FK (Försäkringskassan), PM (Pensionsmyndigheten) or AKASSA (the a-kassa). */
   @IsString() source!: string;
   /** The förmån, e.g. "Bostadsbidrag". */

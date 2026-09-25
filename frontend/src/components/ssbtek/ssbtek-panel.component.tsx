@@ -8,7 +8,7 @@ import { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useSsbtekPanel } from './ssbtek-panel-context';
-import { SsbtekPayments } from './ssbtek-payments.component';
+import { SsbtekPaymentsTab } from './ssbtek-payments-tab.component';
 
 // The panel opens a third of the way up and is dragged between a strip and most of the screen.
 const INITIAL_HEIGHT = 360;
@@ -53,7 +53,7 @@ export const SsbtekPanel: FC = () => {
       </div>
 
       <div className="grow min-h-0 overflow-y-auto px-24 pb-24">
-        <SsbtekPayments errandId={errandId} />
+        <SsbtekPaymentsTab errandId={errandId} />
       </div>
     </section>
   );

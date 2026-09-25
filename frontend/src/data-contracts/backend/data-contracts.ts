@@ -1344,6 +1344,16 @@ export interface SsbtekPeriodQueryDto {
   to?: string;
 }
 
+export interface SsbtekTransferIncomeDto {
+  role: SsbtekTransferIncomeDtoRoleEnum;
+  incomeTypeId: number;
+}
+
+export interface SsbtekTransferDto {
+  /** @minItems 1 */
+  incomes: SsbtekTransferIncomeDto[];
+}
+
 export interface SsbtekPaymentPart {
   benefit?: string;
   amountType?: string;
@@ -1361,6 +1371,7 @@ export interface SsbtekPaymentPart {
 export interface SsbtekPayment {
   person: SsbtekPaymentPersonEnum;
   childName?: string;
+  personalNumber?: string;
   source: string;
   benefit: string;
   paidOn?: string;
@@ -1387,6 +1398,27 @@ export interface SsbtekPaymentsView {
 
 export interface SsbtekPaymentsApiResponse {
   data: SsbtekPaymentsView;
+  message: string;
+}
+
+export interface SsbtekIncomeChangeView {
+  kind: SsbtekIncomeChangeViewKindEnum;
+  role: SsbtekIncomeChangeViewRoleEnum;
+  incomeTypeId?: number;
+  incomeType: string;
+  ssbtekAmount?: number;
+  lifecareAmount?: number;
+  transferable: boolean;
+}
+
+export interface SsbtekChangesView {
+  available: boolean;
+  isFinal: boolean;
+  changes: SsbtekIncomeChangeView[];
+}
+
+export interface SsbtekChangesApiResponse {
+  data: SsbtekChangesView;
   message: string;
 }
 
@@ -1466,10 +1498,26 @@ export enum NormberakningDraftSourceEnum {
   LIFECARE = "LIFECARE",
 }
 
+export enum SsbtekTransferIncomeDtoRoleEnum {
+  APPLICANT = "APPLICANT",
+  CO_APPLICANT = "CO_APPLICANT",
+}
+
 export enum SsbtekPaymentPersonEnum {
   APPLICANT = "APPLICANT",
   CO_APPLICANT = "CO_APPLICANT",
   CHILD = "CHILD",
+}
+
+export enum SsbtekIncomeChangeViewKindEnum {
+  ADD = "ADD",
+  CHANGE = "CHANGE",
+  GONE = "GONE",
+}
+
+export enum SsbtekIncomeChangeViewRoleEnum {
+  APPLICANT = "APPLICANT",
+  CO_APPLICANT = "CO_APPLICANT",
 }
 
 export enum UserRoleEnum {
