@@ -53,35 +53,39 @@ export const AdminSection: FC<{ children: ReactNode }> = ({ children }) => {
     );
   }
 
+  // The main area fills the app shell and scrolls itself — the shell is fixed to the screen and clips what
+  // overflows it — while the content keeps to a centred column.
   return (
-    <main className="mx-auto flex w-full max-w-[120rem] flex-col gap-24 overflow-y-auto p-24">
-      <h1 className="m-0 text-h2-md">{t('title')}</h1>
+    <main className="h-full overflow-y-auto p-24">
+      <div className="mx-auto flex w-full max-w-[120rem] flex-col gap-24">
+        <h1 className="m-0 text-h2-md">{t('title')}</h1>
 
-      {/* A single page needs no navigation — the heading already says where the user is. */}
-      {pages.length > 1 ?
-        <nav aria-label={t('nav.label')}>
-          <ul className="m-0 flex list-none flex-wrap gap-8 p-0">
-            {pages.map((page) => (
-              <li key={page.slug}>
-                <NextLink
-                  href={`/${locale}/admin/${page.slug}`}
-                  aria-current={isCurrent(page.slug) ? 'page' : undefined}
-                  className={cx(
-                    'inline-block rounded-12 px-16 py-10 no-underline transition-colors',
-                    isCurrent(page.slug) ?
-                      'bg-vattjom-surface-primary text-light-primary font-bold'
-                    : 'bg-background-content text-dark-primary hover:bg-background-color-mixin-1'
-                  )}
-                >
-                  {t(page.labelKey)}
-                </NextLink>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      : null}
+        {/* A single page needs no navigation — the heading already says where the user is. */}
+        {pages.length > 1 ?
+          <nav aria-label={t('nav.label')}>
+            <ul className="m-0 flex list-none flex-wrap gap-8 p-0">
+              {pages.map((page) => (
+                <li key={page.slug}>
+                  <NextLink
+                    href={`/${locale}/admin/${page.slug}`}
+                    aria-current={isCurrent(page.slug) ? 'page' : undefined}
+                    className={cx(
+                      'inline-block rounded-12 px-16 py-10 no-underline transition-colors',
+                      isCurrent(page.slug) ?
+                        'bg-vattjom-surface-primary text-light-primary font-bold'
+                      : 'bg-background-content text-dark-primary hover:bg-background-color-mixin-1'
+                    )}
+                  >
+                    {t(page.labelKey)}
+                  </NextLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        : null}
 
-      {children}
+        {children}
+      </div>
     </main>
   );
 };
