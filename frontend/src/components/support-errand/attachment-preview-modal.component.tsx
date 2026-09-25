@@ -1,5 +1,6 @@
 'use client';
 
+import { PdfFrame } from '@components/common/pdf-preview.component';
 import { Attachment } from '@data-contracts/backend/data-contracts';
 import { getUnifiedAttachmentBlob } from '@services/errand-service/errand-service';
 import { Modal, Spinner } from '@sk-web-gui/react';
@@ -99,7 +100,8 @@ const FilePreview: FC<{ blob?: Blob; mimeType: string; fileName: string; isLoadi
       </div>
     );
   }
-  return <iframe src={`${url}#pagemode=none`} className="w-full h-[80vh] border-0" title={fileName} />;
+  // The same trimmed PDF view as the sammanställning, with "Öppna bilaga i ny flik".
+  return <PdfFrame url={url} title={fileName} heightClassName="h-[80vh]" />;
 };
 
 interface AttachmentPreviewModalProps {
