@@ -1,3 +1,4 @@
+import { UploadedFileLike } from '@services/caremanagement-attachment.service';
 import CaremanagementDecisionService from '@services/caremanagement-decision.service';
 import DecisionNotificationService from '@services/decision-notification.service';
 import ErrandLifecareDecisionService from '@services/errand-lifecare-decision.service';
@@ -53,7 +54,7 @@ class ErrandFinalizeService {
   private notificationService = new DecisionNotificationService();
   private lifecareDecision = new ErrandLifecareDecisionService();
 
-  async finalize(errandId: string, input: FinalizeErrandDto, author: string): Promise<FinalizeResult> {
+  async finalize(errandId: string, input: FinalizeErrandDto, author: string, files: UploadedFileLike[] = []): Promise<FinalizeResult> {
     const [beslut, householdSizeChanged] = await Promise.all([
       this.lifecareDecision.read(errandId),
       this.normberakning.householdSizeChanged(errandId),
@@ -68,14 +69,14 @@ class ErrandFinalizeService {
 
     const lifecareDecision =
       finalized.data.decisionId && beslut ? await this.lifecareDecision.receiptFinalized(errandId, finalized.data.decisionId, beslut.id) : undefined;
-    const failedChannels = await this.sendBeslut(errandId, input, author);
+    const failedChannels = await this.sendBeslut(errandId, input, author, files);
     return toFinalizeResult(finalized.data, lifecareDecision, failedChannels);
   }
 
   /** Sends the beslut, reporting every selected channel as failed when the send could not even start. */
-  private async sendBeslut(errandId: string, input: FinalizeErrandDto, author: string): Promise<string[]> {
+  private async sendBeslut(errandId: string, input: FinalizeErrandDto, author: string, files: UploadedFileLike[]): Promise<string[]> {
     try {
-      return await this.notificationService.send(errandId, input, author);
+      return await this.notificationService.send(errandId, input, author, files);
     } catch {
       logger.warn(`Finalized errand ${errandId} but could not send the beslut`);
       return selectedChannelLabels(input);

@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HttpException } from '@/exceptions/HttpException';
 
-const channels = { minaSidor: true, digitalBrevlada: false, brev: true };
+const channels = { minaSidor: true, digitalBrevlada: false, brev: true, message: 'Hej,', includeDecision: true, includeCalculation: true };
 
 /** The beslut the handläggare saved, as it stands in Lifecare. */
 const lifecareBeslut = {
@@ -65,7 +65,7 @@ describe('ErrandFinalizeService.finalize', () => {
     // The Utbetalning tab registers utbetalningar in Lifecare directly; careM gets none.
     expect(finalize.mock.calls[0]?.[1]).not.toHaveProperty('payments');
     expect(receiptFinalized).toHaveBeenCalledWith('errand-1', 'decision-1', 98);
-    expect(send).toHaveBeenCalledWith('errand-1', expect.objectContaining(channels), 'caseworker01');
+    expect(send).toHaveBeenCalledWith('errand-1', expect.objectContaining(channels), 'caseworker01', []);
     expect(result).toEqual({
       decisionId: 'decision-1',
       processMessageCorrelated: true,

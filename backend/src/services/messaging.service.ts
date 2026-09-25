@@ -22,7 +22,12 @@ import {
   Mailbox,
 } from '@/data-contracts/messaging/data-contracts';
 
-const PDF_FILENAME = 'beslut.pdf';
+/** A PDF sent with a digital mail or a letter. */
+interface MessagingPdf {
+  filename: string;
+  /** The PDF, base64-encoded. */
+  content: string;
+}
 
 /**
  * Sends the beslut to the applicant through the Messaging service: Mina sidor (web message), digital
@@ -53,8 +58,8 @@ class MessagingService {
     return (res.data ?? []).some(mailbox => mailbox.partyId === partyId && mailbox.reachable === true);
   }
 
-  /** Digital brevlåda — a digital mail with the beslut PDF attached. */
-  async sendDigitalMail(partyId: string, subject: string, body: string, pdfBase64: string): Promise<void> {
+  /** Digital brevlåda — a digital mail with the PDFs attached. */
+  async sendDigitalMail(partyId: string, subject: string, body: string, pdfs: MessagingPdf[]): Promise<void> {
     const request: DigitalMailRequest = {
       party: { partyIds: [partyId] },
       sender: { supportInfo: this.supportInfo() },
@@ -62,13 +67,13 @@ class MessagingService {
       department: MESSAGING_DEPARTMENT,
       contentType: DigitalMailRequestContentTypeEnum.TextPlain,
       body,
-      attachments: [{ content: pdfBase64, filename: PDF_FILENAME, contentType: DigitalMailAttachmentContentTypeEnum.ApplicationPdf }],
+      attachments: pdfs.map(pdf => ({ ...pdf, contentType: DigitalMailAttachmentContentTypeEnum.ApplicationPdf })),
     };
     await this.apiService.post({ url: `${this.base()}/digital-mail`, data: request });
   }
 
-  /** Brev — a physical letter (snail mail) with the beslut PDF attached. */
-  async sendLetter(partyId: string, subject: string, body: string, pdfBase64: string): Promise<void> {
+  /** Brev — a physical letter (snail mail) with the PDFs enclosed. */
+  async sendLetter(partyId: string, subject: string, body: string, pdfs: MessagingPdf[]): Promise<void> {
     const request: LetterRequest = {
       party: { partyIds: [partyId] },
       subject,
@@ -76,14 +81,11 @@ class MessagingService {
       contentType: LetterRequestContentTypeEnum.TextPlain,
       body,
       department: MESSAGING_DEPARTMENT,
-      attachments: [
-        {
-          deliveryMode: LetterAttachmentDeliveryModeEnum.SNAIL_MAIL,
-          filename: PDF_FILENAME,
-          contentType: LetterAttachmentContentTypeEnum.ApplicationPdf,
-          content: pdfBase64,
-        },
-      ],
+      attachments: pdfs.map(pdf => ({
+        ...pdf,
+        deliveryMode: LetterAttachmentDeliveryModeEnum.SNAIL_MAIL,
+        contentType: LetterAttachmentContentTypeEnum.ApplicationPdf,
+      })),
     };
     await this.apiService.post({ url: `${this.base()}/letter`, data: request });
   }
