@@ -11,9 +11,10 @@ import { useSsbtekPanel } from './ssbtek-panel-context';
 import { useSsbtekPreference } from './ssbtek-preference-context';
 
 /**
- * "Hämta från SSBTEK" in the header, beside "Nytt ärende". Shown only on an errand — SSBTEK is read for the
- * errand's sökande — and not on the SSBTEK page itself. Opens the SSBTEK page in a new tab, or the panel at the
- * foot of the errand, as the handläggare has chosen in the user menu (kept in their settings in careM).
+ * "Hämta från SSBTEK" in the header, where "Nytt ärende" sits too when shown. Shown only on an errand — SSBTEK
+ * is read for the errand's sökande and medsökande — and not on the SSBTEK page itself. Opens the SSBTEK page in a
+ * new tab, or the panel at the foot of the errand, as the handläggare has chosen in the user menu (kept in their
+ * settings in careM).
  */
 export const SsbtekButton: FC = () => {
   const { t } = useTranslation('header');

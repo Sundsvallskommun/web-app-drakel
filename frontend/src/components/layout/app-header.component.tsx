@@ -2,10 +2,8 @@
 
 import { SsbtekButton } from '@components/ssbtek/ssbtek-button.component';
 import { useUserStore } from '@services/user-service/user-service';
-import { Button, Logo, UserMenu } from '@sk-web-gui/react';
-import { basePath } from '@utils/base-path';
+import { Logo, UserMenu } from '@sk-web-gui/react';
 import { getInitials } from '@utils/get-initials';
-import { ExternalLink } from 'lucide-react';
 import NextLink from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -14,9 +12,15 @@ import { useShallow } from 'zustand/react/shallow';
 import { HeaderNotifications } from './header-notifications.component';
 import { useUserMenuGroups } from './user-menu-groups';
 
+// TODO(nytt-arende): "Nytt ärende" är dold tills verksamheten är mogen nog att registrera egna ärenden från
+// Drakel. Ta då tillbaka knappen nedan och de importer den behöver:
+//   import { Button } from '@sk-web-gui/react';
+//   import { basePath } from '@utils/base-path';
+//   import { ExternalLink } from 'lucide-react';
+
 /**
- * Dark top header for the errand/register pages: service logo, "Hämta från SSBTEK", "Nytt ärende", notifications
- * and user menu.
+ * Dark top header for the errand/register pages: service logo, "Hämta från SSBTEK", notifications and user menu.
+ * ("Nytt ärende" is hidden for now — see TODO(nytt-arende) above.)
  */
 export const AppHeader = () => {
   const { t } = useTranslation('header');
@@ -36,7 +40,8 @@ export const AppHeader = () => {
       <div className="flex items-center gap-24 shrink-0">
         <div className="flex items-center gap-12">
           <SsbtekButton />
-          {/* Registrering skapar ett utkast direkt, så det öppnas i en ny flik för att inte lämna pågående ärende. */}
+          {/* TODO(nytt-arende): dold tills verksamheten registrerar egna ärenden från Drakel.
+              Registrering skapar ett utkast direkt, så det öppnas i en ny flik för att inte lämna pågående ärende.
           <Button
             color="vattjom"
             inverted
@@ -47,6 +52,7 @@ export const AppHeader = () => {
           >
             {t('newErrand')}
           </Button>
+          */}
         </div>
 
         <HeaderNotifications />
