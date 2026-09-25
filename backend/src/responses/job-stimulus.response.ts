@@ -1,9 +1,11 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
-import { LifecareJobStimulusPeriodRaw, LifecareJobStimulusRaw } from '@interfaces/lifecare-job-stimulus.interface';
 import { Type } from 'class-transformer';
 import { IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
-/** A jobbstimulans period on the errand's insats, as Lifecare holds it. The personnummer is left behind. */
+/**
+ * A jobbstimulans period on the errand's insats, as Lifecare holds it. The personnummer is left behind.
+ * careM's LifecareJobStimulusPeriod has this very shape and is passed through as it is.
+ */
 export class JobStimulusPeriod {
   /** Lifecare's jobStimulusId. */
   @IsNumber()
@@ -30,17 +32,3 @@ export class JobStimulusPeriodsApiResponse implements ApiResponse<JobStimulusPer
   @IsString()
   message!: string;
 }
-
-const toPeriod = (period: LifecareJobStimulusPeriodRaw, role: string): JobStimulusPeriod => ({
-  id: period.jobStimulusId,
-  role,
-  fromDate: period.fromDate || undefined,
-  // Lifecare sends an empty string for a period without an end.
-  toDate: period.toDate || undefined,
-});
-
-/** The sökandes and the medsökandes periods, each marked with whose it is. Removed periods are left out. */
-export const toJobStimulusPeriods = (raw: LifecareJobStimulusRaw): JobStimulusPeriod[] => [
-  ...(raw.applicant?.periods ?? []).filter(period => !period.markedForRemoval).map(period => toPeriod(period, 'APPLICANT')),
-  ...(raw.coApplicant?.periods ?? []).filter(period => !period.markedForRemoval).map(period => toPeriod(period, 'CO_APPLICANT')),
-];
