@@ -33,7 +33,8 @@
     "errandNumber": "Errand number",
     "received": "Received",
     "applicant": "Applicant",
-    "applicantAndCoApplicant": "Applicant and co-applicant"
+    "applicantAndCoApplicant": "Applicant and co-applicant",
+    "personalNumber": "Personal identity number"
   },
   "assign": {
     "button": "Assign",

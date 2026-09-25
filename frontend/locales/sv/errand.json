@@ -33,7 +33,8 @@
     "errandNumber": "Ärendenummer",
     "received": "Inkom",
     "applicant": "Sökande",
-    "applicantAndCoApplicant": "Sökande och medsökande"
+    "applicantAndCoApplicant": "Sökande och medsökande",
+    "personalNumber": "Personnummer"
   },
   "assign": {
     "button": "Tilldela",
