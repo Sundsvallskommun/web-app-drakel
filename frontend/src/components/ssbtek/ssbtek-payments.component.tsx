@@ -5,6 +5,7 @@ import { Spinner } from '@sk-web-gui/react';
 import { formatApplicationMonth } from '@utils/application-month';
 import { formatDateRange } from '@utils/date-range';
 import { groupByPaymentMonth } from '@utils/ssbtek-payment-months';
+import { SsbtekPeriod } from '@utils/ssbtek-period';
 import { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -13,11 +14,11 @@ import { SsbtekUnavailableChildren } from './ssbtek-unavailable-children.compone
 
 /**
  * The payments SSBTEK reports to the errand's household — the sökande, any medsökande and children — a table per
- * month they were paid, newest first. Shared by the SSBTEK page and the panel at the foot of the errand.
+ * month they were paid, newest first, for the period (careM's default without one).
  */
-export const SsbtekPayments: FC<{ errandId: string }> = ({ errandId }) => {
+export const SsbtekPayments: FC<{ errandId: string; period?: SsbtekPeriod }> = ({ errandId, period }) => {
   const { t, i18n } = useTranslation('ssbtek');
-  const { view, isLoading, error, errorMessage } = useSsbtekPayments(errandId);
+  const { view, isLoading, error, errorMessage } = useSsbtekPayments(errandId, period);
 
   if (isLoading) {
     return (

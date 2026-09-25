@@ -62,7 +62,7 @@ describe('SsbtekPayments', () => {
     expect(await screen.findByRole('heading', { name: 'September 2026' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Augusti 2026' })).toBeInTheDocument();
     expect(screen.getByText('Period: 2026-07-01 – 2026-09-30')).toBeInTheDocument();
-    expect(getSsbtekPayments).toHaveBeenCalledWith('EB-26090036');
+    expect(getSsbtekPayments).toHaveBeenCalledWith('EB-26090036', undefined);
 
     const [september] = screen.getAllByRole('table');
     if (!september) {

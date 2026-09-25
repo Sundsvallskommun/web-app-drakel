@@ -4,7 +4,7 @@ import { Tabs } from '@sk-web-gui/react';
 import { FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { SsbtekPayments } from './ssbtek-payments.component';
+import { SsbtekPaymentsTab } from './ssbtek-payments-tab.component';
 
 /**
  * The errand's SSBTEK page, opened in its own tab from the header so the errand stays open beside it. Laid out as
@@ -25,7 +25,7 @@ export const SsbtekPageClient: FC<{ errandId: string }> = ({ errandId }) => {
           <Tabs.Item>
             <Tabs.Button>{t('tabs.payments')}</Tabs.Button>
             <Tabs.Content>
-              <SsbtekPayments errandId={errandId} />
+              <SsbtekPaymentsTab errandId={errandId} />
             </Tabs.Content>
           </Tabs.Item>
         </Tabs>

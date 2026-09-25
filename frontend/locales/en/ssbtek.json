@@ -42,5 +42,36 @@
     "CHILD": "Child",
     "namedChild": "{{name}} (child)",
     "unnamedChild": "a child"
+  },
+  "periodPicker": {
+    "from": "From month",
+    "to": "To month",
+    "search": "Fetch"
+  },
+  "transfer": {
+    "title": "Transfer to the calculation",
+    "pick": "Transfer {{incomeType}} for {{person}}",
+    "columns": {
+      "pick": "Pick",
+      "incomeType": "Income type",
+      "ssbtekAmount": "According to SSBTEK",
+      "lifecareAmount": "In the calculation",
+      "status": "Status"
+    },
+    "status": {
+      "missing": "Missing from the calculation",
+      "notTransferable": "Cannot be transferred",
+      "change": "Transferred – another amount in the calculation",
+      "gone": "Transferred – no longer reported by SSBTEK"
+    },
+    "submit_one": "Transfer {{count}} income",
+    "submit_other": "Transfer {{count}} incomes",
+    "done_one": "{{count}} income was transferred to the calculation.",
+    "done_other": "{{count}} incomes were transferred to the calculation.",
+    "error": "The incomes could not be transferred to the calculation.",
+    "loadError": "SSBTEK could not be compared with the calculation.",
+    "inSync": "The calculation matches SSBTEK – there is nothing to transfer.",
+    "notAvailable": "The calculation must be saved in Lifecare before incomes can be transferred from SSBTEK.",
+    "final": "The calculation is final in Lifecare, so nothing can be transferred."
   }
 }

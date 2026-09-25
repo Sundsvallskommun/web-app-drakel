@@ -8,7 +8,11 @@ import { SsbtekPanel } from './ssbtek-panel.component';
 import { SsbtekPanelProvider, useSsbtekPanel } from './ssbtek-panel-context';
 
 vi.mock('next/navigation', () => ({ useParams: vi.fn() }));
-vi.mock('@services/ssbtek-service', () => ({ getSsbtekPayments: vi.fn() }));
+vi.mock('@services/ssbtek-service', () => ({
+  getSsbtekPayments: vi.fn(),
+  getSsbtekChanges: vi.fn().mockResolvedValue({ data: { available: false, isFinal: false, changes: [] } }),
+  transferSsbtekIncomes: vi.fn(),
+}));
 
 /** Stands in for the header's "Hämta från SSBTEK" button, when SSBTEK opens on the errand. */
 const ToggleButton: FC = () => {
@@ -80,7 +84,10 @@ describe('SsbtekPanel', () => {
 
     expect(panel.style.right).toBe('var(--errand-sidebar-width, 0px)');
     expect(await screen.findByText('SSBTEK rapporterar inga betalningar under perioden.')).toBeInTheDocument();
-    expect(getSsbtekPayments).toHaveBeenCalledWith('EB-26090036');
+    expect(getSsbtekPayments).toHaveBeenCalledWith(
+      'EB-26090036',
+      expect.objectContaining({ from: expect.any(String) as unknown })
+    );
   });
 
   it('grows when its top edge is dragged up and never shrinks below a strip', () => {

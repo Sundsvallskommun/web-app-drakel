@@ -42,5 +42,36 @@
     "CHILD": "Barn",
     "namedChild": "{{name}} (barn)",
     "unnamedChild": "ett barn"
+  },
+  "periodPicker": {
+    "from": "Från månad",
+    "to": "Till månad",
+    "search": "Hämta"
+  },
+  "transfer": {
+    "title": "Överför till normberäkningen",
+    "pick": "Överför {{incomeType}} för {{person}}",
+    "columns": {
+      "pick": "Välj",
+      "incomeType": "Inkomsttyp",
+      "ssbtekAmount": "Enligt SSBTEK",
+      "lifecareAmount": "I normberäkningen",
+      "status": "Status"
+    },
+    "status": {
+      "missing": "Saknas i normberäkningen",
+      "notTransferable": "Kan inte överföras",
+      "change": "Överförd – annat belopp i normberäkningen",
+      "gone": "Överförd – rapporteras inte längre av SSBTEK"
+    },
+    "submit_one": "Överför {{count}} inkomst",
+    "submit_other": "Överför {{count}} inkomster",
+    "done_one": "{{count}} inkomst överfördes till normberäkningen.",
+    "done_other": "{{count}} inkomster överfördes till normberäkningen.",
+    "error": "Inkomsterna kunde inte överföras till normberäkningen.",
+    "loadError": "Det gick inte att jämföra SSBTEK med normberäkningen.",
+    "inSync": "Normberäkningen stämmer med SSBTEK – det finns inget att överföra.",
+    "notAvailable": "Normberäkningen behöver vara sparad i Lifecare innan inkomster kan överföras från SSBTEK.",
+    "final": "Normberäkningen är slutlig i Lifecare, så inget kan överföras."
   }
 }
