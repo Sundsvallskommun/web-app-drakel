@@ -98,14 +98,26 @@ The frontend is a **clean App Router rebuild**, not a wholesale copy of draken.
 Config lives in `backend/.env.{NODE_ENV}.local` (currently
 `.env.development.local`). Frontend must stay agnostic of tenant details.
 
-- **caremanagement is called directly, NOT through the shared API gateway.**
-  Other APIs go via `API_BASE_URL` (e.g. `api-test.sundsvall.se`) with an OAuth2
-  client-credentials bearer token (`ApiService` + `ApiTokenService`).
-  caremanagement instead uses its own host and (in dev) no auth — see
-  `CaremanagementApiService` and `caremanagementUrl`.
-- `CAREMANAGEMENT_BASE_URL` — caremanagement host, e.g.
-  `https://cm.drakel.sundsvall.dev`. The backend builds
-  `{CAREMANAGEMENT_BASE_URL}/{MUNICIPALITY_ID}/{CAREMANAGEMENT_NAMESPACE}/...`.
+- **Every upstream goes through the WSO2 API gateway** (`API_BASE_URL`, e.g.
+  `api-test.sundsvall.se`) with an OAuth2 client-credentials bearer token
+  (`ApiTokenService`) — caremanagement, Templating, Active Directory, Citizen and
+  Messaging alike. No service has a host of its own. The subscribed APIs and their
+  versions are listed in `backend/src/config/api-config.ts` (`APIS`); build their
+  URLs with `gatewayUrl`, and caremanagement's with `caremanagementUrl`
+  (`{API_BASE_URL}/caremanagement/1.0/{MUNICIPALITY_ID}/{CAREMANAGEMENT_NAMESPACE}/...`).
+  The drakel application in WSO2 must subscribe to every API in `APIS`, and the
+  gateway only lets through the routes of an API's *published* definition — a new
+  caremanagement route needs the definition republished before it works.
+- **The BFF never talks to Lifecare itself.** caremanagement owns the Lifecare
+  (ProfessionalWeb) integration: it signs in with its service account, resolves
+  insats and personnummer from the errand, links what it creates (beräkning, beslut,
+  utbetalning) to the errand and writes the access log. The BFF passes the errand's
+  `/lifecare/...` routes through (`caremanagementLifecareUrl`), keeping its own
+  routes and response shapes for the frontend.
+- caremanagement's contract is generated from the gateway like the others; set
+  `CAREMANAGEMENT_OPENAPI_URL` (a URL or a local file) to generate from another
+  source, e.g. the `openapi.yaml` of a caremanagement branch the gateway does not
+  publish yet.
 - `MUNICIPALITY_ID` = `2281`. **Backend only** — never sent from or known by the
   frontend.
 - `CAREMANAGEMENT_NAMESPACE` (e.g. `FINANCIAL_ASSISTANCE`) — **Backend only** —
