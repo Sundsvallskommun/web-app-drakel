@@ -1,9 +1,8 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
-import CaremanagementApiService from '@services/caremanagement-api.service';
+import CaremanagementApiService, { caremanagementHeaders } from '@services/caremanagement-api.service';
 import { AttachmentFile, fileNameFromDisposition, UploadedFileLike } from '@services/caremanagement-attachment.service';
 import { caremanagementError } from '@utils/caremanagement-error';
 import { caremanagementUrl } from '@utils/caremanagement-url';
-import { sentByHeaders } from '@utils/request-context';
 import axios from 'axios';
 import FormData from 'form-data';
 
@@ -48,7 +47,7 @@ class CaremanagementMessageService {
     }
     const url = caremanagementUrl('errands', errandId, 'messages');
     try {
-      await axios.post(url, form, { headers: { ...form.getHeaders(), ...sentByHeaders() } });
+      await axios.post(url, form, { headers: { ...form.getHeaders(), ...(await caremanagementHeaders()) } });
       return { data: null, message: 'success' };
     } catch (error) {
       throw caremanagementError(error);
@@ -59,7 +58,7 @@ class CaremanagementMessageService {
   async streamMessageAttachmentFile(errandId: string, messageId: string, attachmentId: string): Promise<AttachmentFile> {
     const url = caremanagementUrl('errands', errandId, 'messages', messageId, 'attachments', attachmentId, 'file');
     try {
-      const res = await axios.get<ArrayBuffer>(url, { responseType: 'arraybuffer', headers: sentByHeaders() });
+      const res = await axios.get<ArrayBuffer>(url, { responseType: 'arraybuffer', headers: await caremanagementHeaders() });
       const headers = res.headers as Record<string, string | undefined>;
       return {
         data: Buffer.from(res.data),

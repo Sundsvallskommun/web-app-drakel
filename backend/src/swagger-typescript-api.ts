@@ -4,7 +4,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
-import { APIS, API_BASE_URL, CAREMANAGEMENT_BASE_URL } from './config/index';
+import { getApiBase } from './config/api-config';
+import { APIS, API_BASE_URL } from './config/index';
 
 const execFileAsync = promisify(execFile);
 
@@ -15,6 +16,23 @@ const PATH_TO_OUTPUT_DIR = path.resolve(process.cwd(), './src/data-contracts');
 // when invoked via execFile (no shell to resolve the `.cmd` shim → ENOENT), and never reaches outside
 // the repo's node_modules.
 const SWAGGER_TYPESCRIPT_API_CLI = require.resolve('swagger-typescript-api/cli');
+
+// APIs whose contract is not generated in the gateway loop: caremanagement has its own source (below), and
+// Active Directory's roster is typed by hand.
+const NOT_IN_GATEWAY_LOOP: readonly string[] = ['caremanagement', 'activedirectory'];
+
+/** An OpenAPI document from a URL, or from a local file (e.g. a branch's openapi.yaml not yet on the gateway). */
+const readOpenApi = async (name: string, source: string): Promise<string> => {
+  if (!/^https?:\/\//.test(source)) {
+    return fs.readFileSync(path.resolve(source), 'utf-8');
+  }
+  // Fail loudly on a non-2xx so an HTML error page can never be written out as a spec.
+  const response = await fetch(source);
+  if (!response.ok) {
+    throw new Error(`failed to download ${name} OpenAPI: ${response.status} ${response.statusText}`);
+  }
+  return response.text();
+};
 
 const generateContract = async (name: string, swaggerUrl: string) => {
   const apiDir = `${PATH_TO_OUTPUT_DIR}/${name}`;
@@ -28,12 +46,7 @@ const generateContract = async (name: string, swaggerUrl: string) => {
   }
 
   // Download the OpenAPI document with Node's built-in fetch — cross-platform, no `curl` subprocess.
-  // Fail loudly on a non-2xx so an HTML error page can never be written out as a spec.
-  const response = await fetch(swaggerUrl);
-  if (!response.ok) {
-    throw new Error(`failed to download ${name} OpenAPI: ${response.status} ${response.statusText}`);
-  }
-  fs.writeFileSync(swaggerPath, await response.text());
+  fs.writeFileSync(swaggerPath, await readOpenApi(name, swaggerUrl));
   console.warn(`- ${name} (${swaggerUrl})`);
 
   try {
@@ -61,14 +74,14 @@ const main = async () => {
 
   // Gateway APIs — fetched through the shared API gateway (API_BASE_URL). Sequential for...of so
   // each API is fully downloaded and generated before the next.
-  for (const api of APIS) {
+  for (const api of APIS.filter(api => !NOT_IN_GATEWAY_LOOP.includes(api.name))) {
     await generateContract(api.name, `${API_BASE_URL}/${api.name}/${api.version}/api-docs`);
   }
 
-  // caremanagement's contract source is intentionally explicit. In test it can point at the real
-  // caremanagement OpenAPI via WSO2, even when runtime traffic goes to another configured host.
-  // CAREMANAGEMENT_OPENAPI_URL wins; otherwise we use CAREMANAGEMENT_BASE_URL/api-docs.
-  const caremanagementOpenApiUrl = process.env.CAREMANAGEMENT_OPENAPI_URL || `${CAREMANAGEMENT_BASE_URL}/api-docs`;
+  // caremanagement's contract comes from the gateway like the rest — unless CAREMANAGEMENT_OPENAPI_URL points
+  // elsewhere: a URL, or a local file such as the openapi.yaml of a caremanagement branch the gateway does not
+  // publish yet.
+  const caremanagementOpenApiUrl = process.env.CAREMANAGEMENT_OPENAPI_URL || `${API_BASE_URL}/${getApiBase('caremanagement')}/api-docs`;
   await generateContract('caremanagement', caremanagementOpenApiUrl);
 };
 

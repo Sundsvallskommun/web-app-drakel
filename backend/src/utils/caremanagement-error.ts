@@ -34,8 +34,12 @@ export const caremanagementError = (error: unknown): HttpException => {
         return new HttpException(409, error.response.data?.detail ?? 'The errand is not in a state that allows this');
       case 413:
         return new HttpException(413, 'Uploaded file is too large');
+      case 422:
+        return new HttpException(422, error.response.data?.detail ?? 'caremanagement could not do this for the errand');
       case 502:
         return new HttpException(502, error.response.data?.detail ?? 'A system behind caremanagement refused the request');
+      case 503:
+        return new HttpException(503, error.response.data?.detail ?? 'A system behind caremanagement is not available');
       default:
         break;
     }

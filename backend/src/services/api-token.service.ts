@@ -64,3 +64,8 @@ class ApiTokenService {
 }
 
 export default ApiTokenService;
+
+/** The gateway's bearer token as a header, for the calls that go through the gateway without ApiService. */
+export const gatewayAuthorization = async (): Promise<Record<string, string>> => ({
+  Authorization: `Bearer ${await new ApiTokenService().getToken()}`,
+});

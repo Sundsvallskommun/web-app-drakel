@@ -29,13 +29,10 @@ export const CLIENT_KEY = env.CLIENT_KEY ?? '';
 export const CLIENT_SECRET = env.CLIENT_SECRET ?? '';
 export const BASE_URL_PREFIX = env.BASE_URL_PREFIX ?? '';
 export const MUNICIPALITY_ID = env.MUNICIPALITY_ID ?? '';
-export const CAREMANAGEMENT_BASE_URL = env.CAREMANAGEMENT_BASE_URL ?? '';
+// caremanagement, Templating and Active Directory are all reached through the WSO2 gateway (API_BASE_URL) —
+// see APIS. The namespace scopes every caremanagement errand route.
 export const CAREMANAGEMENT_NAMESPACE = env.CAREMANAGEMENT_NAMESPACE ?? '';
-// The Sundsvall Templating service (document/phrase templates). Reached directly, no auth.
-export const TEMPLATING_BASE_URL = env.TEMPLATING_BASE_URL ?? '';
-// The Active Directory service (handläggare roster). Reached directly, no auth. Optional — the
-// administrator list degrades to empty when unset, so it never blocks BFF startup.
-export const ACTIVE_DIRECTORY_BASE_URL = env.ACTIVE_DIRECTORY_BASE_URL ?? '';
+// The Active Directory domain the handläggare roster is read from.
 export const ACTIVE_DIRECTORY_DOMAIN = env.ACTIVE_DIRECTORY_DOMAIN ?? 'personal';
 // --- Lifecare (read directly on its own host, with a session of its own) ---
 // All optional, and deliberately absent from validateEnv: an unset LIFECARE_BASE_URL means the

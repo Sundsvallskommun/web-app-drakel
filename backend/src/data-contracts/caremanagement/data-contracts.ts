@@ -16,12 +16,12 @@ export enum Direction {
 }
 
 export interface Problem {
+  title?: string;
+  detail?: string;
   /** @format uri */
   instance?: string;
   /** @format uri */
   type?: string;
-  title?: string;
-  detail?: string;
   /** @format int32 */
   status?: number;
 }
@@ -33,10 +33,10 @@ export interface ConstraintViolationProblem {
   status?: number;
   violations?: Violation[];
   title?: string;
-  /** @format uri */
-  instance?: string;
   detail?: string;
   causeAsProblem?: ThrowableProblem;
+  /** @format uri */
+  instance?: string;
 }
 
 export interface ThrowableProblem {
@@ -126,6 +126,147 @@ export interface Monitoring {
    * @format date-time
    */
   updated?: string;
+}
+
+/** A bevakning as the caseworker fills it in, new or changed. It is always bevakad av the insats's caseworker in Lifecare. */
+export interface LifecareReminderRequest {
+  /**
+   * Bevakningsdatum, YYYY-MM-DD. Not before today (Swedish time); on a change only checked when the date changes.
+   * @pattern ^\d{4}-\d{2}-\d{2}$
+   */
+  reminderDate: string;
+  /**
+   * The bevakning text
+   * @minLength 0
+   * @maxLength 4000
+   */
+  text: string;
+  /**
+   * Lifecare's priority code, from the options endpoint
+   * @format int32
+   */
+  priority: number;
+  /**
+   * Lifecare's status code, from the options endpoint
+   * @format int32
+   */
+  status: number;
+}
+
+/** The edits a caseworker makes to a Lifecare journalanteckning or document. Everything else on the Lifecare record is kept as Lifecare has it. */
+export interface UpdateLifecareRecordRequest {
+  /**
+   * The record body as HTML
+   * @minLength 0
+   * @maxLength 1048576
+   */
+  content: string;
+  /**
+   * Documented date, YYYY-MM-DD
+   * @pattern ^\d{4}-\d{2}-\d{2}$
+   */
+  occurenceDate?: string;
+  /**
+   * Documented time, HH:mm
+   * @pattern ^\d{2}:\d{2}$
+   */
+  time?: string;
+  /** Write-protects the record with this save; Lifecare then allows no further change */
+  protected?: boolean;
+}
+
+/** A Lifecare record with its body, as shown when a record is opened. */
+export interface LifecareRecordContent {
+  /** The Lifecare record id */
+  id?: string;
+  /** Which group the record belongs to */
+  category?: LifecareRecordContentCategoryEnum;
+  /** The rubrik */
+  title?: string;
+  /** The body as HTML */
+  content?: string;
+  /** Documented date, YYYY-MM-DD */
+  occurenceDate?: string;
+  /** Documented time, HH:mm (empty when the record has none) */
+  time?: string;
+  /** Whether the record may still be edited in Lifecare */
+  editable?: boolean;
+}
+
+/** A beslut as the caseworker saves it on the Beslut tab - written straight to Lifecare, created the first time and changed after that. */
+export interface LifecareDecisionSaveRequest {
+  /**
+   * Lifecare's beslutstyp code, from the beslutstyper the insats offers
+   * @format int32
+   */
+  decisionCode: number;
+  /**
+   * The beslutsdatum; Lifecare's proposal (today) when left out
+   * @format date
+   */
+  date?: string;
+  /**
+   * Start of the period the beslut covers
+   * @format date
+   */
+  periodFrom?: string;
+  /**
+   * End of the period the beslut covers
+   * @format date
+   */
+  periodTo?: string;
+  /** The amount; 0 when left out */
+  amount?: number;
+  /**
+   * Lifecare's code for the applicant's orsak, from the orsaker of the beslutstyp
+   * @format int32
+   */
+  reasonCode?: number;
+  /**
+   * The beslutsmeddelande as HTML
+   * @minLength 0
+   * @maxLength 1048576
+   */
+  decisionMessage?: string;
+  /** Spara och skrivskydda beslut: saves the beslut write-protected in Lifecare (its meddelande locked), after which it can no longer be changed from careM. */
+  writeProtect?: boolean;
+}
+
+/** The errand's beslut as it stands in Lifecare - what the Beslut tab shows and what finalize records. */
+export interface LifecareDecisionView {
+  /**
+   * Lifecare's decisionId
+   * @format int32
+   */
+  id?: number;
+  /**
+   * Lifecare's beslutstyp code
+   * @format int32
+   */
+  decisionCode?: number;
+  /** careM's outcome for the beslutstyp, BIFALL or AVSLAG; absent for a beslutstyp that cannot be registered from careM */
+  outcome?: LifecareDecisionViewOutcomeEnum;
+  /** The beslutsdatum, yyyy-MM-dd; empty when Lifecare has none */
+  date?: string;
+  /** Start of the period the beslut covers, yyyy-MM-dd */
+  periodFrom?: string;
+  /** End of the period the beslut covers, yyyy-MM-dd */
+  periodTo?: string;
+  /** The amount, 0 when none */
+  amount?: number;
+  /**
+   * Lifecare's code for the orsak; absent when the beslut has none
+   * @format int32
+   */
+  reasonCode?: number;
+  /** The orsak as Lifecare words it */
+  reason?: string;
+  /** The beslutsmeddelande as HTML */
+  message?: string;
+  /** Lifecare has locked the beslutsmeddelande; the beslut can no longer be changed from careM */
+  locked?: boolean;
+  /** The beslutsfattare, by name when Lifecare gives one, otherwise by signature */
+  decisionMaker?: string;
 }
 
 /** Settings for one user (AD account). A user who has never saved any settings gets the defaults. */
@@ -1356,6 +1497,377 @@ export interface PayeeLifecareResult {
   detail?: string;
 }
 
+/** An utbetalning to register on the errand's insats in Lifecare */
+export interface LifecarePaymentRequest {
+  /** Utbetalningsdatum; Lifecare's proposed date when left out */
+  paymentDate?: string;
+  /** The amount; must be above 0 */
+  amount?: number;
+  /** The month the utbetalning concerns, yyyy-MM */
+  applicationMonth?: string;
+  /** The betalsätt's name, matched against Lifecare's betalsätt on the insats */
+  paymentMethod?: string;
+  /** The payee's name */
+  payeeName?: string;
+  /** The payee's street address */
+  payeeAddress?: string;
+  /** The payee's c/o address */
+  payeeCareOf?: string;
+  /** The payee's postal code */
+  payeeZipCode?: string;
+  /** The payee's postal town */
+  payeeCity?: string;
+  /** Clearing number */
+  clearingNumber?: string;
+  /** Account number; left out for the registered-address payee */
+  accountNumber?: string;
+  /** Kontering: the ändamål (Lifecare purpose) among the insats's konteringsrader */
+  accountingCode?: string;
+  /** Lokalbetalningsnummer */
+  localPaymentNumber?: string;
+  /** Invoice number (Lifecare billingNumber) */
+  invoiceNumber?: string;
+  /** Whether the invoice number is an OCR number */
+  usesOcr?: boolean;
+  /** Message rows, at most seven are sent */
+  messageLines?: string[];
+}
+
+/** An utbetalning registered in Lifecare (not the same as paid out) */
+export interface LifecarePaymentCreated {
+  /** Lifecare's id for the new utbetalning */
+  lifecareId?: string;
+  /** Whether the utbetalning was linked to the errand (lifecarePaymentIds). False means it is registered in Lifecare but the errand does not point at it; it must not be registered again */
+  linkedToErrand?: boolean;
+}
+
+/** A new betalningsmottagare to add in Lifecare */
+export interface LifecarePayeeRequest {
+  /**
+   * The account holder
+   * @minLength 0
+   * @maxLength 255
+   */
+  name: string;
+  /**
+   * The label in Lifecare's list; the account holder's name when left out
+   * @minLength 0
+   * @maxLength 255
+   */
+  payeeName?: string;
+  /**
+   * Lifecare's betalsätt code
+   * @format int32
+   */
+  paymentMethod: number;
+  /**
+   * Clearing number
+   * @minLength 0
+   * @maxLength 16
+   */
+  clearing?: string;
+  /**
+   * Account, bankgiro or plusgiro number
+   * @minLength 0
+   * @maxLength 64
+   */
+  accountNumber?: string;
+}
+
+/** A betalningsmottagare in Lifecare, with the account and address an utbetalning to it copies */
+export interface LifecarePayee {
+  /**
+   * Lifecare's payee id
+   * @format int32
+   */
+  id?: number;
+  /** The label the payee has in Lifecare's list */
+  label?: string;
+  /** The account holder */
+  name?: string;
+  /**
+   * Lifecare's betalsätt code
+   * @format int32
+   */
+  paymentMethodCode?: number;
+  /** The betalsätt's name, as the utbetalning stores it */
+  paymentMethod?: string;
+  /** Clearing number; empty when the betalsätt has none */
+  clearing?: string;
+  /** Account, bankgiro or plusgiro number; empty for the registered-address entry */
+  accountNumber?: string;
+  /** Street address */
+  streetAddress?: string;
+  /** c/o address */
+  careOfAddress?: string;
+  /** Postal code */
+  postalCode?: string;
+  /** Postal town */
+  postalAddress?: string;
+  /** Lifecare's Adress entry: pays to the client's registered address rather than an account */
+  toRegisteredAddress?: boolean;
+}
+
+/** A normberäkning row as a caseworker adds or changes it. */
+export interface NormberakningRowInput {
+  /**
+   * Income: the income type id
+   * @format int32
+   */
+  typeId?: number;
+  /**
+   * Income: the income type name
+   * @minLength 0
+   * @maxLength 255
+   */
+  typeName?: string;
+  /** Income: the applicant amount */
+  applicantCaseworkerAmount?: number;
+  /**
+   * Income: the date the applicant amount is attributed to (ISO date or date-time)
+   * @pattern ^\d{4}-\d{2}-\d{2}.*$
+   */
+  applicantAmountDate?: string;
+  /** Income: the co-applicant amount */
+  coapplicantCaseworkerAmount?: number;
+  /**
+   * Income: the date the co-applicant amount is attributed to (ISO date or date-time)
+   * @pattern ^\d{4}-\d{2}-\d{2}.*$
+   */
+  coapplicantAmountDate?: string;
+  /**
+   * Expense: the cost type; careM's code in the draft, Lifecare's expense code once in Lifecare
+   * @minLength 0
+   * @maxLength 64
+   */
+  costType?: string;
+  /** Expense: the bucket */
+  bucket?: NormberakningRowInputBucketEnum;
+  /**
+   * Expense: the other sub-type (careM draft only)
+   * @minLength 0
+   * @maxLength 32
+   */
+  otherSubType?: string;
+  /** Expense: the specification (careM draft only) */
+  specification?: string;
+  /** Expense: the approved amount */
+  caseworkerAmount?: number;
+  /** Expense: the amount applied for */
+  appliedAmount?: number;
+  /**
+   * Person: the party id (careM draft only)
+   * @minLength 0
+   * @maxLength 36
+   */
+  partyId?: string;
+  /** Person: the role (careM draft only) */
+  role?: NormberakningRowInputRoleEnum;
+  /**
+   * Person: the name (careM draft only)
+   * @minLength 0
+   * @maxLength 255
+   */
+  name?: string;
+  /**
+   * Person: the days in the household; none means the whole period
+   * @format int32
+   */
+  caseworkerDays?: number;
+  /** Person: whether the member is included (careM draft only) */
+  included?: boolean;
+  /**
+   * Person: the start of the deviation, ISO date (careM draft only)
+   * @pattern ^\d{4}-\d{2}-\d{2}.*$
+   */
+  deviationFromDate?: string;
+  /**
+   * Person: the end of the deviation, ISO date (careM draft only)
+   * @pattern ^\d{4}-\d{2}-\d{2}.*$
+   */
+  deviationToDate?: string;
+  /**
+   * Person: the norm interval (careM draft only)
+   * @minLength 0
+   * @maxLength 64
+   */
+  normInterval?: string;
+  /**
+   * Person: the Lifecare norm row the member is put on (Lifecare only)
+   * @format int32
+   */
+  normRowId?: number;
+  /** Free-text note */
+  note?: string;
+}
+
+/** A new jobbstimulans period for the sökande */
+export interface LifecareJobStimulusPeriodRequest {
+  /**
+   * Period start, yyyy-MM-dd
+   * @pattern ^\d{4}-\d{2}-\d{2}$
+   */
+  fromDate: string;
+  /**
+   * Period end, yyyy-MM-dd; left out, Lifecare's two-year rule sets it
+   * @pattern ^\d{4}-\d{2}-\d{2}$
+   */
+  toDate?: string;
+}
+
+/** A jobbstimulans period on the errand's insats, as Lifecare holds it */
+export interface LifecareJobStimulusPeriod {
+  /**
+   * Lifecare's jobStimulusId
+   * @format int32
+   */
+  id?: number;
+  /** Whose period it is */
+  role?: LifecareJobStimulusPeriodRoleEnum;
+  /** Period start (yyyy-MM-dd) */
+  fromDate?: string;
+  /** Period end (yyyy-MM-dd); absent for an open-ended period */
+  toDate?: string;
+}
+
+/** A new journalanteckning, written straight to the errand's insats in Lifecare. */
+export interface CreateLifecareJournalNoteRequest {
+  /**
+   * The note body as HTML
+   * @minLength 0
+   * @maxLength 1048576
+   */
+  content: string;
+  /**
+   * Lifecare's noteTypeCode, from the journal-note-types endpoint
+   * @format int32
+   */
+  noteTypeCode: number;
+  /**
+   * The rubrik; the note type's name when left out
+   * @minLength 0
+   * @maxLength 255
+   */
+  title?: string;
+  /**
+   * Documented time, HH:mm; Lifecare stamps the time of saving when left out
+   * @pattern ^\d{2}:\d{2}$
+   */
+  occurenceTime?: string;
+  /**
+   * Documented date, YYYY-MM-DD; Lifecare's proposal (today) when left out
+   * @pattern ^\d{4}-\d{2}-\d{2}$
+   */
+  occurenceDate?: string;
+  /** Saved skrivskyddad, after which it can no longer be changed. The note type's own default when left out. */
+  protected?: boolean;
+}
+
+/** A Lifecare journalanteckning or document row, cleaned up for the UI. */
+export interface LifecareRecord {
+  /** The Lifecare record id */
+  id?: string;
+  /** Which group the record is shown under */
+  category?: LifecareRecordCategoryEnum;
+  /** The rubrik */
+  title?: string;
+  /** Documented date and time, date and time joined (YYYY-MM-DDTHH:mm, or just the date) */
+  dateTime?: string;
+  /** Lifecare's type label */
+  type?: string;
+  /** The akt or utredning the row sits under */
+  ownerTypeText?: string;
+  /** The responsible caseworker, when Lifecare names one */
+  responsibleCaseworker?: string;
+  /** Who last changed it and when, as Lifecare presents it */
+  modifiedBy?: string;
+  /** Whether Lifecare has locked the record */
+  locked?: boolean;
+  /** Whether the record is skrivskyddad (finalised) in Lifecare */
+  protected?: boolean;
+}
+
+/** A new document, written straight to the errand's insats in Lifecare. */
+export interface CreateLifecareDocumentRequest {
+  /**
+   * The document body as HTML
+   * @minLength 0
+   * @maxLength 1048576
+   */
+  content: string;
+  /**
+   * Lifecare's documentTypeCode, from the document-types endpoint
+   * @format int32
+   */
+  documentTypeCode: number;
+  /**
+   * The rubrik; the document type's name when left out
+   * @minLength 0
+   * @maxLength 255
+   */
+  title?: string;
+  /**
+   * Documented date, YYYY-MM-DD; Lifecare's proposal (today) when left out or when the type fixes it
+   * @pattern ^\d{4}-\d{2}-\d{2}$
+   */
+  occurenceDate?: string;
+  /** Saved skrivskyddad, after which it can no longer be changed. The document type's own default when left out. */
+  protected?: boolean;
+}
+
+/** How the errand's normberäkning is saved in Lifecare. */
+export interface LifecareCalculationSaveRequest {
+  /** Save it as slutlig: Lifecare then allows no further change */
+  finalize?: boolean;
+}
+
+/** Lifecare's summering of a beräkning. */
+export interface LifecareCalculationSummary {
+  /** The incomes */
+  income?: number;
+  /** Jobbstimulans gross: the income it is counted on */
+  jobStimulus?: number;
+  /** The part of the income jobbstimulans leaves out */
+  jobStimulusDeduction?: number;
+  /** The norm */
+  norm?: number;
+  /** The norm part for the members */
+  familyCost?: number;
+  /** The norm part for the gemensamma kostnader */
+  commonHouseholdCost?: number;
+  /** The utgifter */
+  expenses?: number;
+  /** Incomes minus norm minus utgifter */
+  sum?: number;
+  /** The levnadskostnader i övrigt */
+  specialExpenses?: number;
+  /** The överskott (positive) or underskott (negative) */
+  result?: number;
+}
+
+/** The errand's beräkning as it stands in Lifecare. */
+export interface LifecareCalculationView {
+  /**
+   * Lifecare's calculation id
+   * @format int32
+   */
+  id?: number;
+  /** The norm */
+  normName?: string;
+  /** The calculation date */
+  date?: string;
+  /** The start of the period */
+  startDate?: string;
+  /** The end of the period */
+  endDate?: string;
+  /** Saved as slutlig in Lifecare; it can no longer be changed then */
+  finalized?: boolean;
+  /** When Lifecare last saved it */
+  updated?: string;
+  /** Lifecare's summering, absent before Lifecare has counted it */
+  summary?: LifecareCalculationSummary;
+}
+
 /** The channels chosen for communicating the calculation and decision to the applicant. */
 export interface CommunicationChannels {
   /** Send as a message in Mina sidor */
@@ -1405,10 +1917,10 @@ export interface FinalizeDecision {
   decisionMessage?: string;
 }
 
-/** Finalize a financial assistance errand: record the decision and resume the process. Carries no payments - Draken registers them directly in Lifecare, and the process reads them from there. A payments field from an older client is ignored. */
+/** Finalize a financial assistance errand: record the decision and resume the process. Carries no payments - Draken registers them directly in Lifecare, and the process reads them from there. A payments field from an older client is ignored. Leave out decision to have careM read the beslut saved in Lifecare. */
 export interface FinalizeRequest {
-  /** The decision */
-  decision: FinalizeDecision;
+  /** The decision. Optional: when left out, careM reads the beslut the errand is linked to in Lifecare (lifecareDecisionId) and records that - its outcome from the beslutstyp, orsak, period, amount (0 for an avslag) and beslutsmeddelande. */
+  decision?: FinalizeDecision;
   /** The channels chosen for sending the calculation and decision to the applicant */
   communication: CommunicationChannels;
   /** Whether the caseworker changed the household size (gemensamma kostnader) in the calculation draft. Recorded on the errand and served on the view. Defaults to false. */
@@ -1423,6 +1935,47 @@ export interface FinalizeResponse {
   processMessageCorrelated?: boolean;
   /** The communication channels chosen — the frontend sends the decision through these */
   communication?: CommunicationChannels;
+  /** How the recorded decision was tied to the errand's beslut in Lifecare (lifecareDecisionId). careM receipts it itself, so a client no longer has to post .../decisions/{decisionId}/lifecare-result after finalizing. */
+  lifecareDecision?: LifecareDecisionRegistration;
+}
+
+/** How the finalized decision was tied to its beslut in Lifecare. */
+export interface LifecareDecisionRegistration {
+  /** The PAYMENT decision careM recorded */
+  decisionId?: string;
+  /** REGISTERED: the beslut is in Lifecare and the decision is marked SYNCED with its id */
+  outcome?: LifecareDecisionRegistrationOutcomeEnum;
+  /** Lifecare's decisionId */
+  lifecareId?: string;
+  /** What went wrong, when something did */
+  detail?: string;
+}
+
+/** One income Draken's BFF wrote into the Lifecare calculation from SSBTEK */
+export interface AppliedSsbtekChange {
+  /** Whose income */
+  role: AppliedSsbtekChangeRoleEnum;
+  /**
+   * The Lifecare income type name, as the change named it
+   * @minLength 1
+   */
+  incomeType: string;
+  /** The amount now in the calculation; null when the income was removed from it */
+  amount?: number;
+}
+
+/** What Draken's BFF wrote into the Lifecare calculation from SSBTEK */
+export interface AppliedSsbtekChanges {
+  /**
+   * The Lifecare calculation written to — must be the errand's lifecareCalculationId
+   * @format int32
+   */
+  calculationId: number;
+  /**
+   * The incomes written
+   * @minItems 1
+   */
+  applied: AppliedSsbtekChange[];
 }
 
 /** What a caseworker sends to add or patch a person row (identity + caseworker-writable fields only). */
@@ -2496,6 +3049,551 @@ export interface MonitoringCount {
   count?: number;
 }
 
+/** Which of the errand's sections Lifecare has as done - the checks on the Normberäkning, Beslut and Utbetalning tabs. */
+export interface LifecareSectionStatus {
+  /** The errand's beräkning is saved as slutlig in Lifecare */
+  calculationFinalized?: boolean;
+  /** The errand's beslut is saved in Lifecare */
+  decisionSaved?: boolean;
+  /** An utbetalning for the errand's month is registered in Lifecare */
+  paymentRegistered?: boolean;
+}
+
+/** A bevakning on the errand's insats in Lifecare, as the sidebar shows it. The personnummer on the Lifecare row is left out. */
+export interface LifecareReminder {
+  /**
+   * The Lifecare reminder id
+   * @format int32
+   */
+  id?: number;
+  /** Bevakningsdatum, YYYY-MM-DD */
+  date?: string;
+  /** The status text */
+  status?: string;
+  /**
+   * Lifecare's status code
+   * @format int32
+   */
+  statusCode?: number;
+  /** The priority text */
+  priority?: string;
+  /**
+   * Lifecare's priority code
+   * @format int32
+   */
+  priorityCode?: number;
+  /** The kind of bevakning */
+  type?: string;
+  /** What the bevakning hangs on */
+  objectType?: string;
+  /** The bevakning text */
+  text?: string;
+  /** The caseworker it is bevakad av, by name (the id when Lifecare gives no name) */
+  caseworker?: string;
+  /** The caseworker's Lifecare id */
+  caseworkerId?: string;
+}
+
+/** A coded choice in the bevakning form. */
+export interface LifecareReminderChoice {
+  /**
+   * Lifecare's code
+   * @format int32
+   */
+  code?: number;
+  /** The text Lifecare gives the code */
+  text?: string;
+}
+
+/** The priorities and statuses a bevakning can have, as Lifecare lists them, and what Lifecare proposes for a new one. */
+export interface LifecareReminderOptions {
+  /** The active priorities */
+  priorities?: LifecareReminderChoice[];
+  /** The active statuses */
+  statuses?: LifecareReminderChoice[];
+  /**
+   * The priority Lifecare proposes for a new bevakning
+   * @format int32
+   */
+  defaultPriority?: number;
+  /**
+   * The status Lifecare proposes for a new bevakning
+   * @format int32
+   */
+  defaultStatus?: number;
+}
+
+/** An utbetalning registered on the insats in Lifecare */
+export interface LifecareRegisteredPayment {
+  /**
+   * Lifecare's paymentId
+   * @format int32
+   */
+  id?: number;
+  /** The payment date */
+  payDate?: string;
+  /** Avser månad, yyyy-MM */
+  concernedMonth?: string;
+  /** The amount */
+  amount?: number;
+  /** The betalsätt's name */
+  paymentMethod?: string;
+  /** Who it goes to */
+  recipient?: string;
+  /** Lifecare's own status */
+  status?: string;
+  /** Makulerad in Lifecare */
+  cancelled?: boolean;
+}
+
+/** Whether the Lifecare utbetalning for the errand's application month has been registered */
+export interface LifecarePaymentStatus {
+  /** The application month (yyyy-MM) the status concerns */
+  applicationMonth?: string;
+  /** True when a standing Lifecare utbetalning concerning the application month is registered */
+  effectuated?: boolean;
+  /** The date of that utbetalning (Lifecare PayDate), when effectuated */
+  paymentDate?: string;
+  /** The amount of that utbetalning, when effectuated */
+  amount?: number;
+  /** Lifecare's own status for that utbetalning, when effectuated */
+  status?: string;
+  /** True when the status could not be determined (no application month, no insats, or Lifecare unavailable) */
+  unavailable?: boolean;
+}
+
+/** A saldo on the insats: what the beslut granted, what is already booked and what is left */
+export interface LifecarePaymentBalance {
+  /** The saldo's name */
+  name?: string;
+  /** What the beslut granted */
+  approvedAmount?: number;
+  /** What is already booked */
+  bookedAmount?: number;
+  /** What is left to pay out */
+  balanceAmount?: number;
+}
+
+/** A month an utbetalning on the insats may concern, as Lifecare offers it */
+export interface LifecarePaymentConcernMonth {
+  /** The month, yyyy-MM */
+  month?: string;
+  /** Lifecare's own wording */
+  label?: string;
+}
+
+/** A betalsätt the insats offers, as Lifecare lists it */
+export interface LifecarePaymentMethod {
+  /**
+   * Lifecare's betalsätt code
+   * @format int32
+   */
+  code?: number;
+  /** The betalsätt's name */
+  name?: string;
+  /** Whether Lokalbetalningsnummer is open for this betalsätt */
+  localNumberEnabled?: boolean;
+  /** Whether Lokalbetalningsnummer must be filled in for this betalsätt */
+  localNumberMandatory?: boolean;
+}
+
+/** The betalsätt, betalningsmottagare, ändamål, saldon and months an utbetalning on the insats can use, read from Lifecare */
+export interface LifecarePaymentOptions {
+  /** The betalsätt in use on the insats */
+  paymentMethods?: LifecarePaymentMethod[];
+  /** The active betalningsmottagare */
+  payees?: LifecarePayee[];
+  /** The insats's konteringsrader */
+  postings?: LifecarePaymentPosting[];
+  /** The insats's saldon: what is left to pay out, as Lifecare counts it */
+  balances?: LifecarePaymentBalance[];
+  /** The months an utbetalning may concern */
+  concernMonths?: LifecarePaymentConcernMonth[];
+  /** What the utbetalning form starts from */
+  proposal?: LifecarePaymentProposal;
+}
+
+/** A konteringsrad on the insats: an ändamål an utbetalning can be booked on */
+export interface LifecarePaymentPosting {
+  /**
+   * Lifecare's ändamål code, which the utbetalning keeps as its kontering
+   * @format int32
+   */
+  purpose?: number;
+  /** The ändamål's text */
+  text?: string;
+}
+
+/** What the utbetalning form starts from: Lifecare's own figures, all changeable */
+export interface LifecarePaymentProposal {
+  /** Lifecare's proposed utbetalningsdatum */
+  paymentDate?: string;
+  /** The first month Lifecare lets an utbetalning concern, yyyy-MM */
+  concernedMonth?: string;
+  /** What is left on the insats's saldon; absent when nothing is left */
+  amount?: number;
+  /**
+   * The payee the latest standing utbetalning on the insats went to, when it is still an active payee
+   * @format int32
+   */
+  payeeId?: number;
+}
+
+/** The normberäkning, careM's draft or the beräkning saved in Lifecare. */
+export interface NormberakningDraft {
+  /** The errand id (careM draft only) */
+  errandId?: string;
+  /** The application month (yyyy-MM) */
+  applicationMonth?: string;
+  /**
+   * The selected norm id
+   * @format int32
+   */
+  normId?: number;
+  normType?: string[];
+  normTypeDisplayNames?: string[];
+  /** The start date of the calculation period (ISO date) */
+  calculationFromDate?: string;
+  /** The end date of the calculation period (ISO date) */
+  calculationToDate?: string;
+  /** The date the calculation is performed (ISO date) */
+  calculationDate?: string;
+  /** Whether the household has an own size (Annan hushållsstorlek) */
+  hasCustomHouseholdSize?: boolean;
+  /**
+   * The household size
+   * @format int32
+   */
+  householdSize?: number;
+  persons?: NormberakningPersonRow[];
+  incomes?: NormberakningIncomeRow[];
+  expenses?: NormberakningExpenseRow[];
+  specialExpenses?: NormberakningExpenseRow[];
+  /** The sum of the incomes */
+  incomeSum?: number;
+  /** The sum of the utgifter */
+  expenseSum?: number;
+  /** The sum of the levnadskostnader i övrigt */
+  specialExpenseSum?: number;
+  /** When the draft was created (careM draft only) */
+  created?: string;
+  /** When the draft or the Lifecare beräkning was last saved */
+  updated?: string;
+  /** Where the rows come from: careM's draft, or the beräkning saved in Lifecare (every change is then made there) */
+  source?: NormberakningDraftSourceEnum;
+  /** Whether Lifecare holds the beräkning as slutlig (Lifecare only) */
+  finalized?: boolean;
+  /** The gemensamma kostnader of a household of the household size, before the members share is taken (Lifecare only) */
+  amountForHouseholdSize?: number;
+  /** The members share of the gemensamma kostnader (Lifecare only) */
+  commonHouseholdCost?: number;
+  /**
+   * How many members the beräkning includes (Lifecare only)
+   * @format int32
+   */
+  familyMembers?: number;
+  /** Whether the applicant has jobbstimulans in the period (Lifecare only) */
+  applicantJobStimulus?: boolean;
+  normRows?: NormberakningNormRow[];
+}
+
+/** An expense row of the normberäkning. */
+export interface NormberakningExpenseRow {
+  /** The row id: careM's row id, or the Lifecare bucket and code (E-3, S-7, E-3-2 for a repeated code) */
+  id?: string;
+  /**
+   * Stable 0-based position of the row within its section
+   * @format int32
+   */
+  position?: number;
+  /** Who created the row: the process or a caseworker (always CASEWORKER in Lifecare) */
+  origin?: NormberakningExpenseRowOriginEnum;
+  /** Which Lifecare bucket the expense posts to */
+  bucket?: NormberakningExpenseRowBucketEnum;
+  /** The cost type: careM's code, or Lifecare's expense code */
+  costType?: string;
+  /** The Lifecare label of the cost type */
+  costTypeDisplayName?: string;
+  /** The other sub-type (careM draft only) */
+  otherSubType?: string;
+  /** The cost specification (careM draft only) */
+  specification?: string;
+  /** The amount applied for (ansökt) */
+  appliedAmount?: number;
+  /** The amount the rules allowed (careM draft only) */
+  processAmount?: number;
+  /** The amount a caseworker decided */
+  caseworkerAmount?: number;
+  /** The amount actually used */
+  effectiveAmount?: number;
+  /** Whether the row is soft-deleted (careM draft only) */
+  deleted?: boolean;
+  /** Free-text note */
+  note?: string;
+}
+
+/** An income row of the normberäkning. */
+export interface NormberakningIncomeRow {
+  /** The row id: careM's row id, or Lifecare's income code */
+  id?: string;
+  /**
+   * Stable 0-based position of the row within its section
+   * @format int32
+   */
+  position?: number;
+  /** Who created the row: the process or a caseworker (always CASEWORKER in Lifecare) */
+  origin?: NormberakningIncomeRowOriginEnum;
+  /**
+   * The income type id
+   * @format int32
+   */
+  typeId?: number;
+  /** The income type name */
+  typeName?: string;
+  /** The amount the process decided for the applicant (careM draft only) */
+  applicantProcessAmount?: number;
+  /** The amount a caseworker decided for the applicant; the gross when jobbstimulans applies */
+  applicantCaseworkerAmount?: number;
+  /** The amount actually used for the applicant */
+  applicantEffectiveAmount?: number;
+  /** The date the applicant amount is attributed to */
+  applicantAmountDate?: string;
+  /** Whether jobbstimulans applies to the applicant side of this income (Lifecare only) */
+  applicantJobStimulus?: boolean;
+  /** The applicant amount Lifecare counts once jobbstimulans is taken off (Lifecare only) */
+  applicantCountedAmount?: number;
+  /** The amount the process decided for the co-applicant (careM draft only) */
+  coapplicantProcessAmount?: number;
+  /** The amount a caseworker decided for the co-applicant */
+  coapplicantCaseworkerAmount?: number;
+  /** The amount actually used for the co-applicant */
+  coapplicantEffectiveAmount?: number;
+  /** The date the co-applicant amount is attributed to */
+  coapplicantAmountDate?: string;
+  /** Whether the row is soft-deleted (careM draft only) */
+  deleted?: boolean;
+  /** Free-text note */
+  note?: string;
+}
+
+/** A normintervall of the norm. */
+export interface NormberakningNormRow {
+  /**
+   * The Lifecare norm row id
+   * @format int32
+   */
+  id?: number;
+  /** The name and monthly amount */
+  name?: string;
+}
+
+/** A household member row of the normberäkning. */
+export interface NormberakningPersonRow {
+  /** The row id: careM's row id, or Lifecare's personKey (new-N for a member not saved yet) */
+  id?: string;
+  /**
+   * Stable 0-based position of the row within its section
+   * @format int32
+   */
+  position?: number;
+  /** Who created the row: the process or a caseworker (always CASEWORKER in Lifecare) */
+  origin?: NormberakningPersonRowOriginEnum;
+  /** The party id of the household member (careM draft only) */
+  partyId?: string;
+  /** The personnummer of the household member; best-effort, can be absent */
+  personalNumber?: string;
+  /** The role of the household member */
+  role?: NormberakningPersonRowRoleEnum;
+  /** Swedish display name for the role (careM draft only) */
+  roleDisplayName?: string;
+  /** The name of the household member */
+  name?: string;
+  /**
+   * The number of days in the home the process derived (careM draft only)
+   * @format int32
+   */
+  processDays?: number;
+  /**
+   * The number of days a caseworker decided
+   * @format int32
+   */
+  caseworkerDays?: number;
+  /**
+   * The number of days actually used
+   * @format int32
+   */
+  effectiveDays?: number;
+  /** Whether the household member is included in the norm */
+  included?: boolean;
+  /** The start date of the member's deviation from the household (ISO date) */
+  deviationFromDate?: string;
+  /** The end date of the member's deviation from the household (ISO date) */
+  deviationToDate?: string;
+  /** The normintervall the member is placed on */
+  normInterval?: string;
+  /**
+   * The Lifecare norm row the member is placed on (Lifecare only)
+   * @format int32
+   */
+  normRowId?: number;
+  /** The member's own share of the norm (the Belopp column) */
+  amount?: number;
+  /** Whether the row is soft-deleted (careM draft only) */
+  deleted?: boolean;
+  /** Free-text note */
+  note?: string;
+}
+
+/** A selectable norm, income or cost type. */
+export interface NormberakningTypeOption {
+  /** The code: a Lifecare id once the beräkning is in Lifecare, careM's code before */
+  code?: string;
+  /** The label */
+  displayName?: string;
+}
+
+/** The type catalogues of the normberäkning. */
+export interface NormberakningTypes {
+  norms?: NormberakningTypeOption[];
+  incomeTypes?: NormberakningTypeOption[];
+  costTypes?: NormberakningTypeOption[];
+  livingCostTypes?: NormberakningTypeOption[];
+}
+
+/** The beräkning preceding the errand's own period, read from Lifecare. */
+export interface NormberakningPreviousCalculation {
+  /**
+   * Lifecare's calculation id
+   * @format int32
+   */
+  id?: number;
+  /** The norm */
+  norm?: string;
+  /** The start of the period */
+  fromDate?: string;
+  /** The end of the period */
+  toDate?: string;
+  /** The sum of the incomes */
+  incomeSum?: number;
+  /** The sum of the utgifter */
+  expenseSum?: number;
+  /** The sum of the levnadskostnader i övrigt */
+  specialExpenseSum?: number;
+  /** The sum of the norm */
+  normSum?: number;
+  /** The gemensamma kostnader */
+  commonHouseholdCost?: number;
+  /** The norm part for the members */
+  familyCost?: number;
+  /** The result, an underskott negative */
+  balance?: number;
+  /** The total sum */
+  totalSum?: number;
+  /** Whether the beräkning is slutlig */
+  isFinal?: boolean;
+  persons?: NormberakningPreviousPerson[];
+  incomes?: NormberakningPreviousIncome[];
+  expenses?: NormberakningPreviousExpense[];
+  specialExpenses?: NormberakningPreviousExpense[];
+}
+
+/** An expense row of a previous Lifecare beräkning. */
+export interface NormberakningPreviousExpense {
+  /** The expense type */
+  type?: string;
+  /** The applied amount */
+  appliedAmount?: number;
+  /** The approved amount */
+  approvedAmount?: number;
+}
+
+/** An income row of a previous Lifecare beräkning. */
+export interface NormberakningPreviousIncome {
+  /** The income type */
+  type?: string;
+  /** The applicant amount */
+  amountApplicant?: number;
+  /** The date the applicant amount was looked up */
+  applicantSearchDate?: string;
+  /** The co-applicant amount */
+  amountCoApplicant?: number;
+  /** The date the co-applicant amount was looked up */
+  coApplicantSearchDate?: string;
+}
+
+/** A household member of a previous Lifecare beräkning. */
+export interface NormberakningPreviousPerson {
+  /** The name */
+  name?: string;
+  /** The member's share of the norm */
+  amount?: number;
+  /** The start of the deviation */
+  deviationFromDate?: string;
+  /** The end of the deviation */
+  deviationToDate?: string;
+}
+
+/** A record's body, shown in the list without opening the record. */
+export interface LifecareRecordBody {
+  /** The Lifecare record id */
+  id?: string;
+  /** The body as HTML; left out when Lifecare would not hand it over */
+  content?: string;
+}
+
+/** The applicant's Lifecare records, split into the two groups the tab shows. */
+export interface LifecareRecords {
+  /** The journalanteckningar, in Lifecare's order */
+  journalNotes?: LifecareRecord[];
+  /** The documents, in Lifecare's order */
+  documents?: LifecareRecord[];
+}
+
+/** A note type a caseworker can pick for a new journalanteckning. */
+export interface LifecareNoteType {
+  /**
+   * Lifecare's noteTypeCode
+   * @format int32
+   */
+  code?: number;
+  /** The note type's name */
+  name?: string;
+  /** Whether a new note of this type is saved skrivskyddad unless the caseworker says otherwise */
+  protectedByDefault?: boolean;
+}
+
+/** A document type a caseworker can pick for a new document. */
+export interface LifecareDocumentType {
+  /**
+   * Lifecare's documentTypeCode
+   * @format int32
+   */
+  code?: number;
+  /** The document type's name */
+  name?: string;
+  /** Whether the documented date may differ from the one Lifecare proposes (today) */
+  canChangeOccurenceDate?: boolean;
+  /** Whether a new document of this type is saved skrivskyddad unless the caseworker says otherwise */
+  protectedByDefault?: boolean;
+}
+
+/** A beslutstyp the errand's insats offers in Lifecare, as the Beslut tab lists it. */
+export interface LifecareDecisionType {
+  /**
+   * Lifecare's beslutstyp code
+   * @format int32
+   */
+  code?: number;
+  /** The beslutstyp's name */
+  name?: string;
+  /** careM's outcome for the type, BIFALL or AVSLAG; absent for a type that cannot be registered from careM yet */
+  outcome?: LifecareDecisionTypeOutcomeEnum;
+  /** Whether a beslut of the type requires a from date */
+  requiresFromDate?: boolean;
+  /** Whether a beslut of the type requires a to date */
+  requiresToDate?: boolean;
+}
+
 /** The errand number and the household's personal numbers. Fetched per process run so the personal numbers never become process variables; every read is recorded in the errand's event log. */
 export interface HouseholdIdentifiers {
   /** The errand's human-readable number — what a person searches for in Draken */
@@ -2504,6 +3602,16 @@ export interface HouseholdIdentifiers {
   applicantPersonId?: string;
   /** The co-applicant's personal number; null when there is no co-applicant or it could not be resolved */
   coApplicantPersonId?: string;
+  /** The household children named on the application that have a partyId; empty when there are none */
+  children?: HouseholdChild[];
+}
+
+/** A household child named on the application: the partyId the beredning tags the child's SSBTEK incomes with, and the personal number SSBTEK is read with. */
+export interface HouseholdChild {
+  /** The child's partyId, as on the errand's children */
+  partyId?: string;
+  /** The child's personal number (12 characters, may contain letters); null when it could not be resolved */
+  personId?: string;
 }
 
 /** Self-describing snapshot of the form as it was rendered and answered. */
@@ -2693,6 +3801,52 @@ export interface PreviousDecision {
   date?: string;
 }
 
+/** One income on which the latest SSBTEK answer and the normberäkning saved in Lifecare disagree */
+export interface SsbtekChange {
+  /** ADD = SSBTEK reports an income the calculation lacks; CHANGE = the calculation has the income at another amount; GONE = an income the system wrote to the calculation is no longer reported by SSBTEK */
+  kind?: SsbtekChangeKindEnum;
+  /** AUTO = the calculation still holds what the system last wrote there (no caseworker has touched the income), so the SSBTEK amount may be written without asking; CONFIRM = show it to the caseworker and write only on their say-so */
+  mode?: SsbtekChangeModeEnum;
+  /** Why the change needs confirming; null for AUTO. FINAL = the calculation is final and takes no change; NO_BASELINE = careM has no record of what the system wrote to this calculation; EDITED = a caseworker has changed the amount; REMOVED = the income was taken out of the calculation (or never put in) on purpose; MULTIPLE_ROWS = the type has several rows; GONE_FROM_SSBTEK = SSBTEK no longer reports it, which does not prove it has stopped */
+  reason?: SsbtekChangeReasonEnum;
+  /** Whose income: the applicant (Lifecare's S column) or the co-applicant (M) */
+  role?: SsbtekChangeRoleEnum;
+  /**
+   * The Lifecare income type id, when careM knows it (always for ADD)
+   * @format int32
+   */
+  incomeTypeId?: number;
+  /** The Lifecare income type name — what the calculation row is matched on */
+  incomeType?: string;
+  /** The amount SSBTEK gives; null for GONE */
+  ssbtekAmount?: number;
+  /** The amount in the calculation (all rows of the type summed); null for ADD */
+  lifecareAmount?: number;
+}
+
+/** Where the normberäkning saved in Lifecare no longer matches the latest SSBTEK answer */
+export interface SsbtekChanges {
+  /**
+   * The Lifecare calculation compared (the errand's lifecareCalculationId)
+   * @format int32
+   */
+  calculationId?: number;
+  /** Whether the calculation is saved as final in Lifecare; if so nothing may be written and every change is CONFIRM */
+  isFinal?: boolean;
+  /**
+   * When the calculation was read from Lifecare for this comparison
+   * @format date-time
+   */
+  comparedAt?: string;
+  /**
+   * When SSBTEK was last read for the errand; null when it has not been read since the calculation was linked
+   * @format date-time
+   */
+  ssbtekReadAt?: string;
+  /** The disagreements, empty when the calculation matches SSBTEK */
+  changes?: SsbtekChange[];
+}
+
 /** A child pre-filled from Lifecare for a financial assistance renewal. Carries only what Lifecare provides — personnummer and name; the citizen completes residence, school etc. on the form. */
 export interface PrefilledChild {
   /** Party id (personId GUID) of the child */
@@ -2733,6 +3887,19 @@ export interface TypeOption {
   group?: TypeOptionGroupEnum;
   /** Whether an applicant may report the type, i.e. whether the code is accepted on the citizen payload. Does not control what the Mina-sidor form renders — that list is maintained in the frontend. */
   citizenReportable?: boolean;
+}
+
+/** An orsak a beslut of the beslutstyp can carry, as Lifecare words it, under the heading it sits in. */
+export interface LifecareDecisionReason {
+  /**
+   * Lifecare's reasonCode
+   * @format int32
+   */
+  code?: number;
+  /** The orsak as Lifecare words it */
+  name?: string;
+  /** The heading the orsak sits under */
+  header?: string;
 }
 
 /** A Lifecare document, metadata only. */
@@ -2995,6 +4162,18 @@ export enum MonitoringRequestSourceEnum {
 export enum MonitoringSourceEnum {
   CASEWORKER = "CASEWORKER",
   LIFECARE = "LIFECARE",
+}
+
+/** Which group the record belongs to */
+export enum LifecareRecordContentCategoryEnum {
+  JOURNAL_NOTE = "JOURNAL_NOTE",
+  DOCUMENT = "DOCUMENT",
+}
+
+/** careM's outcome for the beslutstyp, BIFALL or AVSLAG; absent for a beslutstyp that cannot be registered from careM */
+export enum LifecareDecisionViewOutcomeEnum {
+  BIFALL = "BIFALL",
+  AVSLAG = "AVSLAG",
 }
 
 /** The category of asset */
@@ -3303,6 +4482,7 @@ export enum WarningTypeEnum {
   PREVIOUS_NORM_NOT_AVAILABLE = "PREVIOUS_NORM_NOT_AVAILABLE",
   RECOVERY_CLAIM = "RECOVERY_CLAIM",
   LIFECARE_READ_FAILED = "LIFECARE_READ_FAILED",
+  SSBTEK_CALCULATION_DIFF = "SSBTEK_CALCULATION_DIFF",
 }
 
 /** The Draken view section (tab) the warning belongs to — derived from the type: the decision proposal's types are DECISION, the payment warnings' are PAYMENT, a LIFECARE_READ_FAILED is on the tab whose warnings depend on the failed read (its sourceKey), everything else is CALCULATION */
@@ -3342,11 +4522,50 @@ export enum PayeeLifecareResultOutcomeEnum {
   FAILED = "FAILED",
 }
 
+/** Expense: the bucket */
+export enum NormberakningRowInputBucketEnum {
+  EXPENSE = "EXPENSE",
+  SPECIAL_EXPENSE = "SPECIAL_EXPENSE",
+}
+
+/** Person: the role (careM draft only) */
+export enum NormberakningRowInputRoleEnum {
+  APPLICANT = "APPLICANT",
+  CO_APPLICANT = "CO_APPLICANT",
+  CHILD = "CHILD",
+  VISITATION_CHILD = "VISITATION_CHILD",
+}
+
+/** Whose period it is */
+export enum LifecareJobStimulusPeriodRoleEnum {
+  APPLICANT = "APPLICANT",
+  CO_APPLICANT = "CO_APPLICANT",
+}
+
+/** Which group the record is shown under */
+export enum LifecareRecordCategoryEnum {
+  JOURNAL_NOTE = "JOURNAL_NOTE",
+  DOCUMENT = "DOCUMENT",
+}
+
 /** Decision outcome code. BIFALL/DELAVSLAG grant an amount (and require payments); AVSLAG grants nothing. DELAVSLAG is labelled "Delvis bifall" in the dropdown (see the errand type's decision options). AVVISNING was dropped 2026-09-21 and is no longer accepted. */
 export enum FinalizeDecisionOutcomeEnum {
   BIFALL = "BIFALL",
   DELAVSLAG = "DELAVSLAG",
   AVSLAG = "AVSLAG",
+}
+
+/** REGISTERED: the beslut is in Lifecare and the decision is marked SYNCED with its id */
+export enum LifecareDecisionRegistrationOutcomeEnum {
+  REGISTERED = "REGISTERED",
+  FAILED = "FAILED",
+  NOT_SENT = "NOT_SENT",
+}
+
+/** Whose income */
+export enum AppliedSsbtekChangeRoleEnum {
+  APPLICANT = "APPLICANT",
+  CO_APPLICANT = "CO_APPLICANT",
 }
 
 /** The role of the household member */
@@ -3459,6 +4678,50 @@ export enum AttachmentSenderRoleEnum {
   CASEWORKER = "CASEWORKER",
 }
 
+/** Where the rows come from: careM's draft, or the beräkning saved in Lifecare (every change is then made there) */
+export enum NormberakningDraftSourceEnum {
+  CAREM = "CAREM",
+  LIFECARE = "LIFECARE",
+}
+
+/** Who created the row: the process or a caseworker (always CASEWORKER in Lifecare) */
+export enum NormberakningExpenseRowOriginEnum {
+  SYSTEM = "SYSTEM",
+  CASEWORKER = "CASEWORKER",
+}
+
+/** Which Lifecare bucket the expense posts to */
+export enum NormberakningExpenseRowBucketEnum {
+  EXPENSE = "EXPENSE",
+  SPECIAL_EXPENSE = "SPECIAL_EXPENSE",
+}
+
+/** Who created the row: the process or a caseworker (always CASEWORKER in Lifecare) */
+export enum NormberakningIncomeRowOriginEnum {
+  SYSTEM = "SYSTEM",
+  CASEWORKER = "CASEWORKER",
+}
+
+/** Who created the row: the process or a caseworker (always CASEWORKER in Lifecare) */
+export enum NormberakningPersonRowOriginEnum {
+  SYSTEM = "SYSTEM",
+  CASEWORKER = "CASEWORKER",
+}
+
+/** The role of the household member */
+export enum NormberakningPersonRowRoleEnum {
+  APPLICANT = "APPLICANT",
+  CO_APPLICANT = "CO_APPLICANT",
+  CHILD = "CHILD",
+  VISITATION_CHILD = "VISITATION_CHILD",
+}
+
+/** careM's outcome for the type, BIFALL or AVSLAG; absent for a type that cannot be registered from careM yet */
+export enum LifecareDecisionTypeOutcomeEnum {
+  BIFALL = "BIFALL",
+  AVSLAG = "AVSLAG",
+}
+
 /** The input kind as rendered */
 export enum FormSnapshotFieldInputTypeEnum {
   RADIO = "RADIO",
@@ -3491,6 +4754,35 @@ export enum DecisionProposalOutcomeEnum {
 export enum DecisionProposalAmountBasisEnum {
   LIFECARE_CALCULATION = "LIFECARE_CALCULATION",
   ESTIMATE = "ESTIMATE",
+}
+
+/** ADD = SSBTEK reports an income the calculation lacks; CHANGE = the calculation has the income at another amount; GONE = an income the system wrote to the calculation is no longer reported by SSBTEK */
+export enum SsbtekChangeKindEnum {
+  ADD = "ADD",
+  CHANGE = "CHANGE",
+  GONE = "GONE",
+}
+
+/** AUTO = the calculation still holds what the system last wrote there (no caseworker has touched the income), so the SSBTEK amount may be written without asking; CONFIRM = show it to the caseworker and write only on their say-so */
+export enum SsbtekChangeModeEnum {
+  AUTO = "AUTO",
+  CONFIRM = "CONFIRM",
+}
+
+/** Why the change needs confirming; null for AUTO. FINAL = the calculation is final and takes no change; NO_BASELINE = careM has no record of what the system wrote to this calculation; EDITED = a caseworker has changed the amount; REMOVED = the income was taken out of the calculation (or never put in) on purpose; MULTIPLE_ROWS = the type has several rows; GONE_FROM_SSBTEK = SSBTEK no longer reports it, which does not prove it has stopped */
+export enum SsbtekChangeReasonEnum {
+  FINAL = "FINAL",
+  NO_BASELINE = "NO_BASELINE",
+  EDITED = "EDITED",
+  REMOVED = "REMOVED",
+  MULTIPLE_ROWS = "MULTIPLE_ROWS",
+  GONE_FROM_SSBTEK = "GONE_FROM_SSBTEK",
+}
+
+/** Whose income: the applicant (Lifecare's S column) or the co-applicant (M) */
+export enum SsbtekChangeRoleEnum {
+  APPLICANT = "APPLICANT",
+  CO_APPLICANT = "CO_APPLICANT",
 }
 
 /** Stable code for the Mina-sidor form section the type is shown under; null for income */
@@ -3556,6 +4848,40 @@ export enum CreateAttachmentParamsDocumentTypeEnum {
   DECISION = "DECISION",
 }
 
+/**
+ * The section
+ * @pattern ^(persons|incomes|expenses)$
+ */
+export enum AddNormberakningRowParamsSectionEnum {
+  Persons = "persons",
+  Incomes = "incomes",
+  Expenses = "expenses",
+}
+
+/** @pattern ^(persons|incomes|expenses)$ */
+export enum AddNormberakningRowParamsEnum {
+  Persons = "persons",
+  Incomes = "incomes",
+  Expenses = "expenses",
+}
+
+/**
+ * The section
+ * @pattern ^(persons|incomes|expenses)$
+ */
+export enum RestoreNormberakningRowParamsSectionEnum {
+  Persons = "persons",
+  Incomes = "incomes",
+  Expenses = "expenses",
+}
+
+/** @pattern ^(persons|incomes|expenses)$ */
+export enum RestoreNormberakningRowParamsEnum {
+  Persons = "persons",
+  Incomes = "incomes",
+  Expenses = "expenses",
+}
+
 /** Lookup kind */
 export enum ReadLookupParamsKindEnum {
   CATEGORY = "CATEGORY",
@@ -3591,4 +4917,38 @@ export enum UpdateWarningParamsStatusEnum {
   OPEN = "OPEN",
   ACKNOWLEDGED = "ACKNOWLEDGED",
   CLOSED = "CLOSED",
+}
+
+/**
+ * The section
+ * @pattern ^(persons|incomes|expenses)$
+ */
+export enum DeleteNormberakningRowParamsSectionEnum {
+  Persons = "persons",
+  Incomes = "incomes",
+  Expenses = "expenses",
+}
+
+/** @pattern ^(persons|incomes|expenses)$ */
+export enum DeleteNormberakningRowParamsEnum {
+  Persons = "persons",
+  Incomes = "incomes",
+  Expenses = "expenses",
+}
+
+/**
+ * The section
+ * @pattern ^(persons|incomes|expenses)$
+ */
+export enum UpdateNormberakningRowParamsSectionEnum {
+  Persons = "persons",
+  Incomes = "incomes",
+  Expenses = "expenses",
+}
+
+/** @pattern ^(persons|incomes|expenses)$ */
+export enum UpdateNormberakningRowParamsEnum {
+  Persons = "persons",
+  Incomes = "incomes",
+  Expenses = "expenses",
 }

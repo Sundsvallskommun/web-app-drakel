@@ -1,9 +1,8 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
-import CaremanagementApiService from '@services/caremanagement-api.service';
+import CaremanagementApiService, { caremanagementHeaders } from '@services/caremanagement-api.service';
 import { AttachmentFile } from '@services/caremanagement-attachment.service';
 import { caremanagementError } from '@utils/caremanagement-error';
 import { caremanagementUrl } from '@utils/caremanagement-url';
-import { sentByHeaders } from '@utils/request-context';
 import axios from 'axios';
 import FormData from 'form-data';
 
@@ -39,7 +38,7 @@ class CaremanagementActualisationService {
     form.append('request', JSON.stringify(request), { contentType: 'application/json' });
     const url = caremanagementUrl('errands', 'financial-assistance', 'actualisations', actualisationId, 'archive');
     try {
-      await axios.post(url, form, { params: { partyId }, headers: { ...form.getHeaders(), ...sentByHeaders() } });
+      await axios.post(url, form, { params: { partyId }, headers: { ...form.getHeaders(), ...(await caremanagementHeaders()) } });
       return { data: null, message: 'success' };
     } catch (error) {
       throw caremanagementError(error);
