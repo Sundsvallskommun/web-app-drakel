@@ -1,9 +1,11 @@
 import { CommunicationChannels, FinalizeRequest } from '@/data-contracts/caremanagement/data-contracts';
 import { FinalizeErrandDto } from '@/dtos/finalize.dto';
 
+// careM has no meddelande channel: the meddelande goes into the errand's own conversation, which careM already
+// holds. Digital brevlåda is not offered.
 const toCommunicationChannels = (input: FinalizeErrandDto): CommunicationChannels => ({
   minaSidor: !!input.minaSidor,
-  digitalMailbox: !!input.digitalBrevlada,
+  digitalMailbox: false,
   letter: !!input.brev,
 });
 

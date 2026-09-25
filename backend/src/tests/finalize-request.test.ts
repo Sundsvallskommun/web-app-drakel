@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 describe('buildFinalizeRequest', () => {
   it('sends the chosen channels and the household-size flag, and no decision for careM to read from Lifecare', () => {
-    const request = buildFinalizeRequest({ minaSidor: true, digitalBrevlada: false, brev: true }, true);
+    const request = buildFinalizeRequest({ minaSidor: true, meddelande: true, brev: true }, true);
 
     expect(request).toEqual({
       communication: { minaSidor: true, digitalMailbox: false, letter: true },

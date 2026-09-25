@@ -1,10 +1,11 @@
 'use client';
 
-import { getDigitalMailbox } from '@services/decision-notification-service';
+import TextEditor from '@components/common/text-editor.component';
 import { finalizeErrand } from '@services/finalize-service';
 import { getNormberakningDraft } from '@services/normberakning-service';
 import { useUserStore } from '@services/user-service/user-service';
-import { Button, Checkbox, FormControl, FormLabel, Modal, Textarea } from '@sk-web-gui/react';
+import { Button, Checkbox, FormControl, FormLabel, Modal } from '@sk-web-gui/react';
+import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { buildDecisionMessage } from '@utils/decision-message';
 import { FinalizeFollowUp, finalizeFollowUps } from '@utils/finalize-follow-ups';
 import { FC, useState } from 'react';
@@ -15,15 +16,22 @@ import { FinalizeFollowUps } from './finalize-follow-ups.component';
 import { DecisionAttachments, SendDecisionAttachments } from './send-decision-attachments.component';
 
 const ALL_LIFECARE_DOCUMENTS: DecisionAttachments = { includeDecision: true, includeCalculation: true, files: [] };
+const EMPTY_MESSAGE: TextEditorValue = { markup: '', plainText: '' };
+
+// Text formatting only: files go through the list below the editor, not into the message.
+const MESSAGE_TOOLBAR = [
+  ['bold' as const, 'italic' as const, 'underline' as const],
+  [{ list: 'bullet' as const }, { list: 'ordered' as const }],
+];
 
 /**
  * "Skicka beräkning och beslut" for the administration bar. The dialog proposes a message to the sökande — for the
- * ansökan's month, signed by the handläggare — which they edit, and the documents that go with it: the beslut and
- * the beräkning from Lifecare, which they can take out, and PDFs from their computer. On Skicka the BFF finalizes the
- * errand in caremanagement from the beslut saved in Lifecare, then sends the message through the chosen channels
- * (Mina sidor and brev to begin with; digital brevlåda when the sökande has one). A refusal is shown in careM's or
- * the BFF's words. Anything that did not go through after the errand was decided is listed before the dialog closes,
- * since the errand cannot be finalized again.
+ * ansökan's month, signed by the handläggare — which they edit in a rich text editor, and the documents that go with
+ * it: the beslut and the beräkning from Lifecare, which they can take out, and PDFs from their computer. On Skicka
+ * the BFF finalizes the errand in caremanagement from the beslut saved in Lifecare, then sends the message through
+ * the chosen channels: meddelande (the errand's conversation) and brev. Mina sidor is recorded but not sent yet.
+ * A refusal is shown in careM's or the BFF's words. Anything that did not go through after the errand was decided
+ * is listed before the dialog closes, since the errand cannot be finalized again.
  */
 export const ErrandAvsluta: FC<{
   errandId: string;
@@ -36,10 +44,9 @@ export const ErrandAvsluta: FC<{
   const [working, setWorking] = useState<boolean>(false);
   const [error, setError] = useState<string>();
   const [minaSidor, setMinaSidor] = useState<boolean>(true);
-  const [digitalBrevlada, setDigitalBrevlada] = useState<boolean>(false);
-  const [brev, setBrev] = useState<boolean>(true);
-  const [mailboxAvailable, setMailboxAvailable] = useState<boolean>(false);
-  const [message, setMessage] = useState<string>('');
+  const [meddelande, setMeddelande] = useState<boolean>(true);
+  const [brev, setBrev] = useState<boolean>(false);
+  const [message, setMessage] = useState<TextEditorValue>(EMPTY_MESSAGE);
   const [attachments, setAttachments] = useState<DecisionAttachments>(ALL_LIFECARE_DOCUMENTS);
   // Set once the errand is decided but something after that did not go through.
   const [followUps, setFollowUps] = useState<FinalizeFollowUp[]>([]);
@@ -49,19 +56,19 @@ export const ErrandAvsluta: FC<{
     setChecking(true);
     setError(undefined);
     setMinaSidor(true);
-    setBrev(true);
-    setDigitalBrevlada(false);
+    setMeddelande(true);
+    setBrev(false);
     setAttachments(ALL_LIFECARE_DOCUMENTS);
 
-    const [mailboxRes, draftRes] = await Promise.all([getDigitalMailbox(errandId), getNormberakningDraft(errandId)]);
-    setMailboxAvailable(!mailboxRes.error && mailboxRes.data === true);
+    const draftRes = await getNormberakningDraft(errandId);
     setMessage(buildDecisionMessage(draftRes.data?.applicationMonth, caseworkerName));
     setChecking(false);
     setConfirmOpen(true);
   };
 
-  const messageMissing = message.trim() === '';
-  const noChannel = !minaSidor && !brev && !(digitalBrevlada && mailboxAvailable);
+  const messageMissing = (message.plainText ?? '').trim() === '';
+  // Mina sidor is not sent yet, so one of the channels that does send must be chosen.
+  const noChannel = !meddelande && !brev;
 
   const send = async (): Promise<void> => {
     setWorking(true);
@@ -70,9 +77,9 @@ export const ErrandAvsluta: FC<{
       errandId,
       {
         minaSidor,
-        digitalBrevlada: digitalBrevlada && mailboxAvailable,
+        meddelande,
         brev,
-        message,
+        message: message.markup ?? '',
         includeDecision: attachments.includeDecision,
         includeCalculation: attachments.includeCalculation,
       },
@@ -149,16 +156,15 @@ export const ErrandAvsluta: FC<{
                 >
                   {t('decideAndPay.channels.minaSidor')}
                 </Checkbox>
-                {mailboxAvailable ?
-                  <Checkbox
-                    checked={digitalBrevlada}
-                    onChange={(event) => {
-                      setDigitalBrevlada(event.target.checked);
-                    }}
-                  >
-                    {t('decideAndPay.channels.digitalMailbox')}
-                  </Checkbox>
-                : null}
+                <p className="m-0 text-small text-dark-secondary">{t('decideAndPay.channels.minaSidorNotSent')}</p>
+                <Checkbox
+                  checked={meddelande}
+                  onChange={(event) => {
+                    setMeddelande(event.target.checked);
+                  }}
+                >
+                  {t('decideAndPay.channels.message')}
+                </Checkbox>
                 <Checkbox
                   checked={brev}
                   onChange={(event) => {
@@ -171,9 +177,9 @@ export const ErrandAvsluta: FC<{
 
               <FormControl id="send-decision-message" className="w-full">
                 <FormLabel>{t('decideAndPay.messageLabel')}</FormLabel>
-                <Textarea
-                  className="w-full"
-                  rows={9}
+                <TextEditor
+                  className="text-editor-with-toolbar w-full"
+                  toolbar={MESSAGE_TOOLBAR}
                   value={message}
                   onChange={(event) => {
                     setMessage(event.target.value);

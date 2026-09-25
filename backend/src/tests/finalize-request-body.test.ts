@@ -4,16 +4,16 @@ import { describe, expect, it } from 'vitest';
 describe('parseFinalizeRequest', () => {
   it('reads the request the multipart field carries as JSON', async () => {
     const input = await parseFinalizeRequest(
-      JSON.stringify({ minaSidor: true, brev: true, message: 'Hej,', includeDecision: true, includeCalculation: false }),
+      JSON.stringify({ meddelande: true, brev: true, message: 'Hej,', includeDecision: true, includeCalculation: false }),
     );
 
-    expect(input).toMatchObject({ minaSidor: true, brev: true, message: 'Hej,', includeDecision: true, includeCalculation: false });
+    expect(input).toMatchObject({ meddelande: true, brev: true, message: 'Hej,', includeDecision: true, includeCalculation: false });
   });
 
   it('refuses a request that is missing, not JSON or not complete', async () => {
     await expect(parseFinalizeRequest(undefined)).rejects.toMatchObject({ status: 400 });
     await expect(parseFinalizeRequest('inte json')).rejects.toMatchObject({ status: 400 });
-    await expect(parseFinalizeRequest(JSON.stringify({ minaSidor: true }))).rejects.toMatchObject({ status: 400 });
+    await expect(parseFinalizeRequest(JSON.stringify({ meddelande: true }))).rejects.toMatchObject({ status: 400 });
   });
 });
 

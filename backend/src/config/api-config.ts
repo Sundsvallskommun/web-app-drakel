@@ -10,8 +10,7 @@ export const APIS = [
     version: '3.0',
   },
   {
-    // Messaging — sends the beslut to Mina sidor (webmessage), digital brevlåda (digital-mail) and brev
-    // (letter), and checks whether a person has a digital mailbox.
+    // Messaging — sends the beslut as a brev (letter).
     name: 'messaging',
     version: '7.0',
   },

@@ -173,98 +173,6 @@ export interface DecisionProposalApiResponse {
   message: string;
 }
 
-export interface LifecareCalculationSummaryView {
-  income: number;
-  jobStimulus: number;
-  jobStimulusDeduction: number;
-  norm: number;
-  familyCost: number;
-  commonHouseholdCost: number;
-  expenses: number;
-  sum: number;
-  specialExpenses: number;
-  result: number;
-}
-
-export interface LifecareCalculationView {
-  id: number;
-  normName?: string;
-  date: string;
-  startDate: string;
-  endDate: string;
-  finalized: boolean;
-  updated: string;
-  summary?: LifecareCalculationSummaryView;
-}
-
-export interface LifecareCalculationApiResponse {
-  data?: LifecareCalculationView;
-  message: string;
-}
-
-export interface LifecareCalculationPdfApiResponse {
-  data: string;
-  message: string;
-}
-
-export interface LifecareDecisionView {
-  id: number;
-  decisionCode: number;
-  outcome?: string;
-  date: string;
-  periodFrom?: string;
-  periodTo?: string;
-  amount: number;
-  reasonCode?: number;
-  reason?: string;
-  message?: string;
-  locked: boolean;
-  decisionMaker: string;
-}
-
-export interface LifecareDecisionApiResponse {
-  data?: LifecareDecisionView;
-  message: string;
-}
-
-export interface LifecareDecisionTypeView {
-  code: number;
-  name: string;
-  outcome?: string;
-  requiresFromDate: boolean;
-  requiresToDate: boolean;
-}
-
-export interface LifecareDecisionTypesApiResponse {
-  data: LifecareDecisionTypeView[];
-  message: string;
-}
-
-export interface LifecareDecisionReasonView {
-  code: number;
-  name: string;
-  header: string;
-}
-
-export interface LifecareDecisionReasonsApiResponse {
-  data: LifecareDecisionReasonView[];
-  message: string;
-}
-
-export interface LifecareDecisionPdfApiResponse {
-  data: string;
-  message: string;
-}
-
-export interface DigitalMailboxStatus {
-  available: boolean;
-}
-
-export interface DigitalMailboxApiResponse {
-  data: DigitalMailboxStatus;
-  message: string;
-}
-
 export interface DecisionPhrase {
   identifier: string;
   category: string;
@@ -556,9 +464,92 @@ export interface ErrandEventsApiResponse {
   message: string;
 }
 
+export interface LifecareCalculationSummaryView {
+  income: number;
+  jobStimulus: number;
+  jobStimulusDeduction: number;
+  norm: number;
+  familyCost: number;
+  commonHouseholdCost: number;
+  expenses: number;
+  sum: number;
+  specialExpenses: number;
+  result: number;
+}
+
+export interface LifecareCalculationView {
+  id: number;
+  normName?: string;
+  date: string;
+  startDate: string;
+  endDate: string;
+  finalized: boolean;
+  updated: string;
+  summary?: LifecareCalculationSummaryView;
+}
+
+export interface LifecareCalculationApiResponse {
+  data?: LifecareCalculationView;
+  message: string;
+}
+
+export interface LifecareCalculationPdfApiResponse {
+  data: string;
+  message: string;
+}
+
+export interface LifecareDecisionView {
+  id: number;
+  decisionCode: number;
+  outcome?: string;
+  date: string;
+  periodFrom?: string;
+  periodTo?: string;
+  amount: number;
+  reasonCode?: number;
+  reason?: string;
+  message?: string;
+  locked: boolean;
+  decisionMaker: string;
+}
+
+export interface LifecareDecisionApiResponse {
+  data?: LifecareDecisionView;
+  message: string;
+}
+
+export interface LifecareDecisionTypeView {
+  code: number;
+  name: string;
+  outcome?: string;
+  requiresFromDate: boolean;
+  requiresToDate: boolean;
+}
+
+export interface LifecareDecisionTypesApiResponse {
+  data: LifecareDecisionTypeView[];
+  message: string;
+}
+
+export interface LifecareDecisionReasonView {
+  code: number;
+  name: string;
+  header: string;
+}
+
+export interface LifecareDecisionReasonsApiResponse {
+  data: LifecareDecisionReasonView[];
+  message: string;
+}
+
+export interface LifecareDecisionPdfApiResponse {
+  data: string;
+  message: string;
+}
+
 export interface DecisionNotificationDto {
   minaSidor?: boolean;
-  digitalBrevlada?: boolean;
+  meddelande?: boolean;
   brev?: boolean;
 }
 
@@ -568,7 +559,7 @@ export interface FinalizeErrandDto {
   includeDecision: boolean;
   includeCalculation: boolean;
   minaSidor?: boolean;
-  digitalBrevlada?: boolean;
+  meddelande?: boolean;
   brev?: boolean;
 }
 

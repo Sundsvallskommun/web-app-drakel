@@ -37,9 +37,8 @@ export const CAREMANAGEMENT_NAMESPACE = env.CAREMANAGEMENT_NAMESPACE ?? '';
 export const CAREMANAGEMENT_BASE_URL = env.CAREMANAGEMENT_BASE_URL ?? '';
 // The Active Directory domain the handläggare roster is read from.
 export const ACTIVE_DIRECTORY_DOMAIN = env.ACTIVE_DIRECTORY_DOMAIN ?? 'personal';
-// Messaging sender config for the beslut notification (Mina sidor / digital brevlåda / brev). Optional —
+// Messaging sender config for the beslut sent as a brev. Optional —
 // the send fails gracefully if unset, so a missing value never blocks BFF startup.
-export const MESSAGING_ORGANIZATION_NUMBER = env.MESSAGING_ORGANIZATION_NUMBER ?? '';
 export const MESSAGING_DEPARTMENT = env.MESSAGING_DEPARTMENT ?? '';
 export const MESSAGING_SUPPORT_TEXT = env.MESSAGING_SUPPORT_TEXT ?? '';
 export const MESSAGING_SUPPORT_EMAIL = env.MESSAGING_SUPPORT_EMAIL ?? '';

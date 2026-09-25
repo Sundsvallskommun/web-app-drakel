@@ -10,7 +10,7 @@ import { DecisionNotificationDto } from '@/dtos/decision-notification.dto';
  * trusting a second copy from the browser.
  */
 export class FinalizeErrandDto extends DecisionNotificationDto {
-  /** The message to the sökande, as the handläggare left it (plain text: a letter carries no formatting). */
+  /** The message to the sökande as HTML, as the handläggare left it in the editor. */
   @IsString()
   @MaxLength(8192)
   message!: string;

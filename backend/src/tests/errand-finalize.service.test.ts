@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LifecareDecisionRegistrationOutcomeEnum, NormberakningDraftSourceEnum } from '@/data-contracts/caremanagement/data-contracts';
 import { HttpException } from '@/exceptions/HttpException';
 
-const channels = { minaSidor: true, digitalBrevlada: false, brev: true, message: 'Hej,', includeDecision: true, includeCalculation: true };
+const channels = { minaSidor: true, meddelande: true, brev: true, message: '<p>Hej,</p>', includeDecision: true, includeCalculation: true };
 const communication = { minaSidor: true, digitalMailbox: false, letter: true };
 
 const FINALIZE_URL = caremanagementUrl('errands', 'financial-assistance', 'errand-1', 'finalize');
@@ -127,6 +127,6 @@ describe('ErrandFinalizeService.finalize', () => {
 
     const result = await new ErrandFinalizeService().finalize('errand-1', channels, 'caseworker01');
 
-    expect(result.failedChannels).toEqual(['Mina sidor', 'Brev']);
+    expect(result.failedChannels).toEqual(['Meddelande', 'Brev']);
   });
 });

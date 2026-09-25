@@ -10,7 +10,7 @@ import { FinalizeErrandDto } from '@/dtos/finalize.dto';
 import { FinalizeResult } from '@/responses/finalize.response';
 
 // The labels the beslut dialog uses for the channels, reported back when a channel could not be sent.
-const ALL_CHANNEL_LABELS = { minaSidor: 'Mina sidor', digitalBrevlada: 'Digital brevlåda', brev: 'Brev' } as const;
+const ALL_CHANNEL_LABELS = { meddelande: 'Meddelande', brev: 'Brev' } as const;
 
 const selectedChannelLabels = (input: FinalizeErrandDto): string[] =>
   (Object.keys(ALL_CHANNEL_LABELS) as (keyof typeof ALL_CHANNEL_LABELS)[])
