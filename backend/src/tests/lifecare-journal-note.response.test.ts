@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildJournalNote, LifecareNoteProposalRaw, toNoteTypes } from '@/responses/lifecare-journal-note.response';
+import { buildJournalNote, LifecareNoteProposalRaw, toNoteTypeView } from '@/responses/lifecare-journal-note.response';
 
 // Shaped after a captured GetNoteProposalForService answer, trimmed to the fields that matter here.
 const proposal: LifecareNoteProposalRaw = {
@@ -23,12 +23,13 @@ const proposal: LifecareNoteProposalRaw = {
 
 const journalNoteType = { id: 1, name: 'Journalanteckning', sortOrder: 240, isActive: true };
 
-describe('toNoteTypes', () => {
-  it('lists the active note types in Lifecare order', () => {
-    expect(toNoteTypes(proposal)).toEqual([
-      { code: 3, name: 'Beslut', protectedByDefault: true },
-      { code: 1, name: 'Journalanteckning', protectedByDefault: false },
-    ]);
+describe('toNoteTypeView', () => {
+  it('passes a note type from careM through as it is', () => {
+    expect(toNoteTypeView({ code: 3, name: 'Beslut', protectedByDefault: true })).toEqual({ code: 3, name: 'Beslut', protectedByDefault: true });
+  });
+
+  it('does not make a note skrivskyddad by default when careM does not say so', () => {
+    expect(toNoteTypeView({ code: 1, name: 'Journalanteckning' })).toEqual({ code: 1, name: 'Journalanteckning', protectedByDefault: false });
   });
 });
 

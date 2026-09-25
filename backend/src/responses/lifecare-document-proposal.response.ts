@@ -2,6 +2,7 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsNumber, IsString, ValidateNested } from 'class-validator';
 
+import { LifecareDocumentType } from '@/data-contracts/caremanagement/data-contracts';
 import { LifecareEditableRecord } from '@/responses/lifecare-documents.response';
 
 /**
@@ -54,16 +55,17 @@ export class LifecareDocumentTypesApiResponse implements ApiResponse<LifecareDoc
 export const writableDocumentTypes = (proposal: LifecareDocumentProposalRaw): LifecareDocumentTypeRaw[] =>
   proposal.documentTypes.filter(documentType => documentType.isActive && !documentType.isForm);
 
-/** The writable document types, in Lifecare's own order. */
-export const toDocumentTypes = (proposal: LifecareDocumentProposalRaw): LifecareDocumentTypeView[] =>
-  writableDocumentTypes(proposal)
-    .sort((first, second) => first.sortOrder - second.sortOrder)
-    .map(documentType => ({
-      code: documentType.documentCode,
-      name: documentType.name,
-      canChangeOccurenceDate: documentType.canChangeOccurenceDate,
-      protectedByDefault: documentType.writeProtectAuto === true,
-    }));
+/**
+ * A document type as careM lists it (the writable ones, in Lifecare's order), in the form's shape. careM's contract
+ * leaves every field optional; a type careM does not say allows another date keeps the proposed one, and one it does
+ * not say is skrivskyddad by default is not.
+ */
+export const toDocumentTypeView = (documentType: LifecareDocumentType): LifecareDocumentTypeView => ({
+  code: documentType.code ?? 0,
+  name: documentType.name ?? '',
+  canChangeOccurenceDate: documentType.canChangeOccurenceDate ?? false,
+  protectedByDefault: documentType.protectedByDefault ?? false,
+});
 
 /** What a handläggare fills in on a new document. */
 export interface NewDocument {

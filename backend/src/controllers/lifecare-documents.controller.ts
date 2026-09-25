@@ -16,11 +16,11 @@ import { LifecareNoteTypesApiResponse } from '@/responses/lifecare-journal-note.
 
 /**
  * Serves the applicant's Lifecare record — journalanteckningar and documents — for an errand, read and
- * written live in Lifecare. Nothing is kept in careM; careM only gets the access-log rows.
+ * written live in Lifecare through careM, which also logs every access.
  *
- * Keyed by errand, not by identity number: the errand resolves to the applicant's personnummer and
- * insats on the server, so no personal number is ever passed in drakel's own URL. Lifecare's list is
- * person-wide, so what comes back spans all of the person's akter, not only this errand.
+ * Keyed by errand, not by identity number: careM resolves the errand to the applicant's personnummer and
+ * insats, so no personal number is ever passed in drakel's own URL. Lifecare's list is person-wide, so
+ * what comes back spans all of the person's akter, not only this errand.
  */
 @Controller()
 export class LifecareDocumentsController {
