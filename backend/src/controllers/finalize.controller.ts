@@ -15,7 +15,7 @@ export class FinalizeController {
 
   @Post('/errands/:errandId/finalize')
   @OpenAPI({
-    summary: 'Besluta och utbetala: finalize the errand in caremanagement from the saved beslut and utbetalning drafts, then send the beslut',
+    summary: 'Besluta och utbetala: finalize the errand in caremanagement, which records the beslut saved in Lifecare, then send the beslut',
   })
   @ResponseSchema(FinalizeApiResponse)
   @UseBefore(authMiddleware, validationMiddleware(FinalizeErrandDto, 'body'))
