@@ -92,7 +92,8 @@
       "accountingCode": "Accounting code",
       "optionsLoadError": "Lifecare did not provide payees and payment methods for the service: {{reason}}",
       "save": "Save payment in Lifecare",
-      "saved": "The payment is registered in Lifecare (id {{id}})."
+      "saved": "The payment is registered in Lifecare (id {{id}}).",
+      "savedNotLinked": "The payment is registered in Lifecare (id {{id}}) but could not be linked to the errand. Do not register it again."
     },
     "list": {
       "title": "Registered payments",

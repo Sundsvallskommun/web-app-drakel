@@ -92,7 +92,8 @@
       "accountingCode": "Kontering",
       "optionsLoadError": "Lifecare lämnade inte ut betalningsmottagare och betalsätt för insatsen: {{reason}}",
       "save": "Spara utbetalning i Lifecare",
-      "saved": "Utbetalningen är registrerad i Lifecare (id {{id}})."
+      "saved": "Utbetalningen är registrerad i Lifecare (id {{id}}).",
+      "savedNotLinked": "Utbetalningen är registrerad i Lifecare (id {{id}}) men kunde inte kopplas till ärendet. Registrera den inte igen."
     },
     "list": {
       "title": "Registrerade utbetalningar",

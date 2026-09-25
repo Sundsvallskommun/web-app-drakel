@@ -612,6 +612,13 @@ export interface FormSnapshotApiResponse {
   message: string;
 }
 
+export interface AddJobStimulusPeriodDto {
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  fromDate: string;
+  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
+  toDate?: string;
+}
+
 export interface JobStimulusPeriod {
   id?: number;
   role?: string;
@@ -622,13 +629,6 @@ export interface JobStimulusPeriod {
 export interface JobStimulusPeriodsApiResponse {
   data: JobStimulusPeriod[];
   message: string;
-}
-
-export interface AddJobStimulusPeriodDto {
-  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
-  fromDate: string;
-  /** @pattern ^\d{4}-\d{2}-\d{2}$ */
-  toDate?: string;
 }
 
 export interface CreateJournalEntryDto {
@@ -936,6 +936,30 @@ export interface LifecareRegisteredPaymentsApiResponse {
   message: string;
 }
 
+export interface PaymentStatusView {
+  applicationMonth?: string;
+  effectuated: boolean;
+  paymentDate?: string;
+  amount?: number;
+  status?: string;
+  unavailable: boolean;
+}
+
+export interface PaymentStatusApiResponse {
+  data: PaymentStatusView;
+  message: string;
+}
+
+export interface LifecarePaymentCreated {
+  lifecareId: string;
+  linkedToErrand: boolean;
+}
+
+export interface LifecarePaymentCreatedApiResponse {
+  data: LifecarePaymentCreated;
+  message: string;
+}
+
 export interface CreateLifecarePayeeDto {
   /**
    * @minLength 1
@@ -968,29 +992,6 @@ export interface PaymentInputDto {
   invoiceNumber?: string;
   usesOcr?: boolean;
   messageLines?: string[];
-}
-
-export interface LifecarePaymentCreated {
-  lifecareId: string;
-}
-
-export interface LifecarePaymentCreatedApiResponse {
-  data: LifecarePaymentCreated;
-  message: string;
-}
-
-export interface PaymentStatusView {
-  applicationMonth?: string;
-  effectuated: boolean;
-  paymentDate?: string;
-  amount?: number;
-  status?: string;
-  unavailable: boolean;
-}
-
-export interface PaymentStatusApiResponse {
-  data: PaymentStatusView;
-  message: string;
 }
 
 export interface LifecareReminderView {
@@ -1087,87 +1088,6 @@ export interface Lookup {
 export interface LookupsApiResponse {
   data: Lookup[];
   message: string;
-}
-
-export interface PreviousCalculationPerson {
-  name?: string;
-  amount?: number;
-  deviationFromDate?: string;
-  deviationToDate?: string;
-}
-
-export interface PreviousCalculationIncome {
-  type?: string;
-  amountApplicant?: number;
-  applicantSearchDate?: string;
-  amountCoApplicant?: number;
-  coApplicantSearchDate?: string;
-}
-
-export interface PreviousCalculationExpense {
-  type?: string;
-  appliedAmount?: number;
-  approvedAmount?: number;
-}
-
-export interface PreviousCalculationView {
-  id?: number;
-  norm?: string;
-  fromDate?: string;
-  toDate?: string;
-  incomeSum?: number;
-  expenseSum?: number;
-  specialExpenseSum?: number;
-  normSum?: number;
-  commonHouseholdCost?: number;
-  familyCost?: number;
-  balance?: number;
-  totalSum?: number;
-  isFinal?: boolean;
-  persons?: PreviousCalculationPerson[];
-  incomes?: PreviousCalculationIncome[];
-  expenses?: PreviousCalculationExpense[];
-  specialExpenses?: PreviousCalculationExpense[];
-}
-
-export interface PreviousCalculationApiResponse {
-  data?: PreviousCalculationView;
-  message: string;
-}
-
-export interface NormRowInputDto {
-  typeId?: number;
-  typeName?: string;
-  applicantCaseworkerAmount?: number;
-  applicantAmountDate?: string;
-  coapplicantCaseworkerAmount?: number;
-  coapplicantAmountDate?: string;
-  costType?: string;
-  bucket?: string;
-  otherSubType?: string;
-  specification?: string;
-  caseworkerAmount?: number;
-  appliedAmount?: number;
-  partyId?: string;
-  role?: string;
-  name?: string;
-  caseworkerDays?: number;
-  included?: boolean;
-  deviationFromDate?: string;
-  deviationToDate?: string;
-  normInterval?: string;
-  normRowId?: number;
-  note?: string;
-}
-
-export interface NormHeaderInputDto {
-  normId?: number;
-  normType?: string[];
-  calculationFromDate?: string;
-  calculationToDate?: string;
-  calculationDate?: string;
-  hasCustomHouseholdSize?: boolean;
-  householdSize?: number;
 }
 
 export interface NormPersonRow {
@@ -1282,6 +1202,87 @@ export interface NormberakningTypesApiResponse {
 
 export interface NormberakningDraftApiResponse {
   data: NormberakningDraft;
+  message: string;
+}
+
+export interface NormRowInputDto {
+  typeId?: number;
+  typeName?: string;
+  applicantCaseworkerAmount?: number;
+  applicantAmountDate?: string;
+  coapplicantCaseworkerAmount?: number;
+  coapplicantAmountDate?: string;
+  costType?: string;
+  bucket?: string;
+  otherSubType?: string;
+  specification?: string;
+  caseworkerAmount?: number;
+  appliedAmount?: number;
+  partyId?: string;
+  role?: string;
+  name?: string;
+  caseworkerDays?: number;
+  included?: boolean;
+  deviationFromDate?: string;
+  deviationToDate?: string;
+  normInterval?: string;
+  normRowId?: number;
+  note?: string;
+}
+
+export interface NormHeaderInputDto {
+  normId?: number;
+  normType?: string[];
+  calculationFromDate?: string;
+  calculationToDate?: string;
+  calculationDate?: string;
+  hasCustomHouseholdSize?: boolean;
+  householdSize?: number;
+}
+
+export interface PreviousCalculationPerson {
+  name?: string;
+  amount?: number;
+  deviationFromDate?: string;
+  deviationToDate?: string;
+}
+
+export interface PreviousCalculationIncome {
+  type?: string;
+  amountApplicant?: number;
+  applicantSearchDate?: string;
+  amountCoApplicant?: number;
+  coApplicantSearchDate?: string;
+}
+
+export interface PreviousCalculationExpense {
+  type?: string;
+  appliedAmount?: number;
+  approvedAmount?: number;
+}
+
+export interface PreviousCalculationView {
+  id?: number;
+  norm?: string;
+  fromDate?: string;
+  toDate?: string;
+  incomeSum?: number;
+  expenseSum?: number;
+  specialExpenseSum?: number;
+  normSum?: number;
+  commonHouseholdCost?: number;
+  familyCost?: number;
+  balance?: number;
+  totalSum?: number;
+  isFinal?: boolean;
+  persons?: PreviousCalculationPerson[];
+  incomes?: PreviousCalculationIncome[];
+  expenses?: PreviousCalculationExpense[];
+  specialExpenses?: PreviousCalculationExpense[];
+}
+
+export interface PreviousCalculationApiResponse {
+  data?: PreviousCalculationView;
   message: string;
 }
 
