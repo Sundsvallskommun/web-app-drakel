@@ -32,6 +32,9 @@ export const MUNICIPALITY_ID = env.MUNICIPALITY_ID ?? '';
 // caremanagement, Templating and Active Directory are all reached through the WSO2 gateway (API_BASE_URL) —
 // see APIS. The namespace scopes every caremanagement errand route.
 export const CAREMANAGEMENT_NAMESPACE = env.CAREMANAGEMENT_NAMESPACE ?? '';
+// Optional: a caremanagement host to call directly (e.g. the Dokploy instance), with no gateway token. Unset means
+// caremanagement is reached through the gateway like the rest.
+export const CAREMANAGEMENT_BASE_URL = env.CAREMANAGEMENT_BASE_URL ?? '';
 // The Active Directory domain the handläggare roster is read from.
 export const ACTIVE_DIRECTORY_DOMAIN = env.ACTIVE_DIRECTORY_DOMAIN ?? 'personal';
 // Messaging sender config for the beslut notification (Mina sidor / digital brevlåda / brev). Optional —

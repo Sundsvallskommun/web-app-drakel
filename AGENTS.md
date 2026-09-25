@@ -108,6 +108,9 @@ Config lives in `backend/.env.{NODE_ENV}.local` (currently
   The drakel application in WSO2 must subscribe to every API in `APIS`, and the
   gateway only lets through the routes of an API's *published* definition — a new
   caremanagement route needs the definition republished before it works.
+- `CAREMANAGEMENT_BASE_URL` (optional) — call caremanagement directly on its own
+  host instead, with no gateway token, e.g. the Dokploy instance
+  `https://cm.drakel.sundsvall.dev`. Unset means through the gateway.
 - **The BFF never talks to Lifecare itself.** caremanagement owns the Lifecare
   (ProfessionalWeb) integration: it signs in with its service account, resolves
   insats and personnummer from the errand, links what it creates (beräkning, beslut,

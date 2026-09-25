@@ -1,23 +1,32 @@
-import { CAREMANAGEMENT_NAMESPACE, MUNICIPALITY_ID } from '@config';
+import { CAREMANAGEMENT_BASE_URL, CAREMANAGEMENT_NAMESPACE, MUNICIPALITY_ID } from '@config';
 
 import { gatewayUrl } from './gateway-url';
 
 /**
- * Builds an absolute caremanagement URL on the WSO2 gateway, scoped to the configured municipality and namespace.
+ * caremanagement's root: its own host when CAREMANAGEMENT_BASE_URL is set (e.g. the Dokploy instance), otherwise the
+ * WSO2 gateway.
+ */
+const caremanagementRoot = (...parts: string[]): string =>
+  CAREMANAGEMENT_BASE_URL
+    ? [CAREMANAGEMENT_BASE_URL, ...parts].map(segment => segment.replace(/^\/+|\/+$/g, '')).join('/')
+    : gatewayUrl('caremanagement', ...parts);
+
+/**
+ * Builds an absolute caremanagement URL (gateway, or CAREMANAGEMENT_BASE_URL), scoped to the municipality and namespace.
  * municipalityId and namespace are injected here so the rest of the stack — and the entire frontend — stays
  * tenant-agnostic.
  *
  * @param parts Path segments appended after the municipality/namespace scope
  */
-export const caremanagementUrl = (...parts: string[]): string => gatewayUrl('caremanagement', MUNICIPALITY_ID, CAREMANAGEMENT_NAMESPACE, ...parts);
+export const caremanagementUrl = (...parts: string[]): string => caremanagementRoot(MUNICIPALITY_ID, CAREMANAGEMENT_NAMESPACE, ...parts);
 
 /**
- * Builds an absolute caremanagement URL on the WSO2 gateway, scoped to the configured municipality only — for the
+ * Builds an absolute caremanagement URL (gateway, or CAREMANAGEMENT_BASE_URL), scoped to the municipality only — for the
  * resources that belong to no namespace, e.g. a user's settings.
  *
  * @param parts Path segments appended after the municipality scope
  */
-export const caremanagementMunicipalityUrl = (...parts: string[]): string => gatewayUrl('caremanagement', MUNICIPALITY_ID, ...parts);
+export const caremanagementMunicipalityUrl = (...parts: string[]): string => caremanagementRoot(MUNICIPALITY_ID, ...parts);
 
 /**
  * An errand's route under caremanagement's Lifecare integration — everything drakel does in Lifecare goes through

@@ -5,7 +5,7 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 
 import { getApiBase } from './config/api-config';
-import { APIS, API_BASE_URL } from './config/index';
+import { APIS, API_BASE_URL, CAREMANAGEMENT_BASE_URL } from './config/index';
 
 const execFileAsync = promisify(execFile);
 
@@ -81,7 +81,9 @@ const main = async () => {
   // caremanagement's contract comes from the gateway like the rest — unless CAREMANAGEMENT_OPENAPI_URL points
   // elsewhere: a URL, or a local file such as the openapi.yaml of a caremanagement branch the gateway does not
   // publish yet.
-  const caremanagementOpenApiUrl = process.env.CAREMANAGEMENT_OPENAPI_URL || `${API_BASE_URL}/${getApiBase('caremanagement')}/api-docs`;
+  const caremanagementOpenApiUrl =
+    process.env.CAREMANAGEMENT_OPENAPI_URL ||
+    (CAREMANAGEMENT_BASE_URL ? `${CAREMANAGEMENT_BASE_URL}/api-docs` : `${API_BASE_URL}/${getApiBase('caremanagement')}/api-docs`);
   await generateContract('caremanagement', caremanagementOpenApiUrl);
 };
 

@@ -1,3 +1,4 @@
+import { CAREMANAGEMENT_BASE_URL } from '@config';
 import { ApiResponse } from '@interfaces/api-service.interface';
 import { gatewayAuthorization } from '@services/api-token.service';
 import { caremanagementError } from '@utils/caremanagement-error';
@@ -22,7 +23,8 @@ const NO_CONTENT = 204;
  * is absent when the request has no authenticated user (the actor is then logged null).
  */
 export const caremanagementHeaders = async (): Promise<Record<string, string>> => ({
-  ...(await gatewayAuthorization()),
+  // A caremanagement host called directly (CAREMANAGEMENT_BASE_URL, e.g. Dokploy) takes no gateway token.
+  ...(CAREMANAGEMENT_BASE_URL ? {} : await gatewayAuthorization()),
   ...sentByHeaders(),
 });
 
