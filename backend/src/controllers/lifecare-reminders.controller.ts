@@ -7,7 +7,10 @@ import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 import { CreateLifecareReminderDto } from '@/dtos/lifecare-reminder.dto';
 import { LifecareReminderOptionsApiResponse, LifecareRemindersApiResponse } from '@/responses/lifecare-reminder.response';
 
-/** The bevakningar on the errand's insats, read from and written to Lifecare — the register of record. */
+/**
+ * The bevakningar on the errand's insats, read from and written to Lifecare — the register of record — through
+ * careM. careM answers a create with 201 and a change or removal with 204; drakel keeps its own answers.
+ */
 @Controller()
 export class LifecareRemindersController {
   private remindersService = new ErrandLifecareRemindersService();

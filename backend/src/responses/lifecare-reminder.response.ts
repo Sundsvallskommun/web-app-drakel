@@ -1,7 +1,8 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
-import { LifecareReminderCodeRaw, LifecareReminderListRaw, LifecareReminderProposalRaw } from '@interfaces/lifecare-reminder.interface';
 import { Type } from 'class-transformer';
 import { IsArray, IsNumber, IsString, ValidateNested } from 'class-validator';
+
+import { LifecareReminder, LifecareReminderChoice, LifecareReminderOptions } from '@/data-contracts/caremanagement/data-contracts';
 
 /** A bevakning in Lifecare, as the sidebar shows it. The personnummer on the row is left behind. */
 export class LifecareReminderView {
@@ -45,31 +46,33 @@ export class LifecareReminderOptionsApiResponse implements ApiResponse<LifecareR
   @IsString() message!: string;
 }
 
-/** The bevakningar, soonest first. */
-export const toReminders = (raw: LifecareReminderListRaw): LifecareReminderView[] =>
-  raw.reminders
-    .map(reminder => ({
-      id: reminder.reminderId,
-      date: reminder.reminderDate,
-      status: reminder.statusText ?? '',
-      statusCode: reminder.status,
-      priority: reminder.priorityText ?? '',
-      priorityCode: reminder.priority,
-      type: reminder.typeText ?? '',
-      objectType: reminder.objectTypeName ?? '',
-      text: reminder.text ?? '',
-      caseworker: reminder.caseworkerName ?? reminder.caseworkerId ?? '',
-      caseworkerId: reminder.caseworkerId ?? '',
-    }))
-    .sort((first, second) => first.date.localeCompare(second.date));
+/**
+ * A bevakning as careM lists it, in the sidebar's shape. careM's contract leaves every field optional; one it
+ * leaves out is shown empty (or 0) rather than dropping the row.
+ */
+export const toReminderView = (reminder: LifecareReminder): LifecareReminderView => ({
+  id: reminder.id ?? 0,
+  date: reminder.date ?? '',
+  status: reminder.status ?? '',
+  statusCode: reminder.statusCode ?? 0,
+  priority: reminder.priority ?? '',
+  priorityCode: reminder.priorityCode ?? 0,
+  type: reminder.type ?? '',
+  objectType: reminder.objectType ?? '',
+  text: reminder.text ?? '',
+  caseworker: reminder.caseworker ?? '',
+  caseworkerId: reminder.caseworkerId ?? '',
+});
 
-const toChoices = (codes: LifecareReminderCodeRaw[]): LifecareReminderChoiceView[] =>
-  codes.filter(code => code.isActive).map(code => ({ code: code.code, text: code.text }));
+const toChoiceView = (choice: LifecareReminderChoice): LifecareReminderChoiceView => ({
+  code: choice.code ?? 0,
+  text: choice.text ?? '',
+});
 
-/** The form's choices out of Lifecare's underlag. */
-export const toReminderOptions = (proposal: LifecareReminderProposalRaw): LifecareReminderOptionsView => ({
-  priorities: toChoices(proposal.options.reminderPriorityTypes),
-  statuses: toChoices(proposal.options.reminderStatusTypes),
-  defaultPriority: proposal.reminderForAdd.priority,
-  defaultStatus: proposal.reminderForAdd.status,
+/** The bevakning form's choices as careM lists them, in the form's shape. */
+export const toReminderOptionsView = (options: LifecareReminderOptions): LifecareReminderOptionsView => ({
+  priorities: (options.priorities ?? []).map(toChoiceView),
+  statuses: (options.statuses ?? []).map(toChoiceView),
+  defaultPriority: options.defaultPriority ?? 0,
+  defaultStatus: options.defaultStatus ?? 0,
 });

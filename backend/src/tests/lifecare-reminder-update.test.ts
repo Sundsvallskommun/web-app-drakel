@@ -1,10 +1,6 @@
 import { LifecareEditableReminderRaw, LifecareReminderProposalRaw } from '@interfaces/lifecare-reminder.interface';
-import CaremanagementErrandService from '@services/caremanagement-errand.service';
-import CaremanagementEventService from '@services/caremanagement-event.service';
-import ErrandLifecareRemindersService from '@services/errand-lifecare-reminders.service';
-import LifecareRemindersService from '@services/lifecare-reminders.service';
 import { buildReminderUpdate } from '@utils/lifecare-reminder';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 // Today is pinned so the dates below stay in the future however long the tests live.
 vi.mock('@utils/swedish-today', () => ({ swedishToday: () => '2026-09-23' }));
@@ -96,63 +92,5 @@ describe('buildReminderUpdate', () => {
     const update = buildReminderUpdate({ ...current(), flowable: false, recurringDays: 7 }, options, change);
 
     expect(update.writable && [update.body.flowable, update.body.recurringDays]).toEqual([false, 7]);
-  });
-});
-
-describe('ErrandLifecareRemindersService.update', () => {
-  beforeEach(() => {
-    vi.spyOn(CaremanagementErrandService.prototype, 'getFinancialAssistanceView').mockResolvedValue({
-      data: { lifecareServiceId: 2 },
-      message: 'success',
-    });
-    vi.spyOn(LifecareRemindersService.prototype, 'listByService').mockResolvedValue({
-      reminders: [
-        {
-          reminderId: 40,
-          reminderDate: '2026-09-23',
-          status: 3,
-          statusText: 'Ej påbörjad',
-          priority: 2,
-          priorityText: 'Normal',
-          personId: '199001122390',
-          personName: 'Jeppson, Test',
-          caseworkerId: 'TEST',
-          caseworkerName: 'Test Handläggare',
-          type: 3,
-          typeText: 'Manuell bevakning insats',
-          text: 'Hej',
-          objectType: 7083,
-          objectTypeName: 'IFO.Insats',
-        },
-      ],
-    });
-    vi.spyOn(LifecareRemindersService.prototype, 'readProposal').mockResolvedValue({
-      reminderTypeObjects: [],
-      options,
-      reminderForAdd: { status: 3, priority: 2 },
-    });
-    vi.spyOn(LifecareRemindersService.prototype, 'readForEdit').mockResolvedValue(current());
-    vi.spyOn(CaremanagementEventService.prototype, 'reportLifecareAccess').mockResolvedValue();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it('saves the change and logs it on the errand', async () => {
-    const save = vi.spyOn(LifecareRemindersService.prototype, 'update').mockResolvedValue();
-    const report = vi.spyOn(CaremanagementEventService.prototype, 'reportLifecareAccess').mockResolvedValue();
-
-    await new ErrandLifecareRemindersService().update('errand-1', 40, change);
-
-    expect(save.mock.calls[0]?.[0]).toMatchObject({ reminderId: 40, text: 'Hejsdfdsf' });
-    expect(report.mock.calls[0]?.[1]).toMatchObject([{ action: 'UPDATE', target: 'REMINDER', lifecareId: '40' }]);
-  });
-
-  it('refuses a bevakning that is not on the insats of the errand', async () => {
-    const save = vi.spyOn(LifecareRemindersService.prototype, 'update');
-
-    await expect(new ErrandLifecareRemindersService().update('errand-1', 99, change)).rejects.toMatchObject({ status: 404 });
-    expect(save).not.toHaveBeenCalled();
   });
 });
