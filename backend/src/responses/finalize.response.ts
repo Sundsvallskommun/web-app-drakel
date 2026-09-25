@@ -13,7 +13,7 @@ export class FinalizeResult {
   @IsString() @IsOptional() decisionId?: string;
   /** Whether the process was told about the decision — false leaves it waiting for one. */
   @IsBoolean() processMessageCorrelated!: boolean;
-  /** How registering the beslut in Lifecare went; absent when finalize recorded no beslut. */
+  /** How careM tied the recorded decision to the beslut in Lifecare; absent when careM reports none. */
   @ValidateNested() @Type(() => DecisionRegistration) @IsOptional() lifecareDecision?: DecisionRegistration;
   /** The channels the beslut could not be sent through. */
   @IsArray() @IsString({ each: true }) failedChannels!: string[];
