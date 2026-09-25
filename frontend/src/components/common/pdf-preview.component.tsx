@@ -6,6 +6,43 @@ import { ExternalLink, FileText } from 'lucide-react';
 import { FC, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+/**
+ * A PDF shown trimmed down — no side panel and none of the reader's own toolbar, fitted to the frame's width — with
+ * "Öppna bilaga i ny flik" above it. `url` is an object URL the caller holds (and revokes).
+ */
+export const PdfFrame: FC<{ url: string; title: string; heightClassName?: string }> = ({
+  url,
+  title,
+  heightClassName = 'h-[95rem]',
+}) => {
+  const { t } = useTranslation('attachments');
+  // PDF open parameters rather than a rendering library: `view=FitH` makes the built-in reader fit the
+  // page to the frame's width instead of picking its own zoom (which opens uncomfortably close), and
+  // pagemode/toolbar drop the sidebar and the reader's own chrome so the page itself fills the frame.
+  return (
+    <div className="flex flex-col gap-8">
+      <div className="flex justify-end">
+        <Button
+          size="sm"
+          variant="tertiary"
+          leftIcon={<ExternalLink />}
+          onClick={() => {
+            // The object URL is same-origin, so a new tab can read it while this view still holds it.
+            window.open(url, '_blank', 'noopener,noreferrer');
+          }}
+        >
+          {t('preview.openInNewTab')}
+        </Button>
+      </div>
+      <iframe
+        src={`${url}#pagemode=none&toolbar=0&navpanes=0&view=FitH`}
+        className={`w-full ${heightClassName} border-0`}
+        title={title}
+      />
+    </div>
+  );
+};
+
 interface PdfPreviewProps {
   errandId: string;
   attachmentId: string;
@@ -57,31 +94,7 @@ export const PdfPreviewFrame: FC<PdfPreviewProps> = ({ errandId, attachmentId, t
   if (error) {
     return <div className="flex justify-center items-center h-[20rem] text-error">{t('preview.error')}</div>;
   }
-  // PDF open parameters rather than a rendering library: `view=FitH` makes the built-in reader fit the
-  // page to the frame's width instead of picking its own zoom (which opens uncomfortably close), and
-  // pagemode/toolbar drop the sidebar and the reader's own chrome so the page itself fills the frame.
-  return (
-    <div className="flex flex-col gap-8">
-      <div className="flex justify-end">
-        <Button
-          size="sm"
-          variant="tertiary"
-          leftIcon={<ExternalLink />}
-          onClick={() => {
-            // The object URL is same-origin, so a new tab can read it while this view still holds it.
-            window.open(url, '_blank', 'noopener,noreferrer');
-          }}
-        >
-          {t('preview.openInNewTab')}
-        </Button>
-      </div>
-      <iframe
-        src={`${url}#pagemode=none&toolbar=0&navpanes=0&view=FitH`}
-        className="w-full h-[95rem] border-0"
-        title={title}
-      />
-    </div>
-  );
+  return <PdfFrame url={url} title={title} />;
 };
 
 /**
