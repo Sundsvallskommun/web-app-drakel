@@ -57,7 +57,7 @@ export const getActorEvents = (filters: ActorEventFilters): Promise<ServiceRespo
     }
   });
   return apiService
-    .get<ApiResponse<ActorEventLog>>(`admin/event-log?${params.toString()}`)
+    .get<ApiResponse<ActorEventLog>>(`admin/actor-activity?${params.toString()}`)
     .then((res) => ({ data: res.data.data }))
     .catch(toServiceError);
 };

@@ -28,8 +28,11 @@ export class EventController {
   /**
    * Logguppföljning: one handläggare's activity across every errand. Reading who looked at which errands
    * is a supervisory question rather than part of handläggning, so it takes the /admin permission.
+   *
+   * Not named "event-log": ad blockers' tracking lists (EasyPrivacy's `/event-log?`) block any request
+   * whose URL contains it, so the search never reached the BFF in a browser with one installed.
    */
-  @Get('/admin/event-log')
+  @Get('/admin/actor-activity')
   @OpenAPI({ summary: 'One actor’s activity across every errand, newest first' })
   @ResponseSchema(ActorEventLogApiResponse)
   @UseBefore(authMiddleware, requirePermission('canViewEventLog'))
