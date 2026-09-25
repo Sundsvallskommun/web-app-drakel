@@ -4,19 +4,19 @@ import ErrandSsbtekService from '@services/errand-ssbtek.service';
 import { Controller, Get, Param, QueryParams, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
-import { SsbtekQueryDto } from '@/dtos/ssbtek.dto';
+import { SsbtekPeriodQueryDto } from '@/dtos/ssbtek.dto';
 import { SsbtekPaymentsApiResponse } from '@/responses/ssbtek.response';
 
-/** What SSBTEK reports for the errand's sökande or medsökande, fetched live through careM. */
+/** What SSBTEK reports for the errand's sökande and medsökande, fetched live through careM. */
 @Controller()
 export class SsbtekController {
   private ssbtekService = new ErrandSsbtekService();
 
   @Get('/errands/:errandId/ssbtek/payments')
-  @OpenAPI({ summary: 'The payments SSBTEK reports to the sökande (or medsökande) in the period, newest first' })
+  @OpenAPI({ summary: 'The payments SSBTEK reports to the sökande and any medsökande in the period, newest first' })
   @ResponseSchema(SsbtekPaymentsApiResponse)
-  @UseBefore(authMiddleware, validationMiddleware(SsbtekQueryDto, 'query'))
-  async readPayments(@Param('errandId') errandId: string, @QueryParams() query: SsbtekQueryDto) {
-    return { data: await this.ssbtekService.readPayments(errandId, query), message: 'success' };
+  @UseBefore(authMiddleware, validationMiddleware(SsbtekPeriodQueryDto, 'query'))
+  async readPayments(@Param('errandId') errandId: string, @QueryParams() period: SsbtekPeriodQueryDto) {
+    return { data: await this.ssbtekService.readPayments(errandId, period), message: 'success' };
   }
 }

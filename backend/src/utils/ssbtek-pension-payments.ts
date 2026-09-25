@@ -1,4 +1,4 @@
-import { SsbtekPayment, SsbtekPaymentPart } from '@/responses/ssbtek.response';
+import { SsbtekAgencyPayment, SsbtekPaymentPart } from '@/responses/ssbtek.response';
 
 import { asList, descriptionOf, fieldAt, numberOf, periodOf, SsbtekPeriod, textOf } from './ssbtek-json';
 
@@ -43,7 +43,7 @@ const toPart = (row: unknown, period: SsbtekPeriod): SsbtekPaymentPart => ({
   grossAmount: numberOf(fieldAt(row, 'belopp')),
 });
 
-const toPayment = (item: unknown, preliminary: boolean): SsbtekPayment => {
+const toPayment = (item: unknown, preliminary: boolean): SsbtekAgencyPayment => {
   const rows = asList(fieldAt(item, 'utbetalningsrader'));
   const deductions = asList(fieldAt(item, 'avdrag'));
   const period = periodOf(fieldAt(item, 'utbetalningsperiod'));
@@ -67,7 +67,7 @@ const toPayment = (item: unknown, preliminary: boolean): SsbtekPayment => {
  * Pensionsmyndigheten's payments — the made ones (utbetalningar) and the announced ones (preliminaraUtbetalningar),
  * which SSBTEK answers at the top of Försäkringskassan's answer — each specified per förmån (utbetalningsrader).
  */
-export const pensionPayments = (fkAnswer: unknown): SsbtekPayment[] => [
+export const pensionPayments = (fkAnswer: unknown): SsbtekAgencyPayment[] => [
   ...asList(fieldAt(fkAnswer, 'utbetalningar')).map(item => toPayment(item, false)),
   ...asList(fieldAt(fkAnswer, 'preliminaraUtbetalningar')).map(item => toPayment(item, true)),
 ];

@@ -1,4 +1,4 @@
-import { SsbtekPayment, SsbtekPaymentPart } from '@/responses/ssbtek.response';
+import { SsbtekAgencyPayment, SsbtekPaymentPart } from '@/responses/ssbtek.response';
 
 import { amountOf, asList, descriptionOf, extentOf, fieldAt, numberOf, periodOf, SsbtekPeriod, textOf } from './ssbtek-json';
 
@@ -29,7 +29,7 @@ const spanOf = (parts: SsbtekPaymentPart[]): SsbtekPeriod => {
   return { from: froms[0], to: tos[tos.length - 1] };
 };
 
-const toPayment = (item: unknown, preliminary: boolean): SsbtekPayment => {
+const toPayment = (item: unknown, preliminary: boolean): SsbtekAgencyPayment => {
   const parts = asList(fieldAt(item, 'utbetalningsdetalj')).map(toPart);
   const ownPeriod = periodOf(fieldAt(item, 'period'));
   const hasOwnPeriod = ownPeriod.from !== undefined || ownPeriod.to !== undefined;
@@ -54,7 +54,7 @@ const toPayment = (item: unknown, preliminary: boolean): SsbtekPayment => {
  * Försäkringskassan's payments, from its förmånsinformation: the made payments (utbetalningsuppgift) and the
  * announced ones (preliminarautbetalningar), each with its delförmåner (utbetalningsdetalj).
  */
-export const forsakringskassanPayments = (fkAnswer: unknown): SsbtekPayment[] => {
+export const forsakringskassanPayments = (fkAnswer: unknown): SsbtekAgencyPayment[] => {
   const benefits = fieldAt(fkAnswer, 'formansinformation');
   return [
     ...asList(fieldAt(benefits, 'utbetalningsuppgift')).map(item => toPayment(item, false)),

@@ -10,8 +10,10 @@
   "loading": "Hämtar från SSBTEK",
   "loadError": "Uppgifterna från SSBTEK kunde inte hämtas.",
   "empty": "SSBTEK rapporterar inga betalningar under perioden.",
+  "coApplicantUnavailable": "Medsökandes uppgifter kunde inte hämtas från SSBTEK. Bara sökandes betalningar visas.",
   "noDate": "Utan betalningsdag",
   "columns": {
+    "person": "Person",
     "benefit": "Förmån",
     "paidOn": "Betalningsdag",
     "type": "Typ",
@@ -31,5 +33,9 @@
     "extent": "Omfattning",
     "hours": "Timmar",
     "days": "Dagar"
+  },
+  "persons": {
+    "APPLICANT": "Sökande",
+    "CO_APPLICANT": "Medsökande"
   }
 }

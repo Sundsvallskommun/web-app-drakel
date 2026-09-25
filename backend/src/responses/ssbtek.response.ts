@@ -1,6 +1,10 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+
+/** The members of the household SSBTEK is read for: the errand's sökande and medsökande. */
+const SSBTEK_PERSONS = ['APPLICANT', 'CO_APPLICANT'] as const;
+export type SsbtekPerson = (typeof SSBTEK_PERSONS)[number];
 
 /** One delförmån of a payment — a row of the payment's specification. */
 export class SsbtekPaymentPart {
@@ -22,6 +26,8 @@ export class SsbtekPaymentPart {
 
 /** A payment an agency reports to the person, as SSBTEK answered it. */
 export class SsbtekPayment {
+  /** Whom it was paid to: the sökande or the medsökande. */
+  @IsIn(SSBTEK_PERSONS) person!: SsbtekPerson;
   /** The agency that paid: FK (Försäkringskassan), PM (Pensionsmyndigheten) or AKASSA (the a-kassa). */
   @IsString() source!: string;
   /** The förmån, e.g. "Bostadsbidrag". */
@@ -42,12 +48,19 @@ export class SsbtekPayment {
   @IsArray() @ValidateNested({ each: true }) @Type(() => SsbtekPaymentPart) parts!: SsbtekPaymentPart[];
 }
 
-/** The payments SSBTEK reports to the person in the period, newest first. */
+/** A payment as read from one person's SSBTEK answer, before it is known whose it is. */
+export type SsbtekAgencyPayment = Omit<SsbtekPayment, 'person'>;
+
+/** The payments SSBTEK reports to the household — the sökande and any medsökande — in the period, newest first. */
 export class SsbtekPaymentsView {
   /** The period asked about, `yyyy-MM-dd` — careM's default is the SSBTEK rule periods (month M−2 through M). */
   @IsOptional() @IsString() from?: string;
   @IsOptional() @IsString() to?: string;
   @IsArray() @ValidateNested({ each: true }) @Type(() => SsbtekPayment) payments!: SsbtekPayment[];
+  /** Whether the errand has a medsökande, whose payments are then listed too. */
+  @IsBoolean() hasCoApplicant!: boolean;
+  /** The errand has a medsökande, but SSBTEK could not be read for them: only the sökandes payments are listed. */
+  @IsBoolean() coApplicantUnavailable!: boolean;
 }
 
 export class SsbtekPaymentsApiResponse implements ApiResponse<SsbtekPaymentsView> {

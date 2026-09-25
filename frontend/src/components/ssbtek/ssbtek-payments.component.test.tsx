@@ -1,4 +1,4 @@
-import { SsbtekPaymentsView } from '@data-contracts/backend/data-contracts';
+import { SsbtekPaymentPersonEnum, SsbtekPaymentsView } from '@data-contracts/backend/data-contracts';
 import { getSsbtekPayments } from '@services/ssbtek-service';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -7,11 +7,16 @@ import { SsbtekPayments } from './ssbtek-payments.component';
 
 vi.mock('@services/ssbtek-service', () => ({ getSsbtekPayments: vi.fn() }));
 
+const { APPLICANT, CO_APPLICANT } = SsbtekPaymentPersonEnum;
+
 const VIEW: SsbtekPaymentsView = {
   from: '2026-07-01',
   to: '2026-09-30',
+  hasCoApplicant: false,
+  coApplicantUnavailable: false,
   payments: [
     {
+      person: APPLICANT,
       source: 'FK',
       benefit: 'Bostadsbidrag',
       paidOn: '2026-09-25',
@@ -23,6 +28,7 @@ const VIEW: SsbtekPaymentsView = {
       parts: [],
     },
     {
+      person: APPLICANT,
       source: 'PM',
       benefit: 'Efterlevandepension',
       paidOn: '2026-08-18',
@@ -66,6 +72,47 @@ describe('SsbtekPayments', () => {
     expect(within(row).getByText('2026-09-01 – 2026-09-30')).toBeInTheDocument();
   });
 
+  it('has no Person column when the errand has no medsökande', async () => {
+    vi.mocked(getSsbtekPayments).mockResolvedValue({ data: VIEW });
+
+    render(<SsbtekPayments errandId="EB-26090036" />);
+
+    expect(await screen.findByRole('heading', { name: 'September 2026' })).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Person' })).not.toBeInTheDocument();
+  });
+
+  it('shows whose each payment is when the errand has a medsökande', async () => {
+    const [firstPayment] = VIEW.payments;
+    if (!firstPayment) {
+      throw new Error('no payment in the fixture');
+    }
+    vi.mocked(getSsbtekPayments).mockResolvedValue({
+      data: {
+        ...VIEW,
+        hasCoApplicant: true,
+        payments: [{ ...firstPayment, person: CO_APPLICANT, benefit: 'Sjukpenning' }, ...VIEW.payments],
+      },
+    });
+
+    render(<SsbtekPayments errandId="EB-26090036" />);
+
+    expect(await screen.findAllByRole('columnheader', { name: 'Person' })).toHaveLength(2);
+    expect(within(screen.getByRole('row', { name: /Sjukpenning/ })).getByText('Medsökande')).toBeInTheDocument();
+    expect(within(screen.getByRole('row', { name: /Bostadsbidrag/ })).getByText('Sökande')).toBeInTheDocument();
+  });
+
+  it('says so when SSBTEK could not be read for the medsökande', async () => {
+    vi.mocked(getSsbtekPayments).mockResolvedValue({
+      data: { ...VIEW, hasCoApplicant: true, coApplicantUnavailable: true },
+    });
+
+    render(<SsbtekPayments errandId="EB-26090036" />);
+
+    expect(
+      await screen.findByText('Medsökandes uppgifter kunde inte hämtas från SSBTEK. Bara sökandes betalningar visas.')
+    ).toBeInTheDocument();
+  });
+
   it("opens a payment's row to show its delförmåner", async () => {
     vi.mocked(getSsbtekPayments).mockResolvedValue({ data: VIEW });
     render(<SsbtekPayments errandId="EB-26090036" />);
@@ -89,7 +136,15 @@ describe('SsbtekPayments', () => {
   });
 
   it('says so when SSBTEK reports no payments in the period', async () => {
-    vi.mocked(getSsbtekPayments).mockResolvedValue({ data: { from: '2026-07-01', to: '2026-09-30', payments: [] } });
+    vi.mocked(getSsbtekPayments).mockResolvedValue({
+      data: {
+        from: '2026-07-01',
+        to: '2026-09-30',
+        payments: [],
+        hasCoApplicant: false,
+        coApplicantUnavailable: false,
+      },
+    });
 
     render(<SsbtekPayments errandId="EB-26090036" />);
 

@@ -10,11 +10,14 @@ import { useTranslation } from 'react-i18next';
 import { SsbtekAmount } from './ssbtek-amount.component';
 import { SsbtekPaymentParts } from './ssbtek-payment-parts.component';
 
-/** The number of columns in the payment table, which the opened delförmåner row spans. */
+/** The number of columns in the payment table, which the opened delförmåner row spans — one more with Person. */
 const SSBTEK_PAYMENT_COLUMN_COUNT = 9;
 
-/** A payment in the month's table; a payment the agency specifies opens to show its delförmåner below it. */
-export const SsbtekPaymentRow: FC<{ payment: SsbtekPayment }> = ({ payment }) => {
+/**
+ * A payment in the month's table; a payment the agency specifies opens to show its delförmåner below it. With
+ * `showPerson` (the errand has a medsökande) it says whose payment it is.
+ */
+export const SsbtekPaymentRow: FC<{ payment: SsbtekPayment; showPerson: boolean }> = ({ payment, showPerson }) => {
   const { t } = useTranslation('ssbtek');
   const [open, setOpen] = useState<boolean>(false);
   const hasParts = payment.parts.length > 0;
@@ -38,6 +41,9 @@ export const SsbtekPaymentRow: FC<{ payment: SsbtekPayment }> = ({ payment }) =>
             />
           : null}
         </Table.Column>
+        {showPerson ?
+          <Table.Column>{t(`persons.${payment.person}`)}</Table.Column>
+        : null}
         <Table.Column>{payment.benefit}</Table.Column>
         <Table.Column className="tabular-nums whitespace-nowrap">{payment.paidOn ?? '—'}</Table.Column>
         <Table.Column>{payment.type ?? '—'}</Table.Column>
@@ -59,7 +65,7 @@ export const SsbtekPaymentRow: FC<{ payment: SsbtekPayment }> = ({ payment }) =>
       </Table.Row>
       {open ?
         <Table.Row className="bg-background-200">
-          <Table.Column colSpan={SSBTEK_PAYMENT_COLUMN_COUNT} className="px-24">
+          <Table.Column colSpan={SSBTEK_PAYMENT_COLUMN_COUNT + (showPerson ? 1 : 0)} className="px-24">
             <SsbtekPaymentParts parts={payment.parts} />
           </Table.Column>
         </Table.Row>

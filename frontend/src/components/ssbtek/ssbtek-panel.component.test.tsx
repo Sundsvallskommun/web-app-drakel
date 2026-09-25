@@ -44,7 +44,9 @@ describe('SsbtekPanel', () => {
 
   beforeEach(() => {
     vi.mocked(useParams).mockReturnValue({ locale: 'sv', errandId: 'EB-26090036' });
-    vi.mocked(getSsbtekPayments).mockResolvedValue({ data: { payments: [] } });
+    vi.mocked(getSsbtekPayments).mockResolvedValue({
+      data: { payments: [], hasCoApplicant: false, coApplicantUnavailable: false },
+    });
   });
 
   it('is hidden until the header button opens it, and the header button closes it again', () => {

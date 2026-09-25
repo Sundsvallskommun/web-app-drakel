@@ -10,8 +10,10 @@
   "loading": "Fetching from SSBTEK",
   "loadError": "The information from SSBTEK could not be fetched.",
   "empty": "SSBTEK reports no payments in the period.",
+  "coApplicantUnavailable": "The co-applicant's information could not be fetched from SSBTEK. Only the applicant's payments are shown.",
   "noDate": "Without payment date",
   "columns": {
+    "person": "Person",
     "benefit": "Benefit",
     "paidOn": "Payment date",
     "type": "Type",
@@ -31,5 +33,9 @@
     "extent": "Extent",
     "hours": "Hours",
     "days": "Days"
+  },
+  "persons": {
+    "APPLICANT": "Applicant",
+    "CO_APPLICANT": "Co-applicant"
   }
 }

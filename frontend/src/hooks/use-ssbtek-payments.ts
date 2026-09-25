@@ -14,9 +14,12 @@ interface UseSsbtekPaymentsResult {
   refresh: () => void;
 }
 
-const NO_PAYMENTS: SsbtekPaymentsView = { payments: [] };
+const NO_PAYMENTS: SsbtekPaymentsView = { payments: [], hasCoApplicant: false, coApplicantUnavailable: false };
 
-/** The payments SSBTEK reports to the errand's sökande. Each load is a live SSBTEK read, logged on the errand. */
+/**
+ * The payments SSBTEK reports to the errand's sökande and any medsökande. Each load is a live SSBTEK read, logged
+ * on the errand.
+ */
 export const useSsbtekPayments = (errandId: string): UseSsbtekPaymentsResult => {
   const fetchPayments = useCallback(() => getSsbtekPayments(errandId), [errandId]);
   const { data, isLoading, error, errorMessage, refresh } = useServiceQuery<SsbtekPaymentsView>(fetchPayments, {

@@ -101,7 +101,10 @@ const SO_ANSWER = {
   },
 };
 
-const view = () => toSsbtekPaymentsView({ from: '2026-07-01', to: '2026-09-30', agencies: { fk: FK_ANSWER, so: SO_ANSWER } });
+const PERIOD = { from: '2026-07-01', to: '2026-09-30' };
+const NO_CO_APPLICANT = { kind: 'NONE' } as const;
+
+const view = () => toSsbtekPaymentsView({ ...PERIOD, agencies: { fk: FK_ANSWER, so: SO_ANSWER } }, NO_CO_APPLICANT);
 
 describe('toSsbtekPaymentsView', () => {
   it('lists the payments paid in the period, newest first, and echoes the period', () => {
@@ -119,6 +122,7 @@ describe('toSsbtekPaymentsView', () => {
 
   it('reads a made Försäkringskassan payment', () => {
     expect(view().payments[1]).toEqual({
+      person: 'APPLICANT',
       source: 'FK',
       benefit: 'Bostadsbidrag',
       paidOn: '2026-09-25',
@@ -175,6 +179,48 @@ describe('toSsbtekPaymentsView', () => {
   });
 
   it('lists nothing when no agency answered', () => {
-    expect(toSsbtekPaymentsView({ from: '2026-07-01', to: '2026-09-30' }).payments).toEqual([]);
+    expect(toSsbtekPaymentsView(PERIOD, NO_CO_APPLICANT)).toEqual({
+      ...PERIOD,
+      payments: [],
+      hasCoApplicant: false,
+      coApplicantUnavailable: false,
+    });
+  });
+
+  it('lists the medsökandes payments beside the sökandes, the sökandes first on the same day', () => {
+    const coApplicantAnswer = {
+      formansinformation: {
+        utbetalningsuppgift: [
+          {
+            formansfamilj: { id: 'SJP', beskrivning: 'Sjukpenning' },
+            datum: '2026-09-25',
+            period: { fran: '2026-09-01', till: '2026-09-30' },
+            nettobelopp: sek(8000),
+          },
+        ],
+      },
+    };
+
+    const result = toSsbtekPaymentsView(
+      { ...PERIOD, agencies: { fk: FK_ANSWER } },
+      { kind: 'READ', basis: { ...PERIOD, agencies: { fk: coApplicantAnswer } } },
+    );
+
+    expect(result.hasCoApplicant).toBe(true);
+    expect(result.coApplicantUnavailable).toBe(false);
+    expect(result.payments.map(payment => [payment.person, payment.benefit, payment.paidOn])).toEqual([
+      ['APPLICANT', 'Dagersättning', '2026-09-27'],
+      ['APPLICANT', 'Bostadsbidrag', '2026-09-25'],
+      ['CO_APPLICANT', 'Sjukpenning', '2026-09-25'],
+      ['APPLICANT', 'Bostadstillägg, Efterlevandepension', '2026-08-18'],
+    ]);
+  });
+
+  it('lists only the sökandes payments when SSBTEK could not be read for the medsökande, and says so', () => {
+    const result = toSsbtekPaymentsView({ ...PERIOD, agencies: { fk: FK_ANSWER } }, { kind: 'UNAVAILABLE' });
+
+    expect(result.hasCoApplicant).toBe(true);
+    expect(result.coApplicantUnavailable).toBe(true);
+    expect(result.payments.every(payment => payment.person === 'APPLICANT')).toBe(true);
   });
 });

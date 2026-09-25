@@ -8,8 +8,15 @@ import { useTranslation } from 'react-i18next';
 
 import { SsbtekPaymentRow } from './ssbtek-payment-row.component';
 
-/** One month's payments: the month as a heading that opens and closes its table. Open to begin with. */
-export const SsbtekMonthSection: FC<{ label: string; payments: SsbtekPayment[] }> = ({ label, payments }) => {
+/**
+ * One month's payments: the month as a heading that opens and closes its table. Open to begin with. With
+ * `showPerson` (the errand has a medsökande) a Person column says whose each payment is.
+ */
+export const SsbtekMonthSection: FC<{ label: string; payments: SsbtekPayment[]; showPerson: boolean }> = ({
+  label,
+  payments,
+  showPerson,
+}) => {
   const { t } = useTranslation('ssbtek');
   const [open, setOpen] = useState<boolean>(true);
   const tableId = useId();
@@ -36,6 +43,9 @@ export const SsbtekMonthSection: FC<{ label: string; payments: SsbtekPayment[] }
             <Table.HeaderColumn>
               <span className="sr-only">{t('parts.column')}</span>
             </Table.HeaderColumn>
+            {showPerson ?
+              <Table.HeaderColumn>{t('columns.person')}</Table.HeaderColumn>
+            : null}
             <Table.HeaderColumn>{t('columns.benefit')}</Table.HeaderColumn>
             <Table.HeaderColumn>{t('columns.paidOn')}</Table.HeaderColumn>
             <Table.HeaderColumn>{t('columns.type')}</Table.HeaderColumn>
@@ -47,7 +57,11 @@ export const SsbtekMonthSection: FC<{ label: string; payments: SsbtekPayment[] }
           </Table.Header>
           <Table.Body>
             {payments.map((payment, index) => (
-              <SsbtekPaymentRow key={`${payment.source}-${payment.paidOn ?? ''}-${String(index)}`} payment={payment} />
+              <SsbtekPaymentRow
+                key={`${payment.person}-${payment.source}-${payment.paidOn ?? ''}-${String(index)}`}
+                payment={payment}
+                showPerson={showPerson}
+              />
             ))}
           </Table.Body>
         </Table>

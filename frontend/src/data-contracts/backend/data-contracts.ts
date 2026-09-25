@@ -1336,8 +1336,7 @@ export interface RenderPdfDto {
   html: string;
 }
 
-export interface SsbtekQueryDto {
-  person?: SsbtekQueryDtoPersonEnum;
+export interface SsbtekPeriodQueryDto {
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
   from?: string;
   /** @pattern ^\d{4}-\d{2}-\d{2}$ */
@@ -1359,6 +1358,7 @@ export interface SsbtekPaymentPart {
 }
 
 export interface SsbtekPayment {
+  person: SsbtekPaymentPersonEnum;
   source: string;
   benefit: string;
   paidOn?: string;
@@ -1377,6 +1377,8 @@ export interface SsbtekPaymentsView {
   from?: string;
   to?: string;
   payments: SsbtekPayment[];
+  hasCoApplicant: boolean;
+  coApplicantUnavailable: boolean;
 }
 
 export interface SsbtekPaymentsApiResponse {
@@ -1460,7 +1462,7 @@ export enum NormberakningDraftSourceEnum {
   LIFECARE = "LIFECARE",
 }
 
-export enum SsbtekQueryDtoPersonEnum {
+export enum SsbtekPaymentPersonEnum {
   APPLICANT = "APPLICANT",
   CO_APPLICANT = "CO_APPLICANT",
 }
@@ -1475,9 +1477,4 @@ export enum UpdateWarningStatusDtoStatusEnum {
   OPEN = "OPEN",
   ACKNOWLEDGED = "ACKNOWLEDGED",
   CLOSED = "CLOSED",
-}
-
-export enum SsbtekControllerReadPaymentsParamsPersonEnum {
-  APPLICANT = "APPLICANT",
-  CO_APPLICANT = "CO_APPLICANT",
 }

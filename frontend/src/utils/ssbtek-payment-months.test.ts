@@ -1,9 +1,10 @@
-import { SsbtekPayment } from '@data-contracts/backend/data-contracts';
+import { SsbtekPayment, SsbtekPaymentPersonEnum } from '@data-contracts/backend/data-contracts';
 import { describe, expect, it } from 'vitest';
 
 import { groupByPaymentMonth } from './ssbtek-payment-months';
 
 const payment = (benefit: string, dates: Partial<SsbtekPayment>): SsbtekPayment => ({
+  person: SsbtekPaymentPersonEnum.APPLICANT,
   source: 'FK',
   benefit,
   preliminary: false,

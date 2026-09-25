@@ -1,10 +1,10 @@
-import { SsbtekPayment } from '@/responses/ssbtek.response';
+import { SsbtekAgencyPayment } from '@/responses/ssbtek.response';
 
 import { asList, fieldAt, numberOf, textOf } from './ssbtek-json';
 
 const BENEFIT = 'Arbetslöshetsersättning';
 
-const toPayment = (payment: unknown): SsbtekPayment => ({
+const toPayment = (payment: unknown): SsbtekAgencyPayment => ({
   source: 'AKASSA',
   benefit: BENEFIT,
   paidOn: textOf(fieldAt(payment, 'Utbetalningsdatum')),
@@ -16,7 +16,7 @@ const toPayment = (payment: unknown): SsbtekPayment => ({
 });
 
 /** The a-kassornas payments of arbetslöshetsersättning, per answering a-kassa (Sveriges a-kassor, "so"). */
-export const unemploymentPayments = (soAnswer: unknown): SsbtekPayment[] =>
+export const unemploymentPayments = (soAnswer: unknown): SsbtekAgencyPayment[] =>
   asList(fieldAt(soAnswer, 'ArbetsloshetsersattningLista', 'Arbetsloshetsersattning')).flatMap(fund =>
     asList(fieldAt(fund, 'Utbetalningar')).map(toPayment),
   );
