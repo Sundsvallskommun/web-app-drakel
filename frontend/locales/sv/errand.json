@@ -44,19 +44,18 @@
     "confirm": "Tilldela"
   },
   "decideAndPay": {
-    "button": "Besluta och utbetala",
+    "button": "Skicka beräkning och beslut",
     "preparing": "Förbereder…",
-    "executing": "Verkställer…",
+    "executing": "Skickar…",
     "finalizeError": "Ärendet kunde inte beslutas.",
-    "sendVia": "Skicka beslutet via:",
+    "sendVia": "Skicka via",
     "channels": {
       "minaSidor": "Mina sidor",
       "digitalMailbox": "Digital brevlåda",
-      "letter": "Brev",
-      "message": "Meddelande"
+      "letter": "Brev"
     },
-    "messageLabel": "Meddelande till sökande",
-    "messageRequired": "Skriv ett meddelande innan du beslutar",
+    "messageLabel": "Meddelande",
+    "messageRequired": "Skriv ett meddelande innan du skickar",
     "done": {
       "title": "Ärendet är beslutat",
       "description": "Beslutet är sparat, men det här gick inte igenom:",
@@ -64,6 +63,20 @@
       "processNotResumed": "Processen fick inte besked om beslutet.",
       "decisionNotRegistered": "Beslutet registrerades inte i Lifecare: {{detail}} Registrera det direkt i Lifecare.",
       "decisionReceiptLost": "{{detail}}"
+    },
+    "send": "Skicka",
+    "attachments": {
+      "title": "Dokument som skickas",
+      "help": "Du kan lägga till filer att skicka från Lifecare eller din dator",
+      "decision": "Beslut (Lifecare)",
+      "calculation": "Normberäkning (Lifecare)",
+      "remove": "Ta bort {{name}}",
+      "none": "Inga dokument skickas med.",
+      "addDecision": "Lägg till beslutet",
+      "addCalculation": "Lägg till normberäkningen",
+      "fromLifecare": "Från Lifecare",
+      "fromComputer": "Från datorn",
+      "lifecareNotSupported": "Att bifoga andra dokument från Lifecare fungerar inte i caremanagement än. Filer från datorn måste vara PDF."
     }
   },
   "actualisation": {

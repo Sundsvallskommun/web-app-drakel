@@ -1,18 +1,15 @@
 import { getDigitalMailbox } from '@services/decision-notification-service';
 import { finalizeErrand } from '@services/finalize-service';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { getNormberakningDraft } from '@services/normberakning-service';
+import { useUserStore } from '@services/user-service/user-service';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ErrandAvsluta } from './errand-avsluta.component';
 
-// The rich-text editor is stubbed out: it loads Quill through next/dynamic, and waiting for that made
-// the first run of these tests time out. What is under test is the modal around it, not the editor.
-vi.mock('@components/common/text-editor.component', () => ({
-  default: ({ className }: { className?: string }) => <div className={className} data-testid="text-editor" />,
-}));
-
 vi.mock('@services/decision-notification-service', () => ({ getDigitalMailbox: vi.fn() }));
 vi.mock('@services/finalize-service', () => ({ finalizeErrand: vi.fn() }));
+vi.mock('@services/normberakning-service', () => ({ getNormberakningDraft: vi.fn() }));
 
 const finalized = {
   decisionId: 'decision-1',
@@ -20,93 +17,121 @@ const finalized = {
   failedChannels: [],
 };
 
+const PROPOSED_MESSAGE = [
+  'Hej,',
+  'Din ansökan för september 2026 är klar. Se bifogade dokument.',
+  'Test Handläggare',
+  'Sundsvalls kommun',
+  'Individ- och Arbetsmarknadsförvaltningen',
+  'Enheten för ekonomiskt bistånd',
+].join('\n');
+
 const openModal = async ({ onFinalized = vi.fn() } = {}) => {
   render(<ErrandAvsluta errandId="errand-1" onFinalized={onFinalized} />);
-  fireEvent.click(screen.getByRole('button', { name: 'Besluta och utbetala' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Skicka beräkning och beslut' }));
   await waitFor(() => {
     expect(screen.getByLabelText('Meddelande')).toBeInTheDocument();
   });
 };
 
-/** The confirm button inside the modal — the one that opened it carries the same label. */
-const confirmButton = (): HTMLElement => {
-  const [, confirm] = screen.getAllByRole('button', { name: 'Besluta och utbetala' });
-  if (!confirm) {
-    throw new Error('the modal did not render its confirm button');
-  }
-  return confirm;
-};
+const sendButton = (): HTMLElement => screen.getByRole('button', { name: 'Skicka' });
+const attachmentList = (): HTMLElement => screen.getByRole('list');
 
 describe('ErrandAvsluta', () => {
   beforeEach(() => {
+    useUserStore.setState({ user: { ...useUserStore.getState().user, name: 'Test Handläggare' } });
     vi.mocked(getDigitalMailbox).mockReset();
     vi.mocked(getDigitalMailbox).mockResolvedValue({ data: false });
+    vi.mocked(getNormberakningDraft).mockResolvedValue({ data: { applicationMonth: '2026-09' } });
     vi.mocked(finalizeErrand).mockReset();
     vi.mocked(finalizeErrand).mockResolvedValue({ data: finalized });
   });
 
-  it('offers the message channel alongside the others, unticked', async () => {
-    // The other channels send the beslut that already exists; this one sends something the handläggare
-    // has to write, so it must not start ticked.
+  it('proposes the message for the ansökan’s month, signed by the handläggare, to Mina sidor and brev', async () => {
     await openModal();
 
+    expect(screen.getByLabelText('Meddelande')).toHaveValue(PROPOSED_MESSAGE);
     expect(screen.getByLabelText('Mina sidor')).toBeChecked();
     expect(screen.getByLabelText('Brev')).toBeChecked();
-    expect(screen.getByLabelText('Meddelande')).not.toBeChecked();
+    expect(screen.getByText('Du kan lägga till filer att skicka från Lifecare eller din dator')).toBeInTheDocument();
   });
 
-  it('shows the editor only once the message channel is picked', async () => {
+  it('sends the beslut and the beräkning from Lifecare with it to begin with', async () => {
     await openModal();
 
-    expect(screen.queryByTestId('text-editor')).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByLabelText('Meddelande'));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('text-editor')).toBeInTheDocument();
-    });
-    expect(screen.getByText('Meddelande till sökande')).toBeInTheDocument();
+    expect(within(attachmentList()).getByText('Beslut (Lifecare)')).toBeInTheDocument();
+    expect(within(attachmentList()).getByText('Normberäkning (Lifecare)')).toBeInTheDocument();
   });
 
-  it('holds the confirm button while the picked message channel has nothing written', async () => {
+  it('says adding from Lifecare does not work in caremanagement yet', async () => {
     await openModal();
-    expect(confirmButton()).toBeEnabled();
 
-    fireEvent.click(screen.getByLabelText('Meddelande'));
-
-    await waitFor(() => {
-      expect(confirmButton()).toBeDisabled();
-    });
-    expect(screen.getByText('Skriv ett meddelande innan du beslutar')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Från Lifecare' })).toBeDisabled();
+    expect(screen.getByText(/fungerar inte i caremanagement än/)).toBeInTheDocument();
   });
 
-  it('finalizes with the orsak and the channels that were left ticked', async () => {
+  it('sends the edited message with what the handläggare kept and added, through the channels left ticked', async () => {
     const onFinalized = vi.fn();
+    const ownFile = new File(['%PDF-1.7'], 'hyresavi.pdf', { type: 'application/pdf' });
     await openModal({ onFinalized });
 
+    fireEvent.change(screen.getByLabelText('Meddelande'), { target: { value: 'Hej, se bifogat.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Ta bort Normberäkning (Lifecare)' }));
+    fireEvent.change(screen.getByLabelText('Från datorn'), { target: { files: [ownFile] } });
+    expect(within(attachmentList()).getByText('hyresavi.pdf')).toBeInTheDocument();
     fireEvent.click(screen.getByLabelText('Brev'));
-    fireEvent.click(confirmButton());
+    fireEvent.click(sendButton());
 
     await waitFor(() => {
       expect(onFinalized).toHaveBeenCalled();
     });
-    expect(finalizeErrand).toHaveBeenCalledWith('errand-1', {
-      minaSidor: true,
-      digitalBrevlada: false,
-      brev: false,
-    });
+    expect(finalizeErrand).toHaveBeenCalledWith(
+      'errand-1',
+      {
+        minaSidor: true,
+        digitalBrevlada: false,
+        brev: false,
+        message: 'Hej, se bifogat.',
+        includeDecision: true,
+        includeCalculation: false,
+      },
+      [ownFile]
+    );
+  });
+
+  it('lets the handläggare take out a file they added, and put back what they took out', async () => {
+    const ownFile = new File(['%PDF-1.7'], 'hyresavi.pdf', { type: 'application/pdf' });
+    await openModal();
+
+    fireEvent.change(screen.getByLabelText('Från datorn'), { target: { files: [ownFile] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Ta bort hyresavi.pdf' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ta bort Beslut (Lifecare)' }));
+
+    expect(within(attachmentList()).queryByText('hyresavi.pdf')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Lägg till beslutet' }));
+    expect(within(attachmentList()).getByText('Beslut (Lifecare)')).toBeInTheDocument();
+  });
+
+  it('holds Skicka while the message is empty', async () => {
+    await openModal();
+
+    fireEvent.change(screen.getByLabelText('Meddelande'), { target: { value: '  ' } });
+
+    expect(sendButton()).toBeDisabled();
+    expect(screen.getByText('Skriv ett meddelande innan du skickar')).toBeInTheDocument();
   });
 
   it('keeps the dialog open with the reason when the finalize is refused', async () => {
-    vi.mocked(finalizeErrand).mockResolvedValue({ error: 409, message: 'The errand has already been finalized' });
+    vi.mocked(finalizeErrand).mockResolvedValue({
+      error: 400,
+      message: 'Spara beslutet innan du beslutar och betalar ut.',
+    });
     const onFinalized = vi.fn();
     await openModal({ onFinalized });
 
-    fireEvent.click(confirmButton());
+    fireEvent.click(sendButton());
 
-    await waitFor(() => {
-      expect(screen.getByText('The errand has already been finalized')).toBeInTheDocument();
-    });
+    expect(await screen.findByRole('alert')).toHaveTextContent('Spara beslutet innan du beslutar och betalar ut.');
     expect(onFinalized).not.toHaveBeenCalled();
   });
 
@@ -115,7 +140,7 @@ describe('ErrandAvsluta', () => {
     const onFinalized = vi.fn();
     await openModal({ onFinalized });
 
-    fireEvent.click(confirmButton());
+    fireEvent.click(sendButton());
 
     await waitFor(() => {
       expect(screen.getByText('Beslutet kunde inte skickas till: Brev.')).toBeInTheDocument();
