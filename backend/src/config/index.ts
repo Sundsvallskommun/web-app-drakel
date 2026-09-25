@@ -29,12 +29,15 @@ export const CLIENT_KEY = env.CLIENT_KEY ?? '';
 export const CLIENT_SECRET = env.CLIENT_SECRET ?? '';
 export const BASE_URL_PREFIX = env.BASE_URL_PREFIX ?? '';
 export const MUNICIPALITY_ID = env.MUNICIPALITY_ID ?? '';
-// caremanagement, Templating and Active Directory are all reached through the WSO2 gateway (API_BASE_URL) —
-// see APIS. The namespace scopes every caremanagement errand route.
+// caremanagement, Templating and Active Directory are reached through the WSO2 gateway (API_BASE_URL) — see APIS —
+// unless caremanagement or Templating is given a host of its own below. The namespace scopes every caremanagement errand route.
 export const CAREMANAGEMENT_NAMESPACE = env.CAREMANAGEMENT_NAMESPACE ?? '';
 // Optional: a caremanagement host to call directly (e.g. the Dokploy instance), with no gateway token. Unset means
 // caremanagement is reached through the gateway like the rest.
 export const CAREMANAGEMENT_BASE_URL = env.CAREMANAGEMENT_BASE_URL ?? '';
+// Optional: a Templating host to call directly (e.g. https://templating.drakel.sundsvall.dev), with no gateway token.
+// Unset means Templating is reached through the gateway.
+export const TEMPLATING_BASE_URL = env.TEMPLATING_BASE_URL ?? '';
 // The Active Directory domain the handläggare roster is read from.
 export const ACTIVE_DIRECTORY_DOMAIN = env.ACTIVE_DIRECTORY_DOMAIN ?? 'personal';
 // Messaging sender config for the beslut sent as a brev. Optional —

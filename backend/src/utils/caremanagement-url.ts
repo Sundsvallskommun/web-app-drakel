@@ -1,15 +1,12 @@
 import { CAREMANAGEMENT_BASE_URL, CAREMANAGEMENT_NAMESPACE, MUNICIPALITY_ID } from '@config';
 
-import { gatewayUrl } from './gateway-url';
+import { ownHostOrGatewayUrl } from './gateway-url';
 
 /**
  * caremanagement's root: its own host when CAREMANAGEMENT_BASE_URL is set (e.g. the Dokploy instance), otherwise the
  * WSO2 gateway.
  */
-const caremanagementRoot = (...parts: string[]): string =>
-  CAREMANAGEMENT_BASE_URL
-    ? [CAREMANAGEMENT_BASE_URL, ...parts].map(segment => segment.replace(/^\/+|\/+$/g, '')).join('/')
-    : gatewayUrl('caremanagement', ...parts);
+const caremanagementRoot = (...parts: string[]): string => ownHostOrGatewayUrl(CAREMANAGEMENT_BASE_URL, 'caremanagement', ...parts);
 
 /**
  * Builds an absolute caremanagement URL (gateway, or CAREMANAGEMENT_BASE_URL), scoped to the municipality and namespace.

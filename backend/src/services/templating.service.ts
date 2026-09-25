@@ -1,3 +1,4 @@
+import { TEMPLATING_BASE_URL } from '@config';
 import { gatewayAuthorization } from '@services/api-token.service';
 import { caremanagementError } from '@utils/caremanagement-error';
 import { templatingUrl } from '@utils/templating-url';
@@ -33,16 +34,19 @@ interface TemplateInput {
   metadata: TemplateMetadata[];
 }
 
+// A Templating host called directly (TEMPLATING_BASE_URL, e.g. Dokploy) takes no gateway token.
+const templatingHeaders = async (): Promise<Record<string, string>> => (TEMPLATING_BASE_URL ? {} : gatewayAuthorization());
+
 /**
- * Reads and writes document/phrase templates in the Sundsvall Templating service. Templating is reached
- * directly (no gateway, no auth); templates are tagged with metadata (app/code/kind) that the controllers
- * filter on.
+ * Reads and writes document/phrase templates in the Sundsvall Templating service — on its own host when
+ * TEMPLATING_BASE_URL is set, otherwise through the WSO2 gateway. Templates are tagged with metadata
+ * (app/code/kind) that the controllers filter on.
  */
 class TemplatingService {
   /** All templates for the municipality (content excluded). */
   async listTemplates(): Promise<TemplateSummary[]> {
     try {
-      const res = await axios.get<TemplateSummary[]>(templatingUrl('templates'), { headers: await gatewayAuthorization() });
+      const res = await axios.get<TemplateSummary[]>(templatingUrl('templates'), { headers: await templatingHeaders() });
       return res.data ?? [];
     } catch (error) {
       throw caremanagementError(error);
@@ -52,7 +56,7 @@ class TemplatingService {
   /** The latest version of a template by identifier, including its BASE64 content. */
   async getTemplate(identifier: string): Promise<DetailedTemplate> {
     try {
-      const res = await axios.get<DetailedTemplate>(templatingUrl('templates', identifier), { headers: await gatewayAuthorization() });
+      const res = await axios.get<DetailedTemplate>(templatingUrl('templates', identifier), { headers: await templatingHeaders() });
       return res.data;
     } catch (error) {
       throw caremanagementError(error);
@@ -75,7 +79,7 @@ class TemplatingService {
           metadata: input.metadata,
           versionIncrement: 'MINOR',
         },
-        { headers: await gatewayAuthorization() },
+        { headers: await templatingHeaders() },
       );
     } catch (error) {
       throw caremanagementError(error);
@@ -85,7 +89,7 @@ class TemplatingService {
   /** Deletes a template and every one of its versions. */
   async deleteTemplate(identifier: string): Promise<void> {
     try {
-      await axios.delete(templatingUrl('templates', identifier), { headers: await gatewayAuthorization() });
+      await axios.delete(templatingUrl('templates', identifier), { headers: await templatingHeaders() });
     } catch (error) {
       throw caremanagementError(error);
     }
@@ -100,7 +104,7 @@ class TemplatingService {
           content: Buffer.from(html, 'utf-8').toString('base64'),
           parameters: {},
         },
-        { headers: await gatewayAuthorization() },
+        { headers: await templatingHeaders() },
       );
       return res.data.output ?? '';
     } catch (error) {

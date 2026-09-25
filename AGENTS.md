@@ -111,6 +111,9 @@ Config lives in `backend/.env.{NODE_ENV}.local` (currently
 - `CAREMANAGEMENT_BASE_URL` (optional) — call caremanagement directly on its own
   host instead, with no gateway token, e.g. the Dokploy instance
   `https://cm.drakel.sundsvall.dev`. Unset means through the gateway.
+- `TEMPLATING_BASE_URL` (optional) — the same for Templating, e.g.
+  `https://templating.drakel.sundsvall.dev`, where drakel's mallar and
+  beslutsformuleringar live. Unset means the gateway's Templating (`templating/2.1`).
 - **The BFF never talks to Lifecare itself.** caremanagement owns the Lifecare
   (ProfessionalWeb) integration: it signs in with its service account, resolves
   insats and personnummer from the errand, links what it creates (beräkning, beslut,
