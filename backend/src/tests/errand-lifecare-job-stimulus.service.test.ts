@@ -1,97 +1,52 @@
-import { LifecareJobStimulusRaw } from '@interfaces/lifecare-job-stimulus.interface';
-import CaremanagementErrandService from '@services/caremanagement-errand.service';
-import CaremanagementEventService from '@services/caremanagement-event.service';
+import CaremanagementApiService from '@services/caremanagement-api.service';
 import ErrandLifecareJobStimulusService from '@services/errand-lifecare-job-stimulus.service';
-import LifecareJobStimulusService from '@services/lifecare-job-stimulus.service';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { caremanagementLifecareUrl } from '@utils/caremanagement-url';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-const period = (jobStimulusId: number, fromDate: string, toDate: string, markedForRemoval = false) => ({
-  jobStimulusId,
-  personId: '19880209T050',
-  fromDate,
-  toDate,
-  updateTimestamp: '2026-08-21',
-  updateSignature: 'ebb14eri',
-  markedForRemoval,
-  personIdFormatted: '880209-T050',
-});
+import { LifecareJobStimulusPeriod, LifecareJobStimulusPeriodRoleEnum } from '@/data-contracts/caremanagement/data-contracts';
+import { HttpException } from '@/exceptions/HttpException';
 
-// Calculation/GetJobStimulusForService?businessType=8&businessId=1 (capture 2026-09-24), with a medsökande added.
-const raw: LifecareJobStimulusRaw = {
-  applicant: {
-    periods: [period(101, '2021-01-01', '2021-12-31'), period(103, '2026-01-01', '2027-12-31')],
-    personId: '19880209T050',
-    name: 'Testsson, Test',
-    personIdFormatted: '880209-T050',
-  },
-  coApplicant: {
-    periods: [period(201, '2026-03-01', ''), period(202, '2025-01-01', '2025-06-30', true)],
-    personId: '19900101T001',
-    name: 'Testsson, Medsökande',
-    personIdFormatted: '900101-T001',
-  },
-  hasCoApplicant: true,
-};
+const JOB_STIMULUS_URL = caremanagementLifecareUrl('errand-1', 'job-stimulus-periods');
+
+const periods: LifecareJobStimulusPeriod[] = [
+  { id: 101, role: LifecareJobStimulusPeriodRoleEnum.APPLICANT, fromDate: '2026-01-01', toDate: '2027-12-31' },
+  // An open period has no end.
+  { id: 201, role: LifecareJobStimulusPeriodRoleEnum.CO_APPLICANT, fromDate: '2026-03-01' },
+];
 
 describe('ErrandLifecareJobStimulusService', () => {
-  beforeEach(() => {
-    vi.spyOn(CaremanagementErrandService.prototype, 'getFinancialAssistanceView').mockResolvedValue({
-      data: { lifecareServiceId: 1 },
-      message: 'success',
-    });
-  });
-
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('reads the periods from the insats in Lifecare, per person and without the personnummer', async () => {
-    const read = vi.spyOn(LifecareJobStimulusService.prototype, 'readForService').mockResolvedValue(raw);
-    const report = vi.spyOn(CaremanagementEventService.prototype, 'reportLifecareAccess').mockResolvedValue();
+  it('reads the periods on the insats through careM, as careM answers them', async () => {
+    const get = vi.spyOn(CaremanagementApiService.prototype, 'get').mockResolvedValue({ data: periods, message: 'success', status: 200 });
 
-    const periods = await new ErrandLifecareJobStimulusService().periods('errand-1');
-
-    expect(read).toHaveBeenCalledWith(1);
-    expect(periods).toEqual([
-      { id: 101, role: 'APPLICANT', fromDate: '2021-01-01', toDate: '2021-12-31' },
-      { id: 103, role: 'APPLICANT', fromDate: '2026-01-01', toDate: '2027-12-31' },
-      // An open period has no end; a period marked for removal is left out.
-      { id: 201, role: 'CO_APPLICANT', fromDate: '2026-03-01', toDate: undefined },
-    ]);
-    expect(report.mock.calls[0]?.[1]).toMatchObject([{ action: 'READ', target: 'JOB_STIMULUS' }]);
+    expect(await new ErrandLifecareJobStimulusService().periods('errand-1')).toEqual(periods);
+    expect(get).toHaveBeenCalledWith({ url: JOB_STIMULUS_URL });
   });
 
-  it("adds a period with the end Lifecare's two-year rule gives, sending every existing period back", async () => {
-    const soleApplicant = { ...raw, coApplicant: null, hasCoApplicant: false };
-    vi.spyOn(LifecareJobStimulusService.prototype, 'readForService').mockResolvedValue(soleApplicant);
-    const readToDate = vi.spyOn(LifecareJobStimulusService.prototype, 'readToDate').mockResolvedValue('2030-01-14');
-    const save = vi.spyOn(LifecareJobStimulusService.prototype, 'save').mockResolvedValue(soleApplicant);
-    const report = vi.spyOn(CaremanagementEventService.prototype, 'reportLifecareAccess').mockResolvedValue();
+  it('adds a period for the sökande through careM and answers with every period', async () => {
+    const post = vi.spyOn(CaremanagementApiService.prototype, 'post').mockResolvedValue({ data: periods, message: 'success', status: 201 });
+
+    expect(await new ErrandLifecareJobStimulusService().addPeriod('errand-1', { fromDate: '2028-01-15', toDate: '2028-12-31' })).toEqual(periods);
+    expect(post).toHaveBeenCalledWith({ url: JOB_STIMULUS_URL, data: { fromDate: '2028-01-15', toDate: '2028-12-31' } });
+  });
+
+  it("leaves the end to Lifecare's two-year rule when the handläggare set none", async () => {
+    const post = vi.spyOn(CaremanagementApiService.prototype, 'post').mockResolvedValue({ data: periods, message: 'success', status: 201 });
 
     await new ErrandLifecareJobStimulusService().addPeriod('errand-1', { fromDate: '2028-01-15' });
 
-    expect(readToDate).toHaveBeenCalledWith('2028-01-15');
-    const body = save.mock.calls[0]?.[0] as { applicant: { periods: { fromDate: string; toDate: string }[] } };
-    expect(body.applicant.periods.map(sent => sent.fromDate)).toEqual(['2021-01-01', '2026-01-01', '2028-01-15']);
-    expect(body.applicant.periods[2]?.toDate).toBe('2030-01-14');
-    expect(report.mock.lastCall?.[1]).toMatchObject([{ action: 'CREATE', target: 'JOB_STIMULUS' }]);
+    expect(post).toHaveBeenCalledWith({ url: JOB_STIMULUS_URL, data: { fromDate: '2028-01-15', toDate: undefined } });
   });
 
-  it('refuses to change the periods of a household with a medsökande', async () => {
-    vi.spyOn(LifecareJobStimulusService.prototype, 'readForService').mockResolvedValue(raw);
-    vi.spyOn(CaremanagementEventService.prototype, 'reportLifecareAccess').mockResolvedValue();
-    const save = vi.spyOn(LifecareJobStimulusService.prototype, 'save');
+  it("passes careM's refusal for a household with a medsökande on", async () => {
+    vi.spyOn(CaremanagementApiService.prototype, 'post').mockRejectedValue(new HttpException(422, 'Hushållet har en medsökande.'));
 
-    await expect(
-      new ErrandLifecareJobStimulusService().addPeriod('errand-1', { fromDate: '2028-01-15', toDate: '2028-12-31' }),
-    ).rejects.toMatchObject({ status: 422 });
-    expect(save).not.toHaveBeenCalled();
-  });
-
-  it('has no periods for a household without any', async () => {
-    vi.spyOn(LifecareJobStimulusService.prototype, 'readForService').mockResolvedValue({ applicant: null, coApplicant: null, hasCoApplicant: false });
-    vi.spyOn(CaremanagementEventService.prototype, 'reportLifecareAccess').mockResolvedValue();
-
-    expect(await new ErrandLifecareJobStimulusService().periods('errand-1')).toEqual([]);
+    await expect(new ErrandLifecareJobStimulusService().addPeriod('errand-1', { fromDate: '2028-01-15' })).rejects.toMatchObject({
+      status: 422,
+      message: 'Hushållet har en medsökande.',
+    });
   });
 });

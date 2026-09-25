@@ -7,7 +7,7 @@ import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 import { AddJobStimulusPeriodDto } from '@/dtos/job-stimulus.dto';
 import { JobStimulusPeriodsApiResponse } from '@/responses/job-stimulus.response';
 
-/** The jobbstimulans periods (sökande and medsökande) of an errand, read from and written to Lifecare. */
+/** The jobbstimulans periods (sökande and medsökande) of an errand, read from and written to Lifecare through careM. */
 @Controller()
 export class JobStimulusController {
   private jobStimulusService = new ErrandLifecareJobStimulusService();

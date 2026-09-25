@@ -1,192 +1,69 @@
-import { HttpException } from '@exceptions/HttpException';
-import CaremanagementErrandService from '@services/caremanagement-errand.service';
-import CaremanagementMetadataService from '@services/caremanagement-metadata.service';
-import CaremanagementNormberakningService, { NormSection } from '@services/caremanagement-normberakning.service';
-import LifecareAccessLogService from '@services/lifecare-access-log.service';
-import LifecareCalculationEditService, { CalculationChange, toNormOptions } from '@services/lifecare-calculation-edit.service';
-import LifecareCalculationsService from '@services/lifecare-calculations.service';
-import { applicationMonthOf } from '@utils/application-month';
-import { toDropdownOption } from '@utils/dropdown-option';
+import CaremanagementApiService from '@services/caremanagement-api.service';
+import { caremanagementLifecareUrl } from '@utils/caremanagement-url';
+
 import {
-  addExpense,
-  addIncome,
-  changeExpense,
-  changeHeader,
-  changeIncome,
-  changePerson,
-  removeExpense,
-  removeIncome,
-} from '@utils/lifecare-calculation-rows';
-
-import { TypeOptionGroupEnum } from '@/data-contracts/caremanagement/data-contracts';
+  AddNormberakningRowParamsSectionEnum,
+  NormberakningDraft as CaremanagementNormberakningDraft,
+  NormberakningTypes as CaremanagementNormberakningTypes,
+} from '@/data-contracts/caremanagement/data-contracts';
 import { NormHeaderInputDto, NormRowInputDto } from '@/dtos/normberakning.dto';
-import { NormberakningDraft, NormberakningTypes, NormTypeOption } from '@/responses/normberakning.response';
+import { NormberakningDraft, NormberakningTypes, toNormberakningDraft, toNormberakningTypes } from '@/responses/normberakning.response';
 
-// caremanagement returns one costTypes list grouped by Mina-sidor section (group = enum code). The
-// HOUSING section is Lifecare's boendekostnader (the Utgifter / EXPENSE bucket); the other sections
-// (WORK_AND_STUDIES / HEALTH / OTHER) are levnadskostnader i övrigt (the SPECIAL_EXPENSE bucket).
-const HOUSING_GROUP = TypeOptionGroupEnum.HOUSING;
+/** The three editable sections of the normberäkning, as careM's routes name them: persons · incomes · expenses. */
+export type NormSection = `${AddNormberakningRowParamsSectionEnum}`;
 
-/** Where the errand's beräkning is: careM's draft, or — once saved — Lifecare's beräkning with its id. */
-interface CalculationSource {
-  lifecareCalculationId?: number;
-  lifecareServiceId?: number;
-  applicationMonth?: string;
-}
-
-/** The change a section's row makes to a saved beräkning. */
-const bySection = (section: NormSection, changes: Record<NormSection, CalculationChange>): CalculationChange => changes[section];
-
-const notInLifecare = (what: string): HttpException =>
-  new HttpException(422, `${what} går inte att ändra från Drakel när normberäkningen är sparad i Lifecare. Gör det i Lifecare.`);
+/** The errand's Normberäkning route in careM, e.g. `normberakningUrl(errandId, 'incomes', rowId)`. */
+const normberakningUrl = (errandId: string, ...parts: string[]): string => caremanagementLifecareUrl(errandId, 'normberakning', ...parts);
 
 /**
- * The Normberäkning tab's rows, wherever they are kept. Until the beräkning is first saved in Lifecare they
- * are careM's draft — filled from the ansökan and SSBTEK — and every change goes to careM, with careM's type
- * catalogues. Once saved, Lifecare owns the beräkning: rows are read from it and every change is made there,
- * with Lifecare's own catalogues. careM's draft is then frozen and no longer shown.
+ * The Normberäkning tab's rows, read and changed through careM. careM decides where they are kept — its own draft
+ * until the beräkning is first saved in Lifecare, Lifecare's beräkning after that — and refuses (422) a change that
+ * cannot be made there, e.g. a person added to a beräkning in Lifecare. Each section is edited one row at a time.
  */
 class ErrandNormberakningService {
-  private errandService = new CaremanagementErrandService();
-  private metadataService = new CaremanagementMetadataService();
-  private draftService = new CaremanagementNormberakningService();
-  private lifecare = new LifecareCalculationEditService();
-  private calculations = new LifecareCalculationsService();
-  private accessLog = new LifecareAccessLogService();
+  private apiService = new CaremanagementApiService();
 
   async readDraft(errandId: string): Promise<NormberakningDraft> {
-    const source = await this.sourceOf(errandId);
-    if (source.lifecareCalculationId !== undefined) {
-      return this.lifecare.readDraftView(errandId, source.lifecareCalculationId, source.applicationMonth);
-    }
-    const draft = await this.draftService.readDraft(errandId);
-    return { ...draft.data, source: 'CAREM' };
+    const response = await this.apiService.get<CaremanagementNormberakningDraft>({ url: normberakningUrl(errandId) });
+    return toNormberakningDraft(response.data);
   }
 
   /**
    * Whether the household has an own size (Annan hushållsstorlek) — what finalize tells careM as
-   * `householdSizeChanged`. Lifecare's beräkning once it is there, since the size is changed there; careM's
-   * draft before.
+   * `householdSizeChanged`. careM reads it from wherever the rows are kept.
    */
   async householdSizeChanged(errandId: string): Promise<boolean> {
-    const source = await this.sourceOf(errandId);
-    return source.lifecareCalculationId !== undefined
-      ? this.lifecare.readHasCustomHouseholdSize(errandId, source.lifecareCalculationId)
-      : this.draftService.readHouseholdSizeChanged(errandId);
+    const draft = await this.readDraft(errandId);
+    return draft.hasCustomHouseholdSize ?? false;
   }
 
-  /** The inkomst- and kostnadstyper a new row can have: Lifecare's once the beräkning is there, careM's before. */
+  /** The norms and the inkomst- and kostnadstyper a new row can have: Lifecare's once the beräkning is there, careM's before. */
   async types(errandId: string): Promise<NormberakningTypes> {
-    const source = await this.sourceOf(errandId);
-    if (source.lifecareCalculationId !== undefined) {
-      return this.lifecare.readTypes(source.lifecareCalculationId);
-    }
-    const [res, norms] = await Promise.all([this.metadataService.readFinancialAssistanceMetadata(), this.lifecareNorms(errandId, source)]);
-    const costTypes = res.data?.costTypes ?? [];
-    // Split the single costTypes list into the two normberäkning buckets via the Mina-sidor group.
-    return {
-      norms,
-      incomeTypes: (res.data?.incomeTypes ?? []).map(toDropdownOption),
-      costTypes: costTypes.filter(type => type.group === HOUSING_GROUP).map(toDropdownOption),
-      livingCostTypes: costTypes.filter(type => type.group !== HOUSING_GROUP).map(toDropdownOption),
-    };
+    const response = await this.apiService.get<CaremanagementNormberakningTypes>({ url: normberakningUrl(errandId, 'types') });
+    return toNormberakningTypes(response.data);
   }
 
-  /**
-   * Changes the header: in careM's draft anything it holds; in Lifecare the norm and the household size
-   * (Gemensamma kostnader) — the period is Lifecare's.
-   */
+  /** Changes the header: in careM's draft the norm, the dates and the household size; in Lifecare the norm and the household size. */
   async updateHeader(errandId: string, input: NormHeaderInputDto): Promise<void> {
-    await this.changeRow(errandId, {
-      caremanagement: () => this.draftService.updateHeader(errandId, input),
-      lifecare: (calculation, forEdit) => changeHeader(calculation, forEdit, input),
-    });
+    await this.apiService.patch({ url: normberakningUrl(errandId, 'header'), data: input });
   }
 
   async addRow(errandId: string, section: NormSection, input: NormRowInputDto): Promise<void> {
-    await this.changeRow(errandId, {
-      caremanagement: () => this.draftService.addRow(errandId, section, input),
-      lifecare: bySection(section, {
-        // Who is in the household is Lifecare's: a person is added there, not from Drakel.
-        persons: () => {
-          throw new HttpException(422, 'Personer läggs till i hushållet i Lifecare.');
-        },
-        incomes: (calculation, forEdit) => addIncome(calculation, forEdit.incomeTypes, input),
-        expenses: (calculation, forEdit) => addExpense(calculation, forEdit, input),
-      }),
-    });
+    await this.apiService.post({ url: normberakningUrl(errandId, section), data: input });
   }
 
   async updateRow(errandId: string, section: NormSection, rowId: string, input: NormRowInputDto): Promise<void> {
-    await this.changeRow(errandId, {
-      caremanagement: () => this.draftService.updateRow(errandId, section, rowId, input),
-      lifecare: bySection(section, {
-        persons: calculation => changePerson(calculation, rowId, input),
-        incomes: calculation => changeIncome(calculation, rowId, input),
-        expenses: calculation => changeExpense(calculation, rowId, input),
-      }),
-    });
+    await this.apiService.patch({ url: normberakningUrl(errandId, section, rowId), data: input });
   }
 
+  /** A soft delete in careM's draft; in Lifecare the row is dropped. */
   async deleteRow(errandId: string, section: NormSection, rowId: string): Promise<void> {
-    await this.changeRow(errandId, {
-      caremanagement: () => this.draftService.deleteRow(errandId, section, rowId),
-      lifecare: bySection(section, {
-        // Who is in the beräkning is Lifecare's: a person is not taken out from Drakel.
-        persons: () => {
-          throw new HttpException(422, 'Personer tas inte bort ur normberäkningen från Drakel.');
-        },
-        incomes: calculation => removeIncome(calculation, rowId),
-        expenses: calculation => removeExpense(calculation, rowId),
-      }),
-    });
+    await this.apiService.delete({ url: normberakningUrl(errandId, section, rowId) });
   }
 
+  /** Restores a soft-deleted row of careM's draft; a beräkning in Lifecare has no soft delete. */
   async restoreRow(errandId: string, section: NormSection, rowId: string): Promise<void> {
-    await this.inCaremanagementOnly(errandId, 'En borttagen rad');
-    await this.draftService.restoreRow(errandId, section, rowId);
-  }
-
-  private async changeRow(errandId: string, change: { caremanagement: () => Promise<unknown>; lifecare: CalculationChange }): Promise<void> {
-    const source = await this.sourceOf(errandId);
-    if (source.lifecareCalculationId === undefined) {
-      await change.caremanagement();
-      return;
-    }
-    await this.lifecare.change(errandId, source.lifecareCalculationId, change.lifecare);
-  }
-
-  private async inCaremanagementOnly(errandId: string, what: string): Promise<void> {
-    const source = await this.sourceOf(errandId);
-    if (source.lifecareCalculationId !== undefined) {
-      throw notInLifecare(what);
-    }
-  }
-
-  /**
-   * The norms a beräkning on the insats can have, from Lifecare's underlag for a new one — the Norm list before
-   * the beräkning is in Lifecare. Best-effort: without them the norm cannot be changed, the rest still works.
-   */
-  private async lifecareNorms(errandId: string, source: CalculationSource): Promise<NormTypeOption[]> {
-    if (source.lifecareServiceId === undefined) {
-      return [];
-    }
-    try {
-      const proposal = await this.calculations.readProposal(source.lifecareServiceId);
-      await this.accessLog.logRead(errandId, { target: 'CALCULATION', description: 'Läste normer i Lifecare' });
-      return toNormOptions(proposal.norms);
-    } catch {
-      return [];
-    }
-  }
-
-  private async sourceOf(errandId: string): Promise<CalculationSource> {
-    const view = await this.errandService.getFinancialAssistanceView(errandId);
-    return {
-      lifecareCalculationId: view.data?.data?.lifecareCalculationId ?? undefined,
-      lifecareServiceId: typeof view.data?.lifecareServiceId === 'number' ? view.data.lifecareServiceId : undefined,
-      applicationMonth: applicationMonthOf(view.data?.data),
-    };
+    await this.apiService.post({ url: normberakningUrl(errandId, section, rowId, 'restore') });
   }
 }
 
