@@ -9,10 +9,11 @@ import { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { SsbtekMonthSection } from './ssbtek-month-section.component';
+import { SsbtekUnavailableChildren } from './ssbtek-unavailable-children.component';
 
 /**
- * The payments SSBTEK reports to the errand's household — the sökande and any medsökande — a table per month they
- * were paid, newest first. Shared by the SSBTEK page and the panel at the foot of the errand.
+ * The payments SSBTEK reports to the errand's household — the sökande, any medsökande and children — a table per
+ * month they were paid, newest first. Shared by the SSBTEK page and the panel at the foot of the errand.
  */
 export const SsbtekPayments: FC<{ errandId: string }> = ({ errandId }) => {
   const { t, i18n } = useTranslation('ssbtek');
@@ -38,6 +39,7 @@ export const SsbtekPayments: FC<{ errandId: string }> = ({ errandId }) => {
       {view.coApplicantUnavailable ?
         <p className="text-warning-surface-primary m-0">{t('coApplicantUnavailable')}</p>
       : null}
+      <SsbtekUnavailableChildren names={view.unavailableChildren} />
       {months.length === 0 ?
         <p className="m-0">{t('empty')}</p>
       : months.map(({ month, payments }) => (
@@ -45,7 +47,7 @@ export const SsbtekPayments: FC<{ errandId: string }> = ({ errandId }) => {
             key={month ?? 'no-date'}
             label={month ? formatApplicationMonth(`${month}-01`, i18n.language) : t('noDate')}
             payments={payments}
-            showPerson={view.hasCoApplicant}
+            showPerson={view.hasCoApplicant || view.hasChildren}
           />
         ))
       }

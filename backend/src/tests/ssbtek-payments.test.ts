@@ -104,7 +104,7 @@ const SO_ANSWER = {
 const PERIOD = { from: '2026-07-01', to: '2026-09-30' };
 const NO_CO_APPLICANT = { kind: 'NONE' } as const;
 
-const view = () => toSsbtekPaymentsView({ ...PERIOD, agencies: { fk: FK_ANSWER, so: SO_ANSWER } }, NO_CO_APPLICANT);
+const view = () => toSsbtekPaymentsView({ ...PERIOD, agencies: { fk: FK_ANSWER, so: SO_ANSWER } }, NO_CO_APPLICANT, []);
 
 describe('toSsbtekPaymentsView', () => {
   it('lists the payments paid in the period, newest first, and echoes the period', () => {
@@ -179,11 +179,13 @@ describe('toSsbtekPaymentsView', () => {
   });
 
   it('lists nothing when no agency answered', () => {
-    expect(toSsbtekPaymentsView(PERIOD, NO_CO_APPLICANT)).toEqual({
+    expect(toSsbtekPaymentsView(PERIOD, NO_CO_APPLICANT, [])).toEqual({
       ...PERIOD,
       payments: [],
       hasCoApplicant: false,
       coApplicantUnavailable: false,
+      hasChildren: false,
+      unavailableChildren: [],
     });
   });
 
@@ -204,6 +206,7 @@ describe('toSsbtekPaymentsView', () => {
     const result = toSsbtekPaymentsView(
       { ...PERIOD, agencies: { fk: FK_ANSWER } },
       { kind: 'READ', basis: { ...PERIOD, agencies: { fk: coApplicantAnswer } } },
+      [],
     );
 
     expect(result.hasCoApplicant).toBe(true);
@@ -217,10 +220,38 @@ describe('toSsbtekPaymentsView', () => {
   });
 
   it('lists only the sökandes payments when SSBTEK could not be read for the medsökande, and says so', () => {
-    const result = toSsbtekPaymentsView({ ...PERIOD, agencies: { fk: FK_ANSWER } }, { kind: 'UNAVAILABLE' });
+    const result = toSsbtekPaymentsView({ ...PERIOD, agencies: { fk: FK_ANSWER } }, { kind: 'UNAVAILABLE' }, []);
 
     expect(result.hasCoApplicant).toBe(true);
     expect(result.coApplicantUnavailable).toBe(true);
     expect(result.payments.every(payment => payment.person === 'APPLICANT')).toBe(true);
+  });
+  it("lists each child's payments with the child's name, after the adults' on the same day", () => {
+    const childAnswer = {
+      formansinformation: {
+        utbetalningsuppgift: [
+          {
+            formansfamilj: { id: 'US', beskrivning: 'Underhållsstöd' },
+            datum: '2026-09-25',
+            period: { fran: '2026-09-01', till: '2026-09-30' },
+            nettobelopp: sek(1673),
+          },
+        ],
+      },
+    };
+
+    const result = toSsbtekPaymentsView({ ...PERIOD, agencies: { fk: FK_ANSWER } }, NO_CO_APPLICANT, [
+      { name: 'Alva Testsson', basis: { ...PERIOD, agencies: { fk: childAnswer } } },
+      { name: 'Ebbe Testsson' },
+    ]);
+
+    expect(result.hasChildren).toBe(true);
+    expect(result.unavailableChildren).toEqual(['Ebbe Testsson']);
+    expect(result.payments.map(payment => [payment.person, payment.childName, payment.benefit, payment.paidOn])).toEqual([
+      ['APPLICANT', undefined, 'Dagersättning', '2026-09-27'],
+      ['APPLICANT', undefined, 'Bostadsbidrag', '2026-09-25'],
+      ['CHILD', 'Alva Testsson', 'Underhållsstöd', '2026-09-25'],
+      ['APPLICANT', undefined, 'Bostadstillägg, Efterlevandepension', '2026-08-18'],
+    ]);
   });
 });

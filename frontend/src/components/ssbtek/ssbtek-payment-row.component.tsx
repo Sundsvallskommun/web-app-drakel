@@ -3,6 +3,7 @@
 import { SsbtekPayment } from '@data-contracts/backend/data-contracts';
 import { Button, Table } from '@sk-web-gui/react';
 import { formatDateRange } from '@utils/date-range';
+import { ssbtekPersonLabel } from '@utils/ssbtek-person-label';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,7 +16,7 @@ const SSBTEK_PAYMENT_COLUMN_COUNT = 9;
 
 /**
  * A payment in the month's table; a payment the agency specifies opens to show its delförmåner below it. With
- * `showPerson` (the errand has a medsökande) it says whose payment it is.
+ * `showPerson` (the errand has a medsökande or children) it says whose payment it is.
  */
 export const SsbtekPaymentRow: FC<{ payment: SsbtekPayment; showPerson: boolean }> = ({ payment, showPerson }) => {
   const { t } = useTranslation('ssbtek');
@@ -42,7 +43,7 @@ export const SsbtekPaymentRow: FC<{ payment: SsbtekPayment; showPerson: boolean 
           : null}
         </Table.Column>
         {showPerson ?
-          <Table.Column>{t(`persons.${payment.person}`)}</Table.Column>
+          <Table.Column>{ssbtekPersonLabel(payment, t)}</Table.Column>
         : null}
         <Table.Column>{payment.benefit}</Table.Column>
         <Table.Column className="tabular-nums whitespace-nowrap">{payment.paidOn ?? '—'}</Table.Column>

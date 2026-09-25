@@ -1359,6 +1359,7 @@ export interface SsbtekPaymentPart {
 
 export interface SsbtekPayment {
   person: SsbtekPaymentPersonEnum;
+  childName?: string;
   source: string;
   benefit: string;
   paidOn?: string;
@@ -1379,6 +1380,8 @@ export interface SsbtekPaymentsView {
   payments: SsbtekPayment[];
   hasCoApplicant: boolean;
   coApplicantUnavailable: boolean;
+  hasChildren: boolean;
+  unavailableChildren: string[];
 }
 
 export interface SsbtekPaymentsApiResponse {
@@ -1465,6 +1468,7 @@ export enum NormberakningDraftSourceEnum {
 export enum SsbtekPaymentPersonEnum {
   APPLICANT = "APPLICANT",
   CO_APPLICANT = "CO_APPLICANT",
+  CHILD = "CHILD",
 }
 
 export enum UserRoleEnum {

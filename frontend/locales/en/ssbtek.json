@@ -11,6 +11,7 @@
   "loadError": "The information from SSBTEK could not be fetched.",
   "empty": "SSBTEK reports no payments in the period.",
   "coApplicantUnavailable": "The co-applicant's information could not be fetched from SSBTEK. Only the applicant's payments are shown.",
+  "unavailableChildren": "SSBTEK could not be read for {{children}}. Their payments are not shown.",
   "noDate": "Without payment date",
   "columns": {
     "person": "Person",
@@ -36,6 +37,9 @@
   },
   "persons": {
     "APPLICANT": "Applicant",
-    "CO_APPLICANT": "Co-applicant"
+    "CO_APPLICANT": "Co-applicant",
+    "CHILD": "Child",
+    "namedChild": "{{name}} (child)",
+    "unnamedChild": "a child"
   }
 }

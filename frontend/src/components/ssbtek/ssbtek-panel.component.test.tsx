@@ -45,7 +45,13 @@ describe('SsbtekPanel', () => {
   beforeEach(() => {
     vi.mocked(useParams).mockReturnValue({ locale: 'sv', errandId: 'EB-26090036' });
     vi.mocked(getSsbtekPayments).mockResolvedValue({
-      data: { payments: [], hasCoApplicant: false, coApplicantUnavailable: false },
+      data: {
+        payments: [],
+        hasCoApplicant: false,
+        coApplicantUnavailable: false,
+        hasChildren: false,
+        unavailableChildren: [],
+      },
     });
   });
 

@@ -21,12 +21,20 @@ const answer = (benefit: string) => ({
   message: 'success',
 });
 
+/** The ansökan's children, as careM's financial-assistance view gives them. */
+const withChildren = (children: { partyId?: string; firstName?: string; lastName?: string }[]) =>
+  vi.spyOn(CaremanagementErrandService.prototype, 'getFinancialAssistanceView').mockResolvedValue({
+    data: { data: { children } },
+    message: 'success',
+  });
+
 describe('ErrandSsbtekService', () => {
   beforeEach(() => {
     vi.spyOn(CaremanagementErrandService.prototype, 'getErrandByIdentifier').mockResolvedValue({
       data: { id: 'errand-uuid', errandNumber: 'EB-26090036' },
       message: 'success',
     });
+    withChildren([]);
   });
 
   afterEach(() => {
@@ -77,5 +85,40 @@ describe('ErrandSsbtekService', () => {
     );
 
     await expect(new ErrandSsbtekService().readPayments('EB-26090036', PERIOD)).rejects.toThrow('SSBTEK svarade inte');
+  });
+  it("reads each child the ansökan names by its partyId, and tags their payments with the child's name", async () => {
+    withChildren([
+      { partyId: 'child-1', firstName: 'Alva', lastName: 'Testsson' },
+      { firstName: 'Utan', lastName: 'PartyId' },
+    ]);
+    const readBasis = vi
+      .spyOn(CaremanagementSsbtekService.prototype, 'readBasis')
+      .mockImplementation((_errandId, person) =>
+        person === 'CO_APPLICANT'
+          ? Promise.reject(new HttpException(404, 'Not found'))
+          : Promise.resolve(answer(person === 'CHILD' ? 'Underhållsstöd' : 'Bostadsbidrag')),
+      );
+
+    const view = await new ErrandSsbtekService().readPayments('EB-26090036', PERIOD);
+
+    expect(readBasis).toHaveBeenCalledWith('errand-uuid', 'CHILD', PERIOD, 'child-1');
+    expect(readBasis).toHaveBeenCalledTimes(3);
+    expect(view).toMatchObject({ hasChildren: true, unavailableChildren: [] });
+    expect(view.payments.map(payment => [payment.person, payment.childName, payment.benefit])).toEqual([
+      ['APPLICANT', undefined, 'Bostadsbidrag'],
+      ['CHILD', 'Alva Testsson', 'Underhållsstöd'],
+    ]);
+  });
+
+  it('names the children SSBTEK could not be read for, and still lists the rest', async () => {
+    withChildren([{ partyId: 'child-1', firstName: 'Alva', lastName: 'Testsson' }]);
+    vi.spyOn(CaremanagementSsbtekService.prototype, 'readBasis').mockImplementation((_errandId, person) =>
+      person === 'APPLICANT' ? Promise.resolve(answer('Bostadsbidrag')) : Promise.reject(new HttpException(502, 'SSBTEK svarade inte')),
+    );
+
+    const view = await new ErrandSsbtekService().readPayments('EB-26090036', PERIOD);
+
+    expect(view).toMatchObject({ hasChildren: true, unavailableChildren: ['Alva Testsson'] });
+    expect(view.payments.map(payment => payment.person)).toEqual(['APPLICANT']);
   });
 });

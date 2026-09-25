@@ -14,6 +14,8 @@ const VIEW: SsbtekPaymentsView = {
   to: '2026-09-30',
   hasCoApplicant: false,
   coApplicantUnavailable: false,
+  hasChildren: false,
+  unavailableChildren: [],
   payments: [
     {
       person: APPLICANT,
@@ -143,6 +145,8 @@ describe('SsbtekPayments', () => {
         payments: [],
         hasCoApplicant: false,
         coApplicantUnavailable: false,
+        hasChildren: false,
+        unavailableChildren: [],
       },
     });
 

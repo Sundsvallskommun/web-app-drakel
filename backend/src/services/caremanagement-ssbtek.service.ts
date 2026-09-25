@@ -13,11 +13,14 @@ import { SsbtekPerson } from '@/responses/ssbtek.response';
 class CaremanagementSsbtekService {
   private apiService = new CaremanagementApiService();
 
-  /** Answers 404 when the errand has no household member in that role (e.g. no medsökande). */
-  async readBasis(errandId: string, person: SsbtekPerson, period: SsbtekPeriodQueryDto): Promise<ApiResponse<SsbtekBasis>> {
+  /**
+   * Answers 404 when the errand has no household member in that role (e.g. no medsökande) or no such child. A
+   * child is named by its partyId from the ansökan's children — never by personnummer.
+   */
+  async readBasis(errandId: string, person: SsbtekPerson, period: SsbtekPeriodQueryDto, childPartyId?: string): Promise<ApiResponse<SsbtekBasis>> {
     return this.apiService.get<SsbtekBasis>({
       url: caremanagementUrl('errands', 'financial-assistance', errandId, 'ssbtek'),
-      params: { person, from: period.from, to: period.to },
+      params: { person, childPartyId, from: period.from, to: period.to },
     });
   }
 }

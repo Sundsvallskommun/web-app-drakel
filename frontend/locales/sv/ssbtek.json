@@ -11,6 +11,7 @@
   "loadError": "Uppgifterna från SSBTEK kunde inte hämtas.",
   "empty": "SSBTEK rapporterar inga betalningar under perioden.",
   "coApplicantUnavailable": "Medsökandes uppgifter kunde inte hämtas från SSBTEK. Bara sökandes betalningar visas.",
+  "unavailableChildren": "SSBTEK kunde inte läsas för {{children}}. Deras betalningar visas inte.",
   "noDate": "Utan betalningsdag",
   "columns": {
     "person": "Person",
@@ -36,6 +37,9 @@
   },
   "persons": {
     "APPLICANT": "Sökande",
-    "CO_APPLICANT": "Medsökande"
+    "CO_APPLICANT": "Medsökande",
+    "CHILD": "Barn",
+    "namedChild": "{{name}} (barn)",
+    "unnamedChild": "ett barn"
   }
 }
