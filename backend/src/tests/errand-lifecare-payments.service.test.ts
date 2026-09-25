@@ -1,154 +1,194 @@
-import { LifecarePayeeRaw, LifecarePaymentForCreateRaw, LifecareRegisteredPaymentRaw } from '@interfaces/lifecare-payment.interface';
-import CaremanagementErrandService from '@services/caremanagement-errand.service';
-import CaremanagementEventService from '@services/caremanagement-event.service';
+import CaremanagementApiService from '@services/caremanagement-api.service';
 import ErrandLifecarePaymentsService from '@services/errand-lifecare-payments.service';
-import LifecarePaymentsService from '@services/lifecare-payments.service';
-import { ADDRESS_PAYEE_ID } from '@utils/lifecare-payee';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { caremanagementLifecareUrl } from '@utils/caremanagement-url';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-const accountPayee: LifecarePayeeRaw = {
-  payeeId: 2,
-  payeeName: 'Konto A',
-  personId: '19800101T001',
-  paymentMethod: 14,
-  paymentMethodText: 'Bankgiro via Plusgiro',
-  accountNumber: '11111111',
-  memorialAccountNumber: null,
-  clearing: '',
+import {
+  LifecarePayee,
+  LifecarePaymentOptions,
+  LifecarePaymentStatus,
+  LifecareRegisteredPayment,
+} from '@/data-contracts/caremanagement/data-contracts';
+import { HttpException } from '@/exceptions/HttpException';
+
+const ERRAND_ID = 'errand-1';
+
+const accountPayee: LifecarePayee = {
+  id: 2,
+  label: 'Konto A',
   name: 'Kontoinnehavare A',
+  paymentMethodCode: 14,
+  paymentMethod: 'Bankgiro via Plusgiro',
+  clearing: '',
+  accountNumber: '11111111',
   streetAddress: '',
   careOfAddress: '',
   postalCode: '',
   postalAddress: 'Sundsvall',
-  ocrCheck: false,
-  addressFromPerson: false,
-  updateTimestamp: '2026-09-11',
-  updateSignature: 'handlaggare1',
-  isActive: true,
-  statusText: null,
+  toRegisteredAddress: false,
 };
 
-const underlag: LifecarePaymentForCreateRaw = {
-  payment: { paymentId: 0, susPersonId: '19800101T001' },
-  payees: [
-    { ...accountPayee, payeeId: ADDRESS_PAYEE_ID, payeeName: 'Adress', paymentMethod: 0, paymentMethodText: null, accountNumber: '' },
-    accountPayee,
-    { ...accountPayee, payeeId: 9, isActive: false },
-  ],
-  paymentMethods: [
-    { paymentCode: 14, payment: 'Bankgiro via Plusgiro', inUse: true, localNumberEnabled: false, localNumberMandatory: false },
-    { paymentCode: 21, payment: 'Memorial', inUse: false, localNumberEnabled: false, localNumberMandatory: false },
-  ],
+const paymentOptions: LifecarePaymentOptions = {
+  paymentMethods: [{ code: 14, name: 'Bankgiro via Plusgiro', localNumberEnabled: false, localNumberMandatory: false }],
+  payees: [accountPayee],
+  postings: [{ purpose: 1, text: 'Försörjningsstöd' }],
+  balances: [{ name: 'Försörjningsstöd', approvedAmount: 5000, bookedAmount: 2000, balanceAmount: 3000 }],
+  concernMonths: [{ month: '2026-09', label: 'September 2026' }],
+  proposal: { paymentDate: '2026-09-21', concernedMonth: '2026-09', amount: 3000, payeeId: 2 },
 };
 
-// The insats's utbetalningar in Lifecare: the latest standing one went to Konto A.
-const registered: LifecareRegisteredPaymentRaw[] = [
-  { paymentId: 4, amount: 1, payDate: '2026-09-21', concernedMonth: '202609', accountNumber: '11111111', cancellationDate: '' },
-  { paymentId: 5, amount: 2, payDate: '2026-09-22', concernedMonth: '202609', accountNumber: '22222222', cancellationDate: '2026-09-22' },
-];
+const registeredPayment: LifecareRegisteredPayment = {
+  id: 4,
+  payDate: '2026-09-21',
+  concernedMonth: '2026-09',
+  amount: 3000,
+  paymentMethod: 'Bankgiro via Plusgiro',
+  recipient: 'Kontoinnehavare A',
+  status: 'Utbetald',
+  cancelled: false,
+};
+
+/** careM's answer as the transport hands it over. */
+const answered = <T>(data: T, status = 200) => ({ data, message: 'success', status });
+
+/** careM's 204: nothing there. axios leaves the body empty. */
+const noContent = () => ({ data: '', message: 'success', status: 204 });
 
 describe('ErrandLifecarePaymentsService', () => {
-  beforeEach(() => {
-    vi.spyOn(CaremanagementErrandService.prototype, 'getFinancialAssistanceView').mockResolvedValue({
-      data: { lifecareServiceId: 1 },
-      message: 'success',
-    });
-    vi.spyOn(LifecarePaymentsService.prototype, 'readPaymentForCreate').mockResolvedValue(underlag);
-    vi.spyOn(LifecarePaymentsService.prototype, 'readLatestPayments').mockResolvedValue(registered);
-    vi.spyOn(CaremanagementEventService.prototype, 'reportLifecareAccess').mockResolvedValue();
-  });
-
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('lists the betalsätt in use and the active payees, without the personnummer', async () => {
-    const options = await new ErrandLifecarePaymentsService().paymentOptions('errand-1');
+  describe('paymentOptions', () => {
+    it("reads the options from the errand's careM Lifecare route and passes them on", async () => {
+      const get = vi.spyOn(CaremanagementApiService.prototype, 'get').mockResolvedValue(answered(paymentOptions));
 
-    expect(options.paymentMethods.map(method => method.code)).toEqual([14]);
-    expect(options.payees.map(payee => payee.id)).toEqual([ADDRESS_PAYEE_ID, 2]);
-    expect(options.payees[0]?.toRegisteredAddress).toBe(true);
-    expect(JSON.stringify(options)).not.toContain('19800101T001');
-  });
-
-  it('proposes the next utbetalning from Lifecare alone: its date and month, what is left, the last payee', async () => {
-    const withSaldo: LifecarePaymentForCreateRaw = {
-      ...underlag,
-      payment: { ...underlag.payment, payDate: '2026-09-23' },
-      paymentConcernMonths: [{ concernMonth: '202609', displayMonth: 'September 2026' }],
-      balances: [
-        { serviceId: 1, ownerType: 1, ownerId: 1, paymentType: 1, approvedAmount: 5, bookedAmount: 2, name: 'Ek. Bistånd 3,00 ', balanceAmount: 3 },
-      ],
-    };
-    vi.spyOn(LifecarePaymentsService.prototype, 'readPaymentForCreate').mockResolvedValue(withSaldo);
-
-    const options = await new ErrandLifecarePaymentsService().paymentOptions('errand-1');
-
-    // The makulerad utbetalning to Konto B is newer but no longer stands, so Konto A is proposed.
-    expect(options.proposal).toEqual({ paymentDate: '2026-09-23', concernedMonth: '2026-09', amount: 3, payeeId: 2 });
-    expect(options.concernMonths).toEqual([{ month: '2026-09', label: 'September 2026' }]);
-    expect(options.balances).toEqual([{ name: 'Ek. Bistånd 3,00', approvedAmount: 5, bookedAmount: 2, balanceAmount: 3 }]);
-  });
-
-  it('reads the utbetalning status for the ansökningsmånad from Lifecare', async () => {
-    vi.spyOn(CaremanagementErrandService.prototype, 'getFinancialAssistanceView').mockResolvedValue({
-      data: { lifecareServiceId: 1, data: { periodMonth: 9, periodYear: 2026 } },
-      message: 'success',
+      expect(await new ErrandLifecarePaymentsService().paymentOptions(ERRAND_ID)).toEqual(paymentOptions);
+      expect(get).toHaveBeenCalledWith({ url: caremanagementLifecareUrl(ERRAND_ID, 'payment-options') });
     });
 
-    const status = await new ErrandLifecarePaymentsService().paymentStatus('errand-1');
+    it('fills in what careM left out (null or absent), so the view keeps its required fields', async () => {
+      vi.spyOn(CaremanagementApiService.prototype, 'get').mockResolvedValue(
+        answered({ payees: [{ id: 3, label: 'Adress', toRegisteredAddress: true }], proposal: { paymentDate: null, payeeId: 3 } }),
+      );
 
-    expect(status).toEqual({
-      applicationMonth: '2026-09',
-      effectuated: true,
-      paymentDate: '2026-09-21',
-      amount: 1,
-      status: undefined,
-      unavailable: false,
+      expect(await new ErrandLifecarePaymentsService().paymentOptions(ERRAND_ID)).toEqual({
+        paymentMethods: [],
+        payees: [
+          {
+            id: 3,
+            label: 'Adress',
+            name: '',
+            paymentMethodCode: 0,
+            paymentMethod: '',
+            clearing: '',
+            accountNumber: '',
+            streetAddress: '',
+            careOfAddress: '',
+            postalCode: '',
+            postalAddress: '',
+            toRegisteredAddress: true,
+          },
+        ],
+        postings: [],
+        balances: [],
+        concernMonths: [],
+        proposal: { paymentDate: undefined, concernedMonth: undefined, amount: undefined, payeeId: 3 },
+      });
+    });
+
+    it('is null when careM answers 204', async () => {
+      vi.spyOn(CaremanagementApiService.prototype, 'get').mockResolvedValue(noContent());
+
+      expect(await new ErrandLifecarePaymentsService().paymentOptions(ERRAND_ID)).toBeNull();
+    });
+
+    it("passes careM's refusal on, e.g. an errand without a Lifecare insats", async () => {
+      vi.spyOn(CaremanagementApiService.prototype, 'get').mockRejectedValue(new HttpException(409, 'The errand has no Lifecare insats yet'));
+
+      await expect(new ErrandLifecarePaymentsService().paymentOptions(ERRAND_ID)).rejects.toMatchObject({
+        status: 409,
+        message: 'The errand has no Lifecare insats yet',
+      });
     });
   });
 
-  it('reports the status as unavailable when Lifecare cannot be read', async () => {
-    vi.spyOn(CaremanagementErrandService.prototype, 'getFinancialAssistanceView').mockResolvedValue({
-      data: { lifecareServiceId: 1, data: { periodMonth: 9, periodYear: 2026 } },
-      message: 'success',
-    });
-    vi.spyOn(LifecarePaymentsService.prototype, 'readLatestPayments').mockRejectedValue(new Error('Lifecare could not be reached'));
+  describe('paymentStatus', () => {
+    it("reads the status from the errand's careM Lifecare route", async () => {
+      const status: LifecarePaymentStatus = {
+        applicationMonth: '2026-09',
+        effectuated: true,
+        paymentDate: '2026-09-21',
+        amount: 3000,
+        status: 'Utbetald',
+        unavailable: false,
+      };
+      const get = vi.spyOn(CaremanagementApiService.prototype, 'get').mockResolvedValue(answered(status));
 
-    const status = await new ErrandLifecarePaymentsService().paymentStatus('errand-1');
-
-    expect(status).toEqual({ applicationMonth: '2026-09', effectuated: false, unavailable: true });
-  });
-
-  it('files a new payee under the person Lifecare names for the insats', async () => {
-    const create = vi
-      .spyOn(LifecarePaymentsService.prototype, 'createPayee')
-      .mockResolvedValue({ ...accountPayee, payeeId: 3, payeeName: 'Konto B', accountNumber: '22222222' });
-
-    const created = await new ErrandLifecarePaymentsService().createPayee('errand-1', {
-      name: 'Kontoinnehavare B',
-      paymentMethod: 14,
-      accountNumber: '22222222',
+      expect(await new ErrandLifecarePaymentsService().paymentStatus(ERRAND_ID)).toEqual(status);
+      expect(get).toHaveBeenCalledWith({ url: caremanagementLifecareUrl(ERRAND_ID, 'payment-status') });
     });
 
-    expect(create.mock.calls[0]?.[0]).toMatchObject({ personId: '19800101T001', paymentMethod: 14, accountNumber: '22222222' });
-    expect(created.id).toBe(3);
+    it("leaves out what careM wrote as null — drakel's status has those fields optional", async () => {
+      vi.spyOn(CaremanagementApiService.prototype, 'get').mockResolvedValue(
+        answered({ applicationMonth: '2026-09', effectuated: false, paymentDate: null, amount: null, status: null, unavailable: false }),
+      );
+
+      const status = await new ErrandLifecarePaymentsService().paymentStatus(ERRAND_ID);
+
+      expect(status).toEqual({ applicationMonth: '2026-09', effectuated: false, unavailable: false });
+      expect(status.paymentDate).toBeUndefined();
+      expect(status.amount).toBeUndefined();
+      expect(status.status).toBeUndefined();
+    });
+
+    it('is unavailable, not null, when careM answers 204 — callers such as the section status always get a status', async () => {
+      vi.spyOn(CaremanagementApiService.prototype, 'get').mockResolvedValue(noContent());
+
+      expect(await new ErrandLifecarePaymentsService().paymentStatus(ERRAND_ID)).toEqual({ effectuated: false, unavailable: true });
+    });
   });
 
-  it('returns the existing payee instead of creating the same one twice', async () => {
-    const create = vi.spyOn(LifecarePaymentsService.prototype, 'createPayee');
+  describe('registeredPayments', () => {
+    it("reads the utbetalningar from the errand's careM Lifecare route and passes them on in careM's order", async () => {
+      const older: LifecareRegisteredPayment = { ...registeredPayment, id: 3, payDate: '2026-08-21', concernedMonth: '2026-08', cancelled: true };
+      const get = vi.spyOn(CaremanagementApiService.prototype, 'get').mockResolvedValue(answered([registeredPayment, older]));
 
-    const payee = await new ErrandLifecarePaymentsService().createPayee('errand-1', { name: 'Någon', paymentMethod: 14, accountNumber: '1111-1111' });
+      expect(await new ErrandLifecarePaymentsService().registeredPayments(ERRAND_ID)).toEqual([registeredPayment, older]);
+      expect(get).toHaveBeenCalledWith({ url: caremanagementLifecareUrl(ERRAND_ID, 'payments') });
+    });
 
-    expect(payee.id).toBe(2);
-    expect(create).not.toHaveBeenCalled();
+    it('fills in what careM left out', async () => {
+      vi.spyOn(CaremanagementApiService.prototype, 'get').mockResolvedValue(answered([{ id: 4, payDate: null, amount: null }]));
+
+      expect(await new ErrandLifecarePaymentsService().registeredPayments(ERRAND_ID)).toEqual([
+        { id: 4, payDate: '', concernedMonth: '', amount: 0, paymentMethod: '', recipient: '', status: '', cancelled: false },
+      ]);
+    });
+
+    it('is null when careM answers 204', async () => {
+      vi.spyOn(CaremanagementApiService.prototype, 'get').mockResolvedValue(noContent());
+
+      expect(await new ErrandLifecarePaymentsService().registeredPayments(ERRAND_ID)).toBeNull();
+    });
   });
 
-  it('refuses a betalsätt the insats does not offer', async () => {
-    await expect(
-      new ErrandLifecarePaymentsService().createPayee('errand-1', { name: 'Någon', paymentMethod: 21, accountNumber: '1' }),
-    ).rejects.toMatchObject({
-      status: 400,
+  describe('createPayee', () => {
+    it("posts the new payee as it came to the errand's careM Lifecare route and passes careM's payee on", async () => {
+      const post = vi.spyOn(CaremanagementApiService.prototype, 'post').mockResolvedValue(answered(accountPayee, 201));
+      const newPayee = { name: 'Kontoinnehavare A', payeeName: 'Konto A', paymentMethod: 14, accountNumber: '1111-1111' };
+
+      expect(await new ErrandLifecarePaymentsService().createPayee(ERRAND_ID, newPayee)).toEqual(accountPayee);
+      expect(post).toHaveBeenCalledWith({ url: caremanagementLifecareUrl(ERRAND_ID, 'payees'), data: newPayee });
+    });
+
+    it("passes careM's refusal on", async () => {
+      vi.spyOn(CaremanagementApiService.prototype, 'post').mockRejectedValue(new HttpException(502, 'Lifecare angav ingen person för insatsen'));
+
+      await expect(new ErrandLifecarePaymentsService().createPayee(ERRAND_ID, { name: 'Någon', paymentMethod: 14 })).rejects.toMatchObject({
+        status: 502,
+        message: 'Lifecare angav ingen person för insatsen',
+      });
     });
   });
 });
