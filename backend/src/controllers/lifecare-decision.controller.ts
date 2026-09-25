@@ -1,8 +1,7 @@
-import { RequestWithUser } from '@interfaces/auth.interface';
 import authMiddleware from '@middlewares/auth.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import ErrandLifecareDecisionService from '@services/errand-lifecare-decision.service';
-import { Body, Controller, Get, Param, Put, Req, UseBefore } from 'routing-controllers';
+import { Body, Controller, Get, Param, Put, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
 import { SaveLifecareDecisionDto } from '@/dtos/lifecare-decision.dto';
@@ -13,7 +12,7 @@ import {
   LifecareDecisionTypesApiResponse,
 } from '@/responses/lifecare-decision.response';
 
-/** The errand's beslut, read from, written to and printed by Lifecare. careM keeps only the reference. */
+/** The errand's beslut, read from, written to and printed by Lifecare through careM, which links it to the errand. */
 @Controller()
 export class LifecareDecisionController {
   private decisionService = new ErrandLifecareDecisionService();
@@ -30,8 +29,8 @@ export class LifecareDecisionController {
   @OpenAPI({ summary: "Save the errand's beslut in Lifecare — created the first time, changed after that" })
   @ResponseSchema(LifecareDecisionApiResponse)
   @UseBefore(authMiddleware, validationMiddleware(SaveLifecareDecisionDto, 'body'))
-  async save(@Req() req: RequestWithUser, @Param('errandId') errandId: string, @Body() input: SaveLifecareDecisionDto) {
-    return { data: await this.decisionService.save(errandId, input, req.user.username), message: 'success' };
+  async save(@Param('errandId') errandId: string, @Body() input: SaveLifecareDecisionDto) {
+    return { data: await this.decisionService.save(errandId, input), message: 'success' };
   }
 
   @Get('/errands/:errandId/lifecare-decision/types')

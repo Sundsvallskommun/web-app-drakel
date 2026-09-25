@@ -1,12 +1,15 @@
 import { IsBoolean, IsInt, IsNumber, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 
+import { LifecareDecisionSaveRequest } from '@/data-contracts/caremanagement/data-contracts';
+
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
- * A beslut as the handläggare saves it on the Beslut tab. It is written straight to Lifecare — created
- * the first time, changed after that. Beslutstyp and orsak are Lifecare's own codes, picked from its lists.
+ * A beslut as the handläggare saves it on the Beslut tab. careM writes it straight to Lifecare — created the
+ * first time, changed after that — so it is careM's own save request, passed on as it is. Beslutstyp and orsak
+ * are Lifecare's own codes, picked from its lists.
  */
-export class SaveLifecareDecisionDto {
+export class SaveLifecareDecisionDto implements LifecareDecisionSaveRequest {
   /** Lifecare's beslutstyp code, from the beslutstyper the insats offers. */
   @IsInt()
   decisionCode!: number;
