@@ -1,9 +1,9 @@
 import { IsInt, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 /**
- * A new betalningsmottagare, written straight to Lifecare. The betalsätt is Lifecare's own code, from the
- * payment options it lists for the insats; clearing and account number are filled in as the betalsätt
- * needs them.
+ * A new betalningsmottagare, passed on as it is to careM, which adds it in Lifecare (careM's
+ * `LifecarePayeeRequest`). The betalsätt is Lifecare's own code, from the payment options it lists for the
+ * insats; clearing and account number are filled in as the betalsätt needs them.
  */
 export class CreateLifecarePayeeDto {
   /** The account holder. */

@@ -2,6 +2,8 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import { Type } from 'class-transformer';
 import { IsBoolean, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
+import { LifecarePaymentStatus } from '@/data-contracts/caremanagement/data-contracts';
+
 /** Whether the Lifecare utbetalning for an errand's application month has been effectuated. */
 export class PaymentStatusView {
   /** The application month (yyyy-MM) the status concerns. */
@@ -35,3 +37,14 @@ export class PaymentStatusApiResponse implements ApiResponse<PaymentStatusView> 
   @IsString()
   message!: string;
 }
+
+/** The status as careM answers it, in drakel's shape. */
+export const toPaymentStatusView = (status: LifecarePaymentStatus): PaymentStatusView => ({
+  // careM writes null for what it has not got; drakel's status leaves those fields out.
+  applicationMonth: status.applicationMonth ?? undefined,
+  effectuated: status.effectuated ?? false,
+  paymentDate: status.paymentDate ?? undefined,
+  amount: status.amount ?? undefined,
+  status: status.status ?? undefined,
+  unavailable: status.unavailable ?? false,
+});

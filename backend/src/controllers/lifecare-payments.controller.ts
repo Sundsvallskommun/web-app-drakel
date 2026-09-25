@@ -14,7 +14,7 @@ import { PaymentStatusApiResponse } from '@/responses/payment.response';
 
 /**
  * The utbetalningar on the errand's insats and the betalsätt and betalningsmottagare they can use, read
- * from and written to Lifecare — the register of record for all of them.
+ * from and written to Lifecare — the register of record for all of them — through careM.
  */
 @Controller()
 export class LifecarePaymentsController {
@@ -47,7 +47,11 @@ export class LifecarePaymentsController {
 
   @Post('/errands/:errandId/lifecare-payments')
   @HttpCode(201)
-  @OpenAPI({ summary: "Register an utbetalning on the errand's insats in Lifecare (refused, with the reason, when it cannot be made safely)" })
+  @OpenAPI({
+    summary: "Register an utbetalning on the errand's insats in Lifecare (refused, with the reason, when it cannot be made safely)",
+    description:
+      'linkedToErrand false means the utbetalning IS registered in Lifecare but could not be linked to the errand: it must not be registered again.',
+  })
   @ResponseSchema(LifecarePaymentCreatedApiResponse)
   @UseBefore(authMiddleware, validationMiddleware(PaymentInputDto, 'body'))
   async registerPayment(@Param('errandId') errandId: string, @Body() input: PaymentInputDto) {

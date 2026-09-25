@@ -1,9 +1,9 @@
 import { IsArray, IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 
 /**
- * The utbetalning form's values, registered straight in Lifecare (see buildPaymentCreate). The payee goes
- * as its fields — name, account and address — the way Lifecare's own utbetalning copies them from the
- * chosen betalningsmottagare.
+ * The utbetalning form's values, passed on as they are to careM, which registers them in Lifecare (careM's
+ * `LifecarePaymentRequest`). The payee goes as its fields — name, account and address — the way Lifecare's own
+ * utbetalning copies them from the chosen betalningsmottagare.
  *
  * `paymentMethod` is deliberately an unconstrained string: the value set comes from Lifecare, and it is
  * matched there by name.
