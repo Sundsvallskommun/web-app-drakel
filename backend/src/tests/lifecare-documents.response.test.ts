@@ -1,63 +1,77 @@
 import { describe, expect, it } from 'vitest';
 
+import { LifecareRecord, LifecareRecordCategoryEnum } from '@/data-contracts/caremanagement/data-contracts';
 import {
   applyRecordEdit,
   isEditable,
-  LifecareDocumentsListRaw,
   LifecareEditableRecord,
-  toLifecareRecords,
+  toRecordBodyView,
   toRecordContent,
+  toRecordContentView,
+  toRecordsView,
 } from '@/responses/lifecare-documents.response';
 
-const model = (overrides: Partial<LifecareDocumentsListRaw['documentModels'][number]>): LifecareDocumentsListRaw['documentModels'][number] => ({
-  id: 1,
+/** A journalanteckning as careM lists it. */
+const careMJournalNote: LifecareRecord = {
+  id: '1',
+  category: LifecareRecordCategoryEnum.JOURNAL_NOTE,
   title: 'Journalanteckning',
-  date: '2026-09-22',
-  time: '17:01',
+  dateTime: '2026-09-22T17:01',
   type: 'Journalanteckning',
   ownerTypeText: 'EK Ekonomiskt bistånd',
   responsibleCaseworker: 'RPA_031DEV',
-  updateSignature: 'RPA_031DEV',
-  updateDate: '2026-09-22',
-  protected: true,
+  modifiedBy: 'RPA_031DEV 2026-09-22',
   locked: false,
-  documentType_Name: 'JournalNote',
-  typeCode: 3,
-  ...overrides,
+  protected: true,
+};
+
+describe('toRecordsView', () => {
+  it("passes careM's split through as it is", () => {
+    const records = toRecordsView({ journalNotes: [careMJournalNote], documents: [] });
+
+    expect(records).toEqual({ journalNotes: [careMJournalNote], documents: [] });
+  });
+
+  it('shows a field careM leaves out as empty, and a record without category under the group it came in', () => {
+    const records = toRecordsView({ documents: [{ id: '2' }] });
+
+    expect(records).toEqual({
+      journalNotes: [],
+      documents: [
+        {
+          id: '2',
+          category: 'DOCUMENT',
+          title: '',
+          dateTime: '',
+          type: '',
+          ownerTypeText: '',
+          responsibleCaseworker: undefined,
+          modifiedBy: '',
+          locked: false,
+          protected: false,
+        },
+      ],
+    });
+  });
 });
 
-describe('toLifecareRecords', () => {
-  it('shows type code 3 under Journal, 1 and 13 under Dokument, and no other code on either', () => {
-    const raw: LifecareDocumentsListRaw = {
-      documentModels: [
-        model({ id: 1, typeCode: 3, documentType_Name: 'JournalNote', type: 'Beslut' }),
-        model({ id: 2, typeCode: 1, documentType_Name: 'Pdf', type: 'Inkommen handling' }),
-        model({ id: 3, typeCode: 13, documentType_Name: 'Regular', type: 'Avgifter Brev' }),
-        model({ id: 4, typeCode: 15, documentType_Name: 'Form', type: 'X Exempelblankett I' }),
-        model({ id: 5, typeCode: undefined }),
-      ],
-    };
-
-    const { journalNotes, documents } = toLifecareRecords(raw);
-
-    expect(journalNotes.map(record => record.id)).toEqual(['1']);
-    expect(documents.map(record => record.id)).toEqual(['2', '3']);
+describe('toRecordContentView', () => {
+  it('shows a record careM does not say is editable as read-only', () => {
+    expect(toRecordContentView({ id: '7', content: '<p>Hej</p>' }, 'DOCUMENT')).toEqual({
+      id: '7',
+      category: 'DOCUMENT',
+      title: '',
+      content: '<p>Hej</p>',
+      occurenceDate: '',
+      time: '',
+      editable: false,
+    });
   });
+});
 
-  it('joins the separate date and time into one ISO date-time', () => {
-    const { journalNotes } = toLifecareRecords({ documentModels: [model({ date: '2026-09-22', time: '17:01' })] });
-
-    expect(journalNotes[0]?.dateTime).toBe('2026-09-22T17:01');
-  });
-
-  it('carries the signature and date as the modified-by line', () => {
-    const { journalNotes } = toLifecareRecords({ documentModels: [model({ updateSignature: 'RPA_031DEV', updateDate: '2026-09-22' })] });
-
-    expect(journalNotes[0]?.modifiedBy).toBe('RPA_031DEV 2026-09-22');
-  });
-
-  it('survives a missing payload', () => {
-    expect(toLifecareRecords(undefined)).toEqual({ journalNotes: [], documents: [] });
+describe('toRecordBodyView', () => {
+  it('leaves the content out when Lifecare would not hand it over', () => {
+    expect(toRecordBodyView({ id: '3' })).toEqual({ id: '3', content: undefined });
   });
 });
 

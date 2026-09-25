@@ -1,13 +1,20 @@
 import { IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 
+import {
+  CreateLifecareDocumentRequest,
+  CreateLifecareJournalNoteRequest,
+  UpdateLifecareRecordRequest,
+} from '@/data-contracts/caremanagement/data-contracts';
+
 /**
  * The edits a handläggare makes to a Lifecare journalanteckning or document.
  *
- * Only these three fields are the caller's to change; everything else on the Lifecare object is
- * round-tripped untouched (see {@link LifecareDocumentsService}). The date and time are Lifecare's
- * own field shapes — a plain `YYYY-MM-DD` date and `HH:mm` time, not an ISO offset date-time.
+ * Only these fields are the caller's to change; careM keeps everything else on the Lifecare object as
+ * Lifecare has it. The date and time are Lifecare's own field shapes — a plain `YYYY-MM-DD` date and
+ * `HH:mm` time, not an ISO offset date-time. Passed on to careM as it is, so it is kept to careM's own
+ * request, as are the create DTOs below.
  */
-export class UpdateLifecareRecordDto {
+export class UpdateLifecareRecordDto implements UpdateLifecareRecordRequest {
   /** The record body as HTML, e.g. `<p>…</p>`. */
   @IsString()
   @MaxLength(1048576)
@@ -35,7 +42,7 @@ export class UpdateLifecareRecordDto {
  * A new journalanteckning, written straight to the errand's insats in Lifecare. The note type is
  * Lifecare's own (`noteTypeCode` from the note-types endpoint); the rubrik defaults to its name.
  */
-export class CreateLifecareJournalNoteDto {
+export class CreateLifecareJournalNoteDto implements CreateLifecareJournalNoteRequest {
   /** The note body as HTML. */
   @IsString()
   @IsNotEmpty()
@@ -74,7 +81,7 @@ export class CreateLifecareJournalNoteDto {
  * A new document, written straight to the errand's insats in Lifecare. The document type is Lifecare's
  * own (`documentTypeCode` from the document-types endpoint); the rubrik defaults to its name.
  */
-export class CreateLifecareDocumentDto {
+export class CreateLifecareDocumentDto implements CreateLifecareDocumentRequest {
   /** The document body as HTML. */
   @IsString()
   @IsNotEmpty()

@@ -2,6 +2,8 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsOptional, IsString, ValidateNested } from 'class-validator';
 
+import { LifecareRecord, LifecareRecordBody, LifecareRecordContent, LifecareRecords } from '@/data-contracts/caremanagement/data-contracts';
+
 /**
  * One row of Lifecare's `GetDocumentsListForClient` answer — the fields drakel uses.
  *
@@ -24,7 +26,7 @@ export interface LifecareDocumentModel {
   protected: boolean;
   locked: boolean;
   documentType_Name: string;
-  /** Lifecare's code for the kind of record — which tab a row is shown under (see CATEGORY_BY_TYPE_CODE). */
+  /** Lifecare's code for the kind of record — which tab a row is shown under (careM now makes that split). */
   typeCode?: number;
 }
 
@@ -35,27 +37,6 @@ export interface LifecareDocumentsListRaw {
 
 /** Which side of the split a Lifecare row lands on. */
 export type LifecareRecordCategory = 'JOURNAL_NOTE' | 'DOCUMENT';
-
-/**
- * Which tab a Lifecare row is shown under, by its `typeCode`: 3 under Journal, 1 and 13 under Dokument. A row
- * with any other code is not shown on either.
- *
- * TODO: verksamheten's split as of 2026-09-24. It may need updating once we understand better how Lifecare's
- * type codes work — the codes are not documented, and in the insats's own list (`listDocumentsForService`,
- * capture 2026-09-24) code 1 covered both "Journalanteckning" and "Inkommen handling".
- */
-const CATEGORY_BY_TYPE_CODE: ReadonlyMap<number, LifecareRecordCategory> = new Map([
-  [3, 'JOURNAL_NOTE'],
-  [1, 'DOCUMENT'],
-  [13, 'DOCUMENT'],
-]);
-
-/** The tab a row is shown under, or undefined when it is shown on neither. */
-const categoryOf = (model: LifecareDocumentModel): LifecareRecordCategory | undefined =>
-  model.typeCode === undefined ? undefined : CATEGORY_BY_TYPE_CODE.get(model.typeCode);
-
-/** Rows with no written body: a blankett is built from form fields, a PDF is a file. */
-const NO_TEXT_BODY_TYPES = ['Form', 'Pdf'];
 
 /** A Lifecare record as drakel shows it — a journalanteckning or a document, cleaned up for the UI. */
 export class LifecareRecordView {
@@ -152,13 +133,6 @@ export class LifecareRecordBodiesApiResponse implements ApiResponse<LifecareReco
   @IsString() message!: string;
 }
 
-/** The ids of the rows in one group that carry a written body worth showing. */
-export const textRecordIds = (raw: LifecareDocumentsListRaw | undefined, category: LifecareRecordCategory): string[] =>
-  (raw?.documentModels ?? [])
-    .filter(model => categoryOf(model) === category)
-    .filter(model => !NO_TEXT_BODY_TYPES.includes(model.documentType_Name))
-    .map(model => String(model.id));
-
 const asString = (value: unknown): string => (typeof value === 'string' ? value : '');
 
 /** Builds the view shown when a record is opened, from Lifecare's editable object. */
@@ -212,19 +186,48 @@ export const toLifecareRecord = (model: LifecareDocumentModel, category: Lifecar
 });
 
 /**
- * Splits Lifecare's flat document list into journalanteckningar and documents by type code (see
- * CATEGORY_BY_TYPE_CODE); a row of any other code is left out.
- *
- * The list is one person's whole record across every akt, newest first as Lifecare returns it; the
- * order is kept rather than re-sorted here, and the UI sorts if it wants to.
+ * A record as careM lists it (or answers a create with), in the UI's shape. careM's contract leaves every field
+ * optional; one it leaves out is shown empty, and a record whose category is missing takes the group it came in.
  */
-export const toLifecareRecords = (raw: LifecareDocumentsListRaw | undefined): LifecareRecordsView => {
-  const records = (raw?.documentModels ?? []).flatMap(model => {
-    const category = categoryOf(model);
-    return category ? [toLifecareRecord(model, category)] : [];
-  });
-  return {
-    journalNotes: records.filter(record => record.category === 'JOURNAL_NOTE'),
-    documents: records.filter(record => record.category === 'DOCUMENT'),
-  };
-};
+export const toRecordView = (record: LifecareRecord, category: LifecareRecordCategory): LifecareRecordView => ({
+  id: record.id ?? '',
+  category: record.category ?? category,
+  title: record.title ?? '',
+  dateTime: record.dateTime ?? '',
+  type: record.type ?? '',
+  ownerTypeText: record.ownerTypeText ?? '',
+  // careM may send null for a field it has no value for; drakel leaves such a field out.
+  responsibleCaseworker: record.responsibleCaseworker ?? undefined,
+  modifiedBy: record.modifiedBy ?? '',
+  locked: record.locked ?? false,
+  protected: record.protected ?? false,
+});
+
+/**
+ * careM's split of the applicant's record into journalanteckningar and documents, in the tab's shape. The list is
+ * the person's whole record across every akt, in Lifecare's order; the UI sorts if it wants to.
+ */
+export const toRecordsView = (records: LifecareRecords): LifecareRecordsView => ({
+  journalNotes: (records.journalNotes ?? []).map(record => toRecordView(record, 'JOURNAL_NOTE')),
+  documents: (records.documents ?? []).map(record => toRecordView(record, 'DOCUMENT')),
+});
+
+/**
+ * An opened record as careM answers it, in the UI's shape. A record careM does not say is editable is shown
+ * read-only, so nothing is offered for editing that Lifecare may refuse.
+ */
+export const toRecordContentView = (record: LifecareRecordContent, category: LifecareRecordCategory): LifecareRecordContentView => ({
+  id: record.id ?? '',
+  category: record.category ?? category,
+  title: record.title ?? '',
+  content: record.content ?? '',
+  occurenceDate: record.occurenceDate ?? '',
+  time: record.time ?? '',
+  editable: record.editable ?? false,
+});
+
+/** A record's body as careM answers it; the content stays left out when Lifecare would not hand it over. */
+export const toRecordBodyView = (body: LifecareRecordBody): LifecareRecordBodyView => ({
+  id: body.id ?? '',
+  content: body.content ?? undefined,
+});

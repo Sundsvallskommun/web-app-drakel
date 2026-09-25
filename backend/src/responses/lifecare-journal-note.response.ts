@@ -2,6 +2,7 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsNumber, IsString, ValidateNested } from 'class-validator';
 
+import { LifecareNoteType } from '@/data-contracts/caremanagement/data-contracts';
 import { LifecareEditableRecord } from '@/responses/lifecare-documents.response';
 
 /**
@@ -43,12 +44,15 @@ export class LifecareNoteTypesApiResponse implements ApiResponse<LifecareNoteTyp
   @IsString() message!: string;
 }
 
-/** The active note types, in Lifecare's own order. */
-export const toNoteTypes = (proposal: LifecareNoteProposalRaw): LifecareNoteTypeView[] =>
-  proposal.documentNoteTypes
-    .filter(noteType => noteType.isActive)
-    .sort((first, second) => first.sortOrder - second.sortOrder)
-    .map(noteType => ({ code: noteType.id, name: noteType.name, protectedByDefault: noteType.writeProtectAuto === true }));
+/**
+ * A note type as careM lists it (the active ones, in Lifecare's order), in the form's shape. careM's contract
+ * leaves every field optional; a type careM does not say is skrivskyddad by default is not.
+ */
+export const toNoteTypeView = (noteType: LifecareNoteType): LifecareNoteTypeView => ({
+  code: noteType.code ?? 0,
+  name: noteType.name ?? '',
+  protectedByDefault: noteType.protectedByDefault ?? false,
+});
 
 /** What a handläggare fills in on a new journalanteckning. */
 export interface NewJournalNote {

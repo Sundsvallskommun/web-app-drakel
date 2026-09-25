@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildDocument, LifecareDocumentProposalRaw, toDocumentTypes } from '@/responses/lifecare-document-proposal.response';
+import { buildDocument, LifecareDocumentProposalRaw, toDocumentTypeView } from '@/responses/lifecare-document-proposal.response';
 
 // Shaped after a captured GetDocumentProposalForService answer, trimmed to the fields that matter here.
 const letterType = { documentCode: 1, name: 'EK Brev', sortOrder: 0, isActive: true, isForm: false, canChangeOccurenceDate: true };
@@ -25,12 +25,20 @@ const proposal: LifecareDocumentProposalRaw = {
   },
 };
 
-describe('toDocumentTypes', () => {
-  it('lists the active, non-blankett document types in Lifecare order', () => {
-    expect(toDocumentTypes(proposal)).toEqual([
-      { code: 1, name: 'EK Brev', canChangeOccurenceDate: true, protectedByDefault: false },
-      { code: 4, name: 'EK Utredning', canChangeOccurenceDate: false, protectedByDefault: true },
-    ]);
+describe('toDocumentTypeView', () => {
+  it('passes a document type from careM through as it is', () => {
+    const utredning = { code: 4, name: 'EK Utredning', canChangeOccurenceDate: false, protectedByDefault: true };
+
+    expect(toDocumentTypeView(utredning)).toEqual(utredning);
+  });
+
+  it('keeps the proposed date and no skrivskydd when careM does not say otherwise', () => {
+    expect(toDocumentTypeView({ code: 1, name: 'EK Brev' })).toEqual({
+      code: 1,
+      name: 'EK Brev',
+      canChangeOccurenceDate: false,
+      protectedByDefault: false,
+    });
   });
 });
 

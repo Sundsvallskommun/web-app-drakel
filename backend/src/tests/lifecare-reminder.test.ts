@@ -2,8 +2,6 @@ import { LifecareReminderProposalRaw } from '@interfaces/lifecare-reminder.inter
 import { buildReminderCreate } from '@utils/lifecare-reminder';
 import { describe, expect, it, vi } from 'vitest';
 
-import { toReminderOptions, toReminders } from '@/responses/lifecare-reminder.response';
-
 // Today is pinned so the dates below stay in the future however long the tests live.
 vi.mock('@utils/swedish-today', () => ({ swedishToday: () => '2026-09-23' }));
 
@@ -151,54 +149,5 @@ describe('buildReminderCreate', () => {
   it('refuses a priority or status Lifecare does not offer', () => {
     expect(buildReminderCreate(proposal(), { ...newReminder, priority: 9 }, person).writable).toBe(false);
     expect(buildReminderCreate(proposal(), { ...newReminder, status: 9 }, person).writable).toBe(false);
-  });
-});
-
-describe('toReminders', () => {
-  it('lists the bevakningar soonest first, without the personnummer', () => {
-    const reminder = {
-      reminderId: 38,
-      reminderDate: '2026-09-23',
-      status: 3,
-      statusText: 'Ej påbörjad',
-      priority: 2,
-      priorityText: 'Normal',
-      personId: '199001122390',
-      personName: 'Jeppson, Test',
-      caseworkerId: 'TEST',
-      caseworkerName: 'Test Handläggare',
-      type: 2,
-      typeText: 'Manuell bevakning beslut',
-      text: 'test av text',
-      objectType: 7012,
-      objectTypeName: 'IFO.Beslut',
-    };
-
-    const reminders = toReminders({ reminders: [{ ...reminder, reminderId: 39, reminderDate: '2026-10-01' }, reminder] });
-
-    expect(reminders.map(view => view.id)).toEqual([38, 39]);
-    expect(reminders[0]).toEqual({
-      id: 38,
-      date: '2026-09-23',
-      status: 'Ej påbörjad',
-      statusCode: 3,
-      priority: 'Normal',
-      priorityCode: 2,
-      type: 'Manuell bevakning beslut',
-      objectType: 'IFO.Beslut',
-      text: 'test av text',
-      caseworker: 'Test Handläggare',
-      caseworkerId: 'TEST',
-    });
-  });
-});
-
-describe('toReminderOptions', () => {
-  it('offers the priorities and statuses Lifecare lists, and proposes its defaults', () => {
-    const options = toReminderOptions(proposal());
-
-    expect(options.priorities.map(choice => choice.text)).toEqual(['Hög', 'Normal']);
-    expect(options.defaultPriority).toBe(2);
-    expect(options.defaultStatus).toBe(3);
   });
 });
