@@ -49,6 +49,8 @@ export const caremanagementError = (error: unknown): HttpException => {
     switch (error.response?.status) {
       case 400:
         return new HttpException(400, detail ?? 'Bad request from caremanagement');
+      case 403:
+        return new HttpException(403, detail ?? 'caremanagement is not allowed to do this');
       case 404:
         return new HttpException(404, 'Not found');
       case 409:

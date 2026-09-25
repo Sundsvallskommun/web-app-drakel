@@ -73,4 +73,10 @@ describe('caremanagementError', () => {
     );
     expect(caremanagementError(upstreamError(400, {})).message).toBe('Bad request from caremanagement');
   });
+  it('carries a 403 through with the reason careM gave, e.g. that its Lifecare account may not read this', () => {
+    const mapped = caremanagementError(upstreamError(403, { detail: 'The Lifecare account is not allowed to read this' }));
+
+    expect(mapped.status).toBe(403);
+    expect(mapped.message).toBe('The Lifecare account is not allowed to read this');
+  });
 });
