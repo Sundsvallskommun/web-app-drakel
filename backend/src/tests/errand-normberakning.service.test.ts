@@ -44,14 +44,6 @@ describe('ErrandNormberakningService', () => {
     });
   });
 
-  it("tells finalize whether the household has an own size, from careM's rows", async () => {
-    vi.spyOn(CaremanagementApiService.prototype, 'get').mockResolvedValue(careMAnswers(lifecareDraft));
-    expect(await new ErrandNormberakningService().householdSizeChanged('errand-1')).toBe(true);
-
-    vi.spyOn(CaremanagementApiService.prototype, 'get').mockResolvedValue(careMAnswers({ source: NormberakningDraftSourceEnum.CAREM }));
-    expect(await new ErrandNormberakningService().householdSizeChanged('errand-1')).toBe(false);
-  });
-
   it('reads the type catalogues from careM, a catalogue careM leaves out being empty', async () => {
     const get = vi
       .spyOn(CaremanagementApiService.prototype, 'get')

@@ -42,7 +42,6 @@
     "memorystore": "^1.6.7",
     "morgan": "^1.10.1",
     "passport": "^0.7.0",
-    "playwright": "^1.63.0",
     "qs": "^6.15.2",
     "reflect-metadata": "^0.2.2",
     "routing-controllers": "^0.11.3",

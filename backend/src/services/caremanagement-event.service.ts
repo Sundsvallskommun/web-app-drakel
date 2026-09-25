@@ -2,7 +2,7 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 
-import { ActorEventLog, ErrandEventEntry, LifecareAccess } from '@/data-contracts/caremanagement/data-contracts';
+import { ActorEventLog, ErrandEventEntry } from '@/data-contracts/caremanagement/data-contracts';
 
 /** Optional server-side filters for the errand event log. */
 interface ErrandEventFilters {
@@ -44,15 +44,6 @@ class CaremanagementEventService {
       url: caremanagementUrl('events'),
       params: { actor, action: filters.action, source: filters.source, from: filters.from, to: filters.to },
     });
-  }
-
-  /**
-   * Records reads and writes the BFF made in Lifecare itself on the errand's behalf. Each one becomes a
-   * LIFECARE row in the errand's access log, attributed to the handläggare in X-Sent-By — careM cannot see
-   * these calls, so without the report the log would not show who saw or wrote what.
-   */
-  async reportLifecareAccess(errandId: string, accesses: LifecareAccess[]): Promise<void> {
-    await this.apiService.post<null>({ url: caremanagementUrl('errands', errandId, 'events', 'lifecare'), data: accesses });
   }
 }
 

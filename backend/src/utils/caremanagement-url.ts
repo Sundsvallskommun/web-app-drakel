@@ -26,7 +26,6 @@ export const caremanagementMunicipalityUrl = (...parts: string[]): string => gat
  *
  * @param errandId The errand (careM id)
  * @param parts Path segments after `/lifecare`, e.g. `'decision', 'pdf'`
- * @public TODO(lifecare-via-carem): drop the tag once the Lifecare passthrough services use it.
  */
 export const caremanagementLifecareUrl = (errandId: string, ...parts: string[]): string =>
   caremanagementUrl('errands', 'financial-assistance', errandId, 'lifecare', ...parts);

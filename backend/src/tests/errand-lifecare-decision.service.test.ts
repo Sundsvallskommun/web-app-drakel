@@ -1,5 +1,4 @@
 import CaremanagementApiService from '@services/caremanagement-api.service';
-import CaremanagementDecisionService from '@services/caremanagement-decision.service';
 import ErrandLifecareDecisionService from '@services/errand-lifecare-decision.service';
 import { caremanagementLifecareUrl, caremanagementUrl } from '@utils/caremanagement-url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -134,14 +133,5 @@ describe('ErrandLifecareDecisionService', () => {
     vi.spyOn(CaremanagementApiService.prototype, 'get').mockRejectedValue(new HttpException(404, 'Not found'));
 
     await expect(new ErrandLifecareDecisionService().pdf('errand-1')).rejects.toMatchObject({ status: 404 });
-  });
-
-  it('links careM’s finalized decision to the Lifecare beslut', async () => {
-    const report = vi.spyOn(CaremanagementDecisionService.prototype, 'reportLifecareResult').mockResolvedValue();
-
-    const registration = await new ErrandLifecareDecisionService().receiptFinalized('errand-1', 'decision-1', 98);
-
-    expect(report).toHaveBeenCalledWith('errand-1', 'decision-1', { outcome: 'WRITTEN', lifecareId: '98' });
-    expect(registration).toEqual({ decisionId: 'decision-1', outcome: 'REGISTERED', lifecareId: '98' });
   });
 });

@@ -28,15 +28,6 @@ class ErrandNormberakningService {
     return toNormberakningDraft(response.data);
   }
 
-  /**
-   * Whether the household has an own size (Annan hushållsstorlek) — what finalize tells careM as
-   * `householdSizeChanged`. careM reads it from wherever the rows are kept.
-   */
-  async householdSizeChanged(errandId: string): Promise<boolean> {
-    const draft = await this.readDraft(errandId);
-    return draft.hasCustomHouseholdSize ?? false;
-  }
-
   /** The norms and the inkomst- and kostnadstyper a new row can have: Lifecare's once the beräkning is there, careM's before. */
   async types(errandId: string): Promise<NormberakningTypes> {
     const response = await this.apiService.get<CaremanagementNormberakningTypes>({ url: normberakningUrl(errandId, 'types') });

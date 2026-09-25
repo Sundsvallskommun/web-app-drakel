@@ -1,5 +1,4 @@
 import { IndexController } from '@controllers/index.controller';
-import { warmUpLifecareSession } from '@services/lifecare-api.service';
 import validateEnv from '@utils/validateEnv';
 
 import App from '@/app';
@@ -78,7 +77,3 @@ const app = new App([
 ]);
 
 app.listen();
-
-// Sign in to Lifecare now rather than on the first request. Fire-and-forget: a Lifecare outage at
-// boot must not stop the BFF starting, and a good persisted session makes this a no-op.
-warmUpLifecareSession();
