@@ -1,8 +1,12 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
-import { LifecareDecisionReasonRaw, LifecareDecisionTypeRaw, LifecareSavedDecisionRaw } from '@interfaces/lifecare-decision.interface';
-import { outcomeFor } from '@utils/lifecare-decision';
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+
+import {
+  LifecareDecisionReason as CaremanagementDecisionReason,
+  LifecareDecisionType as CaremanagementDecisionType,
+  LifecareDecisionView as CaremanagementDecisionView,
+} from '@/data-contracts/caremanagement/data-contracts';
 
 /** The errand's beslut as it stands in Lifecare — what the Beslut tab shows and finalize sends to careM. */
 export class LifecareDecisionView {
@@ -69,41 +73,40 @@ export class LifecareDecisionPdfApiResponse implements ApiResponse<string> {
   @IsString() message!: string;
 }
 
-const asText = (value: unknown): string | undefined => (typeof value === 'string' && value !== '' ? value : undefined);
+/*
+ * careM answers with the same fields, but its contract leaves every one of them optional, even those careM always
+ * fills (see careM's LifecareDecisionMapper) and the Beslut tab relies on. The mappers below keep the BFF's promise
+ * by giving a missing one careM's own "none" value: an empty text, 0, or false.
+ */
 
-/** The registered beslut, cleaned up for the Beslut tab and finalize. The personnummer is left behind. */
-export const toLifecareDecisionView = (saved: LifecareSavedDecisionRaw): LifecareDecisionView => ({
-  id: saved.decisionId,
-  decisionCode: saved.decisionCode,
-  outcome: outcomeFor(saved.decisionType),
-  date: asText(saved.date) ?? '',
-  periodFrom: asText(saved.fromDate),
-  periodTo: asText(saved.toDate),
-  amount: typeof saved.amount === 'number' ? saved.amount : 0,
-  // Lifecare sends 0 (or "") for no orsak.
-  reasonCode: typeof saved.reasonCode === 'number' && saved.reasonCode > 0 ? saved.reasonCode : undefined,
-  reason: asText(saved.reason),
-  message: asText(saved.message),
-  locked: saved.lockedMessage,
-  decisionMaker: asText(saved.decisionMakerName) ?? asText(saved.decisionMaker) ?? '',
+/** careM's beslut as the Beslut tab and finalize take it. */
+export const toLifecareDecisionView = (decision: CaremanagementDecisionView): LifecareDecisionView => ({
+  id: decision.id ?? 0,
+  decisionCode: decision.decisionCode ?? 0,
+  outcome: decision.outcome,
+  date: decision.date ?? '',
+  periodFrom: decision.periodFrom,
+  periodTo: decision.periodTo,
+  amount: decision.amount ?? 0,
+  reasonCode: decision.reasonCode,
+  reason: decision.reason,
+  message: decision.message,
+  locked: decision.locked ?? false,
+  decisionMaker: decision.decisionMaker ?? '',
 });
 
-/** The active beslutstyper the insats offers, in Lifecare's order. */
-export const toDecisionTypes = (types: LifecareDecisionTypeRaw[]): LifecareDecisionTypeView[] =>
-  types
-    .filter(type => type.isActive)
-    .map(type => ({
-      code: type.code,
-      name: type.name,
-      outcome: outcomeFor(type.type),
-      requiresFromDate: type.requiresFromDate,
-      requiresToDate: type.requiresToDate,
-    }));
+/** A beslutstyp from careM as the Beslut tab lists it. */
+export const toDecisionTypeView = (type: CaremanagementDecisionType): LifecareDecisionTypeView => ({
+  code: type.code ?? 0,
+  name: type.name ?? '',
+  outcome: type.outcome,
+  requiresFromDate: type.requiresFromDate ?? false,
+  requiresToDate: type.requiresToDate ?? false,
+});
 
-/** The choosable orsaker in Lifecare's catalogue — its leaves — each with the heading it sits under. */
-export const toDecisionReasons = (catalogue: LifecareDecisionReasonRaw[], header = ''): LifecareDecisionReasonView[] =>
-  catalogue.flatMap(node => {
-    const nodeHeader = node.header || header;
-    const own = node.reasonCode !== null ? [{ code: node.reasonCode, name: node.name, header: nodeHeader }] : [];
-    return [...own, ...toDecisionReasons(node.options, node.reasonCode === null ? node.name : nodeHeader)];
-  });
+/** An orsak from careM as the Beslut tab lists it. */
+export const toDecisionReasonView = (reason: CaremanagementDecisionReason): LifecareDecisionReasonView => ({
+  code: reason.code ?? 0,
+  name: reason.name ?? '',
+  header: reason.header ?? '',
+});
