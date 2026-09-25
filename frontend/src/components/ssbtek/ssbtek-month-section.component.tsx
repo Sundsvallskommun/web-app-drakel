@@ -6,7 +6,15 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { FC, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { SsbtekPaymentColumns } from './ssbtek-payment-columns.component';
 import { SsbtekPaymentRow } from './ssbtek-payment-row.component';
+
+/**
+ * The table as in Figma: 12 px corners, and a fixed layout so the columns take the widths Figma gives them — kept
+ * from being squeezed below what the dates and amounts need, where the table scrolls sideways instead.
+ */
+const TABLE_LAYOUT =
+  'rounded-12 [&_.sk-table-wrapper-inside]:rounded-12 [&_table]:table-fixed [&_table]:min-w-[128rem]';
 
 /**
  * One month's payments: the month as a heading that opens and closes its table. Open to begin with. With
@@ -22,23 +30,24 @@ export const SsbtekMonthSection: FC<{ label: string; payments: SsbtekPayment[]; 
   const tableId = useId();
 
   return (
-    <section className="flex flex-col gap-16">
+    <section className="flex flex-col gap-24">
       <button
         type="button"
         aria-expanded={open}
         aria-controls={tableId}
-        className="flex items-center gap-12 self-start"
+        className="flex items-center gap-26 self-start"
         onClick={() => {
           setOpen((wasOpen) => !wasOpen);
         }}
       >
         {open ?
-          <ChevronUp className="w-20 h-20" aria-hidden />
-        : <ChevronDown className="w-20 h-20" aria-hidden />}
+          <ChevronUp className="w-24 h-24" aria-hidden />
+        : <ChevronDown className="w-24 h-24" aria-hidden />}
         <h2 className="text-h4-sm m-0">{label}</h2>
       </button>
       {open ?
-        <Table id={tableId} dense background>
+        <Table id={tableId} wrappingBorder className={TABLE_LAYOUT}>
+          <SsbtekPaymentColumns showPerson={showPerson} />
           <Table.Header>
             <Table.HeaderColumn>
               <span className="sr-only">{t('parts.column')}</span>

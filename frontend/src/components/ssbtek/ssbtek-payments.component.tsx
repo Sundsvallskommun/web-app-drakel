@@ -32,14 +32,16 @@ export const SsbtekPayments: FC<{ errandId: string }> = ({ errandId }) => {
 
   const months = groupByPaymentMonth(view.payments);
   return (
-    <div className="flex flex-col gap-32">
-      <p className="text-small text-dark-secondary m-0">
-        {t('period', { period: formatDateRange(view.from, view.to, t) })}
-      </p>
-      {view.coApplicantUnavailable ?
-        <p className="text-warning-surface-primary m-0">{t('coApplicantUnavailable')}</p>
-      : null}
-      <SsbtekUnavailableChildren names={view.unavailableChildren} />
+    <div className="flex flex-col gap-40">
+      <div className="flex flex-col gap-8">
+        <p className="text-small text-dark-secondary m-0">
+          {t('period', { period: formatDateRange(view.from, view.to, t) })}
+        </p>
+        {view.coApplicantUnavailable ?
+          <p className="text-warning-surface-primary m-0">{t('coApplicantUnavailable')}</p>
+        : null}
+        <SsbtekUnavailableChildren names={view.unavailableChildren} />
+      </div>
       {months.length === 0 ?
         <p className="m-0">{t('empty')}</p>
       : months.map(({ month, payments }) => (

@@ -103,6 +103,24 @@ describe('SsbtekPayments', () => {
     expect(within(screen.getByRole('row', { name: /Bostadsbidrag/ })).getByText('Sökande')).toBeInTheDocument();
   });
 
+  it.each([
+    { hasCoApplicant: false, columns: 9 },
+    { hasCoApplicant: true, columns: 10 },
+  ])(
+    'gives each of the $columns columns a width, so the months line up (medsökande: $hasCoApplicant)',
+    async ({ hasCoApplicant, columns }) => {
+      vi.mocked(getSsbtekPayments).mockResolvedValue({ data: { ...VIEW, hasCoApplicant } });
+
+      render(<SsbtekPayments errandId="EB-26090036" />);
+
+      expect(await screen.findByRole('heading', { name: 'September 2026' })).toBeInTheDocument();
+      screen.getAllByRole('table').forEach((table) => {
+        expect(within(table).getAllByRole('columnheader')).toHaveLength(columns);
+        expect(table.querySelectorAll('col')).toHaveLength(columns);
+      });
+    }
+  );
+
   it('says so when SSBTEK could not be read for the medsökande', async () => {
     vi.mocked(getSsbtekPayments).mockResolvedValue({
       data: { ...VIEW, hasCoApplicant: true, coApplicantUnavailable: true },
