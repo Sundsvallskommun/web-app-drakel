@@ -51,4 +51,38 @@ describe('caremanagementError', () => {
     expect(caremanagementError(upstreamError(418)).status).toBe(500);
     expect(caremanagementError(new Error('socket hang up')).status).toBe(500);
   });
+  it('reads the reason from an error body that came as bytes, as on a PDF read', () => {
+    const body = Buffer.from(JSON.stringify({ detail: 'Lifecare svarade inte' }), 'utf-8');
+    const arrayBuffer = body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength);
+
+    const mapped = caremanagementError(upstreamError(502, arrayBuffer));
+
+    expect(mapped.status).toBe(502);
+    expect(mapped.message).toBe('Lifecare svarade inte');
+  });
+
+  it("carries careM's reason through for a 422 and a 503", () => {
+    expect(caremanagementError(upstreamError(422, { detail: 'Personer läggs till i hushållet i Lifecare.' })).message).toBe(
+      'Personer läggs till i hushållet i Lifecare.',
+    );
+    expect(caremanagementError(upstreamError(503, { detail: 'Lifecare är inte tillgängligt' })).status).toBe(503);
+  });
+  it('carries a 400 through with the reason careM gave, and a generic one without', () => {
+    expect(caremanagementError(upstreamError(400, { detail: 'Spara beslutet innan du beslutar och betalar ut.' })).message).toBe(
+      'Spara beslutet innan du beslutar och betalar ut.',
+    );
+    expect(caremanagementError(upstreamError(400, {})).message).toBe('Bad request from caremanagement');
+  });
+  it('carries a 403 through with the reason careM gave, e.g. that its Lifecare account may not read this', () => {
+    const mapped = caremanagementError(upstreamError(403, { detail: 'The Lifecare account is not allowed to read this' }));
+
+    expect(mapped.status).toBe(403);
+    expect(mapped.message).toBe('The Lifecare account is not allowed to read this');
+  });
+  it("carries a 404 through with careM's reason, and 'Not found' without one", () => {
+    expect(caremanagementError(upstreamError(404, { detail: 'Bevakningen finns inte på insatsen i Lifecare' })).message).toBe(
+      'Bevakningen finns inte på insatsen i Lifecare',
+    );
+    expect(caremanagementError(upstreamError(404)).message).toBe('Not found');
+  });
 });

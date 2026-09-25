@@ -2,7 +2,7 @@ import { IsOptional, IsString, Matches } from 'class-validator';
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-/** A new jobbstimulans period for the sökande, written straight to the insats in Lifecare. */
+/** A new jobbstimulans period for the sökande, written to the insats in Lifecare through careM. */
 export class AddJobStimulusPeriodDto {
   /** Period start, `YYYY-MM-DD`. */
   @IsString()

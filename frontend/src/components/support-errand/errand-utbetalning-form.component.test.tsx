@@ -81,7 +81,7 @@ describe('ErrandUtbetalningForm', () => {
     vi.mocked(getErrandStakeholders).mockReset();
     vi.mocked(getErrandStakeholders).mockResolvedValue({ data: [APPLICANT] });
     vi.mocked(registerLifecarePayment).mockReset();
-    vi.mocked(registerLifecarePayment).mockResolvedValue({ data: { lifecareId: '4' } });
+    vi.mocked(registerLifecarePayment).mockResolvedValue({ data: { lifecareId: '4', linkedToErrand: true } });
   });
 
   it('prefills date, month, amount and payee from the Lifecare proposal', async () => {
@@ -225,6 +225,23 @@ describe('ErrandUtbetalningForm', () => {
     );
     expect(onSaved).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('status')).toHaveTextContent('id 4');
+  });
+
+  it('warns not to register it again when the utbetalning is in Lifecare but careM could not link it to the errand', async () => {
+    vi.mocked(registerLifecarePayment).mockResolvedValue({ data: { lifecareId: '4', linkedToErrand: false } });
+    const onSaved = vi.fn();
+    renderForm({ onSaved });
+    await waitFor(() => {
+      expect(screen.getByLabelText(/^Belopp/)).toHaveValue('8450,00');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Spara utbetalning i Lifecare' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Utbetalningen är registrerad i Lifecare (id 4) men kunde inte kopplas till ärendet. Registrera den inte igen.'
+    );
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(onSaved).toHaveBeenCalledTimes(1);
   });
 
   it("shows why the utbetalning was not registered, in the BFF's or Lifecare's words", async () => {

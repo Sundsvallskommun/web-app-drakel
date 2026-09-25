@@ -29,69 +29,14 @@ export const CLIENT_KEY = env.CLIENT_KEY ?? '';
 export const CLIENT_SECRET = env.CLIENT_SECRET ?? '';
 export const BASE_URL_PREFIX = env.BASE_URL_PREFIX ?? '';
 export const MUNICIPALITY_ID = env.MUNICIPALITY_ID ?? '';
-export const CAREMANAGEMENT_BASE_URL = env.CAREMANAGEMENT_BASE_URL ?? '';
+// caremanagement, Templating and Active Directory are all reached through the WSO2 gateway (API_BASE_URL) —
+// see APIS. The namespace scopes every caremanagement errand route.
 export const CAREMANAGEMENT_NAMESPACE = env.CAREMANAGEMENT_NAMESPACE ?? '';
-// The Sundsvall Templating service (document/phrase templates). Reached directly, no auth.
-export const TEMPLATING_BASE_URL = env.TEMPLATING_BASE_URL ?? '';
-// The Active Directory service (handläggare roster). Reached directly, no auth. Optional — the
-// administrator list degrades to empty when unset, so it never blocks BFF startup.
-export const ACTIVE_DIRECTORY_BASE_URL = env.ACTIVE_DIRECTORY_BASE_URL ?? '';
+// Optional: a caremanagement host to call directly (e.g. the Dokploy instance), with no gateway token. Unset means
+// caremanagement is reached through the gateway like the rest.
+export const CAREMANAGEMENT_BASE_URL = env.CAREMANAGEMENT_BASE_URL ?? '';
+// The Active Directory domain the handläggare roster is read from.
 export const ACTIVE_DIRECTORY_DOMAIN = env.ACTIVE_DIRECTORY_DOMAIN ?? 'personal';
-// --- Lifecare (read directly on its own host, with a session of its own) ---
-// All optional, and deliberately absent from validateEnv: an unset LIFECARE_BASE_URL means the
-// integration is simply not wired in this environment, which fails the calls that need it rather
-// than blocking BFF startup for everyone else.
-export const LIFECARE_BASE_URL = env.LIFECARE_BASE_URL ?? '';
-// The configuration the identity portal normally picks off the query string on a first visit.
-// Defaults match the Sundsvall handläggare flow (?domain=..&Actor=..&IDPMethod=saml).
-export const LIFECARE_DOMAIN = env.LIFECARE_DOMAIN ?? '';
-export const LIFECARE_ACTOR = env.LIFECARE_ACTOR ?? 'Actor_Professional';
-export const LIFECARE_IDP_METHOD = env.LIFECARE_IDP_METHOD ?? 'saml';
-export const LIFECARE_FEDERATION_PROFILE = env.LIFECARE_FEDERATION_PROFILE ?? '';
-// The internal CA that issued Lifecare's and the identity provider's certificates, as PEM. Node
-// trusts neither out of the box — see lifecareAgent. Double-quote it so dotenv turns the \n into
-// real newlines, the same way SAML_IDP_PUBLIC_CERT is carried.
-export const LIFECARE_CA_CERT = env.LIFECARE_CA_CERT ?? '';
-// Skips verifying Lifecare's certificate instead of trusting its CA. Gets past the handshake
-// without the cert, at the cost of no longer knowing who is on the other end — of a connection
-// carrying the integration account's password and personal data. Scoped to Lifecare only, never a
-// process-wide NODE_TLS_REJECT_UNAUTHORIZED. Development stopgap; use LIFECARE_CA_CERT for real.
-export const LIFECARE_INSECURE_TLS = env.LIFECARE_INSECURE_TLS === 'true';
-// The integration account drakel signs in to Lifecare as. Setting LIFECARE_USERNAME is what
-// switches the BFF from the pasted-session scaffolding to signing itself in — see
-// ServiceAccountLifecareSession. Treat the password like CLIENT_SECRET: env only, never committed.
-export const LIFECARE_USERNAME = env.LIFECARE_USERNAME ?? '';
-// One password, mixing letters and digits. On the browser sign-in the letters are typed into the
-// field and the digits are clicked on the scrambled keypad — see BrowserLifecareSession.
-export const LIFECARE_PASSWORD = env.LIFECARE_PASSWORD ?? '';
-// Signs in by driving a headless browser instead of replaying the flow over HTTP — see
-// BrowserLifecareSession. The HTTP flow handles MobilityGuard's web login on its own, so this is a
-// fallback for an identity provider that changes under us. Costs a browser and seconds per sign-in.
-export const LIFECARE_BROWSER_SIGN_IN = env.LIFECARE_BROWSER_SIGN_IN === 'true';
-// Runs the sign-in browser visibly instead of headless, for watching the flow while developing.
-// Slowed down a little so the clicks are followable. Leave off in every real environment.
-export const LIFECARE_BROWSER_HEADED = env.LIFECARE_BROWSER_HEADED === 'true';
-// How long a Lifecare session is reused before it is proactively re-established. A proxy for
-// Lifecare's own inactivity timeout, which we cannot see; the transport still re-signs-in reactively
-// if Lifecare drops the session sooner. Defaults to 20 minutes; a non-numeric value falls back too.
-export const LIFECARE_SESSION_TTL_MINUTES = Number(env.LIFECARE_SESSION_TTL_MINUTES) || 20;
-// Development-only escape hatch: the identity number to read the Lifecare record for, regardless of
-// the errand's applicant. Lets the tab be tested against a known Lifecare test person whose reserve
-// number the Citizen API cannot produce. Ignored outside development.
-export const LIFECARE_CLIENT_ID_OVERRIDE = env.LIFECARE_CLIENT_ID_OVERRIDE ?? '';
-// Development scaffolding only — a session copied out of devtools, see PastedLifecareSession.
-// Holds a live session belonging to a real user, so it never leaves .env.development.local.
-export const LIFECARE_SESSION_COOKIE = env.LIFECARE_SESSION_COOKIE ?? '';
-// Test environments only: the beslutsfattare a beslut is registered in Lifecare under, instead of the
-// handläggare's own account. Lifecare's test environment knows no real handläggare as beslutsfattare, so
-// a beslut cannot be tested end to end without it. Never set in production: there the beslut must name
-// the handläggare, and a handläggare Lifecare does not know stops the beslut rather than falling back.
-export const LIFECARE_TEST_DECISION_MAKER = env.LIFECARE_TEST_DECISION_MAKER ?? '';
-// The Lifecare print template a beslut is rendered as PDF with — for the preview and for what is sent to
-// the sökande. The same template serves every beslut.
-export const LIFECARE_DECISION_PRINT_TEMPLATE_ID = env.LIFECARE_DECISION_PRINT_TEMPLATE_ID ?? '885bfb68-c97b-47c0-921d-ef00caaa2423';
-// The Lifecare print template a normberäkning is rendered as PDF with — the same template serves every beräkning.
-export const LIFECARE_CALCULATION_PRINT_TEMPLATE_ID = env.LIFECARE_CALCULATION_PRINT_TEMPLATE_ID ?? '7936e9ec-e32a-40cf-9dea-d95b16e021f0';
 // Messaging sender config for the beslut sent as a brev. Optional —
 // the send fails gracefully if unset, so a missing value never blocks BFF startup.
 export const MESSAGING_DEPARTMENT = env.MESSAGING_DEPARTMENT ?? '';

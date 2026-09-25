@@ -7,7 +7,7 @@ import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 import { SaveLifecareCalculationDto } from '@/dtos/lifecare-calculation.dto';
 import { LifecareCalculationApiResponse, LifecareCalculationPdfApiResponse } from '@/responses/lifecare-calculation.response';
 
-/** The errand's normberäkning in Lifecare: read back, and saved from careM's draft. careM keeps only the reference. */
+/** The errand's normberäkning in Lifecare, through careM: read back, printed, and saved from careM's draft. */
 @Controller()
 export class LifecareCalculationController {
   private calculationService = new ErrandLifecareCalculationService();
@@ -17,7 +17,7 @@ export class LifecareCalculationController {
   @ResponseSchema(LifecareCalculationApiResponse)
   @UseBefore(authMiddleware)
   async read(@Param('errandId') errandId: string) {
-    return { data: (await this.calculationService.read(errandId)) ?? null, message: 'success' };
+    return { data: await this.calculationService.read(errandId), message: 'success' };
   }
 
   @Get('/errands/:errandId/lifecare-calculation/pdf')
@@ -25,8 +25,7 @@ export class LifecareCalculationController {
   @ResponseSchema(LifecareCalculationPdfApiResponse)
   @UseBefore(authMiddleware)
   async pdf(@Param('errandId') errandId: string) {
-    const pdf = await this.calculationService.pdf(errandId);
-    return { data: pdf.toString('base64'), message: 'success' };
+    return { data: await this.calculationService.pdf(errandId), message: 'success' };
   }
 
   @Post('/errands/:errandId/lifecare-calculation')

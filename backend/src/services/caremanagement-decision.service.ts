@@ -2,13 +2,7 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 
-import {
-  Decision,
-  DecisionLifecareResult,
-  DecisionProposal,
-  FinalizeRequest,
-  FinalizeResponse,
-} from '@/data-contracts/caremanagement/data-contracts';
+import { Decision, DecisionProposal, FinalizeRequest, FinalizeResponse } from '@/data-contracts/caremanagement/data-contracts';
 
 /**
  * Owns the decisions sub-resource of an errand (the beslut audit trail) plus the beslutsalternativ
@@ -32,18 +26,10 @@ class CaremanagementDecisionService {
   }
 
   /**
-   * Tells careM what happened when the beslut was written to Lifecare. WRITTEN and ALREADY_EXISTS store
-   * Lifecare's id on the beslut; FAILED needs Lifecare's own reason, shown to the handläggare as it came.
-   */
-  async reportLifecareResult(errandId: string, decisionId: string, result: DecisionLifecareResult): Promise<void> {
-    await this.apiService.post<null>({ url: caremanagementUrl('errands', errandId, 'decisions', decisionId, 'lifecare-result'), data: result });
-  }
-
-  /**
-   * "Besluta och utbetala": records the PAYMENT decision with its orsak, period and amount, creates the
-   * payment rows, queues the Lifecare write-backs and resumes the process (which sets GRANTED/REJECTED).
-   * Sends nothing to the applicant — the caller does that through the echoed channels. A second finalize,
-   * the wrong status or unapproved sections are a 409.
+   * "Besluta och utbetala": careM reads the beslut saved in Lifecare (when the request names none), records it as
+   * the PAYMENT decision, links it to the Lifecare beslut — reported back as `lifecareDecision` — and resumes the
+   * process (which sets GRANTED/REJECTED). Sends nothing to the applicant — the caller does that through the
+   * echoed channels. A beslut that cannot be finalized is a 400, a second finalize or the wrong status a 409.
    */
   async finalize(errandId: string, request: FinalizeRequest): Promise<ApiResponse<FinalizeResponse>> {
     return this.apiService.post<FinalizeResponse>({

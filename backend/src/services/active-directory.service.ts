@@ -1,6 +1,8 @@
+import { gatewayAuthorization } from '@services/api-token.service';
+import { gatewayUrl } from '@utils/gateway-url';
 import axios from 'axios';
 
-import { ACTIVE_DIRECTORY_BASE_URL, ACTIVE_DIRECTORY_DOMAIN, MUNICIPALITY_ID } from '@/config';
+import { ACTIVE_DIRECTORY_DOMAIN, MUNICIPALITY_ID } from '@/config';
 
 /** A user object returned by the AD object-search (OUChildren). */
 interface AdUser {
@@ -14,16 +16,15 @@ interface AdUser {
   domain?: string;
 }
 
-/**
- * Reads the handläggare roster from the Active Directory object-search. Reached directly (no gateway, no
- * auth), like caremanagement/templating; the host comes from ACTIVE_DIRECTORY_BASE_URL.
- */
+/** Reads the handläggare roster from the Active Directory object-search, through the WSO2 gateway. */
 class ActiveDirectoryService {
   /** All "user" objects in the configured domain (the object-name/class filters are accepted but ignored). */
   async searchUsers(): Promise<AdUser[]> {
-    const base = ACTIVE_DIRECTORY_BASE_URL.replace(/\/+$/, '');
-    const url = `${base}/${MUNICIPALITY_ID}/search/${ACTIVE_DIRECTORY_DOMAIN}`;
-    const res = await axios.get<AdUser[]>(url, { params: { objectName: '*', objectClass: 'user' } });
+    const url = gatewayUrl('activedirectory', MUNICIPALITY_ID, 'search', ACTIVE_DIRECTORY_DOMAIN);
+    const res = await axios.get<AdUser[]>(url, {
+      params: { objectName: '*', objectClass: 'user' },
+      headers: await gatewayAuthorization(),
+    });
     return Array.isArray(res.data) ? res.data : [];
   }
 }

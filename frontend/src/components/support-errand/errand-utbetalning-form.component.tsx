@@ -1,7 +1,12 @@
 'use client';
 
 import { FormField } from '@components/common/form-field.component';
-import { LifecarePaymentOptionsView, PaymentInputDto, Stakeholder } from '@data-contracts/backend/data-contracts';
+import {
+  LifecarePaymentCreated,
+  LifecarePaymentOptionsView,
+  PaymentInputDto,
+  Stakeholder,
+} from '@data-contracts/backend/data-contracts';
 import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
 import { registerLifecarePayment } from '@services/lifecare-payment-service';
 import { Button, Checkbox, DatePicker, FormControl, FormLabel, Input, Select } from '@sk-web-gui/react';
@@ -205,7 +210,8 @@ export const ErrandUtbetalningForm: FC<{
   const { payees, paymentMethods, postings } = options;
   const [saving, setSaving] = useState<boolean>(false);
   const [saveError, setSaveError] = useState<string>();
-  const [savedId, setSavedId] = useState<string>();
+  // The utbetalning just registered: its Lifecare id, and whether careM could link it to the errand.
+  const [saved, setSaved] = useState<LifecarePaymentCreated>();
 
   const { register, control, handleSubmit, reset, setValue } = useForm<UtbetalningFormValues>({
     defaultValues: EMPTY_FORM_VALUES,
@@ -254,14 +260,14 @@ export const ErrandUtbetalningForm: FC<{
   const submit = handleSubmit(async (values) => {
     setSaving(true);
     setSaveError(undefined);
-    setSavedId(undefined);
+    setSaved(undefined);
     const result = await registerLifecarePayment(errandId, toPaymentInput(values));
     setSaving(false);
     if (result.error || !result.data) {
       setSaveError(result.message ?? t('payment.form.saveError'));
       return;
     }
-    setSavedId(result.data.lifecareId);
+    setSaved(result.data);
     onSaved?.();
   });
 
@@ -427,9 +433,15 @@ export const ErrandUtbetalningForm: FC<{
           {saveError}
         </p>
       : null}
-      {savedId ?
+      {/* Registered in Lifecare but not linked to the errand: registering it again would pay twice. */}
+      {saved && !saved.linkedToErrand ?
+        <p className="m-0 text-warning-surface-primary" role="alert">
+          {t('payment.form.savedNotLinked', { id: saved.lifecareId })}
+        </p>
+      : null}
+      {saved?.linkedToErrand ?
         <p className="m-0 text-success-surface-primary" role="status">
-          {t('payment.form.saved', { id: savedId })}
+          {t('payment.form.saved', { id: saved.lifecareId })}
         </p>
       : null}
     </form>

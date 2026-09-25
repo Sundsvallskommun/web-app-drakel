@@ -1,9 +1,16 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
-import { LifecarePayeeRaw, LifecarePaymentForCreateRaw, LifecarePaymentMethodRaw } from '@interfaces/lifecare-payment.interface';
-import { ADDRESS_PAYEE_ID } from '@utils/lifecare-payee';
-import { LifecarePaymentProposal, toMonth } from '@utils/lifecare-payment-proposal';
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+
+import {
+  LifecarePayee,
+  LifecarePaymentBalance,
+  LifecarePaymentConcernMonth,
+  LifecarePaymentMethod,
+  LifecarePaymentOptions,
+  LifecarePaymentPosting,
+  LifecarePaymentProposal,
+} from '@/data-contracts/caremanagement/data-contracts';
 
 /** A betalsätt the insats offers, as Lifecare lists it. */
 export class LifecarePaymentMethodView {
@@ -91,41 +98,63 @@ export class LifecarePayeeApiResponse implements ApiResponse<LifecarePayeeView> 
   @IsString() message!: string;
 }
 
-const toMethodView = (method: LifecarePaymentMethodRaw): LifecarePaymentMethodView => ({
-  code: method.paymentCode,
-  name: method.payment,
-  localNumberEnabled: method.localNumberEnabled,
-  localNumberMandatory: method.localNumberMandatory,
+// careM answers with the same field names as the views above, but declares every field optional (and writes null
+// for what it has not got). The mappers below keep drakel's contract: required fields are filled in, optional
+// ones are left out rather than null.
+
+const toMethodView = (method: LifecarePaymentMethod): LifecarePaymentMethodView => ({
+  code: method.code ?? 0,
+  name: method.name ?? '',
+  localNumberEnabled: method.localNumberEnabled ?? false,
+  localNumberMandatory: method.localNumberMandatory ?? false,
 });
 
-/** A Lifecare payee row as the UI shows it; the personnummer on the row is left behind. */
-export const toPayeeView = (payee: LifecarePayeeRaw, methods: LifecarePaymentMethodRaw[] = []): LifecarePayeeView => ({
-  id: payee.payeeId,
-  label: payee.payeeName ?? payee.name ?? '',
+const toPostingView = (posting: LifecarePaymentPosting): LifecarePostingView => ({
+  purpose: posting.purpose ?? 0,
+  text: posting.text ?? '',
+});
+
+const toBalanceView = (balance: LifecarePaymentBalance): LifecareBalanceView => ({
+  name: balance.name ?? '',
+  approvedAmount: balance.approvedAmount ?? 0,
+  bookedAmount: balance.bookedAmount ?? 0,
+  balanceAmount: balance.balanceAmount ?? 0,
+});
+
+const toConcernMonthView = (month: LifecarePaymentConcernMonth): LifecareConcernMonthView => ({
+  month: month.month ?? '',
+  label: month.label ?? '',
+});
+
+const toProposalView = (proposal: LifecarePaymentProposal | undefined): LifecarePaymentProposalView => ({
+  paymentDate: proposal?.paymentDate ?? undefined,
+  concernedMonth: proposal?.concernedMonth ?? undefined,
+  amount: proposal?.amount ?? undefined,
+  payeeId: proposal?.payeeId ?? undefined,
+});
+
+/** A betalningsmottagare as careM answers it, in drakel's shape. */
+export const toPayeeView = (payee: LifecarePayee): LifecarePayeeView => ({
+  id: payee.id ?? 0,
+  label: payee.label ?? '',
   name: payee.name ?? '',
-  paymentMethodCode: payee.paymentMethod,
-  // The "Adress" entry has no betalsätt text of its own; the list of betalsätt names the code when it can.
-  paymentMethod: payee.paymentMethodText ?? methods.find(method => method.paymentCode === payee.paymentMethod)?.payment ?? '',
+  paymentMethodCode: payee.paymentMethodCode ?? 0,
+  paymentMethod: payee.paymentMethod ?? '',
   clearing: payee.clearing ?? '',
   accountNumber: payee.accountNumber ?? '',
   streetAddress: payee.streetAddress ?? '',
   careOfAddress: payee.careOfAddress ?? '',
   postalCode: payee.postalCode ?? '',
   postalAddress: payee.postalAddress ?? '',
-  toRegisteredAddress: payee.payeeId === ADDRESS_PAYEE_ID,
+  toRegisteredAddress: payee.toRegisteredAddress ?? false,
 });
 
-/** Everything the utbetalning form needs, out of Lifecare's underlag for a new utbetalning. */
-export const toPaymentOptions = (raw: LifecarePaymentForCreateRaw, proposal: LifecarePaymentProposal): LifecarePaymentOptionsView => ({
-  paymentMethods: raw.paymentMethods.filter(method => method.inUse).map(toMethodView),
-  payees: raw.payees.filter(payee => payee.isActive).map(payee => toPayeeView(payee, raw.paymentMethods)),
-  postings: (raw.payment.postings ?? []).map(posting => ({ purpose: posting.purpose, text: posting.purposeText ?? String(posting.purpose) })),
-  balances: (raw.balances ?? []).map(balance => ({
-    name: balance.name.trim(),
-    approvedAmount: balance.approvedAmount,
-    bookedAmount: balance.bookedAmount,
-    balanceAmount: balance.balanceAmount,
-  })),
-  concernMonths: (raw.paymentConcernMonths ?? []).map(month => ({ month: toMonth(month.concernMonth), label: month.displayMonth })),
-  proposal,
+/** Everything the utbetalning form needs, as careM answers it, in drakel's shape. */
+export const toPaymentOptionsView = (options: LifecarePaymentOptions): LifecarePaymentOptionsView => ({
+  paymentMethods: (options.paymentMethods ?? []).map(toMethodView),
+  payees: (options.payees ?? []).map(toPayeeView),
+  postings: (options.postings ?? []).map(toPostingView),
+  balances: (options.balances ?? []).map(toBalanceView),
+  concernMonths: (options.concernMonths ?? []).map(toConcernMonthView),
+  proposal: toProposalView(options.proposal),
 });

@@ -27,7 +27,7 @@ export class FinalizeController {
   @Post('/errands/:errandId/finalize')
   @OpenAPI({
     summary:
-      'Skicka beräkning och beslut: finalize the errand in caremanagement from the saved beslut, then send the message with the chosen attachments',
+      'Skicka beräkning och beslut: finalize the errand in caremanagement, which records the beslut saved in Lifecare, then send the message with the chosen attachments',
     requestBody: {
       content: {
         'multipart/form-data': {

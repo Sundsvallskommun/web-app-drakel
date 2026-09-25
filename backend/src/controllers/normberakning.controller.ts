@@ -1,17 +1,17 @@
 import authMiddleware from '@middlewares/auth.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
-import { NormSection } from '@services/caremanagement-normberakning.service';
-import ErrandNormberakningService from '@services/errand-normberakning.service';
+import ErrandNormberakningService, { NormSection } from '@services/errand-normberakning.service';
 import ErrandPreviousCalculationService from '@services/errand-previous-calculation.service';
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
+import { AddNormberakningRowParamsSectionEnum } from '@/data-contracts/caremanagement/data-contracts';
 import { NormHeaderInputDto, NormRowInputDto } from '@/dtos/normberakning.dto';
 import { HttpException } from '@/exceptions/HttpException';
 import { NormberakningDraftApiResponse, NormberakningTypesApiResponse } from '@/responses/normberakning.response';
 import { PreviousCalculationApiResponse } from '@/responses/previous-calculation.response';
 
-const NORM_SECTIONS: readonly string[] = ['persons', 'incomes', 'expenses'];
+const NORM_SECTIONS: readonly string[] = Object.values(AddNormberakningRowParamsSectionEnum);
 
 /** Validates the section path segment so we never forward an unknown section to caremanagement. */
 const toSection = (section: string): NormSection => {
@@ -22,9 +22,9 @@ const toSection = (section: string): NormSection => {
 };
 
 /**
- * The Normberäkning tab's rows (persons · incomes · expenses) for a financial-assistance errand: careM's draft
- * until the beräkning is first saved in Lifecare, Lifecare's beräkning after that (see ErrandNormberakningService).
- * Each section is edited one row at a time; the frontend reads the draft again for the recounted sums.
+ * The Normberäkning tab's rows (persons · incomes · expenses) for a financial-assistance errand, through careM:
+ * careM's draft until the beräkning is first saved in Lifecare, Lifecare's beräkning after that — careM decides.
+ * Each section is edited one row at a time; the frontend reads the rows again for the recounted sums.
  */
 @Controller()
 export class NormberakningController {
@@ -56,7 +56,7 @@ export class NormberakningController {
   }
 
   @Patch('/errands/:errandId/normberakning/draft/header')
-  @OpenAPI({ summary: 'Edit the draft normberäkning header (norm, dates, household size); careM draft only' })
+  @OpenAPI({ summary: 'Edit the normberäkning header: norm, dates and household size in the careM draft; norm and household size in Lifecare' })
   @UseBefore(authMiddleware, validationMiddleware(NormHeaderInputDto, 'body'))
   async updateHeader(@Param('errandId') errandId: string, @Body() input: NormHeaderInputDto) {
     await this.normberakning.updateHeader(errandId, input);
@@ -85,7 +85,7 @@ export class NormberakningController {
   }
 
   @Delete('/errands/:errandId/normberakning/draft/:section/:rowId')
-  @OpenAPI({ summary: 'Remove a normberäkning row (a soft delete in the careM draft)' })
+  @OpenAPI({ summary: 'Remove a normberäkning row (a soft delete in the careM draft, dropped in Lifecare)' })
   @UseBefore(authMiddleware)
   async deleteRow(@Param('errandId') errandId: string, @Param('section') section: string, @Param('rowId') rowId: string) {
     await this.normberakning.deleteRow(errandId, toSection(section), rowId);

@@ -14,7 +14,7 @@ const ownFile = { buffer: Buffer.from('%PDF-own'), originalname: 'hyresavi.pdf',
 describe('DecisionNotificationService.send', () => {
   beforeEach(() => {
     vi.spyOn(ErrandLifecareDecisionService.prototype, 'pdf').mockResolvedValue(Buffer.from('%PDF-beslut'));
-    vi.spyOn(ErrandLifecareCalculationService.prototype, 'pdf').mockResolvedValue(Buffer.from('%PDF-berakning'));
+    vi.spyOn(ErrandLifecareCalculationService.prototype, 'pdf').mockResolvedValue(Buffer.from('%PDF-berakning').toString('base64'));
     vi.spyOn(CaremanagementErrandService.prototype, 'getErrand').mockResolvedValue({ data: { errandNumber: 'EB-26090039' }, message: 'success' });
     vi.spyOn(CaremanagementStakeholderService.prototype, 'readStakeholders').mockResolvedValue({
       data: [{ role: 'APPLICANT', externalId: 'applicant-party' }],

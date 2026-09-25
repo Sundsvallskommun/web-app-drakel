@@ -54,7 +54,10 @@ class DecisionNotificationService {
     await this.attachmentService.createAttachment(errandId, decisionFile, DECISION_DOCUMENT_TYPE);
     return [
       ...(input.includeDecision ? [decisionFile] : []),
-      ...(calculation ? [{ buffer: calculation, originalname: `normberakning-${errandNumber}.pdf`, mimetype: PDF_MIME_TYPE }] : []),
+      // The beräkning's PDF comes back base64-encoded, as the Normberäkning tab shows it.
+      ...(calculation
+        ? [{ buffer: Buffer.from(calculation, 'base64'), originalname: `normberakning-${errandNumber}.pdf`, mimetype: PDF_MIME_TYPE }]
+        : []),
       ...files,
     ];
   }

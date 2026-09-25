@@ -8,6 +8,22 @@ interface ProblemDetail {
 }
 
 /**
+ * The problem's `detail`. A binary read (e.g. a PDF, read as an ArrayBuffer) gets its error body as bytes too,
+ * so those are decoded before the detail can be read.
+ */
+const detailOf = (body: unknown): string | undefined => {
+  if (body instanceof ArrayBuffer || Buffer.isBuffer(body)) {
+    try {
+      const decoded = Buffer.from(body as ArrayBuffer).toString('utf-8');
+      return (JSON.parse(decoded) as ProblemDetail).detail;
+    } catch {
+      return undefined;
+    }
+  }
+  return (body as ProblemDetail | undefined)?.detail;
+};
+
+/**
  * Maps a failed caremanagement call onto the HttpException drakel returns to the frontend.
  *
  * Shared by every caremanagement service so the same upstream status always surfaces the same way
@@ -19,23 +35,34 @@ interface ProblemDetail {
  * "No personal identity number could be resolved for a person on the calculation", say. Replacing that
  * with a generic message would leave the handläggare with a failure and nothing to act on.
  *
+ * A 400, 404 and 422 are carried through too: on the Lifecare routes caremanagement words its refusals for the
+ * handläggare ("Spara beslutet innan du beslutar och betalar ut."). A 400 without a detail (e.g. a constraint
+ * violation) falls back to a generic sentence.
+ *
  * A 409 is carried through the same way: it means the errand is not in a state that allows the action
  * (finalize answers it for "wrong status, sections not approved or already finalized"), and the detail
  * says which of those it was.
  */
 export const caremanagementError = (error: unknown): HttpException => {
-  if (axios.isAxiosError<ProblemDetail>(error)) {
+  if (axios.isAxiosError(error)) {
+    const detail = detailOf(error.response?.data);
     switch (error.response?.status) {
       case 400:
-        return new HttpException(400, 'Bad request from caremanagement');
+        return new HttpException(400, detail ?? 'Bad request from caremanagement');
+      case 403:
+        return new HttpException(403, detail ?? 'caremanagement is not allowed to do this');
       case 404:
-        return new HttpException(404, 'Not found');
+        return new HttpException(404, detail ?? 'Not found');
       case 409:
-        return new HttpException(409, error.response.data?.detail ?? 'The errand is not in a state that allows this');
+        return new HttpException(409, detail ?? 'The errand is not in a state that allows this');
       case 413:
         return new HttpException(413, 'Uploaded file is too large');
+      case 422:
+        return new HttpException(422, detail ?? 'caremanagement could not do this for the errand');
       case 502:
-        return new HttpException(502, error.response.data?.detail ?? 'A system behind caremanagement refused the request');
+        return new HttpException(502, detail ?? 'A system behind caremanagement refused the request');
+      case 503:
+        return new HttpException(503, detail ?? 'A system behind caremanagement is not available');
       default:
         break;
     }

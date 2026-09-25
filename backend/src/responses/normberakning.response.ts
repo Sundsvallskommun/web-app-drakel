@@ -2,6 +2,12 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
+import {
+  NormberakningDraft as CaremanagementNormberakningDraft,
+  NormberakningNormRow as CaremanagementNormberakningNormRow,
+  NormberakningTypes as CaremanagementNormberakningTypes,
+} from '@/data-contracts/caremanagement/data-contracts';
+
 /**
  * The normberäkning draft mirrors the Lifecare FC "Beräkning" view: one income row per type (with an
  * applicant (S) and co-applicant (M) side), expenses split into EXPENSE / SPECIAL_EXPENSE buckets, the
@@ -155,3 +161,24 @@ export class NormberakningDraftApiResponse implements ApiResponse<NormberakningD
   @IsString()
   message!: string;
 }
+
+/**
+ * careM's normintervall as the Normintervall list's options. careM's contract marks the id and the name optional
+ * where the option requires both; a row without them could not be chosen, so it is left out.
+ */
+const toNormRowOptions = (normRows: CaremanagementNormberakningNormRow[] | undefined): NormRowOption[] | undefined =>
+  normRows?.flatMap(normRow => (normRow.id !== undefined && normRow.name !== undefined ? [{ id: normRow.id, name: normRow.name }] : []));
+
+/** careM's Normberäkning rows as drakel's — the same fields; only the normintervall options need their id and name. */
+export const toNormberakningDraft = (draft: CaremanagementNormberakningDraft): NormberakningDraft => ({
+  ...draft,
+  normRows: toNormRowOptions(draft.normRows),
+});
+
+/** careM's type catalogues as drakel's, where every catalogue is a list — empty when careM has none. */
+export const toNormberakningTypes = (types: CaremanagementNormberakningTypes): NormberakningTypes => ({
+  norms: types.norms ?? [],
+  incomeTypes: types.incomeTypes ?? [],
+  costTypes: types.costTypes ?? [],
+  livingCostTypes: types.livingCostTypes ?? [],
+});

@@ -1,46 +1,21 @@
-import { HttpException } from '@exceptions/HttpException';
+import { CommunicationChannels, FinalizeRequest } from '@/data-contracts/caremanagement/data-contracts';
+import { FinalizeErrandDto } from '@/dtos/finalize.dto';
 
-import { CommunicationChannels, FinalizeDecisionOutcomeEnum, FinalizeRequest } from '@/data-contracts/caremanagement/data-contracts';
-import { LifecareDecisionView } from '@/responses/lifecare-decision.response';
-
-const toOutcome = (value?: string): FinalizeDecisionOutcomeEnum | undefined =>
-  Object.values(FinalizeDecisionOutcomeEnum).find(outcome => outcome === value);
-
-const carriesAmount = (outcome: FinalizeDecisionOutcomeEnum): boolean => outcome !== FinalizeDecisionOutcomeEnum.AVSLAG;
-
-interface FinalizeRequestParts {
-  /** The errand's beslut as it stands in Lifecare. */
-  beslut: LifecareDecisionView | undefined;
-  communication: CommunicationChannels;
-  householdSizeChanged: boolean;
-}
+// careM has no meddelande channel: the meddelande goes into the errand's own conversation, which careM already
+// holds. Digital brevlåda is not offered.
+const toCommunicationChannels = (input: FinalizeErrandDto): CommunicationChannels => ({
+  minaSidor: !!input.minaSidor,
+  digitalMailbox: false,
+  letter: !!input.brev,
+});
 
 /**
- * Builds the finalize payload from the beslut as it stands in Lifecare (outcome, period, amount, orsak and
- * beslutsmeddelande). No utbetalningar go with it: the Utbetalning tab registers them in Lifecare directly,
- * and careM finds a bifall's utbetalning there itself. The checks here are the ones caremanagement would otherwise answer with a bare 400,
- * phrased so the handläggare knows what to do.
+ * careM's finalize request: the channels the handläggare chose and whether the household size was changed.
+ * It carries no decision — careM then reads the beslut the errand is linked to in Lifecare itself (outcome,
+ * orsak, period, amount and beslutsmeddelande), and no utbetalningar: the Utbetalning tab registers them in
+ * Lifecare directly.
  */
-export const buildFinalizeRequest = ({ beslut, communication, householdSizeChanged }: FinalizeRequestParts): FinalizeRequest => {
-  if (!beslut) {
-    throw new HttpException(400, 'Spara beslutet innan du beslutar och betalar ut.');
-  }
-  const outcome = toOutcome(beslut.outcome);
-  if (!outcome) {
-    throw new HttpException(400, 'Beslutet i Lifecare har en beslutstyp som inte går att verkställa från Drakel.');
-  }
-  const grants = carriesAmount(outcome);
-
-  return {
-    decision: {
-      outcome,
-      reason: beslut.reason,
-      periodFrom: beslut.periodFrom,
-      periodTo: beslut.periodTo,
-      amount: grants ? beslut.amount : 0,
-      decisionMessage: beslut.message,
-    },
-    communication,
-    householdSizeChanged,
-  };
-};
+export const buildFinalizeRequest = (input: FinalizeErrandDto, householdSizeChanged: boolean): FinalizeRequest => ({
+  communication: toCommunicationChannels(input),
+  householdSizeChanged,
+});

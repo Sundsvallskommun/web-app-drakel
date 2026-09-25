@@ -16,12 +16,12 @@ export enum Direction {
 }
 
 export interface Problem {
+  title?: string;
+  detail?: string;
   /** @format uri */
   instance?: string;
   /** @format uri */
   type?: string;
-  title?: string;
-  detail?: string;
   /** @format int32 */
   status?: number;
 }
@@ -33,10 +33,10 @@ export interface ConstraintViolationProblem {
   status?: number;
   violations?: Violation[];
   title?: string;
-  /** @format uri */
-  instance?: string;
   detail?: string;
   causeAsProblem?: ThrowableProblem;
+  /** @format uri */
+  instance?: string;
 }
 
 export interface ThrowableProblem {
@@ -3594,14 +3594,6 @@ export interface LifecareDecisionType {
   requiresToDate?: boolean;
 }
 
-/** A household child named on the application: the partyId the beredning tags the child's SSBTEK incomes with, and the personal number SSBTEK is read with. */
-export interface HouseholdChild {
-  /** The child's partyId, as on the errand's children */
-  partyId?: string;
-  /** The child's personal number (12 characters, may contain letters); null when it could not be resolved */
-  personId?: string;
-}
-
 /** The errand number and the household's personal numbers. Fetched per process run so the personal numbers never become process variables; every read is recorded in the errand's event log. */
 export interface HouseholdIdentifiers {
   /** The errand's human-readable number — what a person searches for in Draken */
@@ -3612,6 +3604,14 @@ export interface HouseholdIdentifiers {
   coApplicantPersonId?: string;
   /** The household children named on the application that have a partyId; empty when there are none */
   children?: HouseholdChild[];
+}
+
+/** A household child named on the application: the partyId the beredning tags the child's SSBTEK incomes with, and the personal number SSBTEK is read with. */
+export interface HouseholdChild {
+  /** The child's partyId, as on the errand's children */
+  partyId?: string;
+  /** The child's personal number (12 characters, may contain letters); null when it could not be resolved */
+  personId?: string;
 }
 
 /** Self-describing snapshot of the form as it was rendered and answered. */

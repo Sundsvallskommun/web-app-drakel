@@ -18,13 +18,23 @@ export const APIS = [
     name: 'templating',
     version: '2.1',
   },
+  {
+    // caremanagement — the errands, and (through its /lifecare routes) everything drakel does in Lifecare.
+    // Its contract is generated from its own source, see swagger-typescript-api.ts.
+    name: 'caremanagement',
+    version: '1.0',
+  },
+  {
+    // Active Directory — the handläggare roster. Runtime only: the roster's shape is typed by hand (AdUser).
+    name: 'activedirectory',
+    version: '2.0',
+  },
 ] as const;
 
-// NOTE: caremanagement is intentionally NOT in APIS. Runtime calls are built by caremanagementUrl,
-// while contract generation has its own explicit source in swagger-typescript-api.ts. In test that
-// source can point at the real caremanagement OpenAPI via WSO2 instead of the Dokploy instance.
+// Every upstream API is reached through the WSO2 gateway (API_BASE_URL), with the OAuth2 client-credentials
+// token from ApiTokenService — build its URLs with gatewayUrl.
 
-type ApiName = (typeof APIS)[number]['name'];
+export type ApiName = (typeof APIS)[number]['name'];
 
 export const getApiBase = (name: ApiName) => {
   const api = APIS.find(api => api.name === name);

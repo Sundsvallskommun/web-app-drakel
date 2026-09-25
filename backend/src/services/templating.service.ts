@@ -1,3 +1,4 @@
+import { gatewayAuthorization } from '@services/api-token.service';
 import { caremanagementError } from '@utils/caremanagement-error';
 import { templatingUrl } from '@utils/templating-url';
 import axios from 'axios';
@@ -41,7 +42,7 @@ class TemplatingService {
   /** All templates for the municipality (content excluded). */
   async listTemplates(): Promise<TemplateSummary[]> {
     try {
-      const res = await axios.get<TemplateSummary[]>(templatingUrl('templates'));
+      const res = await axios.get<TemplateSummary[]>(templatingUrl('templates'), { headers: await gatewayAuthorization() });
       return res.data ?? [];
     } catch (error) {
       throw caremanagementError(error);
@@ -51,7 +52,7 @@ class TemplatingService {
   /** The latest version of a template by identifier, including its BASE64 content. */
   async getTemplate(identifier: string): Promise<DetailedTemplate> {
     try {
-      const res = await axios.get<DetailedTemplate>(templatingUrl('templates', identifier));
+      const res = await axios.get<DetailedTemplate>(templatingUrl('templates', identifier), { headers: await gatewayAuthorization() });
       return res.data;
     } catch (error) {
       throw caremanagementError(error);
@@ -64,14 +65,18 @@ class TemplatingService {
    */
   async storeTemplate(input: TemplateInput): Promise<void> {
     try {
-      await axios.post(templatingUrl('templates'), {
-        identifier: input.identifier,
-        name: input.name,
-        description: input.description,
-        content: Buffer.from(input.content, 'utf-8').toString('base64'),
-        metadata: input.metadata,
-        versionIncrement: 'MINOR',
-      });
+      await axios.post(
+        templatingUrl('templates'),
+        {
+          identifier: input.identifier,
+          name: input.name,
+          description: input.description,
+          content: Buffer.from(input.content, 'utf-8').toString('base64'),
+          metadata: input.metadata,
+          versionIncrement: 'MINOR',
+        },
+        { headers: await gatewayAuthorization() },
+      );
     } catch (error) {
       throw caremanagementError(error);
     }
@@ -80,7 +85,7 @@ class TemplatingService {
   /** Deletes a template and every one of its versions. */
   async deleteTemplate(identifier: string): Promise<void> {
     try {
-      await axios.delete(templatingUrl('templates', identifier));
+      await axios.delete(templatingUrl('templates', identifier), { headers: await gatewayAuthorization() });
     } catch (error) {
       throw caremanagementError(error);
     }
@@ -89,10 +94,14 @@ class TemplatingService {
   /** Renders provided HTML to a PDF (render/direct/pdf). Returns the PDF as a BASE64-encoded string. */
   async renderHtmlToPdf(html: string): Promise<string> {
     try {
-      const res = await axios.post<{ output?: string }>(templatingUrl('render', 'direct', 'pdf'), {
-        content: Buffer.from(html, 'utf-8').toString('base64'),
-        parameters: {},
-      });
+      const res = await axios.post<{ output?: string }>(
+        templatingUrl('render', 'direct', 'pdf'),
+        {
+          content: Buffer.from(html, 'utf-8').toString('base64'),
+          parameters: {},
+        },
+        { headers: await gatewayAuthorization() },
+      );
       return res.data.output ?? '';
     } catch (error) {
       throw caremanagementError(error);

@@ -55,41 +55,6 @@ class CaremanagementErrandService {
     });
   }
 
-  /**
-   * Points the errand at its beslut in Lifecare. Only the reference is kept in careM — the beslut itself
-   * lives in Lifecare. careM leaves every field the patch does not name as it was.
-   */
-  async setLifecareDecisionId(errandId: string, lifecareDecisionId: number): Promise<void> {
-    await this.apiService.patch<unknown>({
-      url: caremanagementUrl('errands', 'financial-assistance', errandId, 'data'),
-      data: { lifecareDecisionId },
-    });
-  }
-
-  /** Points the errand at its normberäkning in Lifecare — only the reference; the beräkning lives in Lifecare. */
-  async setLifecareCalculationId(errandId: string, lifecareCalculationId: number): Promise<void> {
-    await this.apiService.patch<unknown>({
-      url: caremanagementUrl('errands', 'financial-assistance', errandId, 'data'),
-      data: { lifecareCalculationId },
-    });
-  }
-
-  /**
-   * Points the errand at one more of its utbetalningar in Lifecare, so careM finds a bifall's utbetalning by id
-   * rather than by insats and month. careM replaces the list the patch names, so it goes whole.
-   */
-  async addLifecarePaymentId(errandId: string, lifecarePaymentId: string): Promise<void> {
-    const view = await this.getFinancialAssistanceView(errandId);
-    const known = view.data?.data?.lifecarePaymentIds ?? [];
-    if (known.includes(lifecarePaymentId)) {
-      return;
-    }
-    await this.apiService.patch<unknown>({
-      url: caremanagementUrl('errands', 'financial-assistance', errandId, 'data'),
-      data: { lifecarePaymentIds: [...known, lifecarePaymentId] },
-    });
-  }
-
   async createErrand(errand: CreateErrandDto): Promise<ApiResponse<Errand>> {
     // caremanagement returns "201 Created" with a Location header and an empty body, so we resolve
     // the created errand by the id in that Location and return the full errand to the caller.
