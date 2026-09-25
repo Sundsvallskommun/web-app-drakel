@@ -13,8 +13,12 @@ const MetaItem: FC<{ label: string; children: ReactNode }> = ({ label, children 
   </div>
 );
 
-/** The summary card under the errand title: status, errand number, received date and applicants. */
-export const ErrandMetaCard: FC<{ errand: Errand; applicantNames: string[] }> = ({ errand, applicantNames }) => {
+/** The summary card under the errand title: status, errand number, received date, applicants and their personnummer. */
+export const ErrandMetaCard: FC<{ errand: Errand; applicantNames: string[]; applicantPersonalNumbers: string[] }> = ({
+  errand,
+  applicantNames,
+  applicantPersonalNumbers,
+}) => {
   const { t } = useTranslation('errand');
   return (
     <div className="bg-background-content border-1 border-divider rounded-12 px-16 py-12 flex flex-wrap items-start gap-x-40 xl:gap-x-64 gap-y-16">
@@ -27,6 +31,11 @@ export const ErrandMetaCard: FC<{ errand: Errand; applicantNames: string[] }> = 
       <MetaItem label={t('metaCard.received')}>{formatDateTime(errand.created) || t('common:none')}</MetaItem>
       <MetaItem label={applicantNames.length > 1 ? t('metaCard.applicantAndCoApplicant') : t('metaCard.applicant')}>
         {applicantNames.length > 0 ? applicantNames.join(', ') : t('common:none')}
+      </MetaItem>
+      <MetaItem label={t('metaCard.personalNumber')}>
+        <span className="tabular-nums">
+          {applicantPersonalNumbers.length > 0 ? applicantPersonalNumbers.join(', ') : t('common:none')}
+        </span>
       </MetaItem>
     </div>
   );

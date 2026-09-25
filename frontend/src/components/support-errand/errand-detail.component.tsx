@@ -182,13 +182,21 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   // Right-column badge counts — backed by unlogged count endpoints, so they load with the errand (the lists
   // stay lazy) and are refreshed after a section mutates.
   const { counts, refresh: refreshCounts } = useErrandCounts(resolvedErrandId);
-  const applicantNames = useMemo<string[]>(
+  const applicants = useMemo(
     () =>
       stakeholders
         .filter((stakeholder) => stakeholder.role === 'APPLICANT' || stakeholder.role === 'CO_APPLICANT')
-        .sort(compareByRole)
-        .map((stakeholder) => stakeholderDisplayName(stakeholder, t('common:unknownStakeholder'))),
-    [stakeholders, t]
+        .sort(compareByRole),
+    [stakeholders]
+  );
+  const applicantNames = useMemo<string[]>(
+    () => applicants.map((stakeholder) => stakeholderDisplayName(stakeholder, t('common:unknownStakeholder'))),
+    [applicants, t]
+  );
+  // In the same order as the names: the sökande's first, then the medsökande's.
+  const applicantPersonalNumbers = useMemo<string[]>(
+    () => applicants.flatMap((stakeholder) => (stakeholder.personalNumber ? [stakeholder.personalNumber] : [])),
+    [applicants]
   );
 
   // Only OPEN warnings are actionable — acknowledged/closed ones disappear from the right column.
@@ -500,7 +508,11 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           <div className="w-full max-w-errand mx-auto flex flex-col">
             <div className="py-40 flex flex-col gap-24">
               <h1 className="m-0 break-words text-h2-sm md:text-h2-md">{heading}</h1>
-              <ErrandMetaCard errand={errand} applicantNames={applicantNames} />
+              <ErrandMetaCard
+                errand={errand}
+                applicantNames={applicantNames}
+                applicantPersonalNumbers={applicantPersonalNumbers}
+              />
             </div>
 
             {/* Huvudtabsen (grupperna) ligger direkt på sidbakgrunden; innehållskortet (vit bakgrund + ram) ligger
