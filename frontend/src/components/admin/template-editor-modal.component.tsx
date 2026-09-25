@@ -7,6 +7,7 @@ import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { DecisionPlaceholderHelp } from './decision-placeholder-help.component';
 import { DECISION_PHRASE_CODE, TemplateCategory } from './template-categories';
 
 /** A selectable CM type, as both type catalogues expose it. */
@@ -130,7 +131,7 @@ export const TemplateEditorModal: FC<{
         <FormControl id="template-content" className="w-full">
           <FormLabel>{t('editor.content')}</FormLabel>
           {isDecisionPhrase ?
-            <p className="m-0 mb-8 text-small text-dark-secondary">{t('editor.decisionPlaceholders')}</p>
+            <DecisionPlaceholderHelp />
           : null}
           <TextEditor
             className="text-editor-with-toolbar w-full"

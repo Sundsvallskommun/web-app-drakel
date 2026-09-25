@@ -6,9 +6,9 @@ import { getDocumentTemplateContent } from '@services/document-template-service'
 import { Checkbox, Combobox, FormControl, FormLabel } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { fillBeslutPhraseMarkup, withPhraseAppended } from '@utils/beslut-phrase-markup';
-import { AMOUNT_PLACEHOLDER, NAME_PLACEHOLDER, PERIOD_PLACEHOLDER } from '@utils/fill-beslut-phrase';
+import { NAME_PLACEHOLDER } from '@utils/fill-beslut-phrase';
 import { FC, useState } from 'react';
-import { Trans, useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 
 // The synthetic "Alla" category (first option) shows every rubrik regardless of kategori.
 const ALL_CATEGORIES = '';
@@ -24,7 +24,8 @@ const eventValue = (value: unknown): string =>
  * searchable rubrik combobox (both single-select). The beslutsformuleringar are Templating's, kept on the admin
  * page. Selecting a rubrik appends its text to the bottom of the editor, separated from the previous content by
  * an empty row, filled from the errand: `¤` with the sökandes name, `¥` with the belopp and `※` with the period
- * as the form holds them when the phrase is added. A value the errand lacks leaves its placeholder.
+ * as the form holds them when the phrase is added. A value the errand lacks leaves its placeholder. Which characters
+ * are replaced is explained where the formuleringar are written, on the admin page.
  */
 export const BeslutMeddelande: FC<{
   /** The beslutsformuleringar to pick from. */
@@ -135,15 +136,11 @@ export const BeslutMeddelande: FC<{
         {phraseError ?
           <p className="m-0 text-error-surface-primary">{phraseError}</p>
         : null}
-        <p className="m-0 text-small text-dark-secondary">
-          <Trans
-            t={t}
-            i18nKey="message.placeholderHelp"
-            values={{ name: NAME_PLACEHOLDER, amount: AMOUNT_PLACEHOLDER, period: PERIOD_PLACEHOLDER }}
-            components={{ bold: <span className="font-bold" /> }}
-          />
-          {applicantName ? '' : ` ${t('message.applicantNameMissing')}`}
-        </p>
+        {applicantName ? null : (
+          <p className="m-0 text-small text-dark-secondary">
+            {t('message.applicantNameMissing', { placeholder: NAME_PLACEHOLDER })}
+          </p>
+        )}
       </div>
 
       <FormControl id="beslut-meddelande" className="w-full">

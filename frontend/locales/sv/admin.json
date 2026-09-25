@@ -43,7 +43,17 @@
     "heading": "Rubrik",
     "category": "Kategori",
     "categoryPlaceholder": "Välj eller skriv en ny kategori",
-    "decisionPlaceholders": "¤ fylls med sökandes namn, ¥ med beloppet och ※ med perioden när formuleringen läggs till i beslutet."
+    "placeholders": {
+      "intro": "De här tecknen ersätts automatiskt när formuleringen läggs till i ett beslut. Kopiera tecknet och klistra in det i texten. Saknar ärendet uppgiften står tecknet kvar.",
+      "name": "Sökandes namn",
+      "amount": "Beloppet",
+      "period": "Perioden",
+      "copy": "Kopiera",
+      "copied": "Kopierat",
+      "copyLabel": "Kopiera {{character}} för {{meaning}}",
+      "copiedStatus": "{{character}} är kopierat",
+      "copyFailed": "Tecknet kunde inte kopieras. Markera det och kopiera det själv."
+    }
   },
   "delete": {
     "title": "Ta bort mall",

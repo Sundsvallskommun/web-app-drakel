@@ -43,7 +43,17 @@
     "heading": "Heading",
     "category": "Category",
     "categoryPlaceholder": "Choose or type a new category",
-    "decisionPlaceholders": "¤ is filled with the applicant's name, ¥ with the amount and ※ with the period when the wording is added to the decision."
+    "placeholders": {
+      "intro": "These characters are replaced automatically when the wording is added to a decision. Copy a character and paste it into the text. If the errand lacks the information, the character stays.",
+      "name": "The applicant's name",
+      "amount": "The amount",
+      "period": "The period",
+      "copy": "Copy",
+      "copied": "Copied",
+      "copyLabel": "Copy {{character}} for {{meaning}}",
+      "copiedStatus": "{{character}} copied",
+      "copyFailed": "The character could not be copied. Select it and copy it yourself."
+    }
   },
   "delete": {
     "title": "Delete template",
