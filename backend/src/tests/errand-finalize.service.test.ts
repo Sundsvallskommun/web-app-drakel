@@ -111,12 +111,12 @@ describe('ErrandFinalizeService.finalize', () => {
     expect(send).not.toHaveBeenCalled();
   });
 
-  it('tells the handläggare to save a beslut that can be finalized when careM answers 400', async () => {
-    post.mockRejectedValue(new HttpException(400, 'Bad request from caremanagement'));
+  it("passes careM's 400 on with careM's own sentence, e.g. that the beslut must be saved first", async () => {
+    post.mockRejectedValue(new HttpException(400, 'Spara beslutet innan du beslutar och betalar ut.'));
 
     await expect(new ErrandFinalizeService().finalize('errand-1', channels, 'caseworker01')).rejects.toMatchObject({
       status: 400,
-      message: expect.stringContaining('Spara beslutet') as unknown,
+      message: 'Spara beslutet innan du beslutar och betalar ut.',
     });
 
     expect(send).not.toHaveBeenCalled();
