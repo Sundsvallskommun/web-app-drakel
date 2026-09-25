@@ -35,7 +35,7 @@ const detailOf = (body: unknown): string | undefined => {
  * "No personal identity number could be resolved for a person on the calculation", say. Replacing that
  * with a generic message would leave the handläggare with a failure and nothing to act on.
  *
- * A 400 and a 422 are carried through too: on the Lifecare routes caremanagement words its refusals for the
+ * A 400, 404 and 422 are carried through too: on the Lifecare routes caremanagement words its refusals for the
  * handläggare ("Spara beslutet innan du beslutar och betalar ut."). A 400 without a detail (e.g. a constraint
  * violation) falls back to a generic sentence.
  *
@@ -52,7 +52,7 @@ export const caremanagementError = (error: unknown): HttpException => {
       case 403:
         return new HttpException(403, detail ?? 'caremanagement is not allowed to do this');
       case 404:
-        return new HttpException(404, 'Not found');
+        return new HttpException(404, detail ?? 'Not found');
       case 409:
         return new HttpException(409, detail ?? 'The errand is not in a state that allows this');
       case 413:

@@ -79,4 +79,10 @@ describe('caremanagementError', () => {
     expect(mapped.status).toBe(403);
     expect(mapped.message).toBe('The Lifecare account is not allowed to read this');
   });
+  it("carries a 404 through with careM's reason, and 'Not found' without one", () => {
+    expect(caremanagementError(upstreamError(404, { detail: 'Bevakningen finns inte på insatsen i Lifecare' })).message).toBe(
+      'Bevakningen finns inte på insatsen i Lifecare',
+    );
+    expect(caremanagementError(upstreamError(404)).message).toBe('Not found');
+  });
 });
