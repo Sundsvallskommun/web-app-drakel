@@ -9,6 +9,7 @@ interface UseDecisionProposalResult {
   proposal: DecisionProposal;
   isLoading: boolean;
   error?: ServiceError;
+  refresh: () => void;
 }
 
 const NO_PROPOSAL: DecisionProposal = {};
@@ -19,10 +20,10 @@ const NO_PROPOSAL: DecisionProposal = {};
  */
 export const useDecisionProposal = (errandId: string): UseDecisionProposalResult => {
   const fetchProposal = useCallback(() => getDecisionProposal(errandId), [errandId]);
-  const { data, isLoading, error } = useServiceQuery<DecisionProposal>(fetchProposal, {
+  const { data, isLoading, error, refresh } = useServiceQuery<DecisionProposal>(fetchProposal, {
     initialData: NO_PROPOSAL,
     ready: !!errandId,
     notFoundAsEmpty: true,
   });
-  return { proposal: data, isLoading, error };
+  return { proposal: data, isLoading, error, refresh };
 };

@@ -136,6 +136,7 @@ const withProposedOutcome = (outcome: string) => {
   vi.mocked(useDecisionProposal).mockReturnValue({
     proposal: { outcome, reason: 'Föräldrapenning otillräcklig' },
     isLoading: false,
+    refresh: vi.fn(),
   });
 };
 
@@ -158,6 +159,7 @@ describe('ErrandBeslut', () => {
         reason: 'Föräldrapenning otillräcklig',
       },
       isLoading: false,
+      refresh: vi.fn(),
     });
     vi.mocked(useLifecareCalculation).mockReturnValue({ calculation: null, isLoading: false, refresh: vi.fn() });
     vi.mocked(saveLifecareDecision).mockReset();

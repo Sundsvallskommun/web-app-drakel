@@ -1,5 +1,6 @@
 'use client';
 
+import { useErrandApiId } from '@hooks/use-errand-api-id';
 import { defaultSsbtekMonths, periodOfMonths, SsbtekMonths } from '@utils/ssbtek-period';
 import { FC, useState } from 'react';
 
@@ -11,7 +12,11 @@ import { SsbtekTransfer } from './ssbtek-transfer.component';
  * The Betalningar tab: the incomes to transfer to the normberäkning, then the payments SSBTEK reports for the months
  * the handläggare picks (month M−2 through the current month to begin with). Shared by the SSBTEK page and the panel.
  */
-export const SsbtekPaymentsTab: FC<{ errandId: string }> = ({ errandId }) => {
+export const SsbtekPaymentsTab: FC<{
+  /** The errand as the URL names it: its id or its errand number. */
+  errandReference: string;
+}> = ({ errandReference }) => {
+  const errandId = useErrandApiId(errandReference);
   const [months, setMonths] = useState<SsbtekMonths>(() => defaultSsbtekMonths());
 
   return (

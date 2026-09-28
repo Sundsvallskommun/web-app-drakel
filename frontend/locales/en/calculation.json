@@ -58,7 +58,8 @@
     "empty": "No income rows",
     "fallbackType": "Income",
     "selectType": "Select income type",
-    "applicantGross": "Gross S"
+    "applicantGross": "Gross S",
+    "fromApplication": "From the application"
   },
   "expenses": {
     "title": "Expenses",

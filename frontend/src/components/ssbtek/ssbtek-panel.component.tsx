@@ -53,7 +53,7 @@ export const SsbtekPanel: FC = () => {
       </div>
 
       <div className="grow min-h-0 overflow-y-auto px-24 pb-24">
-        <SsbtekPaymentsTab errandId={errandId} />
+        <SsbtekPaymentsTab errandReference={errandId} />
       </div>
     </section>
   );

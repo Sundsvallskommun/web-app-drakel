@@ -48,7 +48,7 @@ const INCOME_WARNING_TYPES = new Set([
   'INCOME_DROPPED',
   'INCOME_NOT_TRANSFERABLE',
 ]);
-const EXPENSE_WARNING_TYPES = new Set(['NEW_EXPENSE', 'EXPENSE_REVIEW', 'EXPENSE_CAPPED']);
+const EXPENSE_WARNING_TYPES = new Set(['NEW_EXPENSE', 'EXPENSE_REVIEW']);
 const PERSON_WARNING_TYPES = new Set(['NEW_PERSON', 'HOUSEHOLD_CHANGE']);
 
 const FilterField: FC<{ label: string; required?: boolean; className?: string; children: ReactNode }> = ({
@@ -122,7 +122,7 @@ export const ErrandNormberakning: FC<{
   const { t, i18n } = useTranslation('calculation');
   // Once saved in Lifecare, Lifecare's own summering is the result; until then careM's förslag carries the
   // sums the result is counted from.
-  const { proposal } = useDecisionProposal(errandId);
+  const { proposal, refresh: refreshProposal } = useDecisionProposal(errandId);
   const lifecare = useLifecareCalculation(errandId);
   const normResult =
     lifecare.calculation?.summary ? fromLifecareSummary(lifecare.calculation.summary) : computeNormResult(proposal);
@@ -132,10 +132,13 @@ export const ErrandNormberakning: FC<{
   const closed = draft?.finalized === true;
   const inLifecare = draft?.source === NormberakningDraftSourceEnum.LIFECARE;
 
-  // A row change moves the result too, and once the beräkning is in Lifecare that is Lifecare's summering.
+  // A row change moves the result too, and once the beräkning is in Lifecare that is Lifecare's summering. careM
+  // counts the beslutsförslag and its warnings from the saved beräkning, so they are read again as well.
   const refreshAll = (): void => {
     refresh();
     lifecare.refresh();
+    refreshProposal();
+    onWarningsChanged();
     onLifecareChanged?.();
   };
   const [activeTab, setActiveTab] = useState<number>(0);

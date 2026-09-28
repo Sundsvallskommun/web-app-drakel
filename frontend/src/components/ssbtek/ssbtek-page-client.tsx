@@ -25,7 +25,7 @@ export const SsbtekPageClient: FC<{ errandId: string }> = ({ errandId }) => {
           <Tabs.Item>
             <Tabs.Button>{t('tabs.payments')}</Tabs.Button>
             <Tabs.Content>
-              <SsbtekPaymentsTab errandId={errandId} />
+              <SsbtekPaymentsTab errandReference={errandId} />
             </Tabs.Content>
           </Tabs.Item>
         </Tabs>

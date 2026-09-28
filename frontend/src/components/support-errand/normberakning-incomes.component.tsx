@@ -169,6 +169,9 @@ export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({
   );
 };
 
+// careM's origin for a row the sökande declared in the ansökan (the others are SYSTEM and CASEWORKER).
+const APPLICATION_ORIGIN = 'APPLICATION';
+
 /** A single editable income row (handläggare S/M amount, date, note); process and effective are read-only. */
 const IncomeRow: FC<{
   errandId: string;
@@ -245,6 +248,9 @@ const IncomeRow: FC<{
     <Table.Row>
       <Table.Column>
         <span className="font-bold">{row.typeName ?? t('incomes.fallbackType')}</span>
+        {row.origin === APPLICATION_ORIGIN ?
+          <span className="block text-small text-dark-secondary">{t('incomes.fromApplication')}</span>
+        : null}
       </Table.Column>
       {/* On an income jobbstimulans applies to, the handläggare enters the gross (Brutto S) and Belopp S is
           what Lifecare counts from it; on any other income Belopp S is entered as always. */}

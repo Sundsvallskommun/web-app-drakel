@@ -8,6 +8,9 @@ import { SsbtekPanel } from './ssbtek-panel.component';
 import { SsbtekPanelProvider, useSsbtekPanel } from './ssbtek-panel-context';
 
 vi.mock('next/navigation', () => ({ useParams: vi.fn() }));
+vi.mock('@services/errand-service/errand-service', () => ({
+  getErrand: vi.fn().mockResolvedValue({ data: { id: 'errand-uuid-1' } }),
+}));
 vi.mock('@services/ssbtek-service', () => ({
   getSsbtekPayments: vi.fn(),
   getSsbtekChanges: vi.fn().mockResolvedValue({ data: { available: false, isFinal: false, changes: [] } }),
@@ -84,8 +87,9 @@ describe('SsbtekPanel', () => {
 
     expect(panel.style.right).toBe('var(--errand-sidebar-width, 0px)');
     expect(await screen.findByText('SSBTEK rapporterar inga betalningar under perioden.')).toBeInTheDocument();
+    // The URL names the errand by number; SSBTEK is read with the errand's own id.
     expect(getSsbtekPayments).toHaveBeenCalledWith(
-      'EB-26090036',
+      'errand-uuid-1',
       expect.objectContaining({ from: expect.any(String) as unknown })
     );
   });

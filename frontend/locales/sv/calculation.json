@@ -58,7 +58,8 @@
     "empty": "Inga inkomstrader",
     "fallbackType": "Inkomst",
     "selectType": "Välj inkomsttyp",
-    "applicantGross": "Brutto S"
+    "applicantGross": "Brutto S",
+    "fromApplication": "Från ansökan"
   },
   "expenses": {
     "title": "Utgifter",
