@@ -3,7 +3,7 @@
 import { AsyncContent } from '@components/common/async-content.component';
 import { Errand, FormSnapshot } from '@data-contracts/backend/data-contracts';
 import { useErrandFormSnapshot } from '@hooks/use-errand-form-snapshot';
-import dayjs from 'dayjs';
+import { formatDateTime } from '@utils/date-time';
 import type { TFunction } from 'i18next';
 import { FC, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,7 +20,7 @@ const snapshotDescription = (t: TFunction, snapshot: FormSnapshot): string => {
   return snapshot.capturedAt ?
       t('application:summary.snapshotDescriptionWithDate', {
         title,
-        capturedAt: dayjs(snapshot.capturedAt).format('YYYY-MM-DD HH:mm'),
+        capturedAt: formatDateTime(snapshot.capturedAt),
         interpolation,
       })
     : t('application:summary.snapshotDescription', { title, interpolation });
@@ -29,7 +29,8 @@ const snapshotDescription = (t: TFunction, snapshot: FormSnapshot): string => {
 /**
  * Fliken "Ansökan": the heading (with `action`, e.g. the "Visa pdf" button) followed by the
  * "sammanställning" — the captured application form snapshot ("as it was") when one exists, otherwise the
- * live structured application data.
+ * live structured application data. A snapshot that could not be read is an error, not a missing snapshot:
+ * falling back to the live data then would pass today's data off as what the citizen submitted.
  */
 export const ErrandApplicationSummary: FC<{ errandId: string; errand: Errand; action?: ReactNode }> = ({
   errandId,
@@ -37,10 +38,10 @@ export const ErrandApplicationSummary: FC<{ errandId: string; errand: Errand; ac
   action,
 }) => {
   const { t } = useTranslation('application');
-  const { snapshot, isLoading } = useErrandFormSnapshot(errandId);
+  const { snapshot, isLoading, error } = useErrandFormSnapshot(errandId);
 
   const description =
-    isLoading ? undefined
+    isLoading || error ? undefined
     : snapshot ? snapshotDescription(t, snapshot)
     : t('summary.liveDataDescription');
 
@@ -49,7 +50,7 @@ export const ErrandApplicationSummary: FC<{ errandId: string; errand: Errand; ac
   return (
     <>
       <ErrandSectionHeader title={t('summary.title')} description={description} action={action} />
-      <AsyncContent isLoading={isLoading} errorText="" centered>
+      <AsyncContent isLoading={isLoading} error={error} errorText={t('summary.snapshotError')} centered>
         {snapshot ?
           <FormSnapshotView snapshot={snapshot} />
         : <ErrandApplicationData errand={errand} />}

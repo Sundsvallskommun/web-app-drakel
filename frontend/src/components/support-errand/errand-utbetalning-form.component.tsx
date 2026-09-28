@@ -85,8 +85,8 @@ const proposedFormValues = ({ proposal, postings }: LifecarePaymentOptionsView):
 });
 
 /**
- * The form as the BFF's utbetalning input. The fields the form keeps closed (bokföringsdatum, OCR) are
- * left out rather than sent empty. The payee goes as its fields — name, account and address, the way
+ * The form as the BFF's utbetalning input. The fields the form keeps closed (Redovisas på, bokföringsdatum,
+ * OCR) are left out rather than sent empty. The payee goes as its fields — name, account and address, the way
  * Lifecare's own utbetalning copies them from the chosen payee.
  */
 const toPaymentInput = (values: UtbetalningFormValues): PaymentInputDto => ({
@@ -107,26 +107,21 @@ const toPaymentInput = (values: UtbetalningFormValues): PaymentInputDto => ({
   messageLines: values.messageLines.map((line) => line.text).filter((text) => text.trim() !== ''),
 });
 
-/** "Redovisas på" — the stakeholders the utbetalning is booked on, one checkbox each. */
+/**
+ * "Redovisas på" — the stakeholders the utbetalning is booked on, one checkbox each. Shown as Lifecare's form has
+ * it but closed, with a note why: caremanagement's utbetalning has no such field, so a choice here would go
+ * nowhere.
+ */
 const ReportedOnField: FC<{
   stakeholders: Stakeholder[];
-  disabled: boolean;
   register: UseFormRegister<UtbetalningFormValues>;
-}> = ({ stakeholders, disabled, register }) => {
+}> = ({ stakeholders, register }) => {
   const { t } = useTranslation('decision');
 
   return (
-    <FormControl fieldset required disabled={disabled} className="w-full">
-      {/* sk-web-gui renders a fieldset's label as a `display: contents` legend, which would put the asterisk
-          on a line of its own — so the text and the asterisk share one element here. */}
-      <FormLabel showRequired={false}>
-        <span>
-          {t('payment.form.reportedOn')}
-          <span className="sk-form-required-indicator" aria-hidden="true">
-            *
-          </span>
-        </span>
-      </FormLabel>
+    <FormControl fieldset disabled className="w-full">
+      <FormLabel>{t('payment.form.reportedOn')}</FormLabel>
+      <span className="text-small text-dark-secondary">{t('payment.form.reportedOnUnavailable')}</span>
       <div className="flex flex-col gap-8">
         {stakeholders.map((stakeholder) => (
           <Checkbox key={stakeholder.id} value={stakeholder.id ?? ''} {...register('reportedOnStakeholderIds')}>
@@ -188,7 +183,8 @@ const MessageLinesField: FC<{
  * Which recipient fields are editable follows the chosen betalsätt — see `getEditableRecipientFields`.
  * Lokalbetalningsnummer opens when Lifecare says the betalsätt takes one. Räkningsnummer is open: Lifecare
  * refuses a Bankgiro via Plusgiro utbetalning without it. Bokföringsdatum, "Utbetalas/bokförs ej" and OCR
- * stay disabled — the Lifecare rules that open them are not known yet, so enabling them would be a guess.
+ * stay disabled — the Lifecare rules that open them are not known yet, so enabling them would be a guess — and
+ * so does "Redovisas på", which caremanagement has no field for yet.
  *
  * "Spara utbetalning i Lifecare" registers it there straight away — careM keeps no copy. The BFF refuses
  * one it cannot make safely (a saldo that does not cover it, a likadan utbetalning already made) and
@@ -304,7 +300,7 @@ export const ErrandUtbetalningForm: FC<{
         </FormField>
         <div aria-hidden />
 
-        <ReportedOnField stakeholders={stakeholders} disabled={disabled} register={register} />
+        <ReportedOnField stakeholders={stakeholders} register={register} />
 
         <div className="flex flex-col gap-16">
           {/* Disabled throughout: the Lifecare rule that opens the bokföring fields is not described

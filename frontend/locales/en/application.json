@@ -4,7 +4,8 @@
     "snapshotDescription": "{{title}} as completed by the applicant.",
     "snapshotDescriptionWithDate": "{{title}} as completed by the applicant, filled in {{capturedAt}}.",
     "snapshotFallbackTitle": "The summary",
-    "liveDataDescription": "The details the applicant provided in the application via Mina sidor."
+    "liveDataDescription": "The details the applicant provided in the application via Mina sidor.",
+    "snapshotError": "The application summary could not be fetched. Try again in a while."
   },
   "snapshot": {
     "fallbackSectionTitle": "Section {{number}}",
@@ -105,7 +106,8 @@
       "staysInMunicipality": "Stays in the municipality during the application month",
       "description": "Description of stay",
       "attestation": "Declaration given"
-    }
+    },
+    "loadError": "The details from the application could not be fetched. Try again in a while."
   },
   "stakeholders": {
     "errorText": "Could not fetch stakeholders",

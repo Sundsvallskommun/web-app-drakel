@@ -2,7 +2,7 @@
 
 import { LifecareBalanceView } from '@data-contracts/backend/data-contracts';
 import { cx } from '@sk-web-gui/react';
-import { displayAmount } from '@utils/format-amount';
+import { displayAmount, isBelowZero } from '@utils/format-amount';
 import { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -44,7 +44,12 @@ export const LifecareBalanceBox: FC<{ balances: LifecareBalanceView[]; isLoading
           </LabeledValue>
           <LabeledValue label={t('payment.disposal.remaining')}>
             {/* Negative means more is booked than the beslut allows — worth seeing, not hiding. */}
-            <span className={cx('tabular-nums font-bold', balance.balanceAmount < 0 && 'text-error-surface-primary')}>
+            <span
+              className={cx(
+                'tabular-nums font-bold',
+                isBelowZero(balance.balanceAmount) && 'text-error-surface-primary'
+              )}
+            >
               {displayAmount(balance.balanceAmount)}
             </span>
           </LabeledValue>

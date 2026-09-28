@@ -28,7 +28,7 @@ const lifecareDocument = (id: string, title: string, documentKind: string): Life
 describe('DecisionDocumentsService', () => {
   beforeEach(() => {
     vi.spyOn(ErrandLifecareDecisionService.prototype, 'pdf').mockResolvedValue(Buffer.from('%PDF-beslut'));
-    vi.spyOn(ErrandLifecareCalculationService.prototype, 'pdf').mockResolvedValue(Buffer.from('%PDF-berakning').toString('base64'));
+    vi.spyOn(ErrandLifecareCalculationService.prototype, 'pdf').mockResolvedValue(Buffer.from('%PDF-berakning'));
     vi.spyOn(ErrandLifecareRecordsService.prototype, 'list').mockResolvedValue({
       journalNotes: [],
       documents: [lifecareDocument('12', 'Hyreskontrakt: 2026/27', 'Pdf'), lifecareDocument('13', 'Utredning', 'Regular')],
@@ -69,10 +69,37 @@ describe('DecisionDocumentsService', () => {
     expect(documents.attachments).toEqual([]);
   });
 
-  it('refuses a Lifecare document that is not a stored PDF', async () => {
+  it('prints a written document or a blankett from Lifecare as well as a stored PDF', async () => {
+    const documentPdf = vi.spyOn(ErrandLifecareRecordsService.prototype, 'documentPdf').mockResolvedValue(Buffer.from('%PDF-utredning'));
+
+    const documents = await new DecisionDocumentsService().collect(
+      'errand-1',
+      'EB-26090039',
+      { ...input, includeDecision: false, includeCalculation: false, lifecareDocumentIds: ['13'] },
+      [],
+    );
+
+    expect(documentPdf).toHaveBeenCalledWith('errand-1', '13');
+    expect(documents.attachments.map(file => file.originalname)).toEqual(['Utredning.pdf']);
+  });
+
+  it('refuses a document that is not among the sökandes documents in Lifecare', async () => {
     await expect(
-      new DecisionDocumentsService().collect('errand-1', 'EB-26090039', { ...input, lifecareDocumentIds: ['13'] }, []),
-    ).rejects.toMatchObject({ status: 400, message: 'Bara PDF-dokument från Lifecare kan skickas med beslutet.' });
+      new DecisionDocumentsService().collect('errand-1', 'EB-26090039', { ...input, lifecareDocumentIds: ['99'] }, []),
+    ).rejects.toMatchObject({ status: 400, details: { lifecareDocumentId: '99' } });
+  });
+
+  it('stops the send and names the Lifecare document that could not be fetched by id, never by title', async () => {
+    vi.spyOn(ErrandLifecareRecordsService.prototype, 'documentPdf').mockRejectedValue(new HttpException(502, 'Lifecare svarade inte'));
+
+    const refusal = new DecisionDocumentsService().collect('errand-1', 'EB-26090039', { ...input, lifecareDocumentIds: ['12'] }, []);
+
+    await expect(refusal).rejects.toMatchObject({
+      status: 502,
+      message: 'Ett dokument från Lifecare kunde inte hämtas. Inget är beslutat eller skickat.',
+      details: { lifecareDocumentId: '12' },
+    });
+    await expect(refusal).rejects.not.toMatchObject({ message: expect.stringContaining('Hyreskontrakt') as unknown });
   });
 
   it('refuses the send in the handläggare’s words when Lifecare cannot hand a document over', async () => {

@@ -1,17 +1,15 @@
 'use client';
 
+import { ActorEventLog } from '@data-contracts/backend/data-contracts';
 import { useAdministrators } from '@hooks/use-administrators';
-import { ActorEventLog, getActorEvents } from '@services/event-service';
+import { getActorEvents } from '@services/event-service';
 import { Alert } from '@sk-web-gui/alert';
-import { combineDateAndTime } from '@utils/date-time';
+import { combineDateAndTime, endOfDayDateTime } from '@utils/date-time';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ActorLogResults } from './actor-log-results.component';
 import { ActorLogSearch, ActorLogSearchValues, emptyActorLogSearch } from './actor-log-search.component';
-
-/** The whole day is meant when a date is picked, so the upper bound runs to the last minute of it. */
-const END_OF_DAY = '23:59';
 
 /**
  * "Logguppföljning" — what one handläggare has read and changed, across every errand.
@@ -41,7 +39,8 @@ export const ActorLogPageClient = () => {
       action: values.action || undefined,
       source: values.source || undefined,
       from: values.from ? combineDateAndTime(values.from) : undefined,
-      to: values.to ? combineDateAndTime(values.to, END_OF_DAY) : undefined,
+      // The whole day is meant when a date is picked, so the upper bound runs to its very end.
+      to: values.to ? endOfDayDateTime(values.to) : undefined,
     });
     setSearching(false);
     if (response.error || !response.data) {

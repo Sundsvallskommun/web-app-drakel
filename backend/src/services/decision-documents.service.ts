@@ -1,4 +1,5 @@
-import CaremanagementAttachmentService, { UploadedFileLike } from '@services/caremanagement-attachment.service';
+import { UploadedFileLike } from '@interfaces/file.interface';
+import CaremanagementAttachmentService from '@services/caremanagement-attachment.service';
 import ErrandLifecareCalculationService from '@services/errand-lifecare-calculation.service';
 import ErrandLifecareDecisionService from '@services/errand-lifecare-decision.service';
 import ErrandLifecareRecordsService from '@services/errand-lifecare-records.service';
@@ -10,8 +11,8 @@ import { HttpException } from '@/exceptions/HttpException';
 
 const DECISION_DOCUMENT_TYPE = 'DECISION';
 const PDF_MIME_TYPE = 'application/pdf';
-// careM's documentKind for a stored file, e.g. an inkommen handling — the only kind Lifecare hands over as a PDF yet.
-const PDF_DOCUMENT_KIND = 'Pdf';
+// The detail naming the Lifecare document that could not be fetched, which the dialog turns into its title.
+const LIFECARE_DOCUMENT_ID_DETAIL = 'lifecareDocumentId';
 
 /** The documents of one send: the beslut, always kept on the errand, and everything that goes with the message. */
 interface DecisionDocuments {
@@ -38,7 +39,8 @@ const fetchOrRefuse = async <T>(label: string, fetchDocument: () => Promise<T>):
 
 /**
  * The PDFs of "Skicka beräkning och beslut": Lifecare's print of the beslut, of the beräkning when kept, the
- * handläggare's chosen Lifecare documents (stored PDFs only) and the files from their computer. They are all fetched
+ * handläggare's chosen Lifecare documents (stored PDFs, and written documents and blanketter Lifecare prints) and the
+ * files from their computer. They are all fetched
  * before the errand is finalized, so one Lifecare cannot hand over stops the send while nothing is decided yet.
  */
 class DecisionDocumentsService {
@@ -58,8 +60,7 @@ class DecisionDocumentsService {
       decision: decisionFile,
       attachments: [
         ...(input.includeDecision ? [decisionFile] : []),
-        // The beräkning's PDF comes back base64-encoded, as the Normberäkning tab shows it.
-        ...(calculation ? [pdfFile(Buffer.from(calculation, 'base64'), `normberakning-${errandNumber}.pdf`)] : []),
+        ...(calculation ? [pdfFile(calculation, `normberakning-${errandNumber}.pdf`)] : []),
         ...lifecareDocuments,
         ...files,
       ],
@@ -77,7 +78,22 @@ class DecisionDocumentsService {
     }
   }
 
-  /** The chosen Lifecare documents as PDFs, named by their titles; only a stored PDF can be sent. */
+  /**
+   * One Lifecare document as a PDF — a stored PDF as it is, a written document or a blankett printed by Lifecare. A
+   * failure stops the send and names the document by id, which the dialog turns into its title: the title itself
+   * stays out of the error message, which is logged.
+   */
+  private async lifecareDocumentPdf(errandId: string, id: string): Promise<Buffer> {
+    try {
+      return await this.lifecareRecords.documentPdf(errandId, id);
+    } catch (error) {
+      throw new HttpException(httpStatusOf(error) ?? 502, 'Ett dokument från Lifecare kunde inte hämtas. Inget är beslutat eller skickat.', {
+        [LIFECARE_DOCUMENT_ID_DETAIL]: id,
+      });
+    }
+  }
+
+  /** The chosen Lifecare documents as PDFs, named by their titles; any document under Dokument can be sent. */
   private async lifecareDocuments(errandId: string, ids: string[]): Promise<UploadedFileLike[]> {
     if (ids.length === 0) {
       return [];
@@ -86,10 +102,10 @@ class DecisionDocumentsService {
     return Promise.all(
       ids.map(async id => {
         const document = records.documents.find(record => record.id === id);
-        if (document?.documentKind !== PDF_DOCUMENT_KIND) {
-          throw new HttpException(400, 'Bara PDF-dokument från Lifecare kan skickas med beslutet.');
+        if (!document) {
+          throw new HttpException(400, 'Dokumentet finns inte bland den sökandes dokument i Lifecare.', { [LIFECARE_DOCUMENT_ID_DETAIL]: id });
         }
-        const pdf = await fetchOrRefuse('Ett av dokumenten från Lifecare', () => this.lifecareRecords.documentPdf(errandId, id));
+        const pdf = await this.lifecareDocumentPdf(errandId, id);
         return pdfFile(pdf, toPdfFileName(document.title));
       }),
     );

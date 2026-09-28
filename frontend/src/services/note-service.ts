@@ -1,7 +1,11 @@
 import { ServiceResponse } from '@interfaces/services';
-import { ApiResponse, apiService, toServiceError } from '@services/api-service';
+import { ApiResponse, apiService, discardData, unwrapData } from '@services/api-service';
+import { apiPath } from '@utils/api-path';
 
-/** A caseworker note on an errand (caremanagement Note). `modified*` exist once a note is edited. */
+/**
+ * A caseworker note on an errand (caremanagement Note). `modified*` exist once a note is edited. Defined locally:
+ * the backend's contract only describes the note inputs (CreateNoteDto/UpdateNoteDto), not the note itself.
+ */
 export interface Note {
   id?: string;
   errandId?: string;
@@ -13,25 +17,13 @@ export interface Note {
 }
 
 export const getNotes = (errandId: string): Promise<ServiceResponse<Note[]>> =>
-  apiService
-    .get<ApiResponse<Note[]>>(`errands/${errandId}/notes`)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
+  unwrapData(apiService.get<ApiResponse<Note[]>>(apiPath`errands/${errandId}/notes`));
 
 export const createNote = (errandId: string, body: string): Promise<ServiceResponse<null>> =>
-  apiService
-    .post<ApiResponse<Note>>(`errands/${errandId}/notes`, { body })
-    .then(() => ({ data: null }))
-    .catch(toServiceError);
+  discardData(apiService.post(apiPath`errands/${errandId}/notes`, { body }));
 
 export const updateNote = (errandId: string, noteId: string, body: string): Promise<ServiceResponse<null>> =>
-  apiService
-    .patch<ApiResponse<Note>>(`errands/${errandId}/notes/${noteId}`, { body })
-    .then(() => ({ data: null }))
-    .catch(toServiceError);
+  discardData(apiService.patch(apiPath`errands/${errandId}/notes/${noteId}`, { body }));
 
 export const deleteNote = (errandId: string, noteId: string): Promise<ServiceResponse<null>> =>
-  apiService
-    .delete<ApiResponse<null>>(`errands/${errandId}/notes/${noteId}`)
-    .then(() => ({ data: null }))
-    .catch(toServiceError);
+  discardData(apiService.delete(apiPath`errands/${errandId}/notes/${noteId}`));

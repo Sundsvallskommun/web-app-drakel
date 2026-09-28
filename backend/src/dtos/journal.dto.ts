@@ -23,21 +23,5 @@ export class CreateJournalEntryDto {
   entryDateTime!: string;
 }
 
-/** The fields a handläggare sends when editing a (still WORKING) journalanteckning. */
-export class UpdateJournalEntryDto {
-  @IsString()
-  @MaxLength(255)
-  type!: string;
-
-  @IsString()
-  @MaxLength(255)
-  heading!: string;
-
-  @IsString()
-  @MaxLength(1048576)
-  @IsOptional()
-  text?: string;
-
-  @IsString()
-  entryDateTime!: string;
-}
+/** The fields a handläggare sends when editing a (still WORKING) journalanteckning — the same as when creating it. */
+export class UpdateJournalEntryDto extends CreateJournalEntryDto {}

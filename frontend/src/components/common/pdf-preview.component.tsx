@@ -2,6 +2,7 @@
 
 import { getAttachmentBlob } from '@services/errand-service/errand-service';
 import { Button, Disclosure } from '@sk-web-gui/react';
+import { pdfObjectUrl } from '@utils/pdf-object-url';
 import { ExternalLink, FileText } from 'lucide-react';
 import { FC, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -57,7 +58,7 @@ interface PdfPreviewProps {
  * den här komponenten, och huvudet är redan en klickyta för att fälla ihop — en knapp inuti den blir
  * en knapp i en knapp. Den följer därmed med både i disclosure-varianten och i modalen.
  */
-export const PdfPreviewFrame: FC<PdfPreviewProps> = ({ errandId, attachmentId, title }) => {
+const PdfPreviewFrame: FC<PdfPreviewProps> = ({ errandId, attachmentId, title }) => {
   const { t } = useTranslation('attachments');
   const [url, setUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -72,7 +73,8 @@ export const PdfPreviewFrame: FC<PdfPreviewProps> = ({ errandId, attachmentId, t
     getAttachmentBlob(errandId, attachmentId)
       .then((blob) => {
         if (!active) return;
-        objectUrl = window.URL.createObjectURL(blob);
+        // Shown as a PDF whatever type it was served with, so it can never render as a page in our origin.
+        objectUrl = pdfObjectUrl(blob);
         setUrl(objectUrl);
       })
       .catch(() => {

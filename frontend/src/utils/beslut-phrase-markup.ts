@@ -1,17 +1,8 @@
 import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { escapeHtml } from '@utils/escape-html';
+import { htmlToPlainText } from '@utils/sanitize-html';
 
 import { BeslutPhraseValues, fillBeslutPhrase } from './fill-beslut-phrase';
-
-/** The text of an editor's HTML, paragraph by paragraph — what the message's plain text is kept as. */
-export const markupToPlainText = (markup: string): string =>
-  markup
-    .replace(/<\/p>\s*<p>/g, '\n')
-    .replace(/<br\s*\/?>/g, '')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&');
 
 /**
  * Fills a beslutsformulering's HTML from the errand, as fillBeslutPhrase does for text. The sökandes name is
@@ -28,8 +19,11 @@ export const fillBeslutPhraseMarkup = (markup: string, values: BeslutPhraseValue
  * looks empty (Quill keeps `<p></p>` once touched) is replaced rather than appended to.
  */
 export const withPhraseAppended = (message: TextEditorValue, phraseMarkup: string): TextEditorValue => {
-  const phraseText = markupToPlainText(phraseMarkup);
-  if ((message.plainText ?? '').trim().length === 0 && markupToPlainText(message.markup ?? '').trim().length === 0) {
+  const phraseText = htmlToPlainText(phraseMarkup, { keepParagraphs: true });
+  if (
+    (message.plainText ?? '').trim().length === 0 &&
+    htmlToPlainText(message.markup ?? '', { keepParagraphs: true }).trim().length === 0
+  ) {
     return { markup: phraseMarkup, plainText: phraseText };
   }
   return {

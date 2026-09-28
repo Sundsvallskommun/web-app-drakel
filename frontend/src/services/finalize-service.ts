@@ -1,6 +1,7 @@
 import { FinalizeApiResponse, FinalizeErrandDto, FinalizeResult } from '@data-contracts/backend/data-contracts';
 import { ServiceResponse } from '@interfaces/services';
-import { apiService, toServiceError } from '@services/api-service';
+import { apiService, unwrapData } from '@services/api-service';
+import { apiPath } from '@utils/api-path';
 
 /**
  * "Skicka beräkning och beslut": finalizes the errand from the beslut saved in Lifecare, then sends the
@@ -19,8 +20,5 @@ export const finalizeErrand = (
     form.append('files', file);
   });
   // Empty headers let axios set the multipart boundary instead of the default JSON content-type.
-  return apiService
-    .post<FinalizeApiResponse>(`errands/${errandId}/finalize`, form, { headers: {} })
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
+  return unwrapData(apiService.post<FinalizeApiResponse>(apiPath`errands/${errandId}/finalize`, form, { headers: {} }));
 };

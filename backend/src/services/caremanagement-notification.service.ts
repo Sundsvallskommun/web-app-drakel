@@ -35,14 +35,6 @@ class CaremanagementNotificationService {
       data: state,
     });
   }
-
-  /** Marks every notification on an errand as handled. */
-  async markAllHandled(errandId: string): Promise<ApiResponse<null>> {
-    return this.apiService.put<null>({
-      url: caremanagementUrl('errands', errandId, 'notifications', 'handled'),
-      data: {},
-    });
-  }
 }
 
 export default CaremanagementNotificationService;

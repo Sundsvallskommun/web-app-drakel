@@ -100,7 +100,14 @@ describe('ErrandLifecareRecordsService', () => {
     const get = vi.spyOn(CaremanagementApiService.prototype, 'get').mockResolvedValue(answer(openedNote));
 
     await new ErrandLifecareRecordsService().readJournalNote('errand-1', '../../41');
-    expect(get).toHaveBeenCalledWith({ url: documentsUrl('journal-notes', '..%2F..%2F41') });
+    expect(get.mock.calls[0]?.[0].url).toMatch(/\/documents\/journal-notes\/\.\.%2F\.\.%2F41$/);
+  });
+
+  it('refuses an id that would step out of the record rather than send it on', async () => {
+    const get = vi.spyOn(CaremanagementApiService.prototype, 'get');
+
+    await expect(new ErrandLifecareRecordsService().readJournalNote('errand-1', '..')).rejects.toMatchObject({ status: 400 });
+    expect(get).not.toHaveBeenCalled();
   });
 
   it('saves an edit to a journalanteckning through careM and answers with the saved record', async () => {

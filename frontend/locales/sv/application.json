@@ -4,7 +4,8 @@
     "snapshotDescription": "{{title}} så som sökanden fyllde i den.",
     "snapshotDescriptionWithDate": "{{title}} så som sökanden fyllde i den, ifylld {{capturedAt}}.",
     "snapshotFallbackTitle": "Sammanställningen",
-    "liveDataDescription": "Uppgifterna som sökanden lämnade i ansökan via Mina sidor."
+    "liveDataDescription": "Uppgifterna som sökanden lämnade i ansökan via Mina sidor.",
+    "snapshotError": "Sammanställningen av ansökan kunde inte hämtas. Försök igen om en stund."
   },
   "snapshot": {
     "fallbackSectionTitle": "Avsnitt {{number}}",
@@ -105,7 +106,8 @@
       "staysInMunicipality": "Vistas i kommunen under ansökningsmånaden",
       "description": "Beskrivning av vistelse",
       "attestation": "Försäkran lämnad"
-    }
+    },
+    "loadError": "Uppgifterna från ansökan kunde inte hämtas. Försök igen om en stund."
   },
   "stakeholders": {
     "errorText": "Det gick inte att hämta intressenter",

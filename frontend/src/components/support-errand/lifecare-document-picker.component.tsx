@@ -6,9 +6,6 @@ import { FileText, Plus } from 'lucide-react';
 import { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
-// careM's documentKind for a stored file, e.g. an inkommen handling — the only kind Lifecare hands over as a PDF yet.
-const PDF_DOCUMENT_KIND = 'Pdf';
-
 /** A Lifecare document chosen to go with the beslut. */
 export interface LifecareDocumentChoice {
   id: string;
@@ -16,8 +13,8 @@ export interface LifecareDocumentChoice {
 }
 
 /**
- * The sökandes stored PDFs in Lifecare (inkomna handlingar and the like), to add to "Skicka beräkning och beslut".
- * Textdokument and blanketter are left out: caremanagement cannot print them as PDF yet. Read when the picker opens.
+ * The sökandes documents in Lifecare — stored PDFs such as inkomna handlingar, written documents and blanketter — to add
+ * to "Skicka beräkning och beslut". Lifecare prints each as a PDF when the beslut is sent. Read when the picker opens.
  */
 export const LifecareDocumentPicker: FC<{
   errandId: string;
@@ -27,9 +24,7 @@ export const LifecareDocumentPicker: FC<{
 }> = ({ errandId, chosenIds, onPick }) => {
   const { t } = useTranslation('errand');
   const { records, isLoading, error } = useLifecareDocuments(errandId);
-  const pdfDocuments = records.documents.filter(
-    (document) => document.documentKind === PDF_DOCUMENT_KIND && !chosenIds.includes(document.id)
-  );
+  const offeredDocuments = records.documents.filter((document) => !chosenIds.includes(document.id));
 
   if (isLoading) {
     return <Spinner size={2} aria-label={t('decideAndPay.attachments.lifecareLoading')} />;
@@ -37,16 +32,16 @@ export const LifecareDocumentPicker: FC<{
   if (error) {
     return <p className="m-0 text-small text-error-surface-primary">{t('decideAndPay.attachments.lifecareError')}</p>;
   }
-  if (pdfDocuments.length === 0) {
+  if (offeredDocuments.length === 0) {
     return <p className="m-0 text-small text-dark-secondary">{t('decideAndPay.attachments.lifecareNone')}</p>;
   }
 
   return (
     <ul
       className="m-0 p-0 list-none flex flex-col gap-4 max-h-[24rem] overflow-y-auto"
-      aria-label={t('decideAndPay.attachments.lifecarePdfs')}
+      aria-label={t('decideAndPay.attachments.lifecareDocuments')}
     >
-      {pdfDocuments.map((document) => (
+      {offeredDocuments.map((document) => (
         <li key={document.id} className="flex items-center gap-12 px-12 py-6 rounded-8 hover:bg-background-200">
           <FileText className="shrink-0 w-20 h-20 text-dark-secondary" aria-hidden />
           <span className="min-w-0 flex-1 truncate" title={document.title}>

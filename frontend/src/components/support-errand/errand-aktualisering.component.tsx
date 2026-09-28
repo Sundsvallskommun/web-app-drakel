@@ -1,6 +1,7 @@
 'use client';
 
-import { Actualisation, archiveToActualisation, getActualisations } from '@services/actualisation-service';
+import { Actualisation } from '@data-contracts/backend/data-contracts';
+import { archiveToActualisation, getActualisations } from '@services/actualisation-service';
 import { Button, Modal, Spinner } from '@sk-web-gui/react';
 import { FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';

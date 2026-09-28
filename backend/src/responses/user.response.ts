@@ -1,8 +1,7 @@
+import { ApiResponse } from '@interfaces/api-service.interface';
+import { ClientUser, InternalRole, Permissions } from '@interfaces/users.interface';
 import { Type } from 'class-transformer';
 import { IsBoolean, IsIn, IsString, ValidateNested } from 'class-validator';
-
-import { ApiResponse } from '@/interfaces/api-service.interface';
-import { ClientUser, InternalRole, Permissions } from '@/interfaces/users.interface';
 
 export class PermissionsResponse implements Permissions {
   @IsBoolean()

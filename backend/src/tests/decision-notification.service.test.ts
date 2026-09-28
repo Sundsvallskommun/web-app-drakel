@@ -2,7 +2,10 @@ import CaremanagementMessageService from '@services/caremanagement-message.servi
 import CaremanagementStakeholderService from '@services/caremanagement-stakeholder.service';
 import DecisionNotificationService from '@services/decision-notification.service';
 import MessagingService from '@services/messaging.service';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { logger } from '@utils/logger';
+import { afterEach, beforeEach, describe, expect, it, MockInstance, vi } from 'vitest';
+
+import { HttpException } from '@/exceptions/HttpException';
 
 const MESSAGE = '<p>Hej,</p><p>Din ansökan för september 2026 är klar. Se bifogade dokument.</p>';
 const decision = { buffer: Buffer.from('%PDF-beslut'), originalname: 'beslut-EB-26090039.pdf', mimetype: 'application/pdf' };
@@ -10,11 +13,10 @@ const ownFile = { buffer: Buffer.from('%PDF-own'), originalname: 'hyresavi.pdf',
 const input = { meddelande: true, brev: true, message: MESSAGE, includeDecision: true, includeCalculation: false, lifecareDocumentIds: [] };
 
 describe('DecisionNotificationService.send', () => {
+  let applicantPartyId: MockInstance<CaremanagementStakeholderService['readApplicantPartyId']>;
+
   beforeEach(() => {
-    vi.spyOn(CaremanagementStakeholderService.prototype, 'readStakeholders').mockResolvedValue({
-      data: [{ role: 'APPLICANT', externalId: 'applicant-party' }],
-      message: 'success',
-    });
+    applicantPartyId = vi.spyOn(CaremanagementStakeholderService.prototype, 'readApplicantPartyId').mockResolvedValue('applicant-party');
   });
 
   afterEach(() => {
@@ -43,5 +45,40 @@ describe('DecisionNotificationService.send', () => {
 
     expect(conversation).not.toHaveBeenCalled();
     expect(failed).toEqual(['Brev']);
+  });
+
+  it('fails only the brev when the sökande cannot be looked up — the meddelande does not need them', async () => {
+    applicantPartyId.mockRejectedValue(new HttpException(502, 'careM svarade inte'));
+    const conversation = vi.spyOn(CaremanagementMessageService.prototype, 'createMessage').mockResolvedValue({ data: null, message: 'success' });
+    const letter = vi.spyOn(MessagingService.prototype, 'sendLetter');
+
+    const failed = await new DecisionNotificationService().send('errand-1', input, 'caseworker01', [decision]);
+
+    expect(failed).toEqual(['Brev']);
+    expect(conversation).toHaveBeenCalled();
+    expect(letter).not.toHaveBeenCalled();
+  });
+
+  it('sends no brev to an errand without a sökande', async () => {
+    applicantPartyId.mockResolvedValue(undefined);
+    const letter = vi.spyOn(MessagingService.prototype, 'sendLetter');
+
+    const failed = await new DecisionNotificationService().send('errand-1', { ...input, meddelande: false }, 'caseworker01', [decision]);
+
+    expect(failed).toEqual(['Brev']);
+    expect(letter).not.toHaveBeenCalled();
+  });
+
+  it('logs each failed channel by errand, channel and status — never the message or the sökande', async () => {
+    vi.spyOn(CaremanagementMessageService.prototype, 'createMessage').mockRejectedValue(new HttpException(413, 'Uploaded file is too large'));
+    vi.spyOn(MessagingService.prototype, 'sendLetter').mockResolvedValue();
+    const warn = vi.spyOn(logger, 'warn');
+
+    await new DecisionNotificationService().send('errand-1', input, 'caseworker01', [decision]);
+
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/errand-1.*Meddelande.*413/));
+    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('applicant-party'));
+    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('Hej'));
   });
 });

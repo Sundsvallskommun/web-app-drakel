@@ -32,9 +32,12 @@ const RECORD_SEGMENT: Record<LifecareRecordCategory, string> = { JOURNAL_NOTE: '
 /** careM's path segment, under `/lifecare`, for each group's bodies. */
 const BODIES_SEGMENT: Record<LifecareRecordCategory, string> = { JOURNAL_NOTE: 'journal-note-bodies', DOCUMENT: 'document-bodies' };
 
-/** One record's careM URL. The id comes from drakel's own URL, so it is encoded to stay one path segment. */
-const recordUrl = (errandId: string, category: LifecareRecordCategory, id: string): string =>
-  caremanagementLifecareUrl(errandId, 'documents', RECORD_SEGMENT[category], encodeURIComponent(id));
+/**
+ * One record's careM URL, e.g. `recordUrl(errandId, 'DOCUMENT', id, 'pdf')`. The id comes from drakel's own URL; the
+ * URL builder encodes it, so it stays one path segment.
+ */
+const recordUrl = (errandId: string, category: LifecareRecordCategory, id: string, ...parts: string[]): string =>
+  caremanagementLifecareUrl(errandId, 'documents', RECORD_SEGMENT[category], id, ...parts);
 
 /**
  * The applicant's Lifecare journalanteckningar and documents, seen from an errand, through careM.
@@ -54,7 +57,7 @@ class ErrandLifecareRecordsService {
 
   /** One of the applicant's stored documents as a PDF; careM answers 404 when Lifecare holds no PDF for it. */
   async documentPdf(errandId: string, id: string): Promise<Buffer> {
-    return this.apiService.getBinary({ url: `${recordUrl(errandId, 'DOCUMENT', id)}/pdf` });
+    return this.apiService.getBinary({ url: recordUrl(errandId, 'DOCUMENT', id, 'pdf') });
   }
 
   /** The bodies of one group's records, so the tab can show every record's text without opening it. */

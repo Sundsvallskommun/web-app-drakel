@@ -1,4 +1,5 @@
 import authMiddleware from '@middlewares/auth.middleware';
+import { requireErrandWrite } from '@middlewares/permission.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import ErrandLifecareCalculationService from '@services/errand-lifecare-calculation.service';
 import { Body, Controller, Get, Param, Post, UseBefore } from 'routing-controllers';
@@ -25,13 +26,14 @@ export class LifecareCalculationController {
   @ResponseSchema(LifecareCalculationPdfApiResponse)
   @UseBefore(authMiddleware)
   async pdf(@Param('errandId') errandId: string) {
-    return { data: await this.calculationService.pdf(errandId), message: 'success' };
+    const pdf = await this.calculationService.pdf(errandId);
+    return { data: pdf.toString('base64'), message: 'success' };
   }
 
   @Post('/errands/:errandId/lifecare-calculation')
   @OpenAPI({ summary: "Save the errand's draft normberäkning in Lifecare — created the first time, changed after that; optionally as slutlig" })
   @ResponseSchema(LifecareCalculationApiResponse)
-  @UseBefore(authMiddleware, validationMiddleware(SaveLifecareCalculationDto, 'body'))
+  @UseBefore(authMiddleware, requireErrandWrite, validationMiddleware(SaveLifecareCalculationDto, 'body'))
   async save(@Param('errandId') errandId: string, @Body() input: SaveLifecareCalculationDto) {
     return { data: await this.calculationService.save(errandId, input.finalize === true), message: 'success' };
   }

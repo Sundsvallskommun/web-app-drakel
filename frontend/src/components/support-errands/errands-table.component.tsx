@@ -2,7 +2,7 @@
 
 import { Errand } from '@data-contracts/backend/data-contracts';
 import { Button, Pagination, Select, Spinner, Table } from '@sk-web-gui/react';
-import dayjs from 'dayjs';
+import { formatDateTime } from '@utils/date-time';
 import { TFunction } from 'i18next';
 import { ArrowRight, ChevronDown, ChevronsUpDown, ChevronUp } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
@@ -48,7 +48,6 @@ interface Column {
   sortKey?: string;
 }
 
-const formatDate = (value?: string): string => (value ? dayjs(value).format('YYYY-MM-DD, HH:mm') : '');
 const errandRouteSegment = (errand: Errand): string | undefined => errand.errandNumber ?? errand.id;
 
 const columns: Column[] = [
@@ -87,7 +86,7 @@ const columns: Column[] = [
     sortKey: 'created',
     render: (errand) => (
       <time className="whitespace-nowrap" dateTime={errand.created}>
-        {formatDate(errand.created)}
+        {formatDateTime(errand.created, ', ')}
       </time>
     ),
   },

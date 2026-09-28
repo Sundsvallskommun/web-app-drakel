@@ -1,10 +1,10 @@
 'use client';
 
 import { AsyncContent } from '@components/common/async-content.component';
+import { ErrandEvent } from '@data-contracts/backend/data-contracts';
 import { useErrandEvents } from '@hooks/use-errand-events';
-import { ErrandEvent } from '@services/event-service';
 import { Button, Select } from '@sk-web-gui/react';
-import dayjs from 'dayjs';
+import { formatDateTime } from '@utils/date-time';
 import { FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -29,9 +29,6 @@ const actionChipClass = (action?: string): string => {
 
 // HTTP = the access log (who read/touched), EVENT = the domain-event change log (what changed, incl. process/system).
 const SOURCES = ['HTTP', 'EVENT'];
-
-const formatWhen = (created?: string): string | undefined =>
-  created ? dayjs(created).format('YYYY-MM-DD HH:mm') : undefined;
 
 /**
  * "Händelselogg" — the errand's who/what/when activity log (reads + writes), newest first. Rendered as a
@@ -115,7 +112,7 @@ export const ErrandEvents: FC<{ errandId: string }> = ({ errandId }) => {
                 <span className="text-small break-words">{event.target}</span>
               : null}
               <span className="text-small text-dark-secondary break-words">
-                {actorLabel(event)} · {formatWhen(event.created) ?? t('common:none')}
+                {actorLabel(event)} · {formatDateTime(event.created) || t('common:none')}
               </span>
             </li>
           ))}

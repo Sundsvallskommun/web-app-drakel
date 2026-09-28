@@ -9,22 +9,13 @@ import {
   updateNormRow,
 } from '@services/normberakning-service';
 import { Button, FormControl, FormLabel, Input, Select, Spinner, Table } from '@sk-web-gui/react';
-import { displayAmount } from '@utils/format-amount';
+import { displayAmount, isAmountChanged, isAmountText, parseAmount, toAmountInput } from '@utils/format-amount';
 import { RotateCcw, Trash2 } from 'lucide-react';
 import { FC, FocusEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { NormberakningSummaBox } from './normberakning-summa-box.component';
 import { NormberakningTableBox } from './normberakning-table-box.component';
-
-const parseAmount = (value: string): number | undefined => {
-  const normalized = value.trim().replace(',', '.');
-  if (!normalized) {
-    return undefined;
-  }
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : undefined;
-};
 
 const expenseLabel = (row: NormExpenseRow): string => {
   if (row.specification?.trim()) {
@@ -124,6 +115,7 @@ export const NormberakningExpenses: FC<NormberakningExpensesProps> = ({
                 errandId={errandId}
                 row={row}
                 onAction={(action) => void runRowAction(action)}
+                onError={setError}
               />
             ))
           }
@@ -177,10 +169,11 @@ const ExpenseRow: FC<{
   errandId: string;
   row: NormExpenseRow;
   onAction: (action: () => Promise<{ error?: unknown; message?: string }>) => void;
-}> = ({ errandId, row, onAction }) => {
+  onError: (message: string) => void;
+}> = ({ errandId, row, onAction, onError }) => {
   const { t } = useTranslation('calculation');
-  const [applied, setApplied] = useState<string>(row.appliedAmount?.toString() ?? '');
-  const [amount, setAmount] = useState<string>(row.caseworkerAmount?.toString() ?? '');
+  const [applied, setApplied] = useState<string>(toAmountInput(row.appliedAmount));
+  const [amount, setAmount] = useState<string>(toAmountInput(row.caseworkerAmount));
   const [note, setNote] = useState<string>(row.note ?? '');
   const rowId = row.id ?? '';
 
@@ -212,14 +205,20 @@ const ExpenseRow: FC<{
     );
   }
 
+  // Amounts are compared as numbers: "1234,50" is the saved 1234.5, so a row once saved is not changed again.
   const dirty =
-    applied !== (row.appliedAmount?.toString() ?? '') ||
-    amount !== (row.caseworkerAmount?.toString() ?? '') ||
-    note !== (row.note ?? '');
+    isAmountChanged(applied, row.appliedAmount) ||
+    isAmountChanged(amount, row.caseworkerAmount) ||
+    note.trim() !== (row.note ?? '');
 
-  // Persist the row when a field loses focus, but only if something actually changed.
+  // Persist the row when a field loses focus, but only if something actually changed — and never an amount
+  // that can't be read, which would otherwise be sent as no amount at all.
   const handleBlur = () => {
     if (!dirty) {
+      return;
+    }
+    if (!isAmountText(applied) || !isAmountText(amount)) {
+      onError(t('table.invalidAmount'));
       return;
     }
     onAction(() =>
@@ -314,6 +313,10 @@ const DraftExpenseRow: FC<{
   const hasInput = applied.trim() !== '' || amount.trim() !== '' || note.trim() !== '';
 
   const commit = async () => {
+    if (!isAmountText(applied) || !isAmountText(amount)) {
+      onError(t('table.invalidAmount'));
+      return;
+    }
     setSaving(true);
     onError('');
     const result = await addNormRow(errandId, 'expenses', {

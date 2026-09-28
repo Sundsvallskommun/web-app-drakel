@@ -1,4 +1,5 @@
 import authMiddleware from '@middlewares/auth.middleware';
+import { requireErrandWrite } from '@middlewares/permission.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import ErrandLifecareRemindersService from '@services/errand-lifecare-reminders.service';
 import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, UseBefore } from 'routing-controllers';
@@ -34,7 +35,7 @@ export class LifecareRemindersController {
   @Post('/errands/:errandId/lifecare-reminders')
   @HttpCode(201)
   @OpenAPI({ summary: "Add a bevakning on the errand's insats in Lifecare" })
-  @UseBefore(authMiddleware, validationMiddleware(CreateLifecareReminderDto, 'body'))
+  @UseBefore(authMiddleware, requireErrandWrite, validationMiddleware(CreateLifecareReminderDto, 'body'))
   async create(@Param('errandId') errandId: string, @Body() input: CreateLifecareReminderDto) {
     await this.remindersService.create(errandId, input);
     return { data: null, message: 'success' };
@@ -42,7 +43,7 @@ export class LifecareRemindersController {
 
   @Put('/errands/:errandId/lifecare-reminders/:reminderId')
   @OpenAPI({ summary: "Change a bevakning on the errand's insats in Lifecare (also how it is marked done)" })
-  @UseBefore(authMiddleware, validationMiddleware(CreateLifecareReminderDto, 'body'))
+  @UseBefore(authMiddleware, requireErrandWrite, validationMiddleware(CreateLifecareReminderDto, 'body'))
   async update(@Param('errandId') errandId: string, @Param('reminderId') reminderId: string, @Body() input: CreateLifecareReminderDto) {
     await this.remindersService.update(errandId, Number(reminderId), input);
     return { data: null, message: 'success' };
@@ -50,7 +51,7 @@ export class LifecareRemindersController {
 
   @Delete('/errands/:errandId/lifecare-reminders/:reminderId')
   @OpenAPI({ summary: "Remove a bevakning from the errand's insats in Lifecare" })
-  @UseBefore(authMiddleware)
+  @UseBefore(authMiddleware, requireErrandWrite)
   async remove(@Param('errandId') errandId: string, @Param('reminderId') reminderId: string) {
     await this.remindersService.remove(errandId, Number(reminderId));
     return { data: null, message: 'success' };

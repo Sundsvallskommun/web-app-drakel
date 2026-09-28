@@ -6,8 +6,7 @@
   "loadError": "Det gick inte att hämta normberäkningen ({{error}})",
   "noDraft": "Ingen normberäkning har skapats för det här ärendet ännu. Draften skapas automatiskt när inkomstunderlaget (SSBTEK) har hämtats.",
   "preview": {
-    "modalLabel": "Förhandsgranska beräkning",
-    "empty": "Det finns ingen beräkning att förhandsgranska."
+    "modalLabel": "Förhandsgranska beräkning"
   },
   "details": {
     "title": "Beräkningsuppgifter",
@@ -34,7 +33,8 @@
     "restoreRow": "Återställ rad",
     "deleteRow": "Ta bort rad",
     "saveError": "Det gick inte att spara ändringen",
-    "addError": "Det gick inte att lägga till raden"
+    "addError": "Det gick inte att lägga till raden",
+    "invalidAmount": "Ange beloppet med siffror, t.ex. 1 234,50"
   },
   "family": {
     "title": "Personer som omfattas",

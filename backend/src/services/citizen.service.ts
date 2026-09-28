@@ -1,6 +1,7 @@
 import { MUNICIPALITY_ID } from '@/config';
-import { getApiBase } from '@/config/api-config';
 import { CitizenExtended } from '@/data-contracts/citizen/data-contracts';
+import { gatewayUrl } from '@/utils/gateway-url';
+import { logger } from '@/utils/logger';
 
 import ApiService from './api.service';
 
@@ -38,15 +39,17 @@ class CitizenService {
    * Citizen API is unavailable or the person is unknown.
    */
   async getPersonnumber(partyId: string): Promise<string | null> {
-    const url = `${getApiBase('citizen')}/${MUNICIPALITY_ID}/${partyId}/personnumber`;
     try {
+      // Inside the try: a partyId that cannot be a path segment is one more person Citizen cannot resolve.
+      const url = gatewayUrl('citizen', MUNICIPALITY_ID, partyId, 'personnumber');
       // Citizen returns the personnummer as a JSON number, so coerce to string before trimming. (A
       // 12-digit personnummer always starts with the century, so there's no leading zero to lose.)
       const res = await this.apiService.get<string | number>({ url });
       const personnumber = res.data?.toString().trim() || '';
       return personnumber.length > 0 ? personnumber : null;
     } catch {
-      console.error('Failed to resolve personnummer for partyId', partyId);
+      // Never the partyId: it identifies the person.
+      logger.warn('Failed to resolve a personnummer from Citizen');
       return null;
     }
   }
@@ -62,7 +65,7 @@ class CitizenService {
     if (uniquePartyIds.length === 0) {
       return names;
     }
-    const url = `${getApiBase('citizen')}/${MUNICIPALITY_ID}/batch`;
+    const url = gatewayUrl('citizen', MUNICIPALITY_ID, 'batch');
     try {
       const res = await this.apiService.post<CitizenExtended[]>({ url, data: uniquePartyIds });
       for (const citizen of res.data ?? []) {
@@ -72,7 +75,7 @@ class CitizenService {
         }
       }
     } catch {
-      console.error('Failed to resolve names for', uniquePartyIds.length, 'partyIds');
+      logger.warn(`Failed to resolve names for ${uniquePartyIds.length} partyIds from Citizen`);
     }
     return names;
   }

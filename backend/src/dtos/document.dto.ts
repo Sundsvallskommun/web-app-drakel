@@ -23,21 +23,5 @@ export class CreateDocumentDto {
   documentDateTime!: string;
 }
 
-/** The fields a handläggare sends when editing a (still WORKING) Dokument. */
-export class UpdateDocumentDto {
-  @IsString()
-  @MaxLength(255)
-  type!: string;
-
-  @IsString()
-  @MaxLength(255)
-  heading!: string;
-
-  @IsString()
-  @MaxLength(1048576)
-  @IsOptional()
-  text?: string;
-
-  @IsString()
-  documentDateTime!: string;
-}
+/** The fields a handläggare sends when editing a (still WORKING) Dokument — the same as when creating it. */
+export class UpdateDocumentDto extends CreateDocumentDto {}

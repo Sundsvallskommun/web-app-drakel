@@ -1,11 +1,7 @@
 'use client';
 
-import {
-  getLifecareRecordContent,
-  LifecareRecord,
-  LifecareRecordEdit,
-  updateLifecareRecord,
-} from '@services/lifecare-documents-service';
+import { UpdateLifecareRecordDto } from '@data-contracts/backend/data-contracts';
+import { getLifecareRecordContent, LifecareRecord, updateLifecareRecord } from '@services/lifecare-documents-service';
 import { Button, DatePicker, FormControl, FormLabel, Modal, Spinner } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { toEditorMarkup } from '@utils/sanitize-html';
@@ -23,14 +19,16 @@ const DocumentEditor = dynamic(() => import('./document-editor.component'), {
 /**
  * Opens one Lifecare record: reads its body, shows it, and — when Lifecare still allows it — lets it
  * be edited and saved back. Editability is decided by Lifecare (the `editable` flag on the fetched
- * record), never guessed from the list, so a record finalised since the tab loaded is read-only here.
+ * record), never guessed from the list, so a record finalised since the tab loaded is read-only here — as is
+ * every record for a handläggare who may only read errands (`readOnly`).
  */
 export const LifecareRecordModal: FC<{
   errandId: string;
   record: LifecareRecord;
+  readOnly?: boolean;
   onClose: () => void;
   onSaved: () => void;
-}> = ({ errandId, record, onClose, onSaved }) => {
+}> = ({ errandId, record, readOnly = false, onClose, onSaved }) => {
   const { t } = useTranslation('documentation');
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -53,7 +51,7 @@ export const LifecareRecordModal: FC<{
         setIsLoading(false);
         return;
       }
-      setEditable(res.data.editable);
+      setEditable(res.data.editable && !readOnly);
       setOccurenceDate(res.data.occurenceDate);
       setTime(res.data.time);
       setContent({ markup: toEditorMarkup(res.data.content) });
@@ -62,13 +60,13 @@ export const LifecareRecordModal: FC<{
     return () => {
       active = false;
     };
-  }, [errandId, record.category, record.id]);
+  }, [errandId, record.category, record.id, readOnly]);
 
   /** Saves the edit; `writeProtect` also write-protects the record, after which Lifecare allows no change. */
   const save = async (writeProtect: boolean): Promise<void> => {
     setSaving(true);
     setSaveError(false);
-    const edit: LifecareRecordEdit = {
+    const edit: UpdateLifecareRecordDto = {
       content: content.markup?.trim() ?? '',
       occurenceDate: occurenceDate || undefined,
       time: time || undefined,

@@ -1,32 +1,21 @@
+import {
+  ErrandNotification,
+  ErrandNotificationApiResponse,
+  ErrandNotificationsApiResponse,
+} from '@data-contracts/backend/data-contracts';
 import { ServiceResponse } from '@interfaces/services';
-import { ApiResponse, apiService, toServiceError } from '@services/api-service';
+import { apiService, unwrapData } from '@services/api-service';
+import { apiPath } from '@utils/api-path';
 
-/** A notification addressed to the handläggare (e.g. a new message from the applicant). */
-export interface ErrandNotification {
-  id?: string;
-  errandId?: string;
-  ownerId?: string;
-  createdBy?: string;
-  /** CREATE / UPDATE / DELETE. */
-  type?: string;
-  /** ERRAND / DECISION / ATTACHMENT / STAKEHOLDER / PARAMETER / MESSAGE / SYSTEM. */
-  subType?: string;
-  description?: string;
-  content?: string;
-  /** The handläggare has seen the notification. */
-  acknowledged?: boolean;
-  /** The handläggare has acted on it, not merely seen it. Marking it handled also acknowledges it. */
-  handled?: boolean;
-  created?: string;
-  modified?: string;
-}
+/**
+ * A notification addressed to the handläggare (e.g. a new message from the applicant). `acknowledged` means seen,
+ * `handled` acted on — marking it handled also acknowledges it.
+ */
+export type { ErrandNotification };
 
 /** Fetches the current handläggare's notifications across all their errands (newest first). */
 export const getNotifications = (): Promise<ServiceResponse<ErrandNotification[]>> =>
-  apiService
-    .get<ApiResponse<ErrandNotification[]>>('notifications')
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
+  unwrapData(apiService.get<ErrandNotificationsApiResponse>('notifications'));
 
 /** Marks a single notification as read (or withdraws it). */
 export const acknowledgeNotification = (
@@ -34,10 +23,11 @@ export const acknowledgeNotification = (
   notificationId: string,
   acknowledged = true
 ): Promise<ServiceResponse<ErrandNotification>> =>
-  apiService
-    .patch<ApiResponse<ErrandNotification>>(`errands/${errandId}/notifications/${notificationId}`, { acknowledged })
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
+  unwrapData(
+    apiService.patch<ErrandNotificationApiResponse>(apiPath`errands/${errandId}/notifications/${notificationId}`, {
+      acknowledged,
+    })
+  );
 
 /**
  * Marks a single notification as acted on. The API acknowledges it at the same time, so a notification
@@ -48,7 +38,8 @@ export const handleNotification = (
   notificationId: string,
   handled = true
 ): Promise<ServiceResponse<ErrandNotification>> =>
-  apiService
-    .patch<ApiResponse<ErrandNotification>>(`errands/${errandId}/notifications/${notificationId}`, { handled })
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
+  unwrapData(
+    apiService.patch<ErrandNotificationApiResponse>(apiPath`errands/${errandId}/notifications/${notificationId}`, {
+      handled,
+    })
+  );

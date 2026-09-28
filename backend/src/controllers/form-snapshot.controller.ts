@@ -1,10 +1,12 @@
 import authMiddleware from '@middlewares/auth.middleware';
 import CaremanagementFormSnapshotService from '@services/caremanagement-form-snapshot.service';
+import { httpStatusOf } from '@utils/http-error-status';
 import { Controller, Get, Param, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
-import { HttpException } from '@/exceptions/HttpException';
 import { FormSnapshotApiResponse } from '@/responses/form-snapshot.response';
+
+const NOT_FOUND = 404;
 
 /**
  * Serves the immutable form snapshot of a financial-assistance errand — the application form captured
@@ -25,7 +27,8 @@ export class FormSnapshotController {
       const res = await this.formSnapshotService.readFormSnapshot(errandId);
       return { data: res.data, message: 'success' };
     } catch (error) {
-      if (error instanceof HttpException && error.status === 404) {
+      // httpStatusOf, not `instanceof HttpException`: routing-controllers' HttpError resets the prototype.
+      if (httpStatusOf(error) === NOT_FOUND) {
         return { data: null, message: 'No form snapshot captured' };
       }
       throw error;

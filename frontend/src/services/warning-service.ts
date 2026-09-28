@@ -1,43 +1,37 @@
+import {
+  UpdateWarningStatusDto,
+  UpdateWarningStatusDtoStatusEnum,
+  Warning,
+  WarningsApiResponse,
+} from '@data-contracts/backend/data-contracts';
 import { ServiceResponse } from '@interfaces/services';
-import { ApiResponse, apiService, toServiceError } from '@services/api-service';
+import { apiService, discardData, unwrapData } from '@services/api-service';
+import { apiPath } from '@utils/api-path';
 
 /**
- * An EB income warning on an errand (caremanagement Warning). Defined locally — like {@link Note} —
- * mirroring the backend Warning response. `status` is OPEN until a handläggare acknowledges or closes it.
+ * An EB income warning on an errand (caremanagement Warning). `status` is OPEN until a handläggare acknowledges or
+ * closes it; `section` is the tab it belongs to (CALCULATION, DECISION or PAYMENT). Show `typeDisplayName` rather
+ * than the machine `type` — caremanagement owns the labels.
  */
-export interface Warning {
-  id?: string;
-  /** The machine code; show `typeDisplayName` instead — caremanagement owns the labels for all 33 types. */
-  type?: string;
-  typeDisplayName?: string;
-  /** The tab the warning belongs to, derived from the type by caremanagement. */
-  section?: 'CALCULATION' | 'DECISION' | 'PAYMENT';
-  sourceKey?: string;
-  message?: string;
-  status?: 'OPEN' | 'ACKNOWLEDGED' | 'CLOSED';
-  statusDisplayName?: string;
-  autoResolved?: boolean;
-  created?: string;
-  updated?: string;
-}
+export type { Warning };
+
+const setWarningStatus = (
+  errandId: string,
+  warningId: string,
+  status: UpdateWarningStatusDtoStatusEnum
+): Promise<ServiceResponse<null>> => {
+  const update: UpdateWarningStatusDto = { status };
+  return discardData(apiService.patch(apiPath`errands/${errandId}/warnings/${warningId}`, update));
+};
 
 /** Fetches the EB income warnings on an errand. */
 export const getWarnings = (errandId: string): Promise<ServiceResponse<Warning[]>> =>
-  apiService
-    .get<ApiResponse<Warning[]>>(`errands/${errandId}/warnings`)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
+  unwrapData(apiService.get<WarningsApiResponse>(apiPath`errands/${errandId}/warnings`));
 
 /** Acknowledges a warning so it is no longer OPEN (and disappears from the current list). */
 export const acknowledgeWarning = (errandId: string, warningId: string): Promise<ServiceResponse<null>> =>
-  apiService
-    .patch<ApiResponse<null>>(`errands/${errandId}/warnings/${warningId}`, { status: 'ACKNOWLEDGED' })
-    .then(() => ({ data: null }))
-    .catch(toServiceError);
+  setWarningStatus(errandId, warningId, UpdateWarningStatusDtoStatusEnum.ACKNOWLEDGED);
 
 /** Re-opens an acknowledged/closed warning (sets it back to OPEN). */
 export const reopenWarning = (errandId: string, warningId: string): Promise<ServiceResponse<null>> =>
-  apiService
-    .patch<ApiResponse<null>>(`errands/${errandId}/warnings/${warningId}`, { status: 'OPEN' })
-    .then(() => ({ data: null }))
-    .catch(toServiceError);
+  setWarningStatus(errandId, warningId, UpdateWarningStatusDtoStatusEnum.OPEN);

@@ -120,11 +120,6 @@ export interface Decision {
   created?: string;
 }
 
-export interface DecisionsApiResponse {
-  data: Decision[];
-  message: string;
-}
-
 export interface RecommendationApiResponse {
   data?: Decision;
   message: string;
@@ -185,16 +180,6 @@ export interface DecisionPhrasesApiResponse {
 }
 
 export interface CreateDocumentDto {
-  /** @maxLength 255 */
-  type: string;
-  /** @maxLength 255 */
-  heading: string;
-  /** @maxLength 1048576 */
-  text?: string;
-  documentDateTime: string;
-}
-
-export interface UpdateDocumentDto {
   /** @maxLength 255 */
   type: string;
   /** @maxLength 255 */
@@ -770,16 +755,6 @@ export interface CreateJournalEntryDto {
   entryDateTime: string;
 }
 
-export interface UpdateJournalEntryDto {
-  /** @maxLength 255 */
-  type: string;
-  /** @maxLength 255 */
-  heading: string;
-  /** @maxLength 1048576 */
-  text?: string;
-  entryDateTime: string;
-}
-
 export interface JournalEntry {
   id?: string;
   errandId?: string;
@@ -995,21 +970,39 @@ export interface CreateLifecarePayeeDto {
 }
 
 export interface PaymentInputDto {
+  /** @pattern \d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d.\d+Z? */
   paymentDate?: string;
+  /**
+   * @exclusiveMin 0
+   * @max 1000000
+   */
   amount?: number;
+  /** @pattern ^\d{4}-(0[1-9]|1[0-2])$ */
   applicationMonth?: string;
+  /** @maxLength 255 */
   paymentMethod?: string;
+  /** @maxLength 255 */
   payeeName?: string;
+  /** @maxLength 255 */
   payeeAddress?: string;
+  /** @maxLength 255 */
   payeeCareOf?: string;
+  /** @maxLength 64 */
   payeeZipCode?: string;
+  /** @maxLength 255 */
   payeeCity?: string;
+  /** @maxLength 64 */
   clearingNumber?: string;
+  /** @maxLength 64 */
   accountNumber?: string;
+  /** @maxLength 255 */
   accountingCode?: string;
+  /** @maxLength 64 */
   localPaymentNumber?: string;
+  /** @maxLength 64 */
   invoiceNumber?: string;
   usesOcr?: boolean;
+  /** @maxItems 50 */
   messageLines?: string[];
 }
 
@@ -1302,14 +1295,6 @@ export interface CreateNoteDto {
   body: string;
 }
 
-export interface UpdateNoteDto {
-  /**
-   * @minLength 1
-   * @maxLength 8192
-   */
-  body: string;
-}
-
 export interface UpdateNotificationDto {
   acknowledged?: boolean;
   handled?: boolean;
@@ -1341,7 +1326,10 @@ export interface ErrandNotificationApiResponse {
 }
 
 export interface RenderPdfDto {
-  /** @minLength 1 */
+  /**
+   * @minLength 1
+   * @maxLength 2097152
+   */
   html: string;
 }
 
@@ -1358,7 +1346,10 @@ export interface SsbtekTransferIncomeDto {
 }
 
 export interface SsbtekTransferDto {
-  /** @minItems 1 */
+  /**
+   * @minItems 1
+   * @uniqueItems true
+   */
   incomes: SsbtekTransferIncomeDto[];
 }
 
@@ -1487,6 +1478,34 @@ export interface Warning {
 export interface WarningsApiResponse {
   data: Warning[];
   message: string;
+}
+
+export interface UpdateDocumentDto {
+  /** @maxLength 255 */
+  type: string;
+  /** @maxLength 255 */
+  heading: string;
+  /** @maxLength 1048576 */
+  text?: string;
+  documentDateTime: string;
+}
+
+export interface UpdateJournalEntryDto {
+  /** @maxLength 255 */
+  type: string;
+  /** @maxLength 255 */
+  heading: string;
+  /** @maxLength 1048576 */
+  text?: string;
+  entryDateTime: string;
+}
+
+export interface UpdateNoteDto {
+  /**
+   * @minLength 1
+   * @maxLength 8192
+   */
+  body: string;
 }
 
 export enum SaveTemplateDtoKindEnum {

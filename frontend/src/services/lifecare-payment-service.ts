@@ -8,20 +8,15 @@ import {
   PaymentInputDto,
 } from '@data-contracts/backend/data-contracts';
 import { ServiceResponse } from '@interfaces/services';
-import { apiService, toServiceError } from '@services/api-service';
+import { apiService, unwrapData } from '@services/api-service';
+import { apiPath } from '@utils/api-path';
 
 /** The betalsätt and betalningsmottagare on the insats of the errand — Lifecare's own lists. */
 export const getLifecarePaymentOptions = (errandId: string): Promise<ServiceResponse<LifecarePaymentOptionsView>> =>
-  apiService
-    .get<LifecarePaymentOptionsApiResponse>(`errands/${errandId}/lifecare-payment-options`)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
+  unwrapData(apiService.get<LifecarePaymentOptionsApiResponse>(apiPath`errands/${errandId}/lifecare-payment-options`));
 
 export const getLifecarePayments = (errandId: string): Promise<ServiceResponse<LifecareRegisteredPaymentView[]>> =>
-  apiService
-    .get<LifecareRegisteredPaymentsApiResponse>(`errands/${errandId}/lifecare-payments`)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
+  unwrapData(apiService.get<LifecareRegisteredPaymentsApiResponse>(apiPath`errands/${errandId}/lifecare-payments`));
 
 /**
  * Registers the utbetalning in Lifecare straight away — careM keeps no copy. On a refusal (`error`)
@@ -32,7 +27,4 @@ export const registerLifecarePayment = (
   errandId: string,
   input: PaymentInputDto
 ): Promise<ServiceResponse<LifecarePaymentCreated>> =>
-  apiService
-    .post<LifecarePaymentCreatedApiResponse>(`errands/${errandId}/lifecare-payments`, input)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
+  unwrapData(apiService.post<LifecarePaymentCreatedApiResponse>(apiPath`errands/${errandId}/lifecare-payments`, input));

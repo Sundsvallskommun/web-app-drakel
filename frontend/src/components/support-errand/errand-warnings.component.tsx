@@ -10,6 +10,8 @@ import { useTranslation } from 'react-i18next';
 
 interface ErrandWarningsProps {
   errandId: string;
+  /** Shows the warnings without kvittera/återöppna, for a handläggare who may only read errands. */
+  readOnly?: boolean;
   /** All warnings on the errand (the panel filters to OPEN unless "Visa aktuella" is unchecked). */
   warnings: Warning[];
   isLoading: boolean;
@@ -17,7 +19,14 @@ interface ErrandWarningsProps {
   refresh: () => void;
 }
 
-export const ErrandWarnings: FC<ErrandWarningsProps> = ({ errandId, warnings, isLoading, loadError, refresh }) => {
+export const ErrandWarnings: FC<ErrandWarningsProps> = ({
+  errandId,
+  readOnly = false,
+  warnings,
+  isLoading,
+  loadError,
+  refresh,
+}) => {
   const { t } = useTranslation('sidebar');
   const [busyId, setBusyId] = useState<string>();
   const [actionError, setActionError] = useState<string>();
@@ -93,7 +102,9 @@ export const ErrandWarnings: FC<ErrandWarningsProps> = ({ errandId, warnings, is
                   </div>
                 </div>
 
-                {open && isAcknowledgeable(warning) ?
+                {readOnly ?
+                  null
+                : open && isAcknowledgeable(warning) ?
                   <Button
                     size="sm"
                     variant="secondary"

@@ -1,52 +1,35 @@
-import { AdminTemplate, AdminTemplateDetail } from '@data-contracts/backend/data-contracts';
+import {
+  AdminTemplate,
+  AdminTemplateApiResponse,
+  AdminTemplateDetail,
+  AdminTemplatesApiResponse,
+  SaveTemplateDto,
+} from '@data-contracts/backend/data-contracts';
 import { ServiceResponse } from '@interfaces/services';
-import { ApiResponse, apiService, toServiceError } from '@services/api-service';
+import { apiService, toServiceError, unwrapData } from '@services/api-service';
+import { apiPath } from '@utils/api-path';
 
 export type { AdminTemplate, AdminTemplateDetail };
 
-/** The fields sent when saving a mall or frastext. Without an identifier a new template is created. */
-export interface SaveTemplateInput {
-  identifier?: string;
-  name: string;
-  description?: string;
-  code: string;
-  kind: string;
-  /** A beslutsformulering's kategori. */
-  category?: string;
-  content: string;
-}
-
 /** Lists every mall and frastext this app owns, across both journalanteckning and dokument. */
 export const getAdminTemplates = (): Promise<ServiceResponse<AdminTemplate[]>> =>
-  apiService
-    .get<ApiResponse<AdminTemplate[]>>('admin/templates')
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
+  unwrapData(apiService.get<AdminTemplatesApiResponse>('admin/templates'));
 
 /** Fetches a single template with its HTML content, for the editor. */
 export const getAdminTemplate = (identifier: string): Promise<ServiceResponse<AdminTemplateDetail>> =>
-  apiService
-    .get<ApiResponse<AdminTemplateDetail>>(`admin/templates/${encodeURIComponent(identifier)}`)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
+  unwrapData(apiService.get<AdminTemplateApiResponse>(apiPath`admin/templates/${identifier}`));
 
-/** Saves a template and returns the refreshed list. */
-export const saveAdminTemplate = (input: SaveTemplateInput): Promise<ServiceResponse<AdminTemplate[]>> =>
-  apiService
-    .post<ApiResponse<AdminTemplate[]>>('admin/templates', input)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
+/** Saves a mall or frastext and returns the refreshed list. Without an identifier a new template is created. */
+export const saveAdminTemplate = (input: SaveTemplateDto): Promise<ServiceResponse<AdminTemplate[]>> =>
+  unwrapData(apiService.post<AdminTemplatesApiResponse>('admin/templates', input));
 
 /** Deletes a template and all of its versions. */
 export const deleteAdminTemplate = (identifier: string): Promise<ServiceResponse<boolean>> =>
   apiService
-    .delete(`admin/templates/${encodeURIComponent(identifier)}`)
+    .delete(apiPath`admin/templates/${identifier}`)
     .then(() => ({ data: true }))
     .catch(toServiceError);
 
 /** Puts the default beslutsformuleringar Templating lacks there — never duplicating or overwriting one. */
 export const addDefaultDecisionPhrases = (): Promise<ServiceResponse<AdminTemplate[]>> =>
-  apiService
-    .post<ApiResponse<AdminTemplate[]>>('admin/templates/decision-phrases/defaults', {})
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
+  unwrapData(apiService.post<AdminTemplatesApiResponse>('admin/templates/decision-phrases/defaults', {}));

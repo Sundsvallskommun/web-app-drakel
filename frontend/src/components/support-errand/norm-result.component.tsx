@@ -1,7 +1,7 @@
 'use client';
 
 import { cx } from '@sk-web-gui/react';
-import { formatAmount } from '@utils/format-amount';
+import { formatAmount, formatKronor } from '@utils/format-amount';
 import { isSurplus, NormResult } from '@utils/norm-result';
 import { FC } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +17,7 @@ const NormResultAmount: FC<{ result: NormResult; className?: string }> = ({ resu
       className
     )}
   >
-    {formatAmount(result.result)} kr
+    {formatKronor(result.result)}
   </span>
 );
 

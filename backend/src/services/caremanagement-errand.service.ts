@@ -1,6 +1,6 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
-import { caremanagementUrl } from '@utils/caremanagement-url';
+import { caremanagementFinancialAssistanceUrl, caremanagementUrl } from '@utils/caremanagement-url';
 
 import { Errand, FinancialAssistanceView, FindErrandsResponse, PatchErrand } from '@/data-contracts/caremanagement/data-contracts';
 import { CreateErrandDto, FindErrandsQueryDto, PatchErrandDto } from '@/dtos/errand.dto';
@@ -11,15 +11,30 @@ const errandIdFromLocation = (location?: string): string | undefined => location
 const isUuid = (value: string): boolean => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 const filterString = (value: string): string => value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
+/**
+ * The search's query parameters as caremanagement takes them, named one by one: only what the DTO declares is ever
+ * forwarded, whatever else the request object carries.
+ */
+const findErrandsParams = (query: FindErrandsQueryDto) => ({
+  filter: query.filter,
+  page: query.page,
+  size: query.size,
+  sort: query.sort,
+  hasUnacknowledgedNotifications: query.hasUnacknowledgedNotifications,
+  hasUnhandledNotifications: query.hasUnhandledNotifications,
+  notificationOwnerId: query.notificationOwnerId,
+});
+
 class CaremanagementErrandService {
   private apiService = new CaremanagementApiService();
 
   async findErrands(query: FindErrandsQueryDto): Promise<ApiResponse<FindErrandsResponse>> {
     // `indexes: null` serializes array params as repeated keys (sort=a&sort=b) rather than axios's default
-    // bracket form (sort[]=a), which is the form caremanagement (Spring) expects for ?sort.
+    // bracket form (sort[]=a), which is the form caremanagement (Spring) expects for ?sort. Undefined params are
+    // dropped by axios.
     return this.apiService.get<FindErrandsResponse>({
       url: caremanagementUrl('errands'),
-      params: query,
+      params: findErrandsParams(query),
       paramsSerializer: { indexes: null },
     });
   }
@@ -46,12 +61,21 @@ class CaremanagementErrandService {
   }
 
   /**
+   * The careM id of an errand the frontend names by its route segment — its errand number or its id. careM's
+   * errand-scoped routes take the id only.
+   */
+  async resolveErrandId(identifier: string): Promise<string> {
+    const errand = await this.getErrandByIdentifier(identifier);
+    return errand.data.id ?? identifier;
+  }
+
+  /**
    * Fetches the financial-assistance view of an errand, which (unlike the generic GET /errands/{id})
    * includes the submitted `data` payload. Used for the "Ärendeuppgifter"-tab.
    */
   async getFinancialAssistanceView(errandId: string): Promise<ApiResponse<FinancialAssistanceView>> {
     return this.apiService.get<FinancialAssistanceView>({
-      url: caremanagementUrl('errands', 'financial-assistance', errandId),
+      url: caremanagementFinancialAssistanceUrl(errandId),
     });
   }
 

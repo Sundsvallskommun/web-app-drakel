@@ -1,4 +1,5 @@
 import authMiddleware from '@middlewares/auth.middleware';
+import { requireErrandWrite } from '@middlewares/permission.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import ErrandLifecarePaymentsService from '@services/errand-lifecare-payments.service';
 import LifecarePaymentRegistrationService from '@services/lifecare-payment-registration.service';
@@ -53,7 +54,7 @@ export class LifecarePaymentsController {
       'linkedToErrand false means the utbetalning IS registered in Lifecare but could not be linked to the errand: it must not be registered again.',
   })
   @ResponseSchema(LifecarePaymentCreatedApiResponse)
-  @UseBefore(authMiddleware, validationMiddleware(PaymentInputDto, 'body'))
+  @UseBefore(authMiddleware, requireErrandWrite, validationMiddleware(PaymentInputDto, 'body'))
   async registerPayment(@Param('errandId') errandId: string, @Body() input: PaymentInputDto) {
     return { data: await this.paymentRegistration.register(errandId, input), message: 'success' };
   }
@@ -62,7 +63,7 @@ export class LifecarePaymentsController {
   @HttpCode(201)
   @OpenAPI({ summary: 'Add a betalningsmottagare in Lifecare (an identical existing one is returned instead)' })
   @ResponseSchema(LifecarePayeeApiResponse)
-  @UseBefore(authMiddleware, validationMiddleware(CreateLifecarePayeeDto, 'body'))
+  @UseBefore(authMiddleware, requireErrandWrite, validationMiddleware(CreateLifecarePayeeDto, 'body'))
   async createPayee(@Param('errandId') errandId: string, @Body() input: CreateLifecarePayeeDto) {
     return { data: await this.paymentsService.createPayee(errandId, input), message: 'success' };
   }

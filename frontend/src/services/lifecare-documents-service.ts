@@ -7,62 +7,27 @@ import {
   LifecareNoteTypeView,
   LifecareRecordBodiesApiResponse,
   LifecareRecordBodyView,
+  LifecareRecordContentApiResponse,
+  LifecareRecordContentView,
+  LifecareRecordsView,
+  LifecareRecordView,
+  UpdateLifecareRecordDto,
 } from '@data-contracts/backend/data-contracts';
 import { ServiceResponse } from '@interfaces/services';
-import { ApiResponse, apiService, toServiceError } from '@services/api-service';
+import { ApiResponse, apiService, discardData, unwrapData } from '@services/api-service';
+import { apiPath } from '@utils/api-path';
 
 /** Which group a Lifecare record belongs to. */
 export type LifecareRecordCategory = 'JOURNAL_NOTE' | 'DOCUMENT';
 
-/** A Lifecare record — a journalanteckning or a document. Mirrors the backend LifecareRecordView. */
-export interface LifecareRecord {
-  id: string;
-  category: LifecareRecordCategory;
-  title: string;
-  /** Documented date and time as an ISO date-time. */
-  dateTime: string;
-  /** Lifecare's type label, e.g. "Journalanteckning", "Beslut", "Inkommen handling". */
-  type: string;
-  /** The akt/utredning the record sits under, e.g. "EK Ekonomiskt bistånd". */
-  ownerTypeText: string;
-  responsibleCaseworker?: string;
-  /** Who last changed it and when, as Lifecare presents it. */
-  modifiedBy: string;
-  locked: boolean;
-  protected: boolean;
-  /** What Lifecare says the record is: Regular (a written document), Form (a blankett), Pdf (a stored file) or JournalNote. */
-  documentKind?: string;
-}
+/**
+ * A Lifecare record — a journalanteckning or a document — with its category narrowed to the two groups, since
+ * the category picks the endpoint the record is opened and saved through.
+ */
+export type LifecareRecord = LifecareRecordView & { category: LifecareRecordCategory };
 
 /** A person's Lifecare record, split into the two groups the tab shows. */
-export interface LifecareRecords {
-  journalNotes: LifecareRecord[];
-  documents: LifecareRecord[];
-}
-
-/** A Lifecare record with its body, as returned when a record is opened. */
-export interface LifecareRecordContent {
-  id: string;
-  category: LifecareRecordCategory;
-  title: string;
-  /** The body as HTML. */
-  content: string;
-  /** Documented date, `YYYY-MM-DD`. */
-  occurenceDate: string;
-  /** Documented time, `HH:mm`. */
-  time: string;
-  /** Whether the record may still be edited in Lifecare. */
-  editable: boolean;
-}
-
-/** The edits a handläggare can make to a Lifecare record. */
-export interface LifecareRecordEdit {
-  content: string;
-  occurenceDate?: string;
-  time?: string;
-  /** Write-protects the record; Lifecare then allows no further change. */
-  protected?: boolean;
-}
+export type LifecareRecords = { [Group in keyof LifecareRecordsView]: LifecareRecord[] };
 
 /** The BFF path segment for a record kind. */
 const pathFor = (category: LifecareRecordCategory): string =>
@@ -70,21 +35,19 @@ const pathFor = (category: LifecareRecordCategory): string =>
 
 /** Fetches the applicant's Lifecare record (journalanteckningar and documents) for an errand. */
 export const getLifecareRecords = (errandId: string): Promise<ServiceResponse<LifecareRecords>> =>
-  apiService
-    .get<ApiResponse<LifecareRecords>>(`errands/${errandId}/lifecare-documents`)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
+  unwrapData(apiService.get<ApiResponse<LifecareRecords>>(apiPath`errands/${errandId}/lifecare-documents`));
 
 /** Fetches one Lifecare record with its body. Read through the errand, so the read is logged on it. */
 export const getLifecareRecordContent = (
   errandId: string,
   category: LifecareRecordCategory,
   id: string
-): Promise<ServiceResponse<LifecareRecordContent>> =>
-  apiService
-    .get<ApiResponse<LifecareRecordContent>>(`errands/${errandId}/lifecare-documents/${pathFor(category)}/${id}`)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
+): Promise<ServiceResponse<LifecareRecordContentView>> =>
+  unwrapData(
+    apiService.get<LifecareRecordContentApiResponse>(
+      apiPath`errands/${errandId}/lifecare-documents/${pathFor(category)}/${id}`
+    )
+  );
 
 /**
  * The bodies of every record in one group, so the tab can show their text without opening each one.
@@ -94,31 +57,33 @@ export const getLifecareRecordBodies = (
   errandId: string,
   category: LifecareRecordCategory
 ): Promise<ServiceResponse<LifecareRecordBodyView[]>> =>
-  apiService
-    .get<LifecareRecordBodiesApiResponse>(
-      `errands/${errandId}/${category === 'JOURNAL_NOTE' ? 'lifecare-journal-note-bodies' : 'lifecare-document-bodies'}`
+  unwrapData(
+    apiService.get<LifecareRecordBodiesApiResponse>(
+      category === 'JOURNAL_NOTE' ?
+        apiPath`errands/${errandId}/lifecare-journal-note-bodies`
+      : apiPath`errands/${errandId}/lifecare-document-bodies`
     )
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
+  );
 
 /** Saves an edit to a Lifecare record. */
 export const updateLifecareRecord = (
   errandId: string,
   category: LifecareRecordCategory,
   id: string,
-  edit: LifecareRecordEdit
-): Promise<ServiceResponse<LifecareRecordContent>> =>
-  apiService
-    .put<ApiResponse<LifecareRecordContent>>(`errands/${errandId}/lifecare-documents/${pathFor(category)}/${id}`, edit)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
+  edit: UpdateLifecareRecordDto
+): Promise<ServiceResponse<LifecareRecordContentView>> =>
+  unwrapData(
+    apiService.put<LifecareRecordContentApiResponse>(
+      apiPath`errands/${errandId}/lifecare-documents/${pathFor(category)}/${id}`,
+      edit
+    )
+  );
 
 /** The note types a new journalanteckning on the insats of the errand can have, as Lifecare lists them. */
 export const getLifecareJournalNoteTypes = (errandId: string): Promise<ServiceResponse<LifecareNoteTypeView[]>> =>
-  apiService
-    .get<LifecareNoteTypesApiResponse>(`errands/${errandId}/lifecare-documents/journal-note-types`)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
+  unwrapData(
+    apiService.get<LifecareNoteTypesApiResponse>(apiPath`errands/${errandId}/lifecare-documents/journal-note-types`)
+  );
 
 /**
  * Writes a new journalanteckning straight to the insats of the errand in Lifecare. There is no copy
@@ -129,17 +94,13 @@ export const createLifecareJournalNote = (
   errandId: string,
   input: CreateLifecareJournalNoteDto
 ): Promise<ServiceResponse<null>> =>
-  apiService
-    .post<ApiResponse>(`errands/${errandId}/lifecare-documents/journal-notes`, input)
-    .then(() => ({ data: null }))
-    .catch(toServiceError);
+  discardData(apiService.post(apiPath`errands/${errandId}/lifecare-documents/journal-notes`, input));
 
 /** The document types a new document on the insats of the errand can have, as Lifecare lists them. */
 export const getLifecareDocumentTypes = (errandId: string): Promise<ServiceResponse<LifecareDocumentTypeView[]>> =>
-  apiService
-    .get<LifecareDocumentTypesApiResponse>(`errands/${errandId}/lifecare-documents/document-types`)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
+  unwrapData(
+    apiService.get<LifecareDocumentTypesApiResponse>(apiPath`errands/${errandId}/lifecare-documents/document-types`)
+  );
 
 /**
  * Writes a new document straight to the insats of the errand in Lifecare. As with journalanteckningar,
@@ -149,7 +110,4 @@ export const createLifecareDocument = (
   errandId: string,
   input: CreateLifecareDocumentDto
 ): Promise<ServiceResponse<null>> =>
-  apiService
-    .post<ApiResponse>(`errands/${errandId}/lifecare-documents/documents`, input)
-    .then(() => ({ data: null }))
-    .catch(toServiceError);
+  discardData(apiService.post(apiPath`errands/${errandId}/lifecare-documents/documents`, input));

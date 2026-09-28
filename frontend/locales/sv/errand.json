@@ -78,14 +78,15 @@
       "addCalculation": "Lägg till normberäkningen",
       "fromLifecare": "Från Lifecare",
       "fromComputer": "Från datorn",
-      "lifecareOnlyPdf": "Från Lifecare kan bara PDF-dokument skickas, t.ex. inkomna handlingar. Textdokument och blanketter fungerar inte i caremanagement än. Filer från datorn måste vara PDF.",
       "fromLifecareName": "{{name}} (Lifecare)",
       "add": "Lägg till {{name}}",
       "addShort": "Lägg till",
-      "lifecarePdfs": "PDF-dokument i Lifecare",
       "lifecareLoading": "Hämtar dokument från Lifecare",
       "lifecareError": "Dokumenten i Lifecare kunde inte hämtas.",
-      "lifecareNone": "Det finns inga fler PDF-dokument i Lifecare att lägga till."
+      "lifecareNone": "Det finns inga fler dokument i Lifecare att lägga till.",
+      "lifecareHelp": "Dokument från Lifecare skickas som PDF. Filer från datorn måste vara PDF.",
+      "lifecareDocuments": "Dokument i Lifecare",
+      "lifecareDocumentFailed": "{{name}} kunde inte hämtas från Lifecare. Inget är beslutat eller skickat. Ta bort dokumentet och skicka igen."
     }
   },
   "actualisation": {

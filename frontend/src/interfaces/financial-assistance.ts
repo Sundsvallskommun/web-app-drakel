@@ -1,4 +1,3 @@
-import dayjs from 'dayjs';
 import type { TFunction } from 'i18next';
 
 /**
@@ -133,11 +132,3 @@ export const faLabel = (t: TFunction, group: FinancialAssistanceLabelGroup, valu
 /** The translated label for a person role (APPLICANT/CO_APPLICANT); falls back to the code itself. */
 export const faPersonLabel = (t: TFunction, role?: string): string =>
   role ? t(`common:role.${role}`, { defaultValue: role }) : '';
-
-/** The application period as month name + year in the UI language, e.g. "januari 2026" / "January 2026". */
-export const formatPeriodMonth = (month: number | undefined, year: number | undefined, language: string): string =>
-  month && year && month >= 1 && month <= 12 ?
-    dayjs(new Date(year, month - 1, 1))
-      .locale(language === 'en' ? 'en' : 'sv')
-      .format('MMMM YYYY')
-  : '';

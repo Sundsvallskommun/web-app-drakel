@@ -1,6 +1,6 @@
 'use client';
 
-import { PdfPreviewButton } from '@components/common/pdf-preview-button.component';
+import { PdfModalButton } from '@components/common/pdf-modal-button.component';
 import { NormberakningDraftSourceEnum } from '@data-contracts/backend/data-contracts';
 import { useDecisionProposal } from '@hooks/use-decision-proposal';
 import { useErrandNormberakning } from '@hooks/use-errand-normberakning';
@@ -112,13 +112,15 @@ const typeLabelMap = (options: TypeOption[]): Record<string, string> => {
  */
 export const ErrandNormberakning: FC<{
   errandId: string;
+  /** Shows the beräkning without any way to change it, for a handläggare who may only read errands. */
+  readOnly?: boolean;
   warnings: Warning[];
   onWarningsChanged: () => void;
   /** Called after a change in Lifecare, so the tab's check can follow a beräkning saved as slutlig. */
   onLifecareChanged?: () => void;
   /** The assigned handläggare, shown in the preview-PDF header. */
   handlaggare?: string;
-}> = ({ errandId, warnings, onWarningsChanged, onLifecareChanged, handlaggare }) => {
+}> = ({ errandId, readOnly = false, warnings, onWarningsChanged, onLifecareChanged, handlaggare }) => {
   const { t, i18n } = useTranslation('calculation');
   // Once saved in Lifecare, Lifecare's own summering is the result; until then careM's förslag carries the
   // sums the result is counted from.
@@ -130,6 +132,8 @@ export const ErrandNormberakning: FC<{
   const types = useNormberakningTypes(errandId, draft?.source);
   // A beräkning Lifecare holds as slutlig cannot be changed.
   const closed = draft?.finalized === true;
+  // Everything that changes the beräkning is locked for a slutlig one — and for a handläggare who may only read.
+  const locked = closed || readOnly;
   const inLifecare = draft?.source === NormberakningDraftSourceEnum.LIFECARE;
 
   // A row change moves the result too, and once the beräkning is in Lifecare that is Lifecare's summering. careM
@@ -193,7 +197,7 @@ export const ErrandNormberakning: FC<{
           <div>
             {/* Once the beräkning is in Lifecare, the preview is Lifecare's own print of it; before that, the
                 draft rendered by Drakel. */}
-            <PdfPreviewButton
+            <PdfModalButton
               loadPdf={() =>
                 inLifecare ?
                   getLifecareCalculationPdf(errandId)
@@ -225,7 +229,7 @@ export const ErrandNormberakning: FC<{
                 normId={draft.normId}
                 normName={(draft.normTypeDisplayNames ?? draft.normType ?? []).join(', ')}
                 norms={types.norms}
-                disabled={closed}
+                disabled={locked}
                 onChanged={refreshAll}
               />
             </FilterField>
@@ -260,7 +264,7 @@ export const ErrandNormberakning: FC<{
                 <Tabs.Content>
                   <NormberakningTabPanel
                     errandId={errandId}
-                    locked={closed}
+                    locked={locked}
                     warnings={personWarnings}
                     onWarningsChanged={onWarningsChanged}
                     footer={<PreviousNormberakningFamilj />}
@@ -269,7 +273,7 @@ export const ErrandNormberakning: FC<{
                       persons={draft.persons ?? []}
                       errandId={errandId}
                       normRows={draft.normRows}
-                      editable={inLifecare && !closed}
+                      editable={inLifecare && !locked}
                       onChanged={refreshAll}
                     />
                   </NormberakningTabPanel>
@@ -280,7 +284,7 @@ export const ErrandNormberakning: FC<{
                 <Tabs.Content>
                   <NormberakningTabPanel
                     errandId={errandId}
-                    locked={closed}
+                    locked={locked}
                     warnings={incomeWarnings}
                     onWarningsChanged={onWarningsChanged}
                     footer={<PreviousNormberakningIncomes />}
@@ -307,7 +311,7 @@ export const ErrandNormberakning: FC<{
                 <Tabs.Content>
                   <NormberakningTabPanel
                     errandId={errandId}
-                    locked={closed}
+                    locked={locked}
                     warnings={expenseWarnings}
                     onWarningsChanged={onWarningsChanged}
                     footer={<PreviousNormberakningExpensesBucket />}
@@ -330,7 +334,7 @@ export const ErrandNormberakning: FC<{
                 <Tabs.Content>
                   <NormberakningTabPanel
                     errandId={errandId}
-                    locked={closed}
+                    locked={locked}
                     onWarningsChanged={onWarningsChanged}
                     footer={<PreviousNormberakningLivingCosts />}
                   >
@@ -352,7 +356,7 @@ export const ErrandNormberakning: FC<{
                 <Tabs.Content>
                   <NormberakningTabPanel
                     errandId={errandId}
-                    locked={closed}
+                    locked={locked}
                     onWarningsChanged={onWarningsChanged}
                     footer={<PreviousNormberakningGemensamma />}
                   >
@@ -380,7 +384,12 @@ export const ErrandNormberakning: FC<{
           </div>
         </div>
 
-        <LifecareCalculationSave errandId={errandId} saved={lifecare.calculation} onSaved={refreshAll} />
+        <LifecareCalculationSave
+          errandId={errandId}
+          saved={lifecare.calculation}
+          disabled={readOnly}
+          onSaved={refreshAll}
+        />
       </div>
     </PreviousNormberakningProvider>
   );

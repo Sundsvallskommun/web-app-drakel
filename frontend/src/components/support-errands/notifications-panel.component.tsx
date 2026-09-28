@@ -3,7 +3,7 @@
 import { AsyncContent } from '@components/common/async-content.component';
 import { ErrandNotification } from '@services/notification-service';
 import { Button } from '@sk-web-gui/react';
-import dayjs from 'dayjs';
+import { formatDateTime } from '@utils/date-time';
 import { TFunction } from 'i18next';
 import { Check, CheckCheck, X } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
@@ -15,7 +15,6 @@ const subTypeLabel = (subType: string | undefined, t: TFunction): string =>
   subType ?
     t(`overview:notifications.subTypes.${subType}`, { defaultValue: subType })
   : t('overview:notifications.fallbackTitle');
-const formatWhen = (created?: string): string => (created ? dayjs(created).format('YYYY-MM-DD HH:mm') : '');
 
 interface NotificationsPanelProps {
   notifications: ErrandNotification[];
@@ -72,7 +71,7 @@ export const NotificationsPanel: FC<NotificationsPanelProps> = ({
         {notification.description ?
           <span className="text-small break-words">{notification.description}</span>
         : null}
-        <span className="text-small text-dark-secondary">{formatWhen(notification.created)}</span>
+        <span className="text-small text-dark-secondary">{formatDateTime(notification.created)}</span>
       </button>
       {withAcknowledge || withHandle ?
         <div className="flex flex-wrap gap-8">

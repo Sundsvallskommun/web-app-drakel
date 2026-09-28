@@ -12,9 +12,9 @@ const MOCK_JOURNAL_PDF = join(__dirname, '../../mock/treserva-journal.pdf');
  * TODO(treserva-journal): This is a MOCK that serves the same test PDF for every errand, because there is no
  * migrated data in Lifecare yet. When there is:
  * - find the journalanteckning by its fixed name in the person's Lifecare journal (the same person-wide list
- *   LifecareDocumentsService reads for the Journal tab);
- * - read its PDF from Lifecare, the way the Journal tab reads a record's content;
- * - log the read on the errand (LifecareAccessLogService, target JOURNAL_NOTE), as every Lifecare read is;
+ *   ErrandLifecareRecordsService reads through careM for the Journal tab);
+ * - read its PDF from Lifecare through careM, the way a stored document's PDF is read (documentPdf);
+ * - leave the logging to careM, which logs every Lifecare read on the errand;
  * - answer 404 when the person has no migrated journal, so the button can say so.
  */
 class TreservaJournalService {

@@ -74,6 +74,11 @@ export class FindErrandsQueryDto {
   @Min(1)
   @IsOptional()
   size?: number;
+  /**
+   * Sort orders, e.g. `created,desc`, sent as repeated `sort=` parameters. One sort arrives from the query string as a
+   * plain string rather than an array, so it is wrapped into one.
+   */
+  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? [value] : value))
   @IsArray()
   @IsString({ each: true })
   @IsOptional()

@@ -1,5 +1,6 @@
 'use client';
 
+import { LifecareDocumentTypeView, LifecareNoteTypeView } from '@data-contracts/backend/data-contracts';
 import { ServiceResponse } from '@interfaces/services';
 import { Button, DatePicker, FormControl, FormLabel, Input, Modal, Select } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
@@ -15,15 +16,11 @@ const DocumentEditor = dynamic(() => import('./document-editor.component'), {
 
 const EMPTY_CONTENT: TextEditorValue = { markup: '', plainText: '' };
 
-/** A type Lifecare offers for a new record — a note type or a document type. */
-interface LifecareRecordType {
-  code: number;
-  name: string;
-  /** False when the type keeps the date Lifecare proposes (today). */
-  canChangeOccurenceDate?: boolean;
-  /** Whether Lifecare saves a record of this type skrivskyddad unless told otherwise. */
-  protectedByDefault: boolean;
-}
+/**
+ * A type Lifecare offers for a new record — a note type or a document type. Only a document type says whether the
+ * date can be changed (`canChangeOccurenceDate`; false keeps the date Lifecare proposes, today).
+ */
+type LifecareRecordType = LifecareNoteTypeView & Partial<Pick<LifecareDocumentTypeView, 'canChangeOccurenceDate'>>;
 
 /** What the handläggare filled in, handed to the record kind's own create call. */
 export interface NewLifecareRecordValues {

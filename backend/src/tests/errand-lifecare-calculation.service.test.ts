@@ -3,6 +3,7 @@ import ErrandLifecareCalculationService from '@services/errand-lifecare-calculat
 import { caremanagementLifecareUrl } from '@utils/caremanagement-url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { UPSTREAM_FILE_TIMEOUT_MS } from '@/constants/upstream';
 import { LifecareCalculationView } from '@/data-contracts/caremanagement/data-contracts';
 import { HttpException } from '@/exceptions/HttpException';
 
@@ -79,12 +80,19 @@ describe('ErrandLifecareCalculationService', () => {
     });
   });
 
-  it("hands careM's raw PDF on in base64", async () => {
+  it("hands careM's raw PDF on as a Buffer, as the beslut's is", async () => {
     const pdf = new TextEncoder().encode('%PDF-1.7 beräkning');
     const get = vi.spyOn(CaremanagementApiService.prototype, 'get').mockResolvedValue({ data: pdf.buffer, message: 'success', status: 200 });
 
-    expect(await new ErrandLifecareCalculationService().pdf('errand-1')).toBe(Buffer.from('%PDF-1.7 beräkning').toString('base64'));
-    expect(get).toHaveBeenCalledWith({ url: `${CALCULATION_URL}/pdf`, responseType: 'arraybuffer' });
+    const read = await new ErrandLifecareCalculationService().pdf('errand-1');
+
+    expect(Buffer.isBuffer(read)).toBe(true);
+    expect(read.toString()).toBe('%PDF-1.7 beräkning');
+    expect(get).toHaveBeenCalledWith({
+      url: caremanagementLifecareUrl('errand-1', 'calculation', 'pdf'),
+      responseType: 'arraybuffer',
+      timeout: UPSTREAM_FILE_TIMEOUT_MS,
+    });
   });
 
   it('saves the beräkning in Lifecare through careM, not as slutlig unless asked', async () => {

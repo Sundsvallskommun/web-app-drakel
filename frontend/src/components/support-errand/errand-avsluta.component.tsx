@@ -94,8 +94,16 @@ export const ErrandAvsluta: FC<{
     );
     setWorking(false);
     if (result.error || !result.data) {
-      // Nothing was finalized; the BFF's message says why (caremanagement's own reason on a conflict).
-      setError(result.message ?? t('decideAndPay.finalizeError'));
+      // Nothing was finalized; the BFF's message says why (caremanagement's own reason on a conflict). A Lifecare
+      // document that could not be fetched is named by its title, which only the dialog knows.
+      const failedDocument = attachments.lifecareDocuments.find(
+        (document) => document.id === result.details?.lifecareDocumentId
+      );
+      setError(
+        failedDocument ?
+          t('decideAndPay.attachments.lifecareDocumentFailed', { name: failedDocument.title })
+        : (result.message ?? t('decideAndPay.finalizeError'))
+      );
       return;
     }
     const remaining = finalizeFollowUps(result.data);

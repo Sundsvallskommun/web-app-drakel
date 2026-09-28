@@ -1,9 +1,11 @@
 'use client';
 
 import TextEditor from '@components/common/text-editor.component';
+import { SaveTemplateDtoKindEnum } from '@data-contracts/backend/data-contracts';
 import { AdminTemplateDetail, saveAdminTemplate } from '@services/admin-template-service';
 import { Button, FormControl, FormLabel, Input, Modal, Select } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
+import { toEditorMarkup } from '@utils/sanitize-html';
 import { FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -42,8 +44,9 @@ export const TemplateEditorModal: FC<{
   const [name, setName] = useState<string>(template?.name ?? '');
   const [code, setCode] = useState<string>(template?.code ?? (isDecisionPhrase ? DECISION_PHRASE_CODE : ''));
   const [phraseCategory, setPhraseCategory] = useState<string>(template?.category ?? '');
+  // The stored content goes into the editor's DOM, so it is sanitized first (toEditorMarkup).
   const [content, setContent] = useState<TextEditorValue>(
-    template?.content ? { markup: template.content, plainText: '' } : EMPTY_CONTENT
+    template?.content ? { markup: toEditorMarkup(template.content), plainText: '' } : EMPTY_CONTENT
   );
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string>();
@@ -60,7 +63,7 @@ export const TemplateEditorModal: FC<{
       identifier: template?.identifier,
       name: name.trim(),
       code,
-      kind: category.kind,
+      kind: SaveTemplateDtoKindEnum[category.kind],
       category: isDecisionPhrase ? phraseCategory.trim() : undefined,
       content: content.markup ?? '',
     });

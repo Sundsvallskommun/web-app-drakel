@@ -5,7 +5,7 @@ import { IsArray, IsBoolean, IsOptional, IsString, ValidateNested } from 'class-
 import { DecisionRegistration } from '@/responses/decision-registration.response';
 
 /**
- * The outcome of "Besluta och utbetala". The errand is finalized whenever this comes back — what follows
+ * The outcome of "Skicka beräkning och beslut". The errand is finalized whenever this comes back — what follows
  * lists the parts after that which did not go through, so the handläggare can act on them.
  */
 export class FinalizeResult {

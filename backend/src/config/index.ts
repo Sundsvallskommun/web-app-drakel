@@ -47,8 +47,6 @@ export const MESSAGING_SUPPORT_TEXT = env.MESSAGING_SUPPORT_TEXT ?? '';
 export const MESSAGING_SUPPORT_EMAIL = env.MESSAGING_SUPPORT_EMAIL ?? '';
 export const MESSAGING_SUPPORT_PHONE = env.MESSAGING_SUPPORT_PHONE ?? '';
 export const MESSAGING_SUPPORT_URL = env.MESSAGING_SUPPORT_URL ?? '';
-// Optional — the errand controller falls back to a default type slug when this is unset.
-export const CAREMANAGEMENT_TYPE_SLUG = env.CAREMANAGEMENT_TYPE_SLUG;
 export const AUTHORIZED_GROUPS = env.AUTHORIZED_GROUPS ?? '';
 export const ADMIN_GROUP = env.ADMIN_GROUP ?? '';
 // The two halves of /admin are granted separately: managing the shared mallar is a different job from
@@ -65,3 +63,8 @@ export const SAML_ISSUER = env.SAML_ISSUER ?? '';
 export const SAML_IDP_PUBLIC_CERT = env.SAML_IDP_PUBLIC_CERT ?? '';
 export const SAML_PRIVATE_KEY = env.SAML_PRIVATE_KEY ?? '';
 export const SAML_PUBLIC_KEY = env.SAML_PUBLIC_KEY ?? '';
+// Whether the IdP must sign every assertion, not only the response around it. On unless set to 'false', which is only for
+// an IdP that signs just the response.
+export const SAML_WANT_ASSERTIONS_SIGNED = env.SAML_WANT_ASSERTIONS_SIGNED !== 'false';
+// How the IdP's response is tied to a login drakel started: always (default), ifPresent or never — see toInResponseToCheck.
+export const SAML_VALIDATE_IN_RESPONSE_TO = env.SAML_VALIDATE_IN_RESPONSE_TO;

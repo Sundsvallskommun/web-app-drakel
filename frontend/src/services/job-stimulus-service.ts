@@ -1,27 +1,18 @@
-import { AddJobStimulusPeriodDto } from '@data-contracts/backend/data-contracts';
+import {
+  AddJobStimulusPeriodDto,
+  JobStimulusPeriod,
+  JobStimulusPeriodsApiResponse,
+} from '@data-contracts/backend/data-contracts';
 import { ServiceResponse } from '@interfaces/services';
-import { ApiResponse, apiService, toServiceError } from '@services/api-service';
+import { apiService, unwrapData } from '@services/api-service';
+import { apiPath } from '@utils/api-path';
 
-/**
- * A jobbstimulans period on the errand's insats, read straight from Lifecare. Mirrors the backend
- * response, with the role narrowed to the two parties it can belong to.
- */
-export interface JobStimulusPeriod {
-  /** Lifecare's jobStimulusId. */
-  id?: number;
-  role?: 'APPLICANT' | 'CO_APPLICANT';
-  /** Period start (yyyy-MM-dd). */
-  fromDate?: string;
-  /** Period end (yyyy-MM-dd); absent for an open-ended period. */
-  toDate?: string;
-}
+/** A jobbstimulans period on the errand's insats, read straight from Lifecare (`id` is Lifecare's jobStimulusId). */
+export type { JobStimulusPeriod };
 
 /** Fetches the jobbstimulans periods on the errand's insats, read from Lifecare. */
 export const getJobStimulusPeriods = (errandId: string): Promise<ServiceResponse<JobStimulusPeriod[]>> =>
-  apiService
-    .get<ApiResponse<JobStimulusPeriod[]>>(`errands/${errandId}/job-stimulus-periods`)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
+  unwrapData(apiService.get<JobStimulusPeriodsApiResponse>(apiPath`errands/${errandId}/job-stimulus-periods`));
 
 /**
  * Adds a jobbstimulans period for the sökande on the errand's insats in Lifecare and answers with every
@@ -31,7 +22,4 @@ export const addJobStimulusPeriod = (
   errandId: string,
   input: AddJobStimulusPeriodDto
 ): Promise<ServiceResponse<JobStimulusPeriod[]>> =>
-  apiService
-    .post<ApiResponse<JobStimulusPeriod[]>>(`errands/${errandId}/job-stimulus-periods`, input)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
+  unwrapData(apiService.post<JobStimulusPeriodsApiResponse>(apiPath`errands/${errandId}/job-stimulus-periods`, input));

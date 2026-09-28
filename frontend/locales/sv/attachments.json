@@ -13,14 +13,9 @@
     "error": "Kunde inte visa förhandsgranskningen",
     "openInNewTab": "Öppna bilaga i ny flik"
   },
-  "pdfButton": {
-    "label": "Visa pdf",
-    "modalLabel": "Förhandsgranska PDF"
-  },
   "pdfPreviewButton": {
     "label": "Förhandsgranska PDF",
     "creating": "Skapar förhandsgranskning…",
-    "empty": "Det finns inget att förhandsgranska.",
     "createError": "Det gick inte att skapa förhandsgranskningen."
   },
   "list": {

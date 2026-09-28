@@ -13,6 +13,8 @@ import { SaveTemplateDto } from '@/dtos/admin-template.dto';
 import { HttpException } from '@/exceptions/HttpException';
 import { AdminTemplate, AdminTemplateApiResponse, AdminTemplatesApiResponse } from '@/responses/admin-template.response';
 
+const FORBIDDEN = 403;
+
 // `satisfies` rather than a return type annotation: the value keeps its plain object-literal type, so the
 // detail endpoint can spread it — spreading a value typed as the response class would drop its prototype.
 const toAdminTemplate = (template: TemplateSummary) =>
@@ -46,8 +48,7 @@ export class AdminTemplateController {
   @OpenAPI({ summary: 'List every mall and frastext belonging to this app' })
   @ResponseSchema(AdminTemplatesApiResponse)
   async listTemplates() {
-    const all = await this.templatingService.listTemplates();
-    return { data: all.filter(isAppTemplate).map(toAdminTemplate), message: 'success' };
+    return { data: await this.listAppTemplates(), message: 'success' };
   }
 
   @Get('/admin/templates/:identifier')
@@ -55,12 +56,11 @@ export class AdminTemplateController {
   @ResponseSchema(AdminTemplateApiResponse)
   async getTemplate(@Param('identifier') identifier: string) {
     const template = await this.templatingService.getTemplate(identifier);
-    const content = template.content ? Buffer.from(template.content, 'base64').toString('utf-8') : '';
-    return { data: { ...toAdminTemplate(template), content }, message: 'success' };
+    return { data: { ...toAdminTemplate(template), content: template.content }, message: 'success' };
   }
 
   @Post('/admin/templates')
-  @OpenAPI({ summary: 'Create a mall or frastext, or save a new version of an existing one' })
+  @OpenAPI({ summary: 'Create a mall or frastext, or save a new version of an existing one of this app' })
   @ResponseSchema(AdminTemplatesApiResponse)
   @UseBefore(validationMiddleware(SaveTemplateDto, 'body'))
   async saveTemplate(@Body() input: SaveTemplateDto) {
@@ -68,7 +68,11 @@ export class AdminTemplateController {
       throw new HttpException(400, 'En beslutsformulering behöver en kategori.');
     }
     // A template that has no identifier yet is a new one; an existing identifier is stored as a new
-    // version of that template, which is what keeps a saved edit from turning into a duplicate entry.
+    // version of that template, which is what keeps a saved edit from turning into a duplicate entry. The
+    // identifier comes from the client, so it must name one of this app's templates.
+    if (input.identifier) {
+      await this.requireAppTemplate(input.identifier);
+    }
     const identifier = input.identifier ?? buildTemplateIdentifier(input.code, input.kind, input.name);
     await this.templatingService.storeTemplate({
       identifier,
@@ -77,8 +81,7 @@ export class AdminTemplateController {
       content: input.content,
       metadata: appTemplateMetadata(input.code, input.kind, input.kind === DECISION_PHRASE_KIND ? input.category : undefined),
     });
-    const all = await this.templatingService.listTemplates();
-    return { data: all.filter(isAppTemplate).map(toAdminTemplate), message: 'success' };
+    return { data: await this.listAppTemplates(), message: 'success' };
   }
 
   @Post('/admin/templates/decision-phrases/defaults')
@@ -86,14 +89,32 @@ export class AdminTemplateController {
   @ResponseSchema(AdminTemplatesApiResponse)
   async addDefaultDecisionPhrases() {
     await this.decisionPhraseDefaults.addMissing();
-    const all = await this.templatingService.listTemplates();
-    return { data: all.filter(isAppTemplate).map(toAdminTemplate), message: 'success' };
+    return { data: await this.listAppTemplates(), message: 'success' };
   }
 
   @Delete('/admin/templates/:identifier')
-  @OpenAPI({ summary: 'Delete a mall or frastext, including all its versions' })
+  @OpenAPI({ summary: 'Delete a mall or frastext of this app, including all its versions' })
   @OnUndefined(204)
   async deleteTemplate(@Param('identifier') identifier: string) {
+    await this.requireAppTemplate(identifier);
     await this.templatingService.deleteTemplate(identifier);
+  }
+
+  /** This app's templates in the municipality-wide catalogue, as the admin page lists them. */
+  private async listAppTemplates(): Promise<AdminTemplate[]> {
+    const all = await this.templatingService.listTemplates();
+    return all.filter(isAppTemplate).map(toAdminTemplate);
+  }
+
+  /**
+   * Refuses to touch a template that is not this app's. The Templating catalogue is shared by the municipality's
+   * apps, and storing under an identifier adds a version to whatever template has it — so without this an admin
+   * here could overwrite or delete another app's template. A template that does not exist is Templating's 404.
+   */
+  private async requireAppTemplate(identifier: string): Promise<void> {
+    const template = await this.templatingService.getTemplate(identifier);
+    if (!isAppTemplate(template)) {
+      throw new HttpException(FORBIDDEN, 'Mallen hör inte till drakel och kan inte ändras här.');
+    }
   }
 }

@@ -1,28 +1,35 @@
 import { NormberakningDraft, NormExpenseRow, NormIncomeRow, NormPersonRow } from '@services/normberakning-service';
 import { formatApplicationMonth } from '@utils/application-month';
+import { escapeHtml } from '@utils/escape-html';
+import { formatAmount } from '@utils/format-amount';
 
 /** Shown where a value is computed in Lifecare and not (yet) exposed by the API. */
 const COMPUTED_IN_LIFECARE = 'Beräknas i Lifecare';
 
-const escapeHtml = (value: string): string =>
-  value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+/**
+ * Escapes a value inserted into the document. The HTML is rendered to PDF by the Templating service as a Pebble
+ * template, so besides markup the braces must not survive either: a name or free text such as "{{ … }}" or
+ * "{% … %}" would otherwise be evaluated as a Pebble expression or tag on the server. As entities they print as
+ * the same characters.
+ */
+const escapeValue = (value: string): string => escapeHtml(value).replace(/\{/g, '&#123;').replace(/\}/g, '&#125;');
 
 /** Formats an amount the way the Lifecare PDF does: comma decimal, no thousands separator (e.g. 5000,00). */
-const amount = (value?: number): string => (value == null ? '' : value.toFixed(2).replace('.', ','));
+const amount = (value?: number): string => (value == null ? '' : formatAmount(value));
 
 // Accepts whatever the API hands us (the contract types some fields as string, but e.g. normType comes
 // back as a number) and coerces it to display text — never assume the value already has string methods.
 const text = (value?: string | number | null): string => {
   const trimmed = value == null ? '' : String(value).trim();
-  return trimmed ? escapeHtml(trimmed) : '—';
+  return trimmed ? escapeValue(trimmed) : '—';
 };
 
 const expenseLabel = (row: NormExpenseRow, typeLabels: Record<string, string>): string => {
   if (row.specification?.trim()) {
-    return escapeHtml(row.specification.trim());
+    return escapeValue(row.specification.trim());
   }
   const code = row.costType ?? '';
-  return escapeHtml(typeLabels[code] ?? (code || '—'));
+  return escapeValue(typeLabels[code] ?? (code || '—'));
 };
 
 const visible = <T extends { deleted?: boolean }>(rows: T[]): T[] => rows.filter((row) => !row.deleted);
@@ -99,7 +106,7 @@ const expensesTable = (
     <table>
       <thead><tr><th>Typ</th><th class="num">Ansökt</th><th class="num">Godkänt</th></tr></thead>
       <tbody>${body}</tbody>
-      <tfoot><tr><td colspan="2">${escapeHtml(summaLabel)}</td><td class="num">${amount(sum)}</td></tr></tfoot>
+      <tfoot><tr><td colspan="2">${escapeValue(summaLabel)}</td><td class="num">${amount(sum)}</td></tr></tfoot>
     </table>`;
 };
 
@@ -132,16 +139,16 @@ export const buildNormberakningHtml = (
     : '—';
 
   const meta = [
-    ['Avser ansökan', escapeHtml(formatApplicationMonth(draft.applicationMonth) || '—')],
+    ['Avser ansökan', escapeValue(formatApplicationMonth(draft.applicationMonth) || '—')],
     ['Norm', text((draft.normTypeDisplayNames ?? draft.normType ?? []).join(', '))],
-    ['Period', escapeHtml(period)],
+    ['Period', escapeValue(period)],
     ['Beräkningsdatum', text(draft.calculationDate)],
     ['Handläggare', text(options.handlaggare)],
   ]
     .map(([label, value]) => `<tr><th>${label}</th><td>${value}</td></tr>`)
     .join('');
 
-  const section = (title: string, body: string): string => `<section><h2>${escapeHtml(title)}</h2>${body}</section>`;
+  const section = (title: string, body: string): string => `<section><h2>${escapeValue(title)}</h2>${body}</section>`;
 
   return `<!DOCTYPE html>
 <html lang="sv">

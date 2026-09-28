@@ -1,47 +1,30 @@
 import {
   Attachment,
+  AttachmentsApiResponse,
   Errand,
+  ErrandApiResponse,
+  ErrandsApiResponse,
   FindErrandsQueryDto,
   FindErrandsResult,
+  Message,
+  MessagesApiResponse,
   PatchErrandDto,
   Stakeholder,
+  StakeholdersApiResponse,
 } from '@data-contracts/backend/data-contracts';
 import { FinancialAssistanceData } from '@interfaces/financial-assistance';
 import { ServiceResponse } from '@interfaces/services';
-import { ApiResponse, apiService, toServiceError } from '@services/api-service';
+import { ApiResponse, apiService, discardData, toServiceError, unwrapData } from '@services/api-service';
+import { apiPath } from '@utils/api-path';
+import { objectUrlAs } from '@utils/pdf-object-url';
 
 /**
- * A file attached to a conversation message. Returned alongside each message by the backend and
- * downloaded individually via {@link downloadMessageAttachment}.
+ * A conversation message on an errand. `direction` is INBOUND (applicant → handläggare) or OUTBOUND (handläggare
+ * → applicant); `inReplyToId` is the message it replies to, always on the same errand.
  */
-interface MessageAttachment {
-  id?: string;
-  fileName?: string;
-  mimeType?: string;
-  fileSize?: number;
-}
+export type { Message };
 
-/**
- * A conversation message on an errand. Mirrors the backend Message response; defined locally (like
- * {@link NewStakeholder}) until the backend data-contract is regenerated with the message types.
- */
-export interface Message {
-  id?: string;
-  errandId?: string;
-  /** INBOUND = applicant → handläggare, OUTBOUND = handläggare → applicant. */
-  direction?: 'INBOUND' | 'OUTBOUND';
-  body?: string;
-  author?: string;
-  /** Id of the message this one replies to, when it is a reply (always on the same errand). */
-  inReplyToId?: string;
-  created?: string;
-  attachments?: MessageAttachment[];
-}
-
-/** The generated FindErrandsQueryDto plus the notification filter (not yet in the regenerated contract). */
-export type ErrandsQuery = FindErrandsQueryDto & { hasUnhandledNotifications?: boolean };
-
-const buildParams = (query: ErrandsQuery): Record<string, unknown> => {
+const buildParams = (query: FindErrandsQueryDto): Record<string, unknown> => {
   const params: Record<string, unknown> = {};
   if (query.filter) {
     params.filter = query.filter;
@@ -61,75 +44,54 @@ const buildParams = (query: ErrandsQuery): Record<string, unknown> => {
   return params;
 };
 
-/** Fetches a paged list of caremanagement errands from the backend proxy. */
-export const getErrands = (query: ErrandsQuery = {}): Promise<ServiceResponse<FindErrandsResult>> => {
-  return apiService
-    .get<ApiResponse<FindErrandsResult>>('errands', { params: buildParams(query) })
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
-};
+/**
+ * Fetches a paged list of caremanagement errands from the backend proxy. Several sort orders go as repeated
+ * `sort=` parameters (Spring's convention) — axios would otherwise send them as `sort[]=`, which the backend
+ * never reads.
+ */
+export const getErrands = (query: FindErrandsQueryDto = {}): Promise<ServiceResponse<FindErrandsResult>> =>
+  unwrapData(
+    apiService.get<ErrandsApiResponse>('errands', { params: buildParams(query), paramsSerializer: { indexes: null } })
+  );
 
 /** Fetches a single errand by id or errand number. The errand includes its embedded stakeholders. */
-export const getErrand = (errandId: string): Promise<ServiceResponse<Errand>> => {
-  return apiService
-    .get<ApiResponse<Errand>>(`errands/${errandId}`)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
-};
+export const getErrand = (errandId: string): Promise<ServiceResponse<Errand>> =>
+  unwrapData(apiService.get<ErrandApiResponse>(apiPath`errands/${errandId}`));
 
 /**
  * Fetches the submitted financial-assistance application data for an errand. Comes from the
  * financial-assistance view (the generic errand GET omits the data payload). Null for non-FA errands.
  */
-export const getApplicationData = (errandId: string): Promise<ServiceResponse<FinancialAssistanceData | null>> => {
-  return apiService
-    .get<ApiResponse<FinancialAssistanceData | null>>(`errands/${errandId}/application`)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
-};
+export const getApplicationData = (errandId: string): Promise<ServiceResponse<FinancialAssistanceData | null>> =>
+  unwrapData(apiService.get<ApiResponse<FinancialAssistanceData | null>>(apiPath`errands/${errandId}/application`));
 
 /**
  * Creates an empty draft errand on the backend (which assigns the current handläggare as
  * reporter/assignee) and returns it. Used by the "register new errand" flow.
  */
-export const initiateErrand = (): Promise<ServiceResponse<Errand>> => {
-  return apiService
-    .post<ApiResponse<Errand>>('errands/initiate', {})
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
-};
+export const initiateErrand = (): Promise<ServiceResponse<Errand>> =>
+  unwrapData(apiService.post<ErrandApiResponse>('errands/initiate', {}));
 
 /** Fetches the stakeholders belonging to an errand (the dedicated list endpoint). */
-export const getErrandStakeholders = (errandId: string): Promise<ServiceResponse<Stakeholder[]>> => {
-  return apiService
-    .get<ApiResponse<Stakeholder[]>>(`errands/${errandId}/stakeholders`)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
-};
+export const getErrandStakeholders = (errandId: string): Promise<ServiceResponse<Stakeholder[]>> =>
+  unwrapData(apiService.get<StakeholdersApiResponse>(apiPath`errands/${errandId}/stakeholders`));
 
 /** Updates an errand (PATCH) and returns the updated errand. */
-export const updateErrand = (errandId: string, patch: PatchErrandDto): Promise<ServiceResponse<Errand>> => {
-  return apiService
-    .patch<ApiResponse<Errand>>(`errands/${errandId}`, patch)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
-};
+export const updateErrand = (errandId: string, patch: PatchErrandDto): Promise<ServiceResponse<Errand>> =>
+  unwrapData(apiService.patch<ErrandApiResponse>(apiPath`errands/${errandId}`, patch));
 
 /** Fetches the attachments belonging to an errand. */
-export const getErrandAttachments = (errandId: string): Promise<ServiceResponse<Attachment[]>> => {
-  return apiService
-    .get<ApiResponse<Attachment[]>>(`errands/${errandId}/attachments`)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
-};
+export const getErrandAttachments = (errandId: string): Promise<ServiceResponse<Attachment[]>> =>
+  unwrapData(apiService.get<AttachmentsApiResponse>(apiPath`errands/${errandId}/attachments`));
 
 /**
  * Fetches a streamed file from the backend and triggers a browser "save as". Shared by every
- * download flow so the blob/object-URL/anchor dance lives in exactly one place.
+ * download flow so the blob/object-URL/anchor dance lives in exactly one place. The object URL is typed as a
+ * plain byte stream, so whatever the file claims to be it is only ever saved, never rendered.
  */
 const downloadBlob = async (path: string, fileName?: string): Promise<void> => {
   const res = await apiService.get<Blob>(path, { responseType: 'blob' });
-  const url = window.URL.createObjectURL(res.data);
+  const url = objectUrlAs(res.data, 'application/octet-stream');
   const link = document.createElement('a');
   link.href = url;
   link.download = fileName ?? 'bilaga';
@@ -141,18 +103,26 @@ const downloadBlob = async (path: string, fileName?: string): Promise<void> => {
 
 /** Downloads an attachment's file (the backend streams it) and triggers a browser save. */
 const downloadAttachment = (errandId: string, attachmentId: string, fileName?: string): Promise<void> =>
-  downloadBlob(`errands/${errandId}/attachments/${attachmentId}/file`, fileName);
+  downloadBlob(apiPath`errands/${errandId}/attachments/${attachmentId}/file`, fileName);
 
 /** Fetches an attachment's file as a Blob — used for inline preview (e.g. PDF i iframe). */
 export const getAttachmentBlob = (errandId: string, attachmentId: string): Promise<Blob> =>
   apiService
-    .get<Blob>(`errands/${errandId}/attachments/${attachmentId}/file`, { responseType: 'blob' })
+    .get<Blob>(apiPath`errands/${errandId}/attachments/${attachmentId}/file`, { responseType: 'blob' })
     .then((res) => res.data);
+
+/** An attachment's file as a ServiceResponse — for a preview that shows why it failed rather than throwing. */
+export const getAttachmentFile = (errandId: string, attachmentId: string): Promise<ServiceResponse<Blob>> =>
+  getAttachmentBlob(errandId, attachmentId)
+    .then((file) => ({ data: file }))
+    .catch(toServiceError);
 
 /** Fetches a conversation message attachment's file as a Blob — used for inline preview. */
 const getMessageAttachmentBlob = (errandId: string, messageId: string, attachmentId: string): Promise<Blob> =>
   apiService
-    .get<Blob>(`errands/${errandId}/messages/${messageId}/attachments/${attachmentId}/file`, { responseType: 'blob' })
+    .get<Blob>(apiPath`errands/${errandId}/messages/${messageId}/attachments/${attachmentId}/file`, {
+      responseType: 'blob',
+    })
     .then((res) => res.data);
 
 /**
@@ -176,12 +146,8 @@ export const getUnifiedAttachmentBlob = (errandId: string, attachment: Attachmen
   : getAttachmentBlob(errandId, attachment.id ?? '');
 
 /** Fetches an errand's conversation messages (returned chronologically by the backend). */
-export const getErrandMessages = (errandId: string): Promise<ServiceResponse<Message[]>> => {
-  return apiService
-    .get<ApiResponse<Message[]>>(`errands/${errandId}/messages`)
-    .then((res) => ({ data: res.data.data }))
-    .catch(toServiceError);
-};
+export const getErrandMessages = (errandId: string): Promise<ServiceResponse<Message[]>> =>
+  unwrapData(apiService.get<MessagesApiResponse>(apiPath`errands/${errandId}/messages`));
 
 /**
  * Posts a message (with optional file attachments) to an errand's conversation. Sent as multipart:
@@ -205,10 +171,7 @@ export const postErrandMessage = (
     form.append('inReplyToId', inReplyToId);
   }
   // Empty headers let axios set the multipart boundary instead of the default JSON content-type.
-  return apiService
-    .post<ApiResponse<null>>(`errands/${errandId}/messages`, form, { headers: {} })
-    .then(() => ({ data: null }))
-    .catch(toServiceError);
+  return discardData(apiService.post(apiPath`errands/${errandId}/messages`, form, { headers: {} }));
 };
 
 /** Downloads a single attachment on a conversation message (the backend streams it). */
@@ -218,4 +181,4 @@ export const downloadMessageAttachment = (
   attachmentId: string,
   fileName?: string
 ): Promise<void> =>
-  downloadBlob(`errands/${errandId}/messages/${messageId}/attachments/${attachmentId}/file`, fileName);
+  downloadBlob(apiPath`errands/${errandId}/messages/${messageId}/attachments/${attachmentId}/file`, fileName);

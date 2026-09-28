@@ -1,6 +1,6 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
-import { caremanagementUrl } from '@utils/caremanagement-url';
+import { caremanagementFinancialAssistanceUrl, caremanagementUrl } from '@utils/caremanagement-url';
 
 import { ErrandTypeSchema, FinancialAssistanceMetadata, Lookup, ReadLookupsParamsKindEnum } from '@/data-contracts/caremanagement/data-contracts';
 
@@ -20,7 +20,7 @@ class CaremanagementMetadataService {
    */
   async readFinancialAssistanceMetadata(): Promise<ApiResponse<FinancialAssistanceMetadata>> {
     return this.apiService.get<FinancialAssistanceMetadata>({
-      url: caremanagementUrl('errands', 'financial-assistance', 'metadata'),
+      url: caremanagementFinancialAssistanceUrl('metadata'),
     });
   }
 

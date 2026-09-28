@@ -3,22 +3,30 @@
 import { AsyncContent } from '@components/common/async-content.component';
 import { createNote, deleteNote, Note, updateNote } from '@services/note-service';
 import { Avatar, Button, Divider, FormControl, Modal, Textarea } from '@sk-web-gui/react';
+import { getInitials } from '@utils/get-initials';
 import { prettyTime } from '@utils/pretty-time';
 import { Pencil, Trash } from 'lucide-react';
 import { FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-const initials = (author?: string): string => (author ? author.trim().charAt(0).toUpperCase() : '?');
-
 interface ErrandNotesProps {
   errandId: string;
+  /** Shows the notes without writing, changing or removing any, for a handläggare who may only read errands. */
+  readOnly?: boolean;
   notes: Note[];
   isLoading: boolean;
   loadError: boolean;
   refresh: () => void;
 }
 
-export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, loadError, refresh }) => {
+export const ErrandNotes: FC<ErrandNotesProps> = ({
+  errandId,
+  readOnly = false,
+  notes,
+  isLoading,
+  loadError,
+  refresh,
+}) => {
   const { t } = useTranslation('sidebar');
   const [error, setError] = useState<string>();
   const [text, setText] = useState<string>('');
@@ -80,7 +88,13 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
             <div key={note.id ?? index}>
               <div className="py-12 flex justify-between gap-12" data-cy={`note-${index}`}>
                 <div className="flex gap-12 min-w-0">
-                  <Avatar rounded color="juniskar" size="sm" title={note.author} initials={initials(note.author)} />
+                  <Avatar
+                    rounded
+                    color="juniskar"
+                    size="sm"
+                    title={note.author}
+                    initials={getInitials(note.author ?? '')}
+                  />
                   <div className="min-w-0">
                     <p className="my-0 break-words whitespace-pre-wrap" data-cy="note-text">
                       {note.body}
@@ -93,27 +107,29 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
                   </div>
                 </div>
 
-                <div className="flex gap-4 shrink-0">
-                  <Button
-                    size="sm"
-                    variant="tertiary"
-                    iconButton
-                    aria-label={t('notes.edit')}
-                    onClick={() => {
-                      setEditNote(note);
-                      setEditText(note.body ?? '');
-                    }}
-                    leftIcon={<Pencil />}
-                  />
-                  <Button
-                    size="sm"
-                    variant="tertiary"
-                    iconButton
-                    aria-label={t('notes.delete')}
-                    onClick={() => void remove(note)}
-                    leftIcon={<Trash />}
-                  />
-                </div>
+                {readOnly ? null : (
+                  <div className="flex gap-4 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="tertiary"
+                      iconButton
+                      aria-label={t('notes.edit')}
+                      onClick={() => {
+                        setEditNote(note);
+                        setEditText(note.body ?? '');
+                      }}
+                      leftIcon={<Pencil />}
+                    />
+                    <Button
+                      size="sm"
+                      variant="tertiary"
+                      iconButton
+                      aria-label={t('notes.delete')}
+                      onClick={() => void remove(note)}
+                      leftIcon={<Trash />}
+                    />
+                  </div>
+                )}
               </div>
               <Divider />
             </div>
@@ -121,32 +137,34 @@ export const ErrandNotes: FC<ErrandNotesProps> = ({ errandId, notes, isLoading, 
         </div>
       </AsyncContent>
 
-      <div className="w-full mt-auto flex flex-col items-start gap-12">
-        <FormControl id="new-note" className="w-full">
-          <Textarea
-            className="w-full"
-            rows={4}
-            placeholder={t('notes.newNote')}
-            aria-label={t('notes.newNote')}
-            value={text}
-            onChange={(event) => {
-              setText(event.target.value);
-            }}
-            data-cy="note-input"
-          />
-        </FormControl>
-        <Button
-          color="primary"
-          size="sm"
-          loading={saving}
-          loadingText={t('notes.saving')}
-          disabled={!errandId || text.trim() === ''}
-          onClick={() => void add()}
-          data-cy="save-note-button"
-        >
-          {t('common:save')}
-        </Button>
-      </div>
+      {readOnly ? null : (
+        <div className="w-full mt-auto flex flex-col items-start gap-12">
+          <FormControl id="new-note" className="w-full">
+            <Textarea
+              className="w-full"
+              rows={4}
+              placeholder={t('notes.newNote')}
+              aria-label={t('notes.newNote')}
+              value={text}
+              onChange={(event) => {
+                setText(event.target.value);
+              }}
+              data-cy="note-input"
+            />
+          </FormControl>
+          <Button
+            color="primary"
+            size="sm"
+            loading={saving}
+            loadingText={t('notes.saving')}
+            disabled={!errandId || text.trim() === ''}
+            onClick={() => void add()}
+            data-cy="save-note-button"
+          >
+            {t('common:save')}
+          </Button>
+        </div>
+      )}
 
       <Modal
         show={!!editNote}

@@ -1,8 +1,9 @@
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import ErrandLifecareDecisionService from '@services/errand-lifecare-decision.service';
-import { caremanagementLifecareUrl, caremanagementUrl } from '@utils/caremanagement-url';
+import { caremanagementFinancialAssistanceUrl, caremanagementLifecareUrl } from '@utils/caremanagement-url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { UPSTREAM_FILE_TIMEOUT_MS } from '@/constants/upstream';
 import { LifecareDecisionView as CaremanagementDecisionView, LifecareDecisionViewOutcomeEnum } from '@/data-contracts/caremanagement/data-contracts';
 import { HttpException } from '@/exceptions/HttpException';
 
@@ -107,7 +108,7 @@ describe('ErrandLifecareDecisionService', () => {
     const get = vi.spyOn(CaremanagementApiService.prototype, 'get').mockResolvedValue(answers([reason]));
 
     expect(await new ErrandLifecareDecisionService().reasons(153)).toEqual([reason]);
-    expect(get).toHaveBeenCalledWith({ url: caremanagementUrl('errands', 'financial-assistance', 'lifecare', 'decision-types', '153', 'reasons') });
+    expect(get).toHaveBeenCalledWith({ url: caremanagementFinancialAssistanceUrl('lifecare', 'decision-types', '153', 'reasons') });
     expect(get.mock.calls[0]?.[0].url).toMatch(/\/errands\/financial-assistance\/lifecare\/decision-types\/153\/reasons$/);
   });
 
@@ -124,7 +125,11 @@ describe('ErrandLifecareDecisionService', () => {
 
     const pdf = await new ErrandLifecareDecisionService().pdf('errand-1');
 
-    expect(get).toHaveBeenCalledWith({ url: caremanagementLifecareUrl('errand-1', 'decision', 'pdf'), responseType: 'arraybuffer' });
+    expect(get).toHaveBeenCalledWith({
+      url: caremanagementLifecareUrl('errand-1', 'decision', 'pdf'),
+      responseType: 'arraybuffer',
+      timeout: UPSTREAM_FILE_TIMEOUT_MS,
+    });
     expect(Buffer.isBuffer(pdf)).toBe(true);
     expect(pdf.toString()).toBe('%PDF-1.7 beslut');
   });

@@ -11,7 +11,12 @@ import {
   UploadFile,
 } from '@sk-web-gui/react';
 import { TextEditorValue } from '@sk-web-gui/text-editor';
-import { ALLOWED_ATTACHMENT_FILE_EXTENSIONS, MAX_ATTACHMENT_FILE_SIZE_MB } from '@utils/attachment-upload-limits';
+import {
+  ALLOWED_ATTACHMENT_FILE_EXTENSIONS,
+  MAX_ATTACHMENT_FILE_SIZE_MB,
+  MESSAGE_ATTACHMENT_ACCEPT,
+} from '@utils/attachment-upload-limits';
+import { isPreviewableMimeType } from '@utils/preview-mime-type';
 import { Eye, Paperclip, Reply, SendHorizontal, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { FC, useRef, useState } from 'react';
@@ -19,7 +24,7 @@ import { FormProvider, SubmitHandler, useForm, useWatch } from 'react-hook-form'
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 
-import { isPreviewableMimeType, LocalFilePreviewModal } from './attachment-preview-modal.component';
+import { LocalFilePreviewModal } from './attachment-preview-modal.component';
 import { messagePreview, senderLabel } from './errand-message.component';
 
 // Matches the backend MESSAGE_BODY_MAX_LENGTH / caremanagement CreateMessage.body limit.
@@ -215,6 +220,7 @@ export const ErrandNewMessage: FC<{
                 name="files"
                 appendToContext={false}
                 maxFileSizeMB={MAX_ATTACHMENT_FILE_SIZE_MB}
+                accept={MESSAGE_ATTACHMENT_ACCEPT}
                 onChange={appendSelectedFiles}
                 onInvalid={(error) => {
                   formMethods.setError('files', { type: 'manual', message: error });

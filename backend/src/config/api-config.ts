@@ -31,12 +31,16 @@ export const APIS = [
   },
 ] as const;
 
-// Every upstream API is reached through the WSO2 gateway (API_BASE_URL), with the OAuth2 client-credentials
-// token from ApiTokenService — build its URLs with gatewayUrl.
+// Every upstream API is reached through the WSO2 gateway (API_BASE_URL), with the OAuth2 client-credentials token
+// from ApiTokenService — build its URLs with gatewayUrl — unless caremanagement or Templating is given a host of its
+// own (CAREMANAGEMENT_BASE_URL / TEMPLATING_BASE_URL), which is then called directly without the token.
 
 export type ApiName = (typeof APIS)[number]['name'];
 
-export const getApiBase = (name: ApiName) => {
-  const api = APIS.find(api => api.name === name);
-  return `${api?.name}/${api?.version}`;
+/** The API's path segments on the gateway: its name and version, e.g. `['citizen', '3.0']`. */
+export const apiPathSegments = (name: ApiName): string[] => {
+  const api = APIS.find(candidate => candidate.name === name);
+  return api ? [api.name, api.version] : [name];
 };
+
+export const getApiBase = (name: ApiName) => apiPathSegments(name).join('/');

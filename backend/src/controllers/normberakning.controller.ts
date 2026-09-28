@@ -1,4 +1,5 @@
 import authMiddleware from '@middlewares/auth.middleware';
+import { requireErrandWrite } from '@middlewares/permission.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import ErrandNormberakningService, { NormSection } from '@services/errand-normberakning.service';
 import ErrandPreviousCalculationService from '@services/errand-previous-calculation.service';
@@ -57,7 +58,7 @@ export class NormberakningController {
 
   @Patch('/errands/:errandId/normberakning/draft/header')
   @OpenAPI({ summary: 'Edit the normberäkning header: norm, dates and household size in the careM draft; norm and household size in Lifecare' })
-  @UseBefore(authMiddleware, validationMiddleware(NormHeaderInputDto, 'body'))
+  @UseBefore(authMiddleware, requireErrandWrite, validationMiddleware(NormHeaderInputDto, 'body'))
   async updateHeader(@Param('errandId') errandId: string, @Body() input: NormHeaderInputDto) {
     await this.normberakning.updateHeader(errandId, input);
     return { data: null, message: 'success' };
@@ -65,7 +66,7 @@ export class NormberakningController {
 
   @Post('/errands/:errandId/normberakning/draft/:section')
   @OpenAPI({ summary: 'Add a handläggare row to a normberäkning section' })
-  @UseBefore(authMiddleware, validationMiddleware(NormRowInputDto, 'body'))
+  @UseBefore(authMiddleware, requireErrandWrite, validationMiddleware(NormRowInputDto, 'body'))
   async addRow(@Param('errandId') errandId: string, @Param('section') section: string, @Body() input: NormRowInputDto) {
     await this.normberakning.addRow(errandId, toSection(section), input);
     return { data: null, message: 'success' };
@@ -73,7 +74,7 @@ export class NormberakningController {
 
   @Patch('/errands/:errandId/normberakning/draft/:section/:rowId')
   @OpenAPI({ summary: 'Set the handläggare value/note on a normberäkning row' })
-  @UseBefore(authMiddleware, validationMiddleware(NormRowInputDto, 'body'))
+  @UseBefore(authMiddleware, requireErrandWrite, validationMiddleware(NormRowInputDto, 'body'))
   async updateRow(
     @Param('errandId') errandId: string,
     @Param('section') section: string,
@@ -86,7 +87,7 @@ export class NormberakningController {
 
   @Delete('/errands/:errandId/normberakning/draft/:section/:rowId')
   @OpenAPI({ summary: 'Remove a normberäkning row (a soft delete in the careM draft, dropped in Lifecare)' })
-  @UseBefore(authMiddleware)
+  @UseBefore(authMiddleware, requireErrandWrite)
   async deleteRow(@Param('errandId') errandId: string, @Param('section') section: string, @Param('rowId') rowId: string) {
     await this.normberakning.deleteRow(errandId, toSection(section), rowId);
     return { data: null, message: 'success' };
@@ -94,7 +95,7 @@ export class NormberakningController {
 
   @Post('/errands/:errandId/normberakning/draft/:section/:rowId/restore')
   @OpenAPI({ summary: 'Restore a soft-deleted draft normberäkning row; careM draft only' })
-  @UseBefore(authMiddleware)
+  @UseBefore(authMiddleware, requireErrandWrite)
   async restoreRow(@Param('errandId') errandId: string, @Param('section') section: string, @Param('rowId') rowId: string) {
     await this.normberakning.restoreRow(errandId, toSection(section), rowId);
     return { data: null, message: 'success' };

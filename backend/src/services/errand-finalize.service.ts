@@ -1,4 +1,4 @@
-import { UploadedFileLike } from '@services/caremanagement-attachment.service';
+import { UploadedFileLike } from '@interfaces/file.interface';
 import CaremanagementDecisionService from '@services/caremanagement-decision.service';
 import CaremanagementErrandService from '@services/caremanagement-errand.service';
 import CaremanagementHouseholdSizeService from '@services/caremanagement-household-size.service';

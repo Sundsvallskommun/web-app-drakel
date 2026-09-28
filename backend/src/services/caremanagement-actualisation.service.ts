@@ -1,9 +1,7 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
-import CaremanagementApiService, { caremanagementHeaders } from '@services/caremanagement-api.service';
-import { AttachmentFile } from '@services/caremanagement-attachment.service';
-import { caremanagementError } from '@utils/caremanagement-error';
-import { caremanagementUrl } from '@utils/caremanagement-url';
-import axios from 'axios';
+import { AttachmentFile } from '@interfaces/file.interface';
+import CaremanagementApiService from '@services/caremanagement-api.service';
+import { caremanagementFinancialAssistanceUrl } from '@utils/caremanagement-url';
 import FormData from 'form-data';
 
 import { Actualisation, ArchiveActualisationRequest } from '@/data-contracts/caremanagement/data-contracts';
@@ -19,7 +17,7 @@ class CaremanagementActualisationService {
   /** Lists an applicant's Lifecare aktualiseringar (date range defaults server-side to the last 24 months). */
   async listActualisations(partyId: string): Promise<ApiResponse<Actualisation[]>> {
     return this.apiService.get<Actualisation[]>({
-      url: caremanagementUrl('errands', 'financial-assistance', 'actualisations'),
+      url: caremanagementFinancialAssistanceUrl('actualisations'),
       params: { partyId },
     });
   }
@@ -36,13 +34,12 @@ class CaremanagementActualisationService {
       contentType: file.contentType ?? 'application/pdf',
     });
     form.append('request', JSON.stringify(request), { contentType: 'application/json' });
-    const url = caremanagementUrl('errands', 'financial-assistance', 'actualisations', actualisationId, 'archive');
-    try {
-      await axios.post(url, form, { params: { partyId }, headers: { ...form.getHeaders(), ...(await caremanagementHeaders()) } });
-      return { data: null, message: 'success' };
-    } catch (error) {
-      throw caremanagementError(error);
-    }
+    await this.apiService.postMultipart({
+      url: caremanagementFinancialAssistanceUrl('actualisations', actualisationId, 'archive'),
+      form,
+      params: { partyId },
+    });
+    return { data: null, message: 'success' };
   }
 }
 

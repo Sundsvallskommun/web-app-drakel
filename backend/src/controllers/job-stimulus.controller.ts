@@ -1,4 +1,5 @@
 import authMiddleware from '@middlewares/auth.middleware';
+import { requireErrandWrite } from '@middlewares/permission.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import ErrandLifecareJobStimulusService from '@services/errand-lifecare-job-stimulus.service';
 import { Body, Controller, Get, HttpCode, Param, Post, UseBefore } from 'routing-controllers';
@@ -24,7 +25,7 @@ export class JobStimulusController {
   @HttpCode(201)
   @OpenAPI({ summary: "Add a jobbstimulans period for the sökande on the errand's insats in Lifecare; answers with every period" })
   @ResponseSchema(JobStimulusPeriodsApiResponse)
-  @UseBefore(authMiddleware, validationMiddleware(AddJobStimulusPeriodDto, 'body'))
+  @UseBefore(authMiddleware, requireErrandWrite, validationMiddleware(AddJobStimulusPeriodDto, 'body'))
   async addJobStimulusPeriod(@Param('errandId') errandId: string, @Body() input: AddJobStimulusPeriodDto) {
     return { data: await this.jobStimulusService.addPeriod(errandId, input), message: 'success' };
   }

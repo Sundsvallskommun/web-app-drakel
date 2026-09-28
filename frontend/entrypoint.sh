@@ -11,7 +11,8 @@ replace_in_next() {
     return
   fi
 
-  echo "Replacing ${placeholder} with ${value}..."
+  # Only the placeholder's name is printed: the values include secrets (e.g. HEALTH_PASSWORD) and end up in the logs.
+  echo "Replacing ${placeholder}..."
 
   # Replace in all text files under .next (js, css, html, json)
   find /app/.next -type f \( -name "*.js" -o -name "*.css" -o -name "*.html" -o -name "*.json" \) \

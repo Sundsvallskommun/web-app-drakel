@@ -2,6 +2,7 @@ import CaremanagementErrandService from '@services/caremanagement-errand.service
 import CaremanagementSsbtekChangesService from '@services/caremanagement-ssbtek-changes.service';
 import ErrandNormberakningService from '@services/errand-normberakning.service';
 import { httpStatusOf } from '@utils/http-error-status';
+import { createKeyedLock } from '@utils/keyed-lock';
 import { logger } from '@utils/logger';
 import { incomeTransferFor, NO_SSBTEK_CHANGES, toSsbtekChangesView } from '@utils/ssbtek-changes';
 
@@ -14,6 +15,13 @@ const NOT_FOUND = 404;
 const CONFLICT = 409;
 
 /**
+ * One transfer per errand at a time. A transfer reads careM's comparison and then writes what it offers, so two at
+ * once — a double-click, two tabs — would both see the same income as missing and write it twice. Queued behind the
+ * first, the second reads the comparison as the first left it, where the income is no longer offered.
+ */
+const oneTransferPerErrand = createKeyedLock();
+
+/**
  * Transfers incomes from SSBTEK into the errand's normberäkning, as careM's comparison of the two offers them: only an
  * income the normberäkning lacks, and only once — careM records what was written (its spärr).
  */
@@ -24,17 +32,21 @@ class ErrandSsbtekTransferService {
 
   /** What SSBTEK and the normberäkning disagree on; nothing while the normberäkning is not saved in Lifecare. */
   async readChanges(errandIdentifier: string): Promise<SsbtekChangesView> {
-    const changes = await this.readRawChanges(await this.errandIdOf(errandIdentifier));
-    return changes ? toSsbtekChangesView(changes) : NO_SSBTEK_CHANGES;
+    return this.changesView(await this.errandService.resolveErrandId(errandIdentifier));
   }
 
   /**
    * Writes the picked incomes into the normberäkning — SSBTEK's amounts, one row per income type — then tells careM
    * what was written, and answers with the comparison as it stands after. Refused (409) when the normberäkning is not
-   * saved in Lifecare or a picked income cannot be transferred.
+   * saved in Lifecare or a picked income cannot be transferred (any more).
    */
   async transfer(errandIdentifier: string, request: SsbtekTransferDto): Promise<SsbtekChangesView> {
-    const errandId = await this.errandIdOf(errandIdentifier);
+    const errandId = await this.errandService.resolveErrandId(errandIdentifier);
+    return oneTransferPerErrand(errandId, () => this.transferExclusively(errandId, request));
+  }
+
+  /** The transfer itself; runs only while no other transfer on the errand does. */
+  private async transferExclusively(errandId: string, request: SsbtekTransferDto): Promise<SsbtekChangesView> {
     const changes = await this.readRawChanges(errandId);
     if (!changes) {
       throw new HttpException(CONFLICT, 'Normberäkningen behöver vara sparad i Lifecare innan inkomster kan överföras från SSBTEK.');
@@ -45,7 +57,13 @@ class ErrandSsbtekTransferService {
       await this.normberakning.addRow(errandId, 'incomes', row);
     }
     await this.reportApplied(errandId, changes.calculationId, applied);
-    return this.readChanges(errandId);
+    return this.changesView(errandId);
+  }
+
+  /** careM's comparison as the Normberäkning tab shows it; nothing to show without a normberäkning in Lifecare. */
+  private async changesView(errandId: string): Promise<SsbtekChangesView> {
+    const changes = await this.readRawChanges(errandId);
+    return changes ? toSsbtekChangesView(changes) : NO_SSBTEK_CHANGES;
   }
 
   /** careM's comparison, or undefined when it has none to make (careM answers 404: no normberäkning in Lifecare). */
@@ -73,11 +91,6 @@ class ErrandSsbtekTransferService {
     } catch {
       logger.warn(`Transferred SSBTEK incomes on errand ${errandId} but could not tell careM`);
     }
-  }
-
-  private async errandIdOf(errandIdentifier: string): Promise<string> {
-    const errand = await this.errandService.getErrandByIdentifier(errandIdentifier);
-    return errand.data.id ?? errandIdentifier;
   }
 }
 

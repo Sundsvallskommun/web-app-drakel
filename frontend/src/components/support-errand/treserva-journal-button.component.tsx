@@ -1,5 +1,6 @@
 'use client';
 
+import { useObjectUrl } from '@hooks/use-object-url';
 import { getTreservaJournal } from '@services/treserva-journal-service';
 import { Button } from '@sk-web-gui/react';
 import { base64PdfToObjectUrl } from '@utils/pdf-object-url';
@@ -19,6 +20,8 @@ export const TreservaJournalButton: FC<{ errandId: string }> = ({ errandId }) =>
   const { t } = useTranslation('documentation');
   const [opening, setOpening] = useState<boolean>(false);
   const [error, setError] = useState<string>();
+  // The journal opened last; revoked when another is opened and when the button goes away.
+  const { setObjectUrl } = useObjectUrl();
 
   const open = async (): Promise<void> => {
     setError(undefined);
@@ -34,6 +37,7 @@ export const TreservaJournalButton: FC<{ errandId: string }> = ({ errandId }) =>
       return;
     }
     const url = base64PdfToObjectUrl(result.data);
+    setObjectUrl(url);
     if (tab) {
       tab.location.href = url;
     } else {

@@ -1,7 +1,12 @@
+import { mapWithConcurrency } from '@utils/map-with-concurrency';
+
 import { Errand } from '@/data-contracts/caremanagement/data-contracts';
 
 import CaremanagementStakeholderService, { PartyReference } from './caremanagement-stakeholder.service';
 import CitizenService, { personDisplayName, PersonName } from './citizen.service';
+
+/** How many errands' stakeholders are read from careM at once while a list page is named. */
+const MAX_CONCURRENT_STAKEHOLDER_READS = 6;
 
 /** An errand from the list endpoint with the co-applicant name(s) added by the BFF. */
 type ErrandWithApplicantNames = Errand & { coApplicantName?: string };
@@ -25,9 +30,10 @@ class ApplicantNameService {
   private citizenService = new CitizenService();
 
   async addApplicantNames(errands: Errand[]): Promise<ErrandWithApplicantNames[]> {
-    // Best-effort per errand: a failing stakeholder lookup just leaves that errand's names as they are.
-    const partiesPerErrand = await Promise.all(
-      errands.map(errand => (errand.id ? this.stakeholderService.readApplicants(errand.id).catch(() => undefined) : Promise.resolve(undefined))),
+    // Best-effort per errand: a failing stakeholder lookup just leaves that errand's names as they are. A page of
+    // errands is one stakeholder read each, so only a few run at a time rather than all of them against careM at once.
+    const partiesPerErrand = await mapWithConcurrency(errands, MAX_CONCURRENT_STAKEHOLDER_READS, errand =>
+      errand.id ? this.stakeholderService.readApplicants(errand.id).catch(() => undefined) : Promise.resolve(undefined),
     );
 
     const partyIds = partiesPerErrand.flatMap(parties =>

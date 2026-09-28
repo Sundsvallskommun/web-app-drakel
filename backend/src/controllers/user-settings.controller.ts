@@ -1,3 +1,4 @@
+import { RequestWithUser } from '@interfaces/auth.interface';
 import authMiddleware from '@middlewares/auth.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import CaremanagementUserSettingsService from '@services/caremanagement-user-settings.service';
@@ -5,7 +6,6 @@ import { Body, Controller, Get, Put, Req, UseBefore } from 'routing-controllers'
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
 import { UpdateUserSettingsDto } from '@/dtos/user-settings.dto';
-import { RequestWithUser } from '@/interfaces/auth.interface';
 import { UserSettingsApiResponse } from '@/responses/user-settings.response';
 
 /**

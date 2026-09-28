@@ -37,9 +37,11 @@ class CaremanagementStakeholderService {
     const res = await this.fetchStakeholders(errandId);
     const stakeholders = res.data ?? [];
     // Names are often missing on the stakeholders (the application only stores the partyId), so resolve the
-    // missing ones from Citizen in a single batch call.
+    // missing ones from Citizen in a single batch call. A stakeholder without a partyId has nothing to look up.
     const names = await this.citizenService.getNamesByPartyId(
-      stakeholders.filter(stakeholder => this.isPrivatePerson(stakeholder) && !hasName(stakeholder)).map(stakeholder => stakeholder.externalId ?? ''),
+      stakeholders.flatMap(stakeholder =>
+        stakeholder.externalId && this.isPrivatePerson(stakeholder) && !hasName(stakeholder) ? [stakeholder.externalId] : [],
+      ),
     );
     const enriched = await Promise.all(stakeholders.map(stakeholder => this.enrich(stakeholder, names)));
     return { ...res, data: enriched };
@@ -66,6 +68,14 @@ class CaremanagementStakeholderService {
       applicant: stakeholders.find(stakeholder => stakeholder.role === APPLICANT_ROLE)?.externalId,
       coApplicant: stakeholders.find(stakeholder => stakeholder.role === CO_APPLICANT_ROLE)?.externalId,
     };
+  }
+
+  /**
+   * The sökande's partyId, straight from the errand's stakeholders — no Citizen lookup, so it cannot fail on Citizen.
+   * Undefined when the errand has no sökande or the sökande no partyId.
+   */
+  async readApplicantPartyId(errandId: string): Promise<string | undefined> {
+    return (await this.readHouseholdPartyIds(errandId)).applicant;
   }
 
   private async fetchStakeholders(errandId: string): Promise<ApiResponse<Stakeholder[]>> {

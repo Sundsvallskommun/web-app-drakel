@@ -25,7 +25,9 @@
       "BIFALL": "Approval",
       "AVSLAG": "Rejection",
       "DELAVSLAG": "Partial approval"
-    }
+    },
+    "loadErrorTitle": "The decision could not be read from Lifecare",
+    "loadError": "It is not possible to tell whether the errand already has a decision, so the form is locked so that nothing is overwritten. Try again in a while."
   },
   "message": {
     "title": "Decision message",
@@ -50,19 +52,6 @@
     },
     "statusTitle": "Payment status",
     "loadError": "Could not fetch the payment status",
-    "applicationMonth": "Application for",
-    "unavailable": {
-      "title": "Payment status is not available",
-      "description": "The status is fetched from Lifecare and could not be read right now. Please try again later."
-    },
-    "paid": {
-      "title": "Paid",
-      "paymentDate": "Payment date: {{date}}"
-    },
-    "notPaid": {
-      "title": "Not paid yet",
-      "description": "No effectuated Lifecare payment for the application month."
-    },
     "form": {
       "title": "Register payment",
       "paymentDate": "Payment date",
@@ -93,17 +82,16 @@
       "optionsLoadError": "Lifecare did not provide payees and payment methods for the service: {{reason}}",
       "save": "Save payment in Lifecare",
       "saved": "The payment is registered in Lifecare (id {{id}}).",
-      "savedNotLinked": "The payment is registered in Lifecare (id {{id}}) but could not be linked to the errand. Do not register it again."
+      "savedNotLinked": "The payment is registered in Lifecare (id {{id}}) but could not be linked to the errand. Do not register it again.",
+      "reportedOnUnavailable": "Cannot be chosen yet – caremanagement cannot receive who the payment is reported on."
     },
     "list": {
-      "title": "Registered payments",
       "paymentDate": "Payment date",
       "applicationMonth": "For month",
       "amount": "Amount",
       "payee": "Payee",
       "paymentMethod": "Payment method",
-      "statusHeading": "Status",
-      "empty": "No payments registered"
+      "statusHeading": "Status"
     },
     "disposal": {
       "title": "Available to disburse",
@@ -112,16 +100,6 @@
       "remaining": "Remaining",
       "unavailable": "The balance could not be read from Lifecare.",
       "none": "The service has no balance in Lifecare yet – the decision is not registered there."
-    },
-    "payee": {
-      "add": "Add payee",
-      "adding": "Adding…",
-      "addError": "Could not add the payee",
-      "name": "Name",
-      "label": "Label in Lifecare",
-      "paymentMethod": "Payment method",
-      "clearing": "Clearing",
-      "accountNumber": "Account number"
     },
     "lifecareList": {
       "title": "Payments in Lifecare",

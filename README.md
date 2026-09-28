@@ -6,7 +6,7 @@ Arkitektur, konventioner och kontraktsflöde dokumenteras i [AGENTS.md](./AGENTS
 
 ## APIer
 
-- **Alla APIer** — caremanagement, Templating, Active Directory, Citizen och Messaging — anropas via WSO2-gatewayen (`API_BASE_URL` + OAuth2 client-credentials) och listas i [`backend/src/config/api-config.ts`](./backend/src/config/api-config.ts). Applikationsanvändaren i WSO2 måste prenumerera på dem, och gatewayen släpper bara igenom de routes som finns i API:ets publicerade definition.
+- **Alla APIer** — caremanagement, Templating, Active Directory, Citizen och Messaging — anropas via WSO2-gatewayen (`API_BASE_URL` + OAuth2 client-credentials) och listas i [`backend/src/config/api-config.ts`](./backend/src/config/api-config.ts). caremanagement och Templating kan i stället anropas direkt på egen värd via `CAREMANAGEMENT_BASE_URL` och `TEMPLATING_BASE_URL`. Applikationsanvändaren i WSO2 måste prenumerera på dem, och gatewayen släpper bara igenom de routes som finns i API:ets publicerade definition.
 - **Lifecare** anropas aldrig av BFF:en själv: caremanagement äger kopplingen (inloggning, insats, personnummer, länkning av id:n och åtkomstlogg) och BFF:en skickar vidare till ärendets `/lifecare/...`-routes i caremanagement.
 
 ## Utveckling
@@ -48,10 +48,11 @@ Fyll i `.env.development.local`. Viktiga nycklar:
 | `SAML_IDP_PUBLIC_CERT` | Ska matcha IDP:ns cert |
 | `SAML_PRIVATE_KEY` / `SAML_PUBLIC_KEY` | Behövs korrekt endast mot en riktig IDP |
 | `AUTHORIZED_GROUPS` | Kommaseparerade AD-grupper som får använda appen |
-| `ADMIN_GROUP` | AD-grupp för admin |
+| `ADMIN_GROUP` | AD-grupp för admin. Bara den här gruppen får ändra ärenden; övriga i `AUTHORIZED_GROUPS` får läsa |
 | `MUNICIPALITY_ID` | Kommunkod (`2281`). **Backend-only** — frontend är tenant-agnostisk |
 | `CAREMANAGEMENT_NAMESPACE` | t.ex. `FINANCIAL_ASSISTANCE`. **Backend-only** |
-| `CAREMANAGEMENT_TYPE_SLUG` | Valfri, default `financial-assistance` (binder ärendet till sin typ-modul) |
+| `CAREMANAGEMENT_BASE_URL` | Valfri: anropa caremanagement direkt på egen värd (t.ex. `https://cm.drakel.sundsvall.dev`) i stället för via gatewayen |
+| `TEMPLATING_BASE_URL` | Valfri: anropa Templating direkt på egen värd (t.ex. `https://templating.drakel.sundsvall.dev`) i stället för via gatewayen |
 
 `MUNICIPALITY_ID` + `CAREMANAGEMENT_NAMESPACE` injiceras av backend i caremanagement-URL:erna — frontend känner aldrig till dem.
 
@@ -83,7 +84,7 @@ Appen kör **App Router** med [`next-i18n-router`](https://github.com/i18nexus/n
 
 Backend och frontend deployas som **två separata containrar** byggda från respektive `Dockerfile` (ingen docker-compose). Deploy-plattformen måste sätta env-variablerna på containrarna:
 
-- **Backend** kräver (annars startar `validateEnv` inte): `NODE_ENV, PORT, SECRET_KEY, BASE_URL_PREFIX, API_BASE_URL, CLIENT_KEY, CLIENT_SECRET, MUNICIPALITY_ID, CAREMANAGEMENT_NAMESPACE, AUTHORIZED_GROUPS, ADMIN_GROUP, SAML_*` (+ valfri `CAREMANAGEMENT_TYPE_SLUG`).
+- **Backend** kräver (annars startar `validateEnv` inte): `NODE_ENV, PORT, SECRET_KEY, BASE_URL_PREFIX, API_BASE_URL, CLIENT_KEY, CLIENT_SECRET, MUNICIPALITY_ID, CAREMANAGEMENT_NAMESPACE, AUTHORIZED_GROUPS, ADMIN_GROUP, SAML_*` (+ valfria `CAREMANAGEMENT_BASE_URL`, `TEMPLATING_BASE_URL`).
 - **Frontend** kräver `NEXT_PUBLIC_API_URL` (URL till backend).
 
 ## Kvalitetsgrindar & test

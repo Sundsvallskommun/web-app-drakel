@@ -1,8 +1,7 @@
 'use client';
 
-import { Lookup } from '@data-contracts/backend/data-contracts';
+import { Administrator, Lookup } from '@data-contracts/backend/data-contracts';
 import { useDebouncedValue } from '@hooks/use-debounced-value';
-import { Administrator } from '@services/administrator-service';
 import { Button, Checkbox, Chip, SearchField } from '@sk-web-gui/react';
 import { Search } from 'lucide-react';
 import { FC, useEffect, useRef, useState } from 'react';
@@ -97,8 +96,8 @@ export const ErrandsFilter: FC<ErrandsFilterProps> = ({
     label: type.displayName ?? type.name ?? '',
   }));
   const assigneeOptions: FilterOption[] = administrators.map((admin) => ({
-    value: admin.username,
-    label: admin.displayName,
+    value: admin.username ?? '',
+    label: admin.displayName ?? admin.username ?? '',
   }));
 
   const statusLabel = (value: string): string => statusOptions.find((option) => option.value === value)?.label ?? value;

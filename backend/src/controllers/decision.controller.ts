@@ -4,26 +4,17 @@ import CaremanagementErrandService from '@services/caremanagement-errand.service
 import { Controller, Get, Param, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
-import { DecisionsApiResponse, RecommendationApiResponse } from '@/responses/decision.response';
+import { RecommendationApiResponse } from '@/responses/decision.response';
 import { DecisionProposalApiResponse } from '@/responses/decision-proposal.response';
 
 /**
- * careM's side of the beslut: the recommendation, the beslutsförslag and the decisions careM recorded.
+ * careM's side of the beslut: the recommendation and the beslutsförslag.
  * Beslutstyper and orsaker are Lifecare's. The handläggare's beslut itself is saved in Lifecare — see LifecareDecisionController.
  */
 @Controller()
 export class DecisionController {
   private decisionService = new CaremanagementDecisionService();
   private errandService = new CaremanagementErrandService();
-
-  @Get('/errands/:errandId/decisions')
-  @OpenAPI({ summary: 'List the beslut recorded on an errand' })
-  @ResponseSchema(DecisionsApiResponse)
-  @UseBefore(authMiddleware)
-  async listDecisions(@Param('errandId') errandId: string) {
-    const res = await this.decisionService.readDecisions(errandId);
-    return { data: res.data, message: 'success' };
-  }
 
   @Get('/errands/:errandId/decisions/recommendation')
   @OpenAPI({ summary: 'The latest automated beslut recommendation on the errand (null when none)' })

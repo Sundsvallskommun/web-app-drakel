@@ -1,11 +1,11 @@
+import { RequestWithUser } from '@interfaces/auth.interface';
+import { ClientUser } from '@interfaces/users.interface';
 import authMiddleware from '@middlewares/auth.middleware';
 import { Response } from 'express';
 import { Controller, Get, Req, Res, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
 import { HttpException } from '@/exceptions/HttpException';
-import { RequestWithUser } from '@/interfaces/auth.interface';
-import { ClientUser } from '@/interfaces/users.interface';
 import { UserApiResponse } from '@/responses/user.response';
 
 @Controller()

@@ -2,12 +2,7 @@ import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
 import { caremanagementUrl } from '@utils/caremanagement-url';
 
-import { CreateNote, Note, NoteCount } from '@/data-contracts/caremanagement/data-contracts';
-
-/** Body accepted by caremanagement's PATCH .../notes/{noteId} (the contract's UpdateNote). */
-interface UpdateNote {
-  body: string;
-}
+import { CreateNote, Note, NoteCount, UpdateNote } from '@/data-contracts/caremanagement/data-contracts';
 
 class CaremanagementNoteService {
   private apiService = new CaremanagementApiService();

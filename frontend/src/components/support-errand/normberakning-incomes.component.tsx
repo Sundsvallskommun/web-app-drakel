@@ -9,7 +9,7 @@ import {
   updateNormRow,
 } from '@services/normberakning-service';
 import { Button, DatePicker, FormControl, FormLabel, Input, Select, Spinner, Table } from '@sk-web-gui/react';
-import { displayAmount } from '@utils/format-amount';
+import { displayAmount, isAmountChanged, isAmountText, parseAmount, toAmountInput } from '@utils/format-amount';
 import dayjs from 'dayjs';
 import { RotateCcw, Trash2 } from 'lucide-react';
 import { FC, FocusEvent, useState } from 'react';
@@ -17,15 +17,6 @@ import { useTranslation } from 'react-i18next';
 
 import { NormberakningSummaBox } from './normberakning-summa-box.component';
 import { NormberakningTableBox } from './normberakning-table-box.component';
-
-const parseAmount = (value: string): number | undefined => {
-  const normalized = value.trim().replace(',', '.');
-  if (!normalized) {
-    return undefined;
-  }
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : undefined;
-};
 
 // caremanagement stores the income amount dates as date-time; the field only needs the day (yyyy-MM-dd).
 const toDateInput = (value?: string): string => (value ? dayjs(value).format('YYYY-MM-DD') : '');
@@ -122,6 +113,7 @@ export const NormberakningIncomes: FC<NormberakningIncomesProps> = ({
                 row={row}
                 showGross={applicantJobStimulus}
                 onAction={(action) => void runRowAction(action)}
+                onError={setError}
               />
             ))
           }
@@ -179,11 +171,12 @@ const IncomeRow: FC<{
   /** Whether the table has the Brutto S column. */
   showGross: boolean;
   onAction: (action: () => Promise<{ error?: unknown; message?: string }>) => void;
-}> = ({ errandId, row, showGross, onAction }) => {
+  onError: (message: string) => void;
+}> = ({ errandId, row, showGross, onAction, onError }) => {
   const { t } = useTranslation('calculation');
-  const [applicantAmount, setApplicantAmount] = useState<string>(row.applicantCaseworkerAmount?.toString() ?? '');
+  const [applicantAmount, setApplicantAmount] = useState<string>(toAmountInput(row.applicantCaseworkerAmount));
   const [applicantDate, setApplicantDate] = useState<string>(toDateInput(row.applicantAmountDate));
-  const [coapplicantAmount, setCoapplicantAmount] = useState<string>(row.coapplicantCaseworkerAmount?.toString() ?? '');
+  const [coapplicantAmount, setCoapplicantAmount] = useState<string>(toAmountInput(row.coapplicantCaseworkerAmount));
   const [coapplicantDate, setCoapplicantDate] = useState<string>(toDateInput(row.coapplicantAmountDate));
   const [note, setNote] = useState<string>(row.note ?? '');
 
@@ -221,16 +214,22 @@ const IncomeRow: FC<{
     );
   }
 
+  // Amounts are compared as numbers: "1234,50" is the saved 1234.5, so a row once saved is not changed again.
   const dirty =
-    applicantAmount !== (row.applicantCaseworkerAmount?.toString() ?? '') ||
+    isAmountChanged(applicantAmount, row.applicantCaseworkerAmount) ||
     applicantDate !== toDateInput(row.applicantAmountDate) ||
-    coapplicantAmount !== (row.coapplicantCaseworkerAmount?.toString() ?? '') ||
+    isAmountChanged(coapplicantAmount, row.coapplicantCaseworkerAmount) ||
     coapplicantDate !== toDateInput(row.coapplicantAmountDate) ||
-    note !== (row.note ?? '');
+    note.trim() !== (row.note ?? '');
 
-  // Persist the row when a field loses focus, but only if something actually changed.
+  // Persist the row when a field loses focus, but only if something actually changed — and never an amount
+  // that can't be read, which would otherwise be sent as no amount at all.
   const handleBlur = () => {
     if (!dirty) {
+      return;
+    }
+    if (!isAmountText(applicantAmount) || !isAmountText(coapplicantAmount)) {
+      onError(t('table.invalidAmount'));
       return;
     }
     onAction(() =>
@@ -379,6 +378,10 @@ const DraftIncomeRow: FC<{
     note.trim() !== '';
 
   const commit = async () => {
+    if (!isAmountText(applicantAmount) || !isAmountText(coapplicantAmount)) {
+      onError(t('table.invalidAmount'));
+      return;
+    }
     setSaving(true);
     onError('');
     const result = await addNormRow(errandId, 'incomes', {

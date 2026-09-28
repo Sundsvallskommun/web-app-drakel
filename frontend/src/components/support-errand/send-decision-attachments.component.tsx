@@ -8,8 +8,8 @@ import { useTranslation } from 'react-i18next';
 import { LifecareDocumentChoice, LifecareDocumentPicker } from './lifecare-document-picker.component';
 
 /**
- * What goes with the message: Lifecare's beslut and beräkning (in unless taken out), the stored PDFs the handläggare
- * picked from Lifecare, and their own files.
+ * What goes with the message: Lifecare's beslut and beräkning (in unless taken out), the documents the handläggare picked
+ * from Lifecare, and their own files.
  */
 export interface DecisionAttachments {
   includeDecision: boolean;
@@ -35,7 +35,7 @@ const AttachmentRow: FC<{ name: string; removeLabel: string; onRemove: () => voi
 /**
  * The documents that go with "Skicka beräkning och beslut": the beslut and the beräkning from Lifecare are in to
  * begin with, and the handläggare can take them out, add them back, add the sökandes stored PDFs from Lifecare and
- * add and remove PDFs from their computer. Textdokument and blanketter from Lifecare cannot be added yet.
+ * add and remove PDFs from their computer.
  */
 export const SendDecisionAttachments: FC<{
   errandId: string;
@@ -175,7 +175,7 @@ export const SendDecisionAttachments: FC<{
           }}
         />
       : null}
-      <p className="m-0 text-small text-dark-secondary">{t('decideAndPay.attachments.lifecareOnlyPdf')}</p>
+      <p className="m-0 text-small text-dark-secondary">{t('decideAndPay.attachments.lifecareHelp')}</p>
     </div>
   );
 };

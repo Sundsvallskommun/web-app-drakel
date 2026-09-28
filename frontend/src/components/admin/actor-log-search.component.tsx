@@ -1,7 +1,7 @@
 'use client';
 
 import { FormField } from '@components/common/form-field.component';
-import { Administrator } from '@services/administrator-service';
+import { Administrator } from '@data-contracts/backend/data-contracts';
 import { Button, DatePicker, Select } from '@sk-web-gui/react';
 import { Search } from 'lucide-react';
 import { FC } from 'react';
@@ -51,8 +51,8 @@ export const ActorLogSearch: FC<{
           >
             <Select.Option value="">{t('logs.selectActor')}</Select.Option>
             {administrators.map((administrator) => (
-              <Select.Option key={administrator.username} value={administrator.username}>
-                {administrator.displayName}
+              <Select.Option key={administrator.username} value={administrator.username ?? ''}>
+                {administrator.displayName ?? administrator.username}
               </Select.Option>
             ))}
           </Select>

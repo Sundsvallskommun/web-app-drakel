@@ -5,21 +5,13 @@
   "saving": "Sparar…",
   "cancel": "Avbryt",
   "close": "Stäng",
-  "delete": "Ta bort",
-  "edit": "Redigera",
-  "add": "Lägg till",
-  "remove": "Ta bort",
   "show": "Visa",
   "download": "Ladda ner",
-  "preview": "Förhandsgranska",
   "update": "Uppdatera",
-  "lock": "Lås",
   "send": "Skicka",
   "yes": "Ja",
   "no": "Nej",
-  "loading": "Laddar…",
   "notSet": "Ej satt",
-  "unknown": "Okänd",
   "none": "—",
   "language": "Språk",
   "languages": {
@@ -47,5 +39,6 @@
   "dateRange": {
     "from": "Från {{date}}"
   },
-  "unknownStakeholder": "Okänd intressent"
+  "unknownStakeholder": "Okänd intressent",
+  "readOnly": "Du har bara läsbehörighet – ärenden kan inte ändras."
 }

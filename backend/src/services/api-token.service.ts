@@ -1,6 +1,7 @@
 import { CLIENT_KEY, CLIENT_SECRET } from '@config';
 import { API_BASE_URL } from '@config';
 import { logger } from '@utils/logger';
+import { logUpstreamFailure } from '@utils/upstream-error';
 import axios from 'axios';
 import qs from 'qs';
 
@@ -57,15 +58,17 @@ class ApiTokenService {
 
       return await this.getToken();
     } catch (error) {
-      logger.error(`Failed to fetch JWT access token: ${JSON.stringify(error)}`);
+      // By status and code only: the error carries the request's config, with the client credentials in its Basic header.
+      logUpstreamFailure('OAuth token endpoint', error);
       throw new HttpException(502, 'Bad Gateway');
     }
   }
 }
 
-export default ApiTokenService;
-
-/** The gateway's bearer token as a header, for the calls that go through the gateway without ApiService. */
+/**
+ * The gateway's bearer token as a header — what every call through the gateway carries: ApiService's, and
+ * caremanagement's and Templating's when they have no host of their own.
+ */
 export const gatewayAuthorization = async (): Promise<Record<string, string>> => ({
   Authorization: `Bearer ${await new ApiTokenService().getToken()}`,
 });

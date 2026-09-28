@@ -1,6 +1,7 @@
 'use client';
 
 import { AsyncContent } from '@components/common/async-content.component';
+import { LockFieldset } from '@components/support-errand/lockable-section.component';
 import { SsbtekTransferIncomeDtoRoleEnum } from '@data-contracts/backend/data-contracts';
 import { useSsbtekChanges } from '@hooks/use-ssbtek-changes';
 import { transferSsbtekIncomes } from '@services/ssbtek-service';
@@ -14,8 +15,9 @@ import { changeKey, SsbtekChangeRow } from './ssbtek-change-row.component';
  * Överför till normberäkningen: the incomes SSBTEK reports that the errand's normberäkning in Lifecare lacks, per
  * income type and person, as careM compares them. The handläggare picks and transfers them at SSBTEK's amounts; careM
  * then keeps them from being transferred again. An income already in the normberäkning is shown, but cannot be picked.
+ * A handläggare who may only read errands (`readOnly`) sees the comparison, but can neither pick nor transfer.
  */
-export const SsbtekTransfer: FC<{ errandId: string }> = ({ errandId }) => {
+export const SsbtekTransfer: FC<{ errandId: string; readOnly?: boolean }> = ({ errandId, readOnly = false }) => {
   const { t } = useTranslation('ssbtek');
   const { view, isLoading, error, errorMessage, refresh } = useSsbtekChanges(errandId);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -70,52 +72,58 @@ export const SsbtekTransfer: FC<{ errandId: string }> = ({ errandId }) => {
         {view.isFinal ?
           <p className="m-0 text-small text-dark-secondary">{t('transfer.final')}</p>
         : null}
-        <Table dense wrappingBorder>
-          <Table.Header>
-            <Table.HeaderColumn>
-              <span className="sr-only">{t('transfer.columns.pick')}</span>
-            </Table.HeaderColumn>
-            <Table.HeaderColumn>{t('transfer.columns.incomeType')}</Table.HeaderColumn>
-            <Table.HeaderColumn>{t('columns.person')}</Table.HeaderColumn>
-            <Table.HeaderColumn>{t('transfer.columns.ssbtekAmount')}</Table.HeaderColumn>
-            <Table.HeaderColumn>{t('transfer.columns.lifecareAmount')}</Table.HeaderColumn>
-            <Table.HeaderColumn>{t('transfer.columns.status')}</Table.HeaderColumn>
-          </Table.Header>
-          <Table.Body>
-            {view.changes.map((change) => (
-              <SsbtekChangeRow
-                key={`${changeKey(change)}:${change.kind}`}
-                change={change}
-                selected={selected.has(changeKey(change))}
-                onToggle={() => {
-                  toggle(changeKey(change));
-                }}
-              />
-            ))}
-          </Table.Body>
-        </Table>
-        <div className="flex flex-wrap items-center gap-16">
-          <Button
-            size="sm"
-            color="vattjom"
-            disabled={picked.length === 0}
-            loading={transferring}
-            onClick={() => void transfer()}
-          >
-            {t('transfer.submit', { count: picked.length })}
-          </Button>
-          {transferError ?
-            <p className="m-0 text-error-surface-primary" role="alert">
-              {transferError}
-            </p>
-          : null}
-          {transferredCount ?
-            <p className="m-0 text-success-surface-primary" role="status">
-              {t('transfer.done', { count: transferredCount })}
-            </p>
-          : null}
-        </div>
+        <LockFieldset locked={readOnly}>
+          <Table dense wrappingBorder>
+            <Table.Header>
+              <Table.HeaderColumn>
+                <span className="sr-only">{t('transfer.columns.pick')}</span>
+              </Table.HeaderColumn>
+              <Table.HeaderColumn>{t('transfer.columns.incomeType')}</Table.HeaderColumn>
+              <Table.HeaderColumn>{t('columns.person')}</Table.HeaderColumn>
+              <Table.HeaderColumn>{t('transfer.columns.ssbtekAmount')}</Table.HeaderColumn>
+              <Table.HeaderColumn>{t('transfer.columns.lifecareAmount')}</Table.HeaderColumn>
+              <Table.HeaderColumn>{t('transfer.columns.status')}</Table.HeaderColumn>
+            </Table.Header>
+            <Table.Body>
+              {view.changes.map((change) => (
+                <SsbtekChangeRow
+                  key={`${changeKey(change)}:${change.kind}`}
+                  change={change}
+                  selected={selected.has(changeKey(change))}
+                  onToggle={() => {
+                    toggle(changeKey(change));
+                  }}
+                />
+              ))}
+            </Table.Body>
+          </Table>
+        </LockFieldset>
+        {readOnly ? null : (
+          <div className="flex flex-wrap items-center gap-16">
+            <Button
+              size="sm"
+              color="vattjom"
+              disabled={picked.length === 0}
+              loading={transferring}
+              onClick={() => void transfer()}
+            >
+              {t('transfer.submit', { count: picked.length })}
+            </Button>
+          </div>
+        )}
       </AsyncContent>
+      {/* Outside the list: after a transfer the list is read again — and is often empty then, the normberäkning
+          now matching SSBTEK — but the handläggare should still see that the transfer went through. */}
+      {transferError ?
+        <p className="m-0 text-error-surface-primary" role="alert">
+          {transferError}
+        </p>
+      : null}
+      {transferredCount ?
+        <p className="m-0 text-success-surface-primary" role="status">
+          {t('transfer.done', { count: transferredCount })}
+        </p>
+      : null}
     </section>
   );
 };

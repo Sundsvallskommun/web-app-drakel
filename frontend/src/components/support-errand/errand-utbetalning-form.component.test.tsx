@@ -98,6 +98,14 @@ describe('ErrandUtbetalningForm', () => {
     expect(screen.getByLabelText(/^Avser månad/)).toHaveValue('2026-09');
   });
 
+  it('shows "Redovisas på" closed, since caremanagement cannot receive it yet', async () => {
+    renderForm();
+
+    const applicantCheckbox = await screen.findByRole('checkbox', { name: /Testsson/ });
+    expect(applicantCheckbox).toBeDisabled();
+    expect(screen.getByText(/caremanagement kan inte ta emot vilka utbetalningen redovisas på/)).toBeInTheDocument();
+  });
+
   it('offers the months Lifecare lets the utbetalning concern', async () => {
     renderForm();
 

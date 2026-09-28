@@ -1,14 +1,6 @@
-import { HttpException } from '@exceptions/HttpException';
-import { ClassConstructor, plainToInstance } from 'class-transformer';
-import { validate, ValidationError } from 'class-validator';
+import { validateInput } from '@utils/validate-input';
+import { ClassConstructor } from 'class-transformer';
 import { RequestHandler } from 'express';
-
-const getAllNestedErrors = (error: ValidationError): string => {
-  if (error.constraints) {
-    return Object.values(error.constraints).join(', ');
-  }
-  return (error.children ?? []).map(getAllNestedErrors).join(',');
-};
 
 export const validationMiddleware = (
   type: ClassConstructor<object>,
@@ -18,14 +10,13 @@ export const validationMiddleware = (
   forbidNonWhitelisted = true,
 ): RequestHandler => {
   return (req, _res, next) => {
-    const obj = plainToInstance(type, req[value]);
-    void validate(obj, { skipMissingProperties, whitelist, forbidNonWhitelisted }).then((errors: ValidationError[]) => {
-      if (errors.length > 0) {
-        const message = errors.map(getAllNestedErrors).join(', ');
-        next(new HttpException(400, message));
-      } else {
+    validateInput(type, req[value], { skipMissingProperties, whitelist, forbidNonWhitelisted }).then(
+      () => {
         next();
-      }
-    });
+      },
+      (error: unknown) => {
+        next(error);
+      },
+    );
   };
 };

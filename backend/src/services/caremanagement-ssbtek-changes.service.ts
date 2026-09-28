@@ -1,10 +1,10 @@
 import CaremanagementApiService from '@services/caremanagement-api.service';
-import { caremanagementUrl } from '@utils/caremanagement-url';
+import { caremanagementFinancialAssistanceUrl } from '@utils/caremanagement-url';
 
 import { AppliedSsbtekChanges, SsbtekChanges } from '@/data-contracts/caremanagement/data-contracts';
 
 const changesUrl = (errandId: string, ...parts: string[]): string =>
-  caremanagementUrl('errands', 'financial-assistance', errandId, 'calculation', 'ssbtek-changes', ...parts);
+  caremanagementFinancialAssistanceUrl(errandId, 'calculation', 'ssbtek-changes', ...parts);
 
 /**
  * careM's comparison of SSBTEK with the errand's normberäkning saved in Lifecare, and its record of what has been

@@ -34,7 +34,7 @@ describe('NormberakningIncomes', () => {
     );
 
     expect(screen.getByRole('columnheader', { name: 'Brutto S' })).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: 'Brutto S' })).toHaveValue('5000');
+    expect(screen.getByRole('textbox', { name: 'Brutto S' })).toHaveValue('5000,00');
     expect(screen.getByText(/3\s?750,00/)).toBeInTheDocument();
   });
 
@@ -58,6 +58,63 @@ describe('NormberakningIncomes', () => {
     });
     expect(vi.mocked(updateNormRow).mock.calls[0]?.slice(0, 3)).toEqual(['errand-1', 'incomes', '1']);
     expect(vi.mocked(updateNormRow).mock.calls[0]?.[3]).toMatchObject({ applicantCaseworkerAmount: 6000 });
+  });
+
+  it('does not save a row again when its amount is unchanged, however it is written', () => {
+    render(
+      <NormberakningIncomes
+        errandId="errand-1"
+        rows={[{ id: '7', typeName: 'Lön', applicantCaseworkerAmount: 1234.5 }]}
+        incomeTypes={[]}
+        onChanged={vi.fn()}
+      />
+    );
+    const amountField = screen.getByDisplayValue('1234,50');
+
+    fireEvent.blur(amountField);
+    fireEvent.change(amountField, { target: { value: '1 234,5' } });
+    fireEvent.blur(amountField);
+
+    expect(updateNormRow).not.toHaveBeenCalled();
+  });
+
+  it('reads an amount written with a space between the thousands', async () => {
+    const onChanged = vi.fn();
+    render(
+      <NormberakningIncomes
+        errandId="errand-1"
+        rows={[{ id: '7', typeName: 'Lön', applicantCaseworkerAmount: 1000 }]}
+        incomeTypes={[]}
+        onChanged={onChanged}
+      />
+    );
+    const amountField = screen.getByDisplayValue('1000,00');
+
+    fireEvent.change(amountField, { target: { value: '12 500' } });
+    fireEvent.blur(amountField);
+
+    await waitFor(() => {
+      expect(onChanged).toHaveBeenCalled();
+    });
+    expect(vi.mocked(updateNormRow).mock.calls[0]?.[3]).toMatchObject({ applicantCaseworkerAmount: 12500 });
+  });
+
+  it('does not send an amount it cannot read, and says so', () => {
+    render(
+      <NormberakningIncomes
+        errandId="errand-1"
+        rows={[{ id: '7', typeName: 'Lön', applicantCaseworkerAmount: 1000 }]}
+        incomeTypes={[]}
+        onChanged={vi.fn()}
+      />
+    );
+    const amountField = screen.getByDisplayValue('1000,00');
+
+    fireEvent.change(amountField, { target: { value: 'tolvhundra' } });
+    fireEvent.blur(amountField);
+
+    expect(updateNormRow).not.toHaveBeenCalled();
+    expect(screen.getByText('Ange beloppet med siffror, t.ex. 1 234,50')).toBeInTheDocument();
   });
 
   it('has no Brutto S column when the sökande has no jobbstimulans', () => {

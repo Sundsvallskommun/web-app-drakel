@@ -1,4 +1,5 @@
 import authMiddleware from '@middlewares/auth.middleware';
+import { requireErrandWrite } from '@middlewares/permission.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import ErrandSsbtekService from '@services/errand-ssbtek.service';
 import ErrandSsbtekTransferService from '@services/errand-ssbtek-transfer.service';
@@ -37,7 +38,7 @@ export class SsbtekController {
     summary: "Transfers the picked incomes, at SSBTEK's amounts, into the normberäkning; careM records them so they are not transferred again",
   })
   @ResponseSchema(SsbtekChangesApiResponse)
-  @UseBefore(authMiddleware, validationMiddleware(SsbtekTransferDto, 'body'))
+  @UseBefore(authMiddleware, requireErrandWrite, validationMiddleware(SsbtekTransferDto, 'body'))
   async transfer(@Param('errandId') errandId: string, @Body() request: SsbtekTransferDto) {
     return { data: await this.transferService.transfer(errandId, request), message: 'success' };
   }

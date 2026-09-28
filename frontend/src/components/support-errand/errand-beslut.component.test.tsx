@@ -318,6 +318,22 @@ describe('ErrandBeslut', () => {
     });
   });
 
+  it('treats a failed read of the beslut as unknown, not as no beslut: nothing is filled in or saved', async () => {
+    vi.mocked(useLifecareDecision).mockReturnValue({ decision: null, isLoading: false, error: 502, refresh: vi.fn() });
+    withResult(-5220);
+    const onRegisterSave = renderTab();
+
+    expect(screen.getByText('Beslutet kunde inte läsas från Lifecare')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Spara och skrivskydda beslut' })).toBeDisabled();
+    // Give a would-be auto-fill the chance to run before checking that it did not.
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(getDocumentTemplateContent).not.toHaveBeenCalledWith('drakel.fa.decision.bifall-manad');
+    expect(screen.getByTestId('beslut-meddelande')).toBeEmptyDOMElement();
+    expect(onRegisterSave).not.toHaveBeenCalledWith(expect.any(Function));
+  });
+
   it('offers no write-protect for a beslut Lifecare has already locked', () => {
     withSaved({ ...SAVED, locked: true });
     renderTab();

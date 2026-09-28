@@ -1,6 +1,7 @@
 'use client';
 
-import { ErrandEvent, getErrandEvents } from '@services/event-service';
+import { ErrandEvent } from '@data-contracts/backend/data-contracts';
+import { getErrandEvents } from '@services/event-service';
 import { useCallback } from 'react';
 
 import { ServiceError, useServiceQuery } from './use-service-query';

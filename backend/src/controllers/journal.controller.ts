@@ -1,5 +1,6 @@
 import { RequestWithUser } from '@interfaces/auth.interface';
 import authMiddleware from '@middlewares/auth.middleware';
+import { requireErrandWrite } from '@middlewares/permission.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import CaremanagementJournalService from '@services/caremanagement-journal.service';
 import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseBefore } from 'routing-controllers';
@@ -35,7 +36,7 @@ export class JournalController {
   @Post('/errands/:errandId/journal-entries')
   @OpenAPI({ summary: 'Create a journalanteckning on an errand' })
   @ResponseSchema(JournalEntryApiResponse)
-  @UseBefore(authMiddleware, validationMiddleware(CreateJournalEntryDto, 'body'))
+  @UseBefore(authMiddleware, requireErrandWrite, validationMiddleware(CreateJournalEntryDto, 'body'))
   async createEntry(@Req() req: RequestWithUser, @Param('errandId') errandId: string, @Body() input: CreateJournalEntryDto) {
     const body: CreateJournalEntry = {
       type: input.type,
@@ -51,7 +52,7 @@ export class JournalController {
   @Patch('/errands/:errandId/journal-entries/:entryId')
   @OpenAPI({ summary: 'Edit a WORKING journalanteckning' })
   @ResponseSchema(JournalEntryApiResponse)
-  @UseBefore(authMiddleware, validationMiddleware(UpdateJournalEntryDto, 'body'))
+  @UseBefore(authMiddleware, requireErrandWrite, validationMiddleware(UpdateJournalEntryDto, 'body'))
   async updateEntry(
     @Req() req: RequestWithUser,
     @Param('errandId') errandId: string,
@@ -72,7 +73,7 @@ export class JournalController {
   @Post('/errands/:errandId/journal-entries/:entryId/lock')
   @OpenAPI({ summary: 'Lock a journalanteckning into an upprättad handling' })
   @ResponseSchema(JournalEntryApiResponse)
-  @UseBefore(authMiddleware)
+  @UseBefore(authMiddleware, requireErrandWrite)
   async lockEntry(@Req() req: RequestWithUser, @Param('errandId') errandId: string, @Param('entryId') entryId: string) {
     const res = await this.journalService.lockEntry(errandId, entryId, { lockedBy: req.user.username });
     return { data: res.data, message: 'success' };
@@ -80,7 +81,7 @@ export class JournalController {
 
   @Delete('/errands/:errandId/journal-entries/:entryId')
   @OpenAPI({ summary: 'Delete a journalanteckning' })
-  @UseBefore(authMiddleware)
+  @UseBefore(authMiddleware, requireErrandWrite)
   async deleteEntry(@Param('errandId') errandId: string, @Param('entryId') entryId: string) {
     await this.journalService.deleteEntry(errandId, entryId);
     return { data: null, message: 'success' };

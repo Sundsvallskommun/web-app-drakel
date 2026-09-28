@@ -108,25 +108,43 @@ describe('ErrandAvsluta', () => {
     expect(within(attachmentList()).getByText('Normberäkning (Lifecare)')).toBeInTheDocument();
   });
 
-  it('adds the sökandes stored PDFs from Lifecare, but not textdokument or blanketter', async () => {
+  it('adds any of the sökandes documents from Lifecare — stored PDFs, written documents and blanketter', async () => {
     await openModal();
 
     fireEvent.click(screen.getByRole('button', { name: 'Från Lifecare' }));
-    const picker = screen.getByRole('list', { name: 'PDF-dokument i Lifecare' });
-    expect(within(picker).queryByText('Utredning')).not.toBeInTheDocument();
+    const picker = screen.getByRole('list', { name: 'Dokument i Lifecare' });
     fireEvent.click(within(picker).getByRole('button', { name: 'Lägg till Hyreskontrakt' }));
+    fireEvent.click(within(picker).getByRole('button', { name: 'Lägg till Utredning' }));
 
     expect(within(attachmentList()).getByText('Hyreskontrakt (Lifecare)')).toBeInTheDocument();
-    expect(screen.getByText('Det finns inga fler PDF-dokument i Lifecare att lägga till.')).toBeInTheDocument();
+    expect(within(attachmentList()).getByText('Utredning (Lifecare)')).toBeInTheDocument();
+    expect(screen.getByText('Det finns inga fler dokument i Lifecare att lägga till.')).toBeInTheDocument();
     fireEvent.click(sendButton());
 
     await waitFor(() => {
       expect(finalizeErrand).toHaveBeenCalledWith(
         'errand-1',
-        expect.objectContaining({ lifecareDocumentIds: ['12'] }),
+        expect.objectContaining({ lifecareDocumentIds: ['12', '13'] }),
         []
       );
     });
+  });
+
+  it('names the Lifecare document that could not be fetched, so the handläggare can take it out and send again', async () => {
+    vi.mocked(finalizeErrand).mockResolvedValue({
+      error: 502,
+      message: 'Ett dokument från Lifecare kunde inte hämtas. Inget är beslutat eller skickat.',
+      details: { lifecareDocumentId: '13' },
+    });
+    await openModal();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Från Lifecare' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Lägg till Utredning' }));
+    fireEvent.click(sendButton());
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Utredning kunde inte hämtas från Lifecare. Inget är beslutat eller skickat. Ta bort dokumentet och skicka igen.'
+    );
   });
 
   it('sends the edited message as markup with what the handläggare kept and added, through the channels ticked', async () => {

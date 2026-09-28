@@ -29,15 +29,29 @@ describe('parseFinalizeRequest', () => {
     await expect(parseFinalizeRequest('inte json')).rejects.toMatchObject({ status: 400 });
     await expect(parseFinalizeRequest(JSON.stringify({ meddelande: true }))).rejects.toMatchObject({ status: 400 });
   });
+
+  it('refuses a request carrying anything the DTO does not name', async () => {
+    const request = { meddelande: true, brev: false, message: 'Hej,', includeDecision: true, includeCalculation: false, lifecareDocumentIds: [] };
+
+    await expect(parseFinalizeRequest(JSON.stringify({ ...request, amount: 5000 }))).rejects.toMatchObject({ status: 400 });
+  });
 });
 
 describe('assertOnlyPdfs', () => {
+  const pdf = Buffer.from('%PDF-1.7\n…');
+
   it('lets PDFs through and refuses any other file, naming it', () => {
     expect(() => {
-      assertOnlyPdfs([{ mimetype: 'application/pdf', originalname: 'intyg.pdf' }]);
+      assertOnlyPdfs([{ buffer: pdf, mimetype: 'application/pdf', originalname: 'intyg.pdf' }]);
     }).not.toThrow();
     expect(() => {
-      assertOnlyPdfs([{ mimetype: 'image/png', originalname: 'kvitto.png' }]);
+      assertOnlyPdfs([{ buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47]), mimetype: 'image/png', originalname: 'kvitto.png' }]);
     }).toThrow('kvitto.png är inte en PDF');
+  });
+
+  it('refuses a file the browser calls a PDF that does not start like one', () => {
+    expect(() => {
+      assertOnlyPdfs([{ buffer: Buffer.from('<html><script></script></html>'), mimetype: 'application/pdf', originalname: 'beslut.pdf' }]);
+    }).toThrow('beslut.pdf är inte en PDF');
   });
 });

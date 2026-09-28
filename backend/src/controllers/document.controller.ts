@@ -1,5 +1,6 @@
 import { RequestWithUser } from '@interfaces/auth.interface';
 import authMiddleware from '@middlewares/auth.middleware';
+import { requireErrandWrite } from '@middlewares/permission.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import CaremanagementDocumentService from '@services/caremanagement-document.service';
 import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseBefore } from 'routing-controllers';
@@ -35,7 +36,7 @@ export class DocumentController {
   @Post('/errands/:errandId/documents')
   @OpenAPI({ summary: 'Create a dokument on an errand' })
   @ResponseSchema(DocumentApiResponse)
-  @UseBefore(authMiddleware, validationMiddleware(CreateDocumentDto, 'body'))
+  @UseBefore(authMiddleware, requireErrandWrite, validationMiddleware(CreateDocumentDto, 'body'))
   async createDocument(@Req() req: RequestWithUser, @Param('errandId') errandId: string, @Body() input: CreateDocumentDto) {
     const body: CreateDocument = {
       type: input.type,
@@ -51,7 +52,7 @@ export class DocumentController {
   @Patch('/errands/:errandId/documents/:documentId')
   @OpenAPI({ summary: 'Edit a WORKING dokument' })
   @ResponseSchema(DocumentApiResponse)
-  @UseBefore(authMiddleware, validationMiddleware(UpdateDocumentDto, 'body'))
+  @UseBefore(authMiddleware, requireErrandWrite, validationMiddleware(UpdateDocumentDto, 'body'))
   async updateDocument(
     @Req() req: RequestWithUser,
     @Param('errandId') errandId: string,
@@ -72,7 +73,7 @@ export class DocumentController {
   @Post('/errands/:errandId/documents/:documentId/lock')
   @OpenAPI({ summary: 'Lock a dokument into an upprättad handling' })
   @ResponseSchema(DocumentApiResponse)
-  @UseBefore(authMiddleware)
+  @UseBefore(authMiddleware, requireErrandWrite)
   async lockDocument(@Req() req: RequestWithUser, @Param('errandId') errandId: string, @Param('documentId') documentId: string) {
     const res = await this.documentService.lockDocument(errandId, documentId, { lockedBy: req.user.username });
     return { data: res.data, message: 'success' };
@@ -80,7 +81,7 @@ export class DocumentController {
 
   @Delete('/errands/:errandId/documents/:documentId')
   @OpenAPI({ summary: 'Delete a dokument' })
-  @UseBefore(authMiddleware)
+  @UseBefore(authMiddleware, requireErrandWrite)
   async deleteDocument(@Param('errandId') errandId: string, @Param('documentId') documentId: string) {
     await this.documentService.deleteDocument(errandId, documentId);
     return { data: null, message: 'success' };

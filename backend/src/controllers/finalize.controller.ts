@@ -1,20 +1,17 @@
 import { RequestWithUser } from '@interfaces/auth.interface';
+import { UploadedFileLike } from '@interfaces/file.interface';
 import authMiddleware from '@middlewares/auth.middleware';
-import { UploadedFileLike } from '@services/caremanagement-attachment.service';
+import { requireErrandWrite } from '@middlewares/permission.middleware';
 import ErrandFinalizeService from '@services/errand-finalize.service';
 import { assertOnlyPdfs, parseFinalizeRequest } from '@utils/finalize-request-body';
+import { withRequestContext } from '@utils/request-context';
 import { BodyParam, Controller, Param, Post, Req, UploadedFiles, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
-import { MAX_UPLOAD_FILE_SIZE_BYTES } from '@/constants/upload';
+import { multipartUploadOptions } from '@/constants/upload';
 import { FinalizeApiResponse } from '@/responses/finalize.response';
 
 const MAX_ATTACHED_FILES = 10;
-
-const attachedFileOptions = {
-  required: false,
-  options: { limits: { files: MAX_ATTACHED_FILES, fileSize: MAX_UPLOAD_FILE_SIZE_BYTES } },
-};
 
 /**
  * "Skicka beräkning och beslut" — finalizes a financial-assistance errand and sends the handläggare's message, with
@@ -44,17 +41,20 @@ export class FinalizeController {
     },
   })
   @ResponseSchema(FinalizeApiResponse)
-  @UseBefore(authMiddleware)
+  @UseBefore(authMiddleware, requireErrandWrite)
   async finalize(
     @Req() req: RequestWithUser,
     @Param('errandId') errandId: string,
     // A multipart text field, so typed `string`: routing-controllers would try to JSON-parse any other type itself.
     @BodyParam('request') request: string,
-    @UploadedFiles('files', attachedFileOptions) files?: UploadedFileLike[],
+    @UploadedFiles('files', multipartUploadOptions(MAX_ATTACHED_FILES)) files?: UploadedFileLike[],
   ) {
-    const input = await parseFinalizeRequest(request);
-    assertOnlyPdfs(files ?? []);
-    const result = await this.finalizeService.finalize(errandId, input, req.user.username, files ?? []);
-    return { data: result, message: 'success' };
+    // Multipart: multer has dropped the request context, so the handläggare is put back for X-Sent-By.
+    return withRequestContext(req, async () => {
+      const input = await parseFinalizeRequest(request);
+      assertOnlyPdfs(files ?? []);
+      const result = await this.finalizeService.finalize(errandId, input, req.user.username, files ?? []);
+      return { data: result, message: 'success' };
+    });
   }
 }

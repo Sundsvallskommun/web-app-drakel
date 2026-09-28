@@ -1,6 +1,6 @@
 'use client';
 
-import { PaymentStatus } from '@services/payment-service';
+import { PaymentStatusView } from '@data-contracts/backend/data-contracts';
 import { cx } from '@sk-web-gui/react';
 import { displayAmount } from '@utils/format-amount';
 import { FC } from 'react';
@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
  * The utbetalning status for the application month on one row: date, belopp and Lifecare's status — or,
  * when the status could not be read, why not.
  */
-export const PaymentStatusRow: FC<{ status: PaymentStatus }> = ({ status }) => {
+export const PaymentStatusRow: FC<{ status: PaymentStatusView }> = ({ status }) => {
   const { t } = useTranslation('decision');
 
   if (status.unavailable) {

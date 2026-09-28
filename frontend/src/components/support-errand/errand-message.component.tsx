@@ -4,8 +4,8 @@ import { Attachment } from '@data-contracts/backend/data-contracts';
 import { downloadMessageAttachment, Message } from '@services/errand-service/errand-service';
 import { useUserStore } from '@services/user-service/user-service';
 import { Button, cx } from '@sk-web-gui/react';
+import { formatDateTime } from '@utils/date-time';
 import { htmlToPlainText } from '@utils/sanitize-html';
-import dayjs from 'dayjs';
 import type { TFunction } from 'i18next';
 import { CornerUpLeft, Reply } from 'lucide-react';
 import { FC, useState } from 'react';
@@ -49,8 +49,6 @@ export const messagePreview = (message: Message, t: TFunction): string => {
   }
   return t('messages:message.attachmentOnly');
 };
-
-const formatMessageTimestamp = (created: string): string => dayjs(created).format('YYYY-MM-DD, HH:mm');
 
 /** The quoted message a reply points at; clicking it jumps to (and highlights) the original in the thread. */
 const RepliedMessageQuote: FC<{
@@ -100,7 +98,8 @@ export const ErrandMessage: FC<{
   isHighlighted?: boolean;
   /** The message this one replies to, resolved by the parent; absent when not a reply (or unavailable). */
   repliedMessage?: Message;
-  onReply: (message: Message) => void;
+  /** Left out for a handläggare who may only read errands: the message then has no reply button. */
+  onReply?: (message: Message) => void;
   onJumpTo: (messageId: string) => void;
 }> = ({ message, errandId, isHighlighted = false, repliedMessage, onReply, onJumpTo }) => {
   const { t } = useTranslation('messages');
@@ -145,22 +144,24 @@ export const ErrandMessage: FC<{
           {message.created ?
             <time dateTime={message.created} className="text-small text-dark-secondary">
               <span className="sr-only">{t('message.sent')}</span>
-              {formatMessageTimestamp(message.created)}
+              {formatDateTime(message.created, ', ')}
             </time>
           : null}
         </div>
-        <Button
-          variant="tertiary"
-          showBackground={false}
-          size="sm"
-          iconButton
-          leftIcon={<Reply />}
-          className="shrink-0"
-          aria-label={t('message.reply', { sender })}
-          onClick={() => {
-            onReply(message);
-          }}
-        />
+        {onReply ?
+          <Button
+            variant="tertiary"
+            showBackground={false}
+            size="sm"
+            iconButton
+            leftIcon={<Reply />}
+            className="shrink-0"
+            aria-label={t('message.reply', { sender })}
+            onClick={() => {
+              onReply(message);
+            }}
+          />
+        : null}
       </div>
 
       <div

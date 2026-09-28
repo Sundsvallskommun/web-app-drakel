@@ -26,6 +26,12 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    // The tenant scope every caremanagement and Templating URL is built with. The URL builder refuses an empty path
+    // segment, so the tests run with the values a deployment has rather than none.
+    env: {
+      MUNICIPALITY_ID: '2281',
+      CAREMANAGEMENT_NAMESPACE: 'FINANCIAL_ASSISTANCE',
+    },
     setupFiles: ['./vitest.setup.ts'],
     include: ['src/**/*.{test,spec}.ts'],
     coverage: {

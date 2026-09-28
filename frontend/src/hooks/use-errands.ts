@@ -1,7 +1,12 @@
 'use client';
 
-import { Errand, FindErrandsResult, PagingAndSortingMetaData } from '@data-contracts/backend/data-contracts';
-import { ErrandsQuery, getErrands } from '@services/errand-service/errand-service';
+import {
+  Errand,
+  FindErrandsQueryDto,
+  FindErrandsResult,
+  PagingAndSortingMetaData,
+} from '@data-contracts/backend/data-contracts';
+import { getErrands } from '@services/errand-service/errand-service';
 import { useCallback } from 'react';
 
 import { ServiceError, useServiceQuery } from './use-service-query';
@@ -25,7 +30,7 @@ const NO_META: PagingAndSortingMetaData = {};
  * `enabled` false keeps it idle without reporting loading — the Sök view fetches nothing until the
  * handläggare has said what to look for.
  */
-export const useErrands = (query: ErrandsQuery, enabled = true): UseErrandsResult => {
+export const useErrands = (query: FindErrandsQueryDto, enabled = true): UseErrandsResult => {
   const { filter, page, size, hasUnhandledNotifications } = query;
   // Stable string for the dependency list. Joined with a newline — NOT a comma — because each sort entry
   // is itself "field,direction"; a comma delimiter would split the direction off into its own (invalid)

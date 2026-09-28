@@ -96,26 +96,28 @@ export const useOverviewFilterStore = create<OverviewFilterState & OverviewFilte
       name: 'drakel-overview-filter',
       // Bumped whenever the set of views changes, or a persisted key is renamed: a browser holding a view
       // that no longer exists would otherwise select nothing, leaving the sidebar with no highlight and an
-      // unfiltered list. Version 5 renamed onlyUnread to onlyUnhandled.
-      version: 5,
+      // unfiltered list. Version 5 renamed onlyUnread to onlyUnhandled; version 6 stopped persisting the search.
+      version: 6,
       migrate: (persisted) => {
-        const state = persisted as Partial<OverviewFilterState> | undefined;
-        const view = state?.selectedView;
+        // The search term an older version stored is dropped rather than restored (see partialize).
+        const { query: _storedQuery, ...state } = (persisted ?? {}) as Partial<OverviewFilterState>;
+        const view = state.selectedView;
         return {
           ...state,
           selectedView: view && ERRAND_VIEWS.includes(view) ? view : 'ongoing',
           // A persisted filter object predates whichever groups were added since; merging over the
           // empty set keeps every group present, so reading `.length` on a new one cannot throw.
-          filters: { ...emptyFilters, ...state?.filters },
+          filters: { ...emptyFilters, ...state.filters },
         } as OverviewFilterState;
       },
       // We rehydrate manually (after mount) via a guard in the page so the SSR/first client render uses the
       // default state and there's no hydration mismatch.
       skipHydration: true,
-      // Persist the filter/sort/view, not the page position — a reload starts on the first page.
+      // Persist the filter/sort/view, not the page position — a reload starts on the first page. The free-text
+      // search is not persisted either: it holds names and personnummer, and localStorage outlives the session
+      // on a shared workstation. It stays in memory, so it still survives going into an errand and back.
       partialize: (state) => ({
         selectedView: state.selectedView,
-        query: state.query,
         filters: state.filters,
         sort: state.sort,
         onlyUnhandled: state.onlyUnhandled,

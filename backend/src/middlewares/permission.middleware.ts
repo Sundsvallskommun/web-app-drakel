@@ -17,3 +17,11 @@ export const requirePermission = (permission: keyof Permissions) => (req: Reques
   }
   next(new HttpException(403, 'FORBIDDEN'));
 };
+
+/**
+ * Guards every route that changes an errand, or writes anything upstream on its behalf (careM, Lifecare through careM,
+ * a message to the sökande): only ADMIN_GROUP, which grants `canEditErrands`, may. Reading stays open to every
+ * authorized user, as do a user's own settings and their notifications' read state. Runs before multer on a multipart
+ * route, so a refused upload is never parsed.
+ */
+export const requireErrandWrite = requirePermission('canEditErrands');

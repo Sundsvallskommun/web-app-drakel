@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { combineDateAndTime, formatDateTime, splitDateTime } from './date-time';
+import { combineDateAndTime, endOfDayDateTime, formatDateTime, splitDateTime } from './date-time';
 
 // The offset depends on the machine's timezone, so the assertions pin the date/time parts and accept
 // any valid offset — keeping the tests green in CI (UTC) as well as locally (Europe/Stockholm).
@@ -35,8 +35,20 @@ describe('formatDateTime', () => {
     expect(formatDateTime(combineDateAndTime('2025-05-30', '14:30'))).toBe('2025-05-30 14:30');
   });
 
+  it('puts another separator between date and time when asked to', () => {
+    expect(formatDateTime(combineDateAndTime('2025-05-30', '14:30'), ', ')).toBe('2025-05-30, 14:30');
+  });
+
   it('returns an empty string when the value is missing or unparsable', () => {
     expect(formatDateTime()).toBe('');
     expect(formatDateTime('inte ett datum')).toBe('');
+  });
+});
+
+describe('endOfDayDateTime', () => {
+  it('runs to the very end of the day, so the last minute is included', () => {
+    const endOfDay = endOfDayDateTime('2025-05-30');
+    expect(endOfDay).toMatch(ISO_OFFSET);
+    expect(endOfDay.startsWith('2025-05-30T23:59:59')).toBe(true);
   });
 });

@@ -27,7 +27,7 @@ class CaremanagementUserSettingsService {
   }
 
   private url(adAccount: string): string {
-    return caremanagementMunicipalityUrl('user-settings', encodeURIComponent(adAccount));
+    return caremanagementMunicipalityUrl('user-settings', adAccount);
   }
 }
 

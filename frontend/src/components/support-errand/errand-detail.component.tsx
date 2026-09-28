@@ -1,34 +1,35 @@
 'use client';
 
-import { AttachmentPdfButton } from '@components/common/attachment-pdf-button.component';
+import { PdfModalButton } from '@components/common/pdf-modal-button.component';
 import { PdfPreview } from '@components/common/pdf-preview.component';
 import { useErrand } from '@hooks/use-errand';
 import { useErrandAttachments } from '@hooks/use-errand-attachments';
 import { useErrandCounts } from '@hooks/use-errand-counts';
+import { useErrandEditPermission } from '@hooks/use-errand-edit-permission';
 import { useErrandForm } from '@hooks/use-errand-form';
 import { useErrandNotes } from '@hooks/use-errand-notes';
 import { useErrandStakeholders } from '@hooks/use-errand-stakeholders';
 import { useErrandWarnings } from '@hooks/use-errand-warnings';
 import { useLifecareReminders } from '@hooks/use-lifecare-reminders';
 import { useLifecareSectionStatus } from '@hooks/use-lifecare-section-status';
+import { getAttachmentFile } from '@services/errand-service/errand-service';
 import { Badge, Spinner, Tabs } from '@sk-web-gui/react';
-import { CLIENT_FILES_PDF } from '@utils/attachment-names';
+import { isClientFilesPdf, isSummaryPdf } from '@utils/attachment-names';
 import { stakeholderDisplayName } from '@utils/stakeholder-name';
 import { compareByRole } from '@utils/stakeholder-role';
 import { Check } from 'lucide-react';
 import { FC, Fragment, ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { AttachmentsPanel } from './attachments-panel.component';
 import { ErrandAdministrationBar } from './errand-administration-bar.component';
 import { ErrandAktualisering } from './errand-aktualisering.component';
 import { ErrandApplicationSummary } from './errand-application-summary.component';
-import { ErrandAttachments } from './errand-attachments.component';
 import { ErrandAvsluta } from './errand-avsluta.component';
 import { ErrandBeslut } from './errand-beslut.component';
 import { ErrandBevakningar } from './errand-bevakningar.component';
 import { ErrandEvents } from './errand-events.component';
 import { ErrandHeaderBanner } from './errand-header-banner.component';
-import { ErrandMessageAttachments } from './errand-message-attachments.component';
 import { ErrandMessages } from './errand-messages.component';
 import { ErrandMetaCard } from './errand-meta-card.component';
 import { ErrandNormberakning } from './errand-normberakning.component';
@@ -85,6 +86,9 @@ const ErrandTabPanel: FC<{ children: ReactNode }> = ({ children }) => (
 export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   const { t } = useTranslation('errand');
   const { errand, isLoading, error, refresh } = useErrand(errandId);
+  // Without canEditErrands the backend refuses every errand write, so each section is shown read-only.
+  const { canEditErrands } = useErrandEditPermission();
+  const readOnly = !canEditErrands;
   const [activeTab, setActiveTab] = useState<number>(0);
   const [activeSubTab, setActiveSubTab] = useState<number>(0);
   // Keys of the expanded right-column sections; a section's data only loads once it's expanded.
@@ -129,6 +133,8 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     showCalculationSections
   );
 
+  // Each part only saves what changed: the errand PATCH is skipped when the handläggning fields are untouched
+  // (a Beslut-only change never touches the errand), and the Beslut tab saves only while it is mounted.
   const saveAll = useCallback(async () => {
     setSavingAll(true);
     await save();
@@ -145,7 +151,6 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   // as soon as the errand opens, and caremanagement exposes no unlogged way to ask whether that warning
   // exists. The trade-off is accepted — listing warnings is recorded in the errand's event log, unlike
   // the count endpoints the badges use.
-  const warningsEnabled = true;
   const notesEnabled = openSidebarSections.includes('notes');
   const bevakningarEnabled = openSidebarSections.includes('bevakningar');
 
@@ -160,7 +165,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     isLoading: warningsLoading,
     error: warningsError,
     refresh: refreshWarnings,
-  } = useErrandWarnings(resolvedErrandId, warningsEnabled);
+  } = useErrandWarnings(resolvedErrandId);
   // Attachments back the default Ansökan view (the CASE_DATA PDF) and the tab counters, so they load
   // eagerly with the errand.
   const {
@@ -212,11 +217,10 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
     (warning) => warning.status === 'OPEN' && (warning.section ?? 'CALCULATION') === 'CALCULATION'
   );
 
-  // The consolidated client conversation files PDF (documentType CONVERSATION) — previewed atop the
-  // message-attachments tab, so it's excluded from that tab's file list below to avoid showing twice.
-  const conversationSummaryAttachment = attachments.find(
-    (attachment) => (attachment.fileName ?? '').toLowerCase() === CLIENT_FILES_PDF
-  );
+  // The consolidated client conversation files PDF — previewed atop the message-attachments tab, so it's
+  // excluded from that tab's file list below to avoid showing twice. Recognised by name and documentType, so
+  // a file the client sent under the same name can't pose as it.
+  const conversationSummaryAttachment = attachments.find(isClientFilesPdf);
   // CONVERSATION files belong to the Meddelanden → Bilagor sub-tab; everything else (application /
   // generated / errand files) to the Ärende → Bilagor tab.
   const conversationAttachments = attachments.filter(
@@ -225,6 +229,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
   // The generated "ärendeuppgifter" PDF (documentType CASE_DATA) is opened via "Visa pdf" on the Ansökan tab,
   // so it's excluded from the Bilagor list below to avoid showing it twice.
   const caseDataAttachment = attachments.find((attachment) => attachment.documentType === 'CASE_DATA');
+  const caseDataAttachmentId = caseDataAttachment?.id;
   // The generated beslut PDF (documentType DECISION) is sent/saved by "Besluta och utbetala" but not listed here.
   const errandAttachments = attachments.filter(
     (attachment) =>
@@ -232,8 +237,13 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
       attachment.documentType !== 'CASE_DATA' &&
       attachment.documentType !== 'DECISION'
   );
+  // The application summary PDF caremanagement generates, previewed atop the Bilagor tab.
+  const applicationSummaryAttachment = errandAttachments.find(isSummaryPdf);
 
-  if (isLoading) {
+  // Only the first load replaces the page with a spinner. A refresh after Spara, a beslut or an arkivering
+  // keeps the errand on screen, so the open tab keeps its unsaved input and its confirmation.
+  const showsRequestedErrand = !!errand && (errand.id === errandId || errand.errandNumber === errandId);
+  if (isLoading && !showsRequestedErrand) {
     return (
       <div className="flex justify-center my-32">
         <Spinner size={5} />
@@ -263,6 +273,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
       component: (
         <ErrandWarnings
           errandId={errand.id ?? ''}
+          readOnly={readOnly}
           warnings={warnings}
           isLoading={warningsLoading}
           loadError={!!warningsError}
@@ -280,6 +291,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
       component: (
         <ErrandNotes
           errandId={errand.id ?? ''}
+          readOnly={readOnly}
           notes={notes}
           isLoading={notesLoading}
           loadError={!!notesError}
@@ -298,6 +310,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
       component: (
         <ErrandBevakningar
           errandId={errand.id ?? ''}
+          readOnly={readOnly}
           reminders={reminders}
           isLoading={remindersLoading}
           loadError={!!remindersError}
@@ -329,13 +342,13 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                 errandId={apiErrandId}
                 errand={errand}
                 action={
-                  caseDataAttachment?.id ?
+                  caseDataAttachmentId ?
                     // Wrap so the button is one flex item — its fragment (Button + Modal) would otherwise
                     // be two children and justify-between would push the button to the middle.
                     <div>
-                      <AttachmentPdfButton
-                        errandId={apiErrandId}
-                        attachmentId={caseDataAttachment.id}
+                      <PdfModalButton
+                        appearance="secondary"
+                        loadPdf={() => getAttachmentFile(apiErrandId, caseDataAttachmentId)}
                         label={t('detail.showPdf')}
                         modalLabel={t('detail.summaryPdf')}
                       />
@@ -351,13 +364,20 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           counter: errandAttachments.length + conversationAttachments.length,
           content: (
             <ErrandTabPanel>
-              <ErrandAttachments
+              {/* Conversation files are merged into the one list rather than shown as their own group — a
+                  handläggare looking for a file should not have to know which way it arrived. They also keep
+                  their own Meddelanden → Bilagor tab. */}
+              <AttachmentsPanel
                 errandId={apiErrandId}
-                attachments={errandAttachments}
-                messageAttachments={conversationAttachments}
+                attachments={[...errandAttachments, ...conversationAttachments]}
+                header={{ title: t('attachments:title'), description: t('attachments:errandAttachments.description') }}
+                summary={{
+                  attachment: applicationSummaryAttachment,
+                  title: t('attachments:errandAttachments.summaryTitle'),
+                }}
+                listHeading={t('detail.attachmentsFromApplication')}
                 isLoading={attachmentsLoading}
                 loadError={!!attachmentsError}
-                heading={t('detail.attachmentsFromApplication')}
               />
               {/* The message-attachments summary PDF is mirrored here so it's also reachable under the
                   regular Bilagor tab (the full conversation list stays under Meddelanden → Bilagor). */}
@@ -381,6 +401,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                 <ErrandTabPanel>
                   <ErrandNormberakning
                     errandId={apiErrandId}
+                    readOnly={readOnly}
                     warnings={openWarnings}
                     onWarningsChanged={refreshWarnings}
                     onLifecareChanged={refreshSectionStatus}
@@ -394,7 +415,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               approved: sectionStatus.decisionSaved,
               content: (
                 <ErrandTabPanel>
-                  <ErrandBeslut errandId={apiErrandId} onRegisterSave={registerBeslutSave} />
+                  <ErrandBeslut errandId={apiErrandId} readOnly={readOnly} onRegisterSave={registerBeslutSave} />
                 </ErrandTabPanel>
               ),
             },
@@ -403,7 +424,11 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               approved: sectionStatus.paymentRegistered,
               content: (
                 <ErrandTabPanel>
-                  <ErrandUtbetalning errandId={apiErrandId} onLifecareChanged={refreshSectionStatus} />
+                  <ErrandUtbetalning
+                    errandId={apiErrandId}
+                    readOnly={readOnly}
+                    onLifecareChanged={refreshSectionStatus}
+                  />
                 </ErrandTabPanel>
               ),
             },
@@ -422,16 +447,21 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
           content: (
             <ErrandMessages
               errandId={apiErrandId}
+              readOnly={readOnly}
               applicantNames={applicantNames}
               errandNumber={errand.errandNumber}
               sharedAttachments={
-                <ErrandMessageAttachments
+                <AttachmentsPanel
                   errandId={apiErrandId}
                   attachments={conversationAttachments}
-                  summaryAttachment={conversationSummaryAttachment}
+                  summary={{
+                    attachment: conversationSummaryAttachment,
+                    title: t('attachments:messageAttachments.summaryTitle'),
+                  }}
+                  listHeading={t('attachments:messageAttachments.heading')}
+                  placeholder={t('attachments:messageAttachments.empty')}
                   isLoading={attachmentsLoading}
                   loadError={!!attachmentsError}
-                  hideHeading
                 />
               }
             />
@@ -449,7 +479,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               label: t('detail.tabs.journal'),
               content: (
                 <ErrandTabPanel>
-                  <LifecareRecordSection errandId={apiErrandId} category="JOURNAL_NOTE" />
+                  <LifecareRecordSection errandId={apiErrandId} category="JOURNAL_NOTE" readOnly={readOnly} />
                 </ErrandTabPanel>
               ),
             },
@@ -457,7 +487,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
               label: t('detail.tabs.documents'),
               content: (
                 <ErrandTabPanel>
-                  <LifecareRecordSection errandId={apiErrandId} category="DOCUMENT" />
+                  <LifecareRecordSection errandId={apiErrandId} category="DOCUMENT" readOnly={readOnly} />
                 </ErrandTabPanel>
               ),
             },
@@ -481,7 +511,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
         actions={
           <>
             {/* Beslut/utbetalning gäller bara återansökan, och bara medan ärendet inte är beslutat. */}
-            {isRenewalApplication && !DECIDED_STATUSES.includes(errand.status ?? '') ?
+            {canEditErrands && isRenewalApplication && !DECIDED_STATUSES.includes(errand.status ?? '') ?
               <ErrandAvsluta
                 errandId={apiErrandId}
                 onFinalized={() => {
@@ -490,7 +520,7 @@ export const ErrandDetail: FC<{ errandId: string }> = ({ errandId }) => {
                 }}
               />
             : null}
-            {isSupplementaryApplication ?
+            {canEditErrands && isSupplementaryApplication ?
               <ErrandAktualisering errandId={apiErrandId} onArchived={refresh} />
             : null}
           </>

@@ -1,20 +1,14 @@
 'use client';
 
-import { Errand, PatchErrandDto } from '@data-contracts/backend/data-contracts';
+import { Errand } from '@data-contracts/backend/data-contracts';
 import { updateErrand } from '@services/errand-service/errand-service';
+import { buildErrandPatch, ErrandForm } from '@utils/errand-patch';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export interface ErrandForm {
-  contactReason: string;
-  description: string;
-  assignedUserId: string;
-  status: string;
-}
+export type { ErrandForm };
 
 const fromErrand = (errand?: Errand): ErrandForm => ({
-  contactReason: errand?.contactReason ?? '',
-  description: errand?.description ?? '',
   assignedUserId: errand?.assignedUserId ?? '',
   status: errand?.status ?? '',
 });
@@ -22,7 +16,8 @@ const fromErrand = (errand?: Errand): ErrandForm => ({
 /**
  * Shared editable form for an errand. The state is lifted here so the single central "Spara ärende"
  * button (in the Handläggning sidebar) saves every edited field across the whole errand view —
- * mirroring draken, which has one save rather than per-section saves.
+ * mirroring draken, which has one save rather than per-section saves. A save only sends the fields that
+ * changed, and nothing at all when none did.
  */
 export const useErrandForm = (errand: Errand | undefined, onSaved: () => void) => {
   const { t } = useTranslation('errand');
@@ -38,21 +33,15 @@ export const useErrandForm = (errand: Errand | undefined, onSaved: () => void) =
     setForm((current) => ({ ...current, [key]: value }));
   };
 
-  const initial = fromErrand(errand);
-  const isDirty = (Object.keys(form) as (keyof ErrandForm)[]).some((key) => form[key] !== initial[key]);
+  const patch = buildErrandPatch(form, fromErrand(errand));
+  const isDirty = Object.keys(patch).length > 0;
 
   const save = async () => {
-    if (!errand?.id) {
+    if (!errand?.id || !isDirty) {
       return;
     }
     setSaving(true);
     setError(undefined);
-    const patch: PatchErrandDto = {
-      contactReason: form.contactReason || undefined,
-      description: form.description || undefined,
-      assignedUserId: form.assignedUserId || undefined,
-      status: form.status || undefined,
-    };
     const result = await updateErrand(errand.id, patch);
     setSaving(false);
     if (result.error) {

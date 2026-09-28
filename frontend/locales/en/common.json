@@ -5,21 +5,13 @@
   "saving": "Saving…",
   "cancel": "Cancel",
   "close": "Close",
-  "delete": "Delete",
-  "edit": "Edit",
-  "add": "Add",
-  "remove": "Remove",
   "show": "View",
   "download": "Download",
-  "preview": "Preview",
   "update": "Refresh",
-  "lock": "Lock",
   "send": "Send",
   "yes": "Yes",
   "no": "No",
-  "loading": "Loading…",
   "notSet": "Not set",
-  "unknown": "Unknown",
   "none": "—",
   "language": "Language",
   "languages": {
@@ -47,5 +39,6 @@
   "dateRange": {
     "from": "From {{date}}"
   },
-  "unknownStakeholder": "Unknown stakeholder"
+  "unknownStakeholder": "Unknown stakeholder",
+  "readOnly": "You only have read access – errands cannot be changed."
 }

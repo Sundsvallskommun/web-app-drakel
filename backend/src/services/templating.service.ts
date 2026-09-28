@@ -1,66 +1,56 @@
-import { TEMPLATING_BASE_URL } from '@config';
-import { gatewayAuthorization } from '@services/api-token.service';
-import { caremanagementError } from '@utils/caremanagement-error';
 import { templatingUrl } from '@utils/templating-url';
-import axios from 'axios';
 
-/** A metadata tag on a template (e.g. { key: 'code', value: 'LETTER' }). */
-interface TemplateMetadata {
-  key?: string;
-  value?: string;
-}
+import { UPSTREAM_FILE_TIMEOUT_MS } from '@/constants/upstream';
+import {
+  DetailedTemplateResponse,
+  DirectRenderResponse,
+  IncrementMode,
+  Metadata,
+  TemplateRequest,
+  TemplateResponse,
+} from '@/data-contracts/templating/data-contracts';
 
-/** A template as returned by the list/search endpoints — content excluded. */
-export interface TemplateSummary {
-  identifier?: string;
-  version?: string;
-  name?: string;
-  description?: string;
-  metadata?: TemplateMetadata[];
-}
+import TemplatingApiService from './templating-api.service';
 
-/** A single template including its BASE64-encoded content. */
-interface DetailedTemplate extends TemplateSummary {
-  content?: string;
-}
+/** What drakel reads of a template, whether from the list (content excluded) or read one by one. */
+export type TemplateSummary = Pick<TemplateResponse, 'identifier' | 'version' | 'name' | 'description' | 'metadata'>;
 
-/** What is sent when storing a template. Content is BASE64-encoded; metadata carries the app/code/kind tags. */
+/** A single template with its content decoded to the HTML it holds. */
+type DecodedTemplate = TemplateSummary & { content: string };
+
+/** What is stored as a template. Metadata carries the app/code/kind tags. */
 interface TemplateInput {
   identifier: string;
   name: string;
   description?: string;
   /** Decoded HTML — the service encodes it before sending. */
   content: string;
-  metadata: TemplateMetadata[];
+  metadata: Metadata[];
 }
 
-// A Templating host called directly (TEMPLATING_BASE_URL, e.g. Dokploy) takes no gateway token.
-const templatingHeaders = async (): Promise<Record<string, string>> => (TEMPLATING_BASE_URL ? {} : gatewayAuthorization());
+/** Templating keeps a template's content, and answers a rendered PDF, BASE64-encoded. */
+const toBase64 = (text: string): string => Buffer.from(text, 'utf-8').toString('base64');
+const fromBase64 = (encoded: string): string => Buffer.from(encoded, 'base64').toString('utf-8');
 
 /**
  * Reads and writes document/phrase templates in the Sundsvall Templating service — on its own host when
  * TEMPLATING_BASE_URL is set, otherwise through the WSO2 gateway. Templates are tagged with metadata
- * (app/code/kind) that the controllers filter on.
+ * (app/code/kind) that the controllers filter on. Content is decoded and encoded here, so callers only see HTML.
  */
 class TemplatingService {
+  private apiService = new TemplatingApiService();
+
   /** All templates for the municipality (content excluded). */
   async listTemplates(): Promise<TemplateSummary[]> {
-    try {
-      const res = await axios.get<TemplateSummary[]>(templatingUrl('templates'), { headers: await templatingHeaders() });
-      return res.data ?? [];
-    } catch (error) {
-      throw caremanagementError(error);
-    }
+    const response = await this.apiService.get<TemplateSummary[]>({ url: templatingUrl('templates') });
+    return response.data ?? [];
   }
 
-  /** The latest version of a template by identifier, including its BASE64 content. */
-  async getTemplate(identifier: string): Promise<DetailedTemplate> {
-    try {
-      const res = await axios.get<DetailedTemplate>(templatingUrl('templates', identifier), { headers: await templatingHeaders() });
-      return res.data;
-    } catch (error) {
-      throw caremanagementError(error);
-    }
+  /** The latest version of a template by identifier, with its content decoded (empty when it has none). */
+  async getTemplate(identifier: string): Promise<DecodedTemplate> {
+    const response = await this.apiService.get<DetailedTemplateResponse>({ url: templatingUrl('templates', identifier) });
+    const { content, ...summary } = response.data;
+    return { ...summary, content: content ? fromBase64(content) : '' };
   }
 
   /**
@@ -68,48 +58,32 @@ class TemplatingService {
    * adds a new version rather than replacing it, which is what makes "spara" on an existing mall work.
    */
   async storeTemplate(input: TemplateInput): Promise<void> {
-    try {
-      await axios.post(
-        templatingUrl('templates'),
-        {
-          identifier: input.identifier,
-          name: input.name,
-          description: input.description,
-          content: Buffer.from(input.content, 'utf-8').toString('base64'),
-          metadata: input.metadata,
-          versionIncrement: 'MINOR',
-        },
-        { headers: await templatingHeaders() },
-      );
-    } catch (error) {
-      throw caremanagementError(error);
-    }
+    const request: TemplateRequest = {
+      identifier: input.identifier,
+      name: input.name,
+      description: input.description,
+      content: toBase64(input.content),
+      metadata: input.metadata,
+      versionIncrement: IncrementMode.MINOR,
+    };
+    await this.apiService.post({ url: templatingUrl('templates'), data: request });
   }
 
   /** Deletes a template and every one of its versions. */
   async deleteTemplate(identifier: string): Promise<void> {
-    try {
-      await axios.delete(templatingUrl('templates', identifier), { headers: await templatingHeaders() });
-    } catch (error) {
-      throw caremanagementError(error);
-    }
+    await this.apiService.delete({ url: templatingUrl('templates', identifier) });
   }
 
   /** Renders provided HTML to a PDF (render/direct/pdf). Returns the PDF as a BASE64-encoded string. */
   async renderHtmlToPdf(html: string): Promise<string> {
-    try {
-      const res = await axios.post<{ output?: string }>(
-        templatingUrl('render', 'direct', 'pdf'),
-        {
-          content: Buffer.from(html, 'utf-8').toString('base64'),
-          parameters: {},
-        },
-        { headers: await templatingHeaders() },
-      );
-      return res.data.output ?? '';
-    } catch (error) {
-      throw caremanagementError(error);
-    }
+    const response = await this.apiService.post<DirectRenderResponse>({
+      url: templatingUrl('render', 'direct', 'pdf'),
+      // Direct HTML has no variables: `parameters` goes as the empty object this call has always sent, although the
+      // generated contract types it as a string.
+      data: { content: toBase64(html), parameters: {} },
+      timeout: UPSTREAM_FILE_TIMEOUT_MS,
+    });
+    return response.data.output ?? '';
   }
 }
 

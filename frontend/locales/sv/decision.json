@@ -25,7 +25,9 @@
       "BIFALL": "Bifall",
       "AVSLAG": "Avslag",
       "DELAVSLAG": "Delvis bifall"
-    }
+    },
+    "loadErrorTitle": "Beslutet kunde inte läsas från Lifecare",
+    "loadError": "Det går inte att se om ärendet redan har ett beslut, så formuläret är låst för att inget ska skrivas över. Försök igen om en stund."
   },
   "message": {
     "title": "Beslutsmeddelande",
@@ -50,19 +52,6 @@
     },
     "statusTitle": "Utbetalningsstatus",
     "loadError": "Det gick inte att hämta utbetalningsstatus",
-    "applicationMonth": "Avser ansökan",
-    "unavailable": {
-      "title": "Utbetalningsstatus är inte tillgänglig",
-      "description": "Status hämtas från Lifecare och kunde inte läsas just nu. Försök igen senare."
-    },
-    "paid": {
-      "title": "Utbetald",
-      "paymentDate": "Utbetalningsdatum: {{date}}"
-    },
-    "notPaid": {
-      "title": "Inte utbetald ännu",
-      "description": "Ingen verkställd Lifecare-utbetalning för ansökningsmånaden."
-    },
     "form": {
       "title": "Registrera utbetalning",
       "paymentDate": "Utbetalningsdatum",
@@ -93,17 +82,16 @@
       "optionsLoadError": "Lifecare lämnade inte ut betalningsmottagare och betalsätt för insatsen: {{reason}}",
       "save": "Spara utbetalning i Lifecare",
       "saved": "Utbetalningen är registrerad i Lifecare (id {{id}}).",
-      "savedNotLinked": "Utbetalningen är registrerad i Lifecare (id {{id}}) men kunde inte kopplas till ärendet. Registrera den inte igen."
+      "savedNotLinked": "Utbetalningen är registrerad i Lifecare (id {{id}}) men kunde inte kopplas till ärendet. Registrera den inte igen.",
+      "reportedOnUnavailable": "Går inte att välja ännu – caremanagement kan inte ta emot vilka utbetalningen redovisas på."
     },
     "list": {
-      "title": "Registrerade utbetalningar",
       "paymentDate": "Utbetalningsdatum",
       "applicationMonth": "Avser månad",
       "amount": "Belopp",
       "payee": "Mottagare",
       "paymentMethod": "Betalsätt",
-      "statusHeading": "Status",
-      "empty": "Inga utbetalningar registrerade"
+      "statusHeading": "Status"
     },
     "disposal": {
       "title": "Att disponera",
@@ -112,16 +100,6 @@
       "remaining": "Kvar att disponera",
       "unavailable": "Saldot kunde inte läsas från Lifecare.",
       "none": "Insatsen har inget saldo i Lifecare än – beslutet är inte registrerat där."
-    },
-    "payee": {
-      "add": "Lägg till mottagare",
-      "adding": "Lägger till…",
-      "addError": "Det gick inte att lägga till mottagaren",
-      "name": "Namn",
-      "label": "Benämning i Lifecare",
-      "paymentMethod": "Betalsätt",
-      "clearing": "Clearing",
-      "accountNumber": "Kontonummer"
     },
     "lifecareList": {
       "title": "Utbetalningar i Lifecare",

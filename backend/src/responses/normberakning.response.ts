@@ -20,7 +20,7 @@ export class NormPersonRow {
   @IsInt() @IsOptional() position?: number;
   @IsString() @IsOptional() origin?: string;
   @IsString() @IsOptional() partyId?: string;
-  /** Personnummer resolved from partyId via the Citizen API; best-effort, so it can be absent. */
+  /** The household member's personnummer as careM supplies it; best-effort, so it can be absent. */
   @IsString() @IsOptional() personalNumber?: string;
   /** The role as a machine code; `roleDisplayName` carries the label to show. */
   @IsString() @IsOptional() role?: string;

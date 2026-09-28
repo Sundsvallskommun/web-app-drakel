@@ -47,14 +47,6 @@ export class Decision {
   created?: string;
 }
 
-export class DecisionsApiResponse implements ApiResponse<Decision[]> {
-  @ValidateNested({ each: true })
-  @Type(() => Decision)
-  data!: Decision[];
-  @IsString()
-  message!: string;
-}
-
 export class RecommendationApiResponse implements ApiResponse<Decision | null> {
   @ValidateNested()
   @Type(() => Decision)

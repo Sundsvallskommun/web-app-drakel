@@ -26,9 +26,11 @@ const LATEST_PAYMENT_COUNT = 5;
  */
 export const ErrandUtbetalning: FC<{
   errandId: string;
+  /** Shows the utbetalningar without a way to register one, for a handläggare who may only read errands. */
+  readOnly?: boolean;
   /** Called after an utbetalning is registered in Lifecare, so the tab's check can follow. */
   onLifecareChanged?: () => void;
-}> = ({ errandId, onLifecareChanged }) => {
+}> = ({ errandId, readOnly = false, onLifecareChanged }) => {
   const { t } = useTranslation('decision');
   const { status, isLoading, error, refresh } = useErrandPayment(errandId);
   const lifecareOptions = useLifecarePaymentOptions(errandId);
@@ -78,6 +80,7 @@ export const ErrandUtbetalning: FC<{
           errandId={errandId}
           options={lifecareOptions.options}
           optionsError={lifecareOptions.errorMessage}
+          disabled={readOnly}
           onSaved={refreshAll}
         />
       </ContentBox>

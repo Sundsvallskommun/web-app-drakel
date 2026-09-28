@@ -10,11 +10,14 @@ vi.mock('docx-preview', () => ({ renderAsync: vi.fn() }));
 
 const PDF_URL = 'blob:http://localhost/meddelandebilaga';
 
+// jsdom has no object URLs.
+const createObjectURL = vi.fn((_blob: Blob) => PDF_URL);
+
 describe('AttachmentPreviewModal', () => {
   beforeEach(() => {
     vi.mocked(getUnifiedAttachmentBlob).mockResolvedValue(new Blob(['%PDF-1.7'], { type: 'application/pdf' }));
-    // jsdom has no object URLs.
-    Object.defineProperty(window.URL, 'createObjectURL', { value: vi.fn(() => PDF_URL), configurable: true });
+    createObjectURL.mockClear();
+    Object.defineProperty(window.URL, 'createObjectURL', { value: createObjectURL, configurable: true });
     Object.defineProperty(window.URL, 'revokeObjectURL', { value: vi.fn(), configurable: true });
   });
 
@@ -39,5 +42,23 @@ describe('AttachmentPreviewModal', () => {
       `${PDF_URL}#pagemode=none&toolbar=0&navpanes=0&view=FitH`
     );
     expect(open).toHaveBeenCalledWith(PDF_URL, '_blank', 'noopener,noreferrer');
+  });
+
+  it('shows a PDF as a PDF even when the server answered with another type', async () => {
+    vi.mocked(getUnifiedAttachmentBlob).mockResolvedValue(
+      new Blob(['<script>alert(1)</script>'], { type: 'text/html' })
+    );
+    render(
+      <AttachmentPreviewModal
+        errandId="errand-1"
+        attachment={{ id: 'attachment-1', fileName: 'intyg.pdf', mimeType: 'application/pdf' }}
+        onClose={vi.fn()}
+      />
+    );
+
+    await screen.findByTitle('intyg.pdf');
+
+    const shownBlob = createObjectURL.mock.calls[0]?.[0];
+    expect(shownBlob?.type).toBe('application/pdf');
   });
 });

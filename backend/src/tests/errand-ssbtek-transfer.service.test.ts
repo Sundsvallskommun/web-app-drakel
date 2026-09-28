@@ -2,9 +2,11 @@ import CaremanagementErrandService from '@services/caremanagement-errand.service
 import CaremanagementSsbtekChangesService from '@services/caremanagement-ssbtek-changes.service';
 import ErrandNormberakningService from '@services/errand-normberakning.service';
 import ErrandSsbtekTransferService from '@services/errand-ssbtek-transfer.service';
+import { validateInput } from '@utils/validate-input';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SsbtekChangeKindEnum, SsbtekChangeRoleEnum, SsbtekChanges } from '@/data-contracts/caremanagement/data-contracts';
+import { SsbtekTransferDto } from '@/dtos/ssbtek-transfer.dto';
 import { HttpException } from '@/exceptions/HttpException';
 
 const comparison: SsbtekChanges = {
@@ -76,5 +78,40 @@ describe('ErrandSsbtekTransferService', () => {
     await expect(
       new ErrandSsbtekTransferService().transfer('EB-26090036', { incomes: [{ role: 'APPLICANT', incomeTypeId: 12 }] }),
     ).resolves.toMatchObject({ available: true });
+  });
+
+  it('writes an income once when the same transfer is sent twice at once (a double-click)', async () => {
+    // careM's comparison offers the income until it is in the normberäkning.
+    let written = false;
+    vi.spyOn(CaremanagementSsbtekChangesService.prototype, 'readChanges').mockImplementation(() =>
+      Promise.resolve(written ? { ...comparison, changes: [] } : comparison),
+    );
+    const addRow = vi.spyOn(ErrandNormberakningService.prototype, 'addRow').mockImplementation(async () => {
+      await new Promise(resolve => setTimeout(resolve, 10));
+      written = true;
+    });
+    vi.spyOn(CaremanagementSsbtekChangesService.prototype, 'reportApplied').mockResolvedValue();
+    const request = { incomes: [{ role: 'APPLICANT' as const, incomeTypeId: 12 }] };
+
+    const [first, second] = await Promise.allSettled([
+      new ErrandSsbtekTransferService().transfer('EB-26090036', request),
+      new ErrandSsbtekTransferService().transfer('EB-26090036', request),
+    ]);
+
+    expect(addRow).toHaveBeenCalledTimes(1);
+    expect(first.status).toBe('fulfilled');
+    expect(second).toMatchObject({ status: 'rejected', reason: { status: 409 } });
+  });
+});
+
+describe('SsbtekTransferDto', () => {
+  it('refuses the same income picked twice, which would be written twice', async () => {
+    const incomes = [
+      { role: 'APPLICANT', incomeTypeId: 12 },
+      { role: 'APPLICANT', incomeTypeId: 12 },
+    ];
+
+    await expect(validateInput(SsbtekTransferDto, { incomes })).rejects.toMatchObject({ status: 400 });
+    await expect(validateInput(SsbtekTransferDto, { incomes: [incomes[0], { role: 'CO_APPLICANT', incomeTypeId: 12 }] })).resolves.toBeDefined();
   });
 });

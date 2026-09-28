@@ -4,28 +4,22 @@ import { PdfFrame } from '@components/common/pdf-preview.component';
 import { Attachment } from '@data-contracts/backend/data-contracts';
 import { getUnifiedAttachmentBlob } from '@services/errand-service/errand-service';
 import { Modal, Spinner } from '@sk-web-gui/react';
-import { renderAsync } from 'docx-preview';
+import { objectUrlAs, pdfObjectUrl } from '@utils/pdf-object-url';
+import { isDocxMimeType, isPreviewableMimeType, isRasterImageMimeType } from '@utils/preview-mime-type';
+import { renderDocxSafely } from '@utils/render-docx-safely';
 import { FC, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-const isImageMimeType = (mimeType: string): boolean => mimeType.startsWith('image/');
-const isPdfMimeType = (mimeType: string): boolean => mimeType === 'application/pdf';
-// Only the modern .docx (Office Open XML) can be rendered client-side; legacy binary .doc cannot.
-const isDocxMimeType = (mimeType: string): boolean =>
-  mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-
-/** Mime types we can render inline (PDF in an iframe, images fitted, .docx rendered client-side). */
-export const isPreviewableMimeType = (mimeType: string): boolean =>
-  isPdfMimeType(mimeType) || isImageMimeType(mimeType) || isDocxMimeType(mimeType);
-
-/** Mime types we can render inline in the preview modal (PDF in an iframe, images fitted, .docx rendered). */
+/** Mime types we can render inline in the preview modal (PDF in an iframe, raster images fitted, .docx rendered). */
 export const isPreviewableAttachment = (attachment: Attachment): boolean =>
   isPreviewableMimeType(attachment.mimeType ?? '');
 
 /**
- * Renders a single file's bytes inline: PDFs and images render from a blob object URL (iframe / fitted
- * image), .docx is rendered to HTML in-browser by docx-preview. The blob is supplied by the parent —
- * fetched from the server (AttachmentPreviewModal) or a locally-selected File (LocalFilePreviewModal).
+ * Renders a single file's bytes inline: PDFs and raster images render from a blob object URL (iframe / fitted
+ * image), .docx is rendered to HTML in-browser by docx-preview (without anything that could run). The blob is
+ * supplied by the parent — fetched from the server (AttachmentPreviewModal) or a locally-selected File
+ * (LocalFilePreviewModal). The object URL always carries the type decided here from `mimeType`, never the
+ * blob's own, so a file served as something else can't render as a page in our origin.
  */
 const FilePreview: FC<{ blob?: Blob; mimeType: string; fileName: string; isLoading: boolean; error: boolean }> = ({
   blob,
@@ -37,7 +31,7 @@ const FilePreview: FC<{ blob?: Blob; mimeType: string; fileName: string; isLoadi
   const { t } = useTranslation('attachments');
   const [url, setUrl] = useState<string>('');
   const docxContainerRef = useRef<HTMLDivElement>(null);
-  const isImage = isImageMimeType(mimeType);
+  const isImage = isRasterImageMimeType(mimeType);
   const isDocx = isDocxMimeType(mimeType);
 
   useEffect(() => {
@@ -54,10 +48,11 @@ const FilePreview: FC<{ blob?: Blob; mimeType: string; fileName: string; isLoadi
       const container = docxContainerRef.current;
       if (container) {
         container.innerHTML = '';
-        void renderAsync(blob, container);
+        void renderDocxSafely(blob, container);
       }
     } else {
-      objectUrl = window.URL.createObjectURL(blob);
+      // Everything else that is previewable is shown as a PDF unless it is one of the raster image types.
+      objectUrl = isImage ? objectUrlAs(blob, mimeType.toLowerCase()) : pdfObjectUrl(blob);
       setUrl(objectUrl);
     }
     return () => {
@@ -65,7 +60,7 @@ const FilePreview: FC<{ blob?: Blob; mimeType: string; fileName: string; isLoadi
         window.URL.revokeObjectURL(objectUrl);
       }
     };
-  }, [blob, isDocx]);
+  }, [blob, isDocx, isImage, mimeType]);
 
   if (error) {
     return <div className="flex justify-center items-center h-[20rem] text-error">{t('preview.error')}</div>;

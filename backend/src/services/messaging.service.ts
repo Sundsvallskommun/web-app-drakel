@@ -1,4 +1,5 @@
 import ApiService from '@services/api.service';
+import { gatewayUrl } from '@utils/gateway-url';
 
 import {
   MESSAGING_DEPARTMENT,
@@ -8,7 +9,6 @@ import {
   MESSAGING_SUPPORT_URL,
   MUNICIPALITY_ID,
 } from '@/config';
-import { getApiBase } from '@/config/api-config';
 import {
   LetterAttachmentContentTypeEnum,
   LetterAttachmentDeliveryModeEnum,
@@ -30,10 +30,6 @@ interface MessagingPdf {
  */
 class MessagingService {
   private apiService = new ApiService();
-
-  private base(): string {
-    return `${getApiBase('messaging')}/${MUNICIPALITY_ID}`;
-  }
 
   private supportInfo() {
     return {
@@ -59,7 +55,7 @@ class MessagingService {
         contentType: LetterAttachmentContentTypeEnum.ApplicationPdf,
       })),
     };
-    await this.apiService.post({ url: `${this.base()}/letter`, data: request });
+    await this.apiService.post({ url: gatewayUrl('messaging', MUNICIPALITY_ID, 'letter'), data: request });
   }
 }
 

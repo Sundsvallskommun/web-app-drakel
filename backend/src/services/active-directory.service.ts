@@ -1,6 +1,5 @@
-import { gatewayAuthorization } from '@services/api-token.service';
+import ApiService from '@services/api.service';
 import { gatewayUrl } from '@utils/gateway-url';
-import axios from 'axios';
 
 import { ACTIVE_DIRECTORY_DOMAIN, MUNICIPALITY_ID } from '@/config';
 
@@ -18,14 +17,15 @@ interface AdUser {
 
 /** Reads the handläggare roster from the Active Directory object-search, through the WSO2 gateway. */
 class ActiveDirectoryService {
+  private apiService = new ApiService();
+
   /** All "user" objects in the configured domain (the object-name/class filters are accepted but ignored). */
   async searchUsers(): Promise<AdUser[]> {
-    const url = gatewayUrl('activedirectory', MUNICIPALITY_ID, 'search', ACTIVE_DIRECTORY_DOMAIN);
-    const res = await axios.get<AdUser[]>(url, {
+    const response = await this.apiService.get<AdUser[]>({
+      url: gatewayUrl('activedirectory', MUNICIPALITY_ID, 'search', ACTIVE_DIRECTORY_DOMAIN),
       params: { objectName: '*', objectClass: 'user' },
-      headers: await gatewayAuthorization(),
     });
-    return Array.isArray(res.data) ? res.data : [];
+    return Array.isArray(response.data) ? response.data : [];
   }
 }
 

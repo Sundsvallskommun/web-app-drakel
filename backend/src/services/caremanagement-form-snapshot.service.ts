@@ -1,6 +1,6 @@
 import { ApiResponse } from '@interfaces/api-service.interface';
 import CaremanagementApiService from '@services/caremanagement-api.service';
-import { caremanagementUrl } from '@utils/caremanagement-url';
+import { caremanagementFinancialAssistanceUrl } from '@utils/caremanagement-url';
 
 import { FormSnapshot } from '@/data-contracts/caremanagement/data-contracts';
 
@@ -14,7 +14,7 @@ class CaremanagementFormSnapshotService {
 
   async readFormSnapshot(errandId: string): Promise<ApiResponse<FormSnapshot>> {
     return this.apiService.get<FormSnapshot>({
-      url: caremanagementUrl('errands', 'financial-assistance', errandId, 'form-snapshot'),
+      url: caremanagementFinancialAssistanceUrl(errandId, 'form-snapshot'),
     });
   }
 }

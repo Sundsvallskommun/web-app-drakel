@@ -1,3 +1,5 @@
+import { SaveTemplateDtoKindEnum } from '@data-contracts/backend/data-contracts';
+
 /**
  * The kinds of template the admin page manages. A template is placed by two metadata tags: `kind`
  * separates a full mall from an insertable frastext or a beslutsformulering, and `code` ties it to a CM
@@ -9,9 +11,10 @@ type TemplateTarget = 'journal' | 'document' | 'decision';
 
 /**
  * DOCUMENT is a full mall (replaces the body), PHRASE a frastext (inserted at the cursor), DECISION_PHRASE a
- * beslutsformulering (picked by kategori and rubrik in the Beslut tab).
+ * beslutsformulering (picked by kategori and rubrik in the Beslut tab). The values of the generated enum the
+ * template is saved with, as plain strings so they compare with a stored template's kind.
  */
-type TemplateKind = 'DOCUMENT' | 'PHRASE' | 'DECISION_PHRASE';
+type TemplateKind = `${SaveTemplateDtoKindEnum}`;
 
 /** The code every beslutsformulering carries. */
 export const DECISION_PHRASE_CODE = 'DECISION';

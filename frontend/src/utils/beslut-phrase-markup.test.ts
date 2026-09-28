@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { fillBeslutPhraseMarkup, markupToPlainText, withPhraseAppended } from './beslut-phrase-markup';
+import { fillBeslutPhraseMarkup, withPhraseAppended } from './beslut-phrase-markup';
 
 describe('fillBeslutPhraseMarkup', () => {
   it('fills the placeholders in a phrase’s HTML, keeping a name as text', () => {
@@ -25,11 +25,5 @@ describe('withPhraseAppended', () => {
       markup: '<p>Gammal</p><p><br></p><p>Ny</p>',
       plainText: 'Gammal\n\nNy',
     });
-  });
-});
-
-describe('markupToPlainText', () => {
-  it('reads paragraphs as lines', () => {
-    expect(markupToPlainText('<p>Ett &amp; två</p><p><br></p><p>tre</p>')).toBe('Ett & två\n\ntre');
   });
 });

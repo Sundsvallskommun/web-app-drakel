@@ -3,11 +3,13 @@
 import { ServiceResponse } from '@interfaces/services';
 import { apiURL } from '@utils/api-url';
 import { basePath, withoutBasePath } from '@utils/base-path';
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 
 export interface ApiResponse<T = unknown> {
   data: T;
   message: string;
+  /** On an error: facts beside the message, e.g. which document failed. */
+  details?: Record<string, string>;
 }
 
 /**
@@ -16,10 +18,35 @@ export interface ApiResponse<T = unknown> {
  */
 export const toServiceError = (error: unknown): ServiceResponse<never> => {
   if (axios.isAxiosError<ApiResponse>(error)) {
-    return { message: error.response?.data?.message, error: error.response?.status ?? 'UNKNOWN ERROR' };
+    return {
+      message: error.response?.data?.message,
+      details: error.response?.data?.details,
+      error: error.response?.status ?? 'UNKNOWN ERROR',
+    };
   }
   return { error: 'UNKNOWN ERROR' };
 };
+
+/**
+ * Unwraps the backend's `{ data, message }` envelope into a ServiceResponse; a rejection becomes the error
+ * shape (toServiceError). The one line every read and most writes in the service layer end with.
+ */
+export const unwrapData = <Data>(request: Promise<{ data: { data: Data } }>): Promise<ServiceResponse<Data>> =>
+  request.then((response) => ({ data: response.data.data })).catch(toServiceError);
+
+/**
+ * As unwrapData, with the unwrapped data passed through `transform` first — a default for an envelope whose data may
+ * be missing, a field of it, a sort order.
+ */
+export const mapData = <Envelope extends { data?: unknown }, Result>(
+  request: Promise<{ data: Envelope }>,
+  transform: (data: Envelope['data']) => Result
+): Promise<ServiceResponse<Result>> =>
+  request.then((response) => ({ data: transform(response.data.data) })).catch(toServiceError);
+
+/** For a write whose answer is not used: resolves with `data: null`, or the error shape on a rejection. */
+export const discardData = (request: Promise<unknown>): Promise<ServiceResponse<null>> =>
+  request.then(() => ({ data: null })).catch(toServiceError);
 
 const isAuthPath = (pathname: string): boolean => /\/login|\/logout/.test(pathname);
 
@@ -30,40 +57,36 @@ const handleError = (error: AxiosError<ApiResponse>) => {
   // we are already on an auth page), preserving where they were so they return after logging in.
   if (error?.response?.status === 401 && !isAuthPath(pathname)) {
     const failMessage = error.response?.data?.message ?? 'NOT_AUTHORIZED';
-    window.location.href = `${basePath}/login?path=${pathname}&failMessage=${failMessage}`;
+    const loginQuery = new URLSearchParams({ path: pathname, failMessage });
+    window.location.href = `${basePath}/login?${loginQuery.toString()}`;
   }
 
   throw error;
 };
 
-const defaultOptions = {
+const defaultOptions: AxiosRequestConfig = {
   headers: {
     'Content-Type': 'application/json',
   },
   withCredentials: true,
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const get = <T>(url: string, options?: Record<string, any>) =>
+const get = <T>(url: string, options?: AxiosRequestConfig) =>
   axios.get<T>(apiURL(url), { ...defaultOptions, ...options }).catch(handleError);
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const post = <T>(url: string, data: any, options?: Record<string, any>) => {
+const post = <T>(url: string, data: unknown, options?: AxiosRequestConfig) => {
   return axios.post<T>(apiURL(url), data, { ...defaultOptions, ...options }).catch(handleError);
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const remove = <T>(url: string, options?: Record<string, any>) => {
+const remove = <T>(url: string, options?: AxiosRequestConfig) => {
   return axios.delete<T>(apiURL(url), { ...defaultOptions, ...options }).catch(handleError);
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const patch = <T>(url: string, data: any, options?: Record<string, any>) => {
+const patch = <T>(url: string, data: unknown, options?: AxiosRequestConfig) => {
   return axios.patch<T>(apiURL(url), data, { ...defaultOptions, ...options }).catch(handleError);
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const put = <T>(url: string, data: any, options?: Record<string, any>) => {
+const put = <T>(url: string, data: unknown, options?: AxiosRequestConfig) => {
   return axios.put<T>(apiURL(url), data, { ...defaultOptions, ...options }).catch(handleError);
 };
 

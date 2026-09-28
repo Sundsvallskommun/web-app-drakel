@@ -1,5 +1,7 @@
 'use client';
 
+import { ReadOnlyNotice } from '@components/common/read-only-notice.component';
+import { useErrandEditPermission } from '@hooks/use-errand-edit-permission';
 import { initiateErrand } from '@services/errand-service/errand-service';
 import { Spinner } from '@sk-web-gui/react';
 import { useParams, useRouter } from 'next/navigation';
@@ -8,7 +10,8 @@ import { useTranslation } from 'react-i18next';
 
 /**
  * Registering a new errand mirrors draken: visiting this page immediately creates an empty draft
- * errand on the backend, then redirects to that errand's page where its fields are filled in.
+ * errand on the backend, then redirects to that errand's page where its fields are filled in. Nothing is
+ * created until the user is known to have canEditErrands; one who may only read errands is told so instead.
  */
 export const RegistreraPageClient = () => {
   const { t } = useTranslation('overview');
@@ -16,10 +19,11 @@ export const RegistreraPageClient = () => {
   const { locale } = useParams<{ locale: string }>();
   const initiated = useRef<boolean>(false);
   const [initiateFailed, setInitiateFailed] = useState<boolean>(false);
+  const { canEditErrands, readOnly } = useErrandEditPermission();
 
   useEffect(() => {
     // Guard against React strict-mode double effect creating two draft errands.
-    if (initiated.current) {
+    if (initiated.current || !canEditErrands) {
       return;
     }
     initiated.current = true;
@@ -32,11 +36,13 @@ export const RegistreraPageClient = () => {
       }
       router.replace(`/${locale}/arende/${encodeURIComponent(routeSegment)}`);
     });
-  }, [router, locale]);
+  }, [router, locale, canEditErrands]);
 
   return (
     <div className="h-full w-full flex flex-col items-center justify-center p-28 gap-16">
-      {initiateFailed ?
+      {readOnly ?
+        <ReadOnlyNotice />
+      : initiateFailed ?
         <p className="text-error-surface-primary">{t('registration.initiateError')}</p>
       : <>
           <Spinner size={4} />

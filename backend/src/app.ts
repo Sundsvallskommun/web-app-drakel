@@ -16,42 +16,47 @@ import {
   SAML_PRIVATE_KEY,
   SAML_PUBLIC_KEY,
   SAML_SUCCESS_REDIRECT,
-  SECRET_KEY,
-  SESSION_MEMORY,
+  SAML_VALIDATE_IN_RESPONSE_TO,
+  SAML_WANT_ASSERTIONS_SIGNED,
   SWAGGER_ENABLED,
 } from '@config';
+import authMiddleware from '@middlewares/auth.middleware';
 import errorMiddleware from '@middlewares/error.middleware';
 import requestContextMiddleware from '@middlewares/request-context.middleware';
 import { Profile as SamlProfile, Strategy, VerifiedCallback } from '@node-saml/passport-saml';
 import { logger, stream } from '@utils/logger';
 import bodyParser from 'body-parser';
-import { defaultMetadataStorage } from 'class-transformer/cjs/storage';
-import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import express, { RequestHandler } from 'express';
+import express, { Request, RequestHandler } from 'express';
 import rateLimit from 'express-rate-limit';
-import session from 'express-session';
 import { existsSync, mkdirSync } from 'fs';
 import helmet from 'helmet';
-import hpp from 'hpp';
-import createMemoryStore from 'memorystore';
-import morgan from 'morgan';
 import passport from 'passport';
 import { join } from 'path';
 import { getMetadataArgsStorage, useExpressServer } from 'routing-controllers';
 import { routingControllersToSpec } from 'routing-controllers-openapi';
-import createFileStore from 'session-file-store';
 import swaggerUi from 'swagger-ui-express';
 
 import { Profile } from './interfaces/profile.interface';
 import { User } from './interfaces/users.interface';
 import { authorizeGroups, getPermissions, getRole } from './services/authorization.service';
-import { allowedOrigins, isValidOrigin } from './utils/isValidOrigin';
-import { isValidUrl } from './utils/util';
+import { isAllowedCorsOrigin, isRefusedWildcard } from './utils/cors-origin';
+import { allowedOrigins } from './utils/isValidOrigin';
+import { openApiSchemas } from './utils/openapi-schemas';
+import { requestLogger } from './utils/request-log';
+import { toInResponseToCheck } from './utils/saml-in-response-to';
+import { allowedRedirect, buildRelayState, parseRelayState } from './utils/saml-relay-state';
+import { sessionMiddleware } from './utils/session-middleware';
+import { STRICT_VALIDATION } from './utils/validate-input';
 
 const corsWhitelist = allowedOrigins();
+
+const IS_PRODUCTION = NODE_ENV === 'production';
+
+/** How far the IdP's clock may be off ours before an assertion's validity window is refused. */
+const SAML_CLOCK_SKEW_MS = 5000;
 
 // Rate limit the public, unauthenticated SAML endpoints to throttle brute-force/replay
 // attempts and limit the DoS surface of session creation + assertion verification.
@@ -62,10 +67,16 @@ const samlRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-const SessionStoreCreate = SESSION_MEMORY ? createMemoryStore(session) : createFileStore(session);
-const sessionTTL = 4 * 24 * 60 * 60;
-// NOTE: memory uses ms while file uses seconds
-const sessionStore = new SessionStoreCreate(SESSION_MEMORY ? { checkPeriod: sessionTTL * 1000 } : { sessionTTL, path: './data/sessions' });
+/**
+ * Hands the SAML RelayState to passport-saml. Express 5's `req.query` is a read-only getter recomputed from `req.url`,
+ * so writes to it are silently discarded; passport-saml reads RelayState from `req.query.RelayState || req.body.RelayState`,
+ * so it is stashed on `req.body` instead.
+ */
+const stashRelayState = (req: Request, relayState: string): void => {
+  if (relayState) {
+    req.body = { ...(req.body as Record<string, unknown> | undefined), RelayState: relayState };
+  }
+};
 
 passport.serializeUser(function (user, done) {
   done(null, user);
@@ -85,10 +96,17 @@ const samlStrategy = new Strategy(
     // Identity Provider's public key
     idpCert: SAML_IDP_PUBLIC_CERT,
     issuer: SAML_ISSUER,
-    wantAssertionsSigned: false,
+    // Every assertion must carry the IdP's signature; the response around it need not be signed as well.
+    wantAssertionsSigned: SAML_WANT_ASSERTIONS_SIGNED,
     wantAuthnResponseSigned: false,
-    acceptedClockSkewMs: -1,
-    audience: false,
+    // A response must answer a login request drakel sent (its id is kept until the callback), so an unsolicited or a
+    // replayed response is refused.
+    validateInResponseTo: toInResponseToCheck(SAML_VALIDATE_IN_RESPONSE_TO),
+    // Assertions outside their NotBefore/NotOnOrAfter window (give or take the skew) are refused; -1 turned the check off.
+    acceptedClockSkewMs: SAML_CLOCK_SKEW_MS,
+    // In production an assertion must be addressed to us — our SP entityID, the issuer. The development IdP addresses
+    // its assertions to its own configured SP metadata URL instead, so the check stays off there.
+    audience: IS_PRODUCTION ? SAML_ISSUER : false,
     logoutCallbackUrl: SAML_LOGOUT_CALLBACK_URL,
   },
   function (profile: SamlProfile | null, done: VerifiedCallback) {
@@ -182,28 +200,18 @@ class App {
     // Behind the reverse proxy the real client IP arrives in X-Forwarded-For. Without this,
     // express-rate-limit keys every request on the proxy's own IP, so all users share one quota —
     // the SAML limiter would lock everyone out together. `1` trusts exactly one proxy hop; raise it
-    // if requests pass through more than one.
+    // if requests pass through more than one. It is also what lets Express see from X-Forwarded-Proto
+    // that a request came in over HTTPS, which the session's secure cookie depends on in production.
     this.app.set('trust proxy', 1);
 
-    this.app.use(morgan(LOG_FORMAT, { stream }));
-    this.app.use(hpp());
+    this.app.use(requestLogger(LOG_FORMAT, stream));
     this.app.use(helmet());
     this.app.use(compression());
+    // JSON only: the one form-encoded body drakel takes is the IdP's login POST, which parses its own (see below).
     this.app.use(express.json());
-    this.app.use(express.urlencoded({ extended: true }));
     this.app.use(cookieParser());
 
-    this.app.use(
-      session({
-        // Unique cookie name so drakel's session doesn't clash with other apps running on
-        // localhost (cookies ignore the port, so a shared `connect.sid` would get clobbered).
-        name: 'drakel.sid',
-        secret: SECRET_KEY,
-        resave: false,
-        saveUninitialized: false,
-        store: sessionStore,
-      }),
-    );
+    this.app.use(sessionMiddleware());
 
     this.app.use(passport.initialize());
     this.app.use(passport.session());
@@ -213,17 +221,16 @@ class App {
     // caremanagement transport's X-Sent-By header (feeds caremanagement's per-errand event log).
     this.app.use(requestContextMiddleware);
 
+    if (isRefusedWildcard(corsWhitelist, CREDENTIALS)) {
+      logger.error("ORIGIN '*' is ignored while CREDENTIALS is on: list the frontend's origins instead.");
+    }
     const corsMiddleware = cors({
       credentials: CREDENTIALS,
       origin: function (origin, callback) {
-        // `origin` is undefined when the request carries no Origin header at all — a same-origin
-        // call, a top-level navigation, or a server-to-server client. Those are not CORS requests.
-        if (origin === undefined || corsWhitelist.includes(origin) || corsWhitelist.includes('*')) {
-          callback(null, true);
-        } else if (NODE_ENV === 'development') {
+        if (isAllowedCorsOrigin(origin, corsWhitelist, CREDENTIALS)) {
           callback(null, true);
         } else {
-          logger.warn(`CORS rejected origin '${origin}' (allowed: ${corsWhitelist.join(', ') || 'none'})`);
+          logger.warn(`CORS rejected origin '${origin ?? ''}' (allowed: ${corsWhitelist.join(', ') || 'none'})`);
           callback(new Error('Not allowed by CORS'));
         }
       },
@@ -247,21 +254,7 @@ class App {
       `${BASE_URL_PREFIX}/saml/login`,
       samlRateLimiter,
       (req, res, next) => {
-        // Express 5's `req.query` is a read-only getter recomputed from `req.url`, so writes to
-        // it are silently discarded. passport-saml reads RelayState from
-        // `req.query.RelayState || req.body.RelayState`, so stash it on `req.body` instead.
-        let relayState = '';
-        if (req.session.returnTo) {
-          relayState = req.session.returnTo;
-        } else if (typeof req.query.successRedirect === 'string') {
-          relayState = req.query.successRedirect;
-        }
-        if (typeof req.query.failureRedirect === 'string') {
-          relayState = `${relayState},${req.query.failureRedirect}`;
-        }
-        if (relayState) {
-          req.body = { ...(req.body as Record<string, unknown> | undefined), RelayState: relayState };
-        }
+        stashRelayState(req, buildRelayState(req.session.returnTo ?? req.query.successRedirect, req.query.failureRedirect));
         next();
       },
       (req, res, next) => {
@@ -283,24 +276,12 @@ class App {
       `${BASE_URL_PREFIX}/saml/logout`,
       samlRateLimiter,
       (req, res, next) => {
-        // See the /saml/login note: req.query is not writable in Express 5; pass RelayState
-        // via req.body, which samlStrategy.logout() also reads.
-        let relayState = '';
-        if (req.session.returnTo) {
-          relayState = req.session.returnTo;
-        } else if (typeof req.query.successRedirect === 'string') {
-          relayState = req.query.successRedirect;
-        }
-        if (relayState) {
-          req.body = { ...(req.body as Record<string, unknown> | undefined), RelayState: relayState };
-        }
+        // See stashRelayState: samlStrategy.logout() reads RelayState from req.body too.
+        stashRelayState(req, buildRelayState(req.session.returnTo ?? req.query.successRedirect));
         next();
       },
       (req, res, next) => {
-        let successRedirect = SAML_SUCCESS_REDIRECT;
-        if (typeof req.query.successRedirect === 'string' && isValidUrl(req.query.successRedirect) && isValidOrigin(req.query.successRedirect)) {
-          successRedirect = req.query.successRedirect;
-        }
+        const successRedirect = allowedRedirect(req.query.successRedirect)?.toString() ?? SAML_SUCCESS_REDIRECT;
 
         samlStrategy.logout(req as unknown as Parameters<typeof samlStrategy.logout>[0], () => {
           req.logout(err => {
@@ -314,88 +295,40 @@ class App {
       },
     );
 
-    this.app.get(`${BASE_URL_PREFIX}/saml/logout/callback`, samlRateLimiter, bodyParser.urlencoded({ extended: false }), (req, res, next) => {
+    // The IdP comes back here with a redirect (a GET), so the RelayState is in the query. Logging out cannot fail
+    // once req.logout has run, so the browser goes to the success redirect the RelayState names — when it is allowed.
+    this.app.get(`${BASE_URL_PREFIX}/saml/logout/callback`, samlRateLimiter, (req, res, next) => {
       req.logout(err => {
         if (err) {
           next(err);
           return;
         }
-
-        let successRedirect: URL, failureRedirect: URL;
-        const relayState = (req.body as { RelayState?: string }).RelayState ?? '';
-        const urls = relayState.split(',');
-        const primary = urls[0] ?? '';
-        const secondary = urls[1] ?? '';
-
-        if (isValidUrl(primary) && isValidOrigin(primary)) {
-          successRedirect = new URL(primary);
-        } else {
-          successRedirect = new URL(SAML_SUCCESS_REDIRECT);
-        }
-        if (isValidUrl(secondary) && isValidOrigin(secondary)) {
-          failureRedirect = new URL(secondary);
-        } else {
-          failureRedirect = successRedirect;
-        }
-
-        const queries = new URLSearchParams(failureRedirect.searchParams);
-
-        if (req.session.messages?.length > 0) {
-          queries.append('failMessage', req.session.messages[0] ?? 'SAML_UNKNOWN_ERROR');
-        } else {
-          queries.append('failMessage', 'SAML_UNKNOWN_ERROR');
-        }
-
-        if (failureRedirect) {
-          res.redirect(failureRedirect.toString());
-        } else {
-          res.redirect(successRedirect.toString());
-        }
+        const { successRedirect } = parseRelayState(req.query.RelayState, SAML_SUCCESS_REDIRECT);
+        res.redirect(successRedirect.toString());
       });
     });
 
     this.app.post(`${BASE_URL_PREFIX}/saml/login/callback`, samlRateLimiter, bodyParser.urlencoded({ extended: false }), (req, res, next) => {
-      let successRedirect: URL, failureRedirect: URL;
+      const { successRedirect, failureRedirect } = parseRelayState((req.body as { RelayState?: unknown }).RelayState, SAML_SUCCESS_REDIRECT);
 
-      const relayState = (req.body as { RelayState?: string }).RelayState ?? '';
-      const urls = relayState.split(',');
-      const primary = urls[0] ?? '';
-      const secondary = urls[1] ?? '';
-
-      if (isValidUrl(primary) && isValidOrigin(primary)) {
-        successRedirect = new URL(primary);
-      } else {
-        successRedirect = new URL(SAML_SUCCESS_REDIRECT);
-      }
-      if (isValidUrl(secondary) && isValidOrigin(secondary)) {
-        failureRedirect = new URL(secondary);
-      } else {
-        failureRedirect = successRedirect;
-      }
+      /** Sends the browser to the failure redirect, telling the frontend why. */
+      const redirectToFailure = (failMessage: string): void => {
+        const queries = new URLSearchParams(failureRedirect.searchParams);
+        queries.append('failMessage', failMessage);
+        failureRedirect.search = queries.toString();
+        res.redirect(failureRedirect.toString());
+      };
 
       void (
         passport.authenticate('saml', (err: Error | null, user?: Express.User | false) => {
           if (err) {
-            const queries = new URLSearchParams(failureRedirect.searchParams);
-            if (err?.name) {
-              queries.append('failMessage', err.name);
-            } else {
-              queries.append('failMessage', 'SAML_UNKNOWN_ERROR');
-            }
-            failureRedirect.search = queries.toString();
-            res.redirect(failureRedirect.toString());
+            redirectToFailure(err.name || 'SAML_UNKNOWN_ERROR');
           } else if (!user) {
-            const failMessage = new URLSearchParams(failureRedirect.searchParams);
-            failMessage.append('failMessage', 'NO_USER');
-            failureRedirect.search = failMessage.toString();
-            res.redirect(failureRedirect.toString());
+            redirectToFailure('NO_USER');
           } else {
             req.login(user, loginErr => {
               if (loginErr) {
-                const failMessage = new URLSearchParams(failureRedirect.searchParams);
-                failMessage.append('failMessage', 'SAML_UNKNOWN_ERROR');
-                failureRedirect.search = failMessage.toString();
-                res.redirect(failureRedirect.toString());
+                redirectToFailure('SAML_UNKNOWN_ERROR');
                 return;
               }
               res.redirect(successRedirect.toString());
@@ -411,15 +344,13 @@ class App {
       routePrefix: BASE_URL_PREFIX,
       controllers: controllers,
       defaultErrorHandler: false,
+      // Every @Body, @QueryParams … DTO is validated with unknown properties refused, so nothing a DTO does not name
+      // reaches a handler — or is passed on upstream.
+      validation: STRICT_VALIDATION,
     });
   }
 
   private initializeSwagger(controllers: ControllerClass[]) {
-    const schemas = validationMetadatasToSchemas({
-      classTransformerMetadataStorage: defaultMetadataStorage,
-      refPointerPrefix: '#/components/schemas/',
-    });
-
     const routingControllersOptions = {
       routePrefix: BASE_URL_PREFIX,
       controllers: controllers,
@@ -430,7 +361,7 @@ class App {
     type SchemasMap = NonNullable<NonNullable<OpenApiComponents>['schemas']>;
     const spec = routingControllersToSpec(storage, routingControllersOptions, {
       components: {
-        schemas: schemas as unknown as SchemasMap,
+        schemas: openApiSchemas() as unknown as SchemasMap,
         securitySchemes: {
           basicAuth: {
             scheme: 'basic',
@@ -445,10 +376,13 @@ class App {
       },
     });
 
-    this.app.use(`${BASE_URL_PREFIX}/swagger.json`, (req: express.Request, res: express.Response) => {
+    // The API's map is for signed-in users only in production. In development it stays open: the frontend's
+    // contract generator reads swagger.json without a session.
+    const swaggerGuard: RequestHandler[] = IS_PRODUCTION ? [authMiddleware] : [];
+    this.app.use(`${BASE_URL_PREFIX}/swagger.json`, ...swaggerGuard, (req: express.Request, res: express.Response) => {
       res.json(spec);
     });
-    this.app.use(`${BASE_URL_PREFIX}/api-docs`, swaggerUi.serve, swaggerUi.setup(spec));
+    this.app.use(`${BASE_URL_PREFIX}/api-docs`, ...swaggerGuard, swaggerUi.serve, swaggerUi.setup(spec));
   }
 
   private initializeErrorHandling() {

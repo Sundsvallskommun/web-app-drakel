@@ -13,14 +13,9 @@
     "error": "Could not show the preview",
     "openInNewTab": "Open attachment in a new tab"
   },
-  "pdfButton": {
-    "label": "Show PDF",
-    "modalLabel": "Preview PDF"
-  },
   "pdfPreviewButton": {
     "label": "Preview PDF",
     "creating": "Creating preview…",
-    "empty": "There is nothing to preview.",
     "createError": "Could not create the preview."
   },
   "list": {

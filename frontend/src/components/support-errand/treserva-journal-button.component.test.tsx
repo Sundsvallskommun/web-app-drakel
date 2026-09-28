@@ -8,12 +8,18 @@ vi.mock('@services/treserva-journal-service', () => ({ getTreservaJournal: vi.fn
 
 describe('TreservaJournalButton', () => {
   const tab = { location: { href: '' }, close: vi.fn() };
+  // jsdom has no object URLs.
+  const createObjectURL = vi.fn((_blob: Blob) => 'blob:treserva-journal');
+  const revokeObjectURL = vi.fn();
 
   beforeEach(() => {
     tab.location.href = '';
     tab.close.mockReset();
     vi.spyOn(window, 'open').mockReturnValue(tab as unknown as Window);
-    window.URL.createObjectURL = vi.fn(() => 'blob:treserva-journal');
+    createObjectURL.mockReset().mockReturnValue('blob:treserva-journal');
+    revokeObjectURL.mockReset();
+    window.URL.createObjectURL = createObjectURL;
+    window.URL.revokeObjectURL = revokeObjectURL;
   });
 
   afterEach(() => {
@@ -31,6 +37,26 @@ describe('TreservaJournalButton', () => {
     });
     expect(window.open).toHaveBeenCalledWith('', '_blank');
     expect(getTreservaJournal).toHaveBeenCalledWith('errand-1');
+  });
+
+  it('revokes the journal opened before when it is opened again, and the last one on unmount', async () => {
+    vi.mocked(getTreservaJournal).mockResolvedValue({ data: btoa('%PDF-1.7') });
+    createObjectURL.mockReturnValueOnce('blob:first').mockReturnValueOnce('blob:second');
+    const { unmount } = render(<TreservaJournalButton errandId="errand-1" />);
+    const button = screen.getByRole('button', { name: 'Journal från Treserva' });
+
+    fireEvent.click(button);
+    await waitFor(() => {
+      expect(tab.location.href).toBe('blob:first');
+    });
+    fireEvent.click(button);
+    await waitFor(() => {
+      expect(tab.location.href).toBe('blob:second');
+    });
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:first');
+
+    unmount();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:second');
   });
 
   it('closes the tab again and says why when the journal cannot be read', async () => {

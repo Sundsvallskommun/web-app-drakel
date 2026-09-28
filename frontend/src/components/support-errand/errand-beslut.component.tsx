@@ -1,6 +1,6 @@
 'use client';
 
-import { PdfPreviewButton } from '@components/common/pdf-preview-button.component';
+import { PdfModalButton } from '@components/common/pdf-modal-button.component';
 import { LifecareDecisionReasonView } from '@data-contracts/backend/data-contracts';
 import { useBeslutRecommendation } from '@hooks/use-beslut-recommendation';
 import { useDecisionPhrases } from '@hooks/use-decision-phrases';
@@ -18,12 +18,13 @@ import { FormControl, FormLabel, Input, Select, Spinner } from '@sk-web-gui/reac
 import { TextEditorValue } from '@sk-web-gui/text-editor';
 import { resolveBeslutAmount, resolveBeslutPeriod } from '@utils/beslut';
 import { bifallPhraseFor, decisionTypeFor, hasChildren, toBeslutOutcome } from '@utils/beslut-outcome';
-import { fillBeslutPhraseMarkup, markupToPlainText, withPhraseAppended } from '@utils/beslut-phrase-markup';
+import { fillBeslutPhraseMarkup, withPhraseAppended } from '@utils/beslut-phrase-markup';
 import { formatAmount } from '@utils/format-amount';
 import { groupDecisionReasons } from '@utils/group-decision-reasons';
 import { computeNormResult, fromLifecareSummary, isSurplus } from '@utils/norm-result';
+import { htmlToPlainText } from '@utils/sanitize-html';
 import { stakeholderDisplayName } from '@utils/stakeholder-name';
-import dayjs from 'dayjs';
+import { todayDate } from '@utils/today-date';
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -35,8 +36,6 @@ import { ErrandSectionHeader } from './errand-section-header.component';
 import { LabeledValue } from './labeled-value.component';
 import { LockFieldset } from './lockable-section.component';
 import { NormResultLine } from './norm-result.component';
-
-const todayDate = (): string => dayjs().format('YYYY-MM-DD');
 
 const EMPTY_MESSAGE: TextEditorValue = { markup: '', plainText: '' };
 
@@ -94,9 +93,11 @@ const ReasonField: FC<{
  */
 export const ErrandBeslut: FC<{
   errandId: string;
+  /** Shows the beslut without any way to change or save it, for a handläggare who may only read errands. */
+  readOnly?: boolean;
   /** Registers this tab's save with the parent so the central "Spara ärende" button runs it (null = nothing to save). */
   onRegisterSave?: (save: (() => Promise<boolean>) | null) => void;
-}> = ({ errandId, onRegisterSave }) => {
+}> = ({ errandId, readOnly = false, onRegisterSave }) => {
   const { t } = useTranslation('decision');
   const { draft, isLoading: draftLoading } = useErrandNormberakning(errandId);
   const { recommendation, isLoading: recommendationLoading } = useBeslutRecommendation(errandId);
@@ -105,14 +106,17 @@ export const ErrandBeslut: FC<{
   const { stakeholders, isLoading: stakeholdersLoading } = useErrandStakeholders(errandId);
   const applicant = stakeholders.find((stakeholder) => stakeholder.role === 'APPLICANT');
   const applicantName = applicant ? stakeholderDisplayName(applicant) : '';
-  const { decision: savedBeslut, isLoading: savedLoading, refresh } = useLifecareDecision(errandId);
+  const { decision: savedBeslut, isLoading: savedLoading, error: savedError, refresh } = useLifecareDecision(errandId);
   const { proposal } = useDecisionProposal(errandId);
   const { calculation } = useLifecareCalculation(errandId);
   // The normberäkning saved in Lifecare is the result, and its underskott what a bifall grants.
   const normResult = calculation?.summary ? fromLifecareSummary(calculation.summary) : computeNormResult(proposal);
   const calculatedDeficit = calculation?.summary ? Math.max(0, -calculation.summary.result) : undefined;
-  // A beslut whose meddelande Lifecare has locked can no longer be changed from here.
-  const formLocked = savedBeslut?.locked === true;
+  // A failed read is not "no beslut": the errand may well have one in Lifecare, which a save would overwrite.
+  const savedUnknown = savedError !== undefined;
+  // A beslut whose meddelande Lifecare has locked can no longer be changed from here — nor one that could not be
+  // read, nor any by a handläggare who may only read errands.
+  const formLocked = savedBeslut?.locked === true || savedUnknown || readOnly;
 
   const period = useMemo(() => resolveBeslutPeriod(recommendation, draft), [recommendation, draft]);
   const today = useMemo(() => todayDate(), []);
@@ -201,8 +205,15 @@ export const ErrandBeslut: FC<{
   const grants = proposedOutcome === 'BIFALL' || proposedOutcome === 'DELAVSLAG';
   const bifallPhrase = grants ? bifallPhraseFor(phrases, hasChildren(draft)) : undefined;
   const autoFilled = useRef<boolean>(false);
-  const messageEmpty = markupToPlainText(messageValue.markup ?? '').trim() === '';
-  const readyToFill = !savedLoading && !stakeholdersLoading && savedBeslut === null && !messageTouched && messageEmpty;
+  const messageEmpty = htmlToPlainText(messageValue.markup ?? '', { keepParagraphs: true }).trim() === '';
+  const readyToFill =
+    !readOnly &&
+    !savedLoading &&
+    !savedUnknown &&
+    !stakeholdersLoading &&
+    savedBeslut === null &&
+    !messageTouched &&
+    messageEmpty;
   useEffect(() => {
     if (autoFilled.current || !readyToFill || bifallPhrase === undefined || amount === undefined) {
       return;
@@ -239,7 +250,8 @@ export const ErrandBeslut: FC<{
     toDate !== prefillTo ||
     reason !== prefillReason ||
     addFullfoljd !== prefillAddFullfoljd;
-  const beslutDirty = !!decisionCode && (savedBeslut === null || fieldsChanged || messageTouched);
+  const beslutDirty =
+    !readOnly && !savedUnknown && !!decisionCode && (savedBeslut === null || fieldsChanged || messageTouched);
 
   // The decision message is the composed beslutsmeddelande, with the fullföljdshänvisning (fetched from
   // Templating) appended at the end when the handläggare ticked the box.
@@ -332,6 +344,16 @@ export const ErrandBeslut: FC<{
           <Alert.Content>
             <Alert.Content.Title className="font-bold">{t('details.saveErrorTitle')}</Alert.Content.Title>
             <Alert.Content.Description>{saveError}</Alert.Content.Description>
+          </Alert.Content>
+        </Alert>
+      : null}
+
+      {savedUnknown ?
+        <Alert type="error">
+          <Alert.Icon />
+          <Alert.Content>
+            <Alert.Content.Title className="font-bold">{t('details.loadErrorTitle')}</Alert.Content.Title>
+            <Alert.Content.Description>{t('details.loadError')}</Alert.Content.Description>
           </Alert.Content>
         </Alert>
       : null}
@@ -456,7 +478,7 @@ export const ErrandBeslut: FC<{
           // Wrap so the preview button is one flex item — its fragment (Button + Modal) would otherwise
           // become two children and justify-between would push the button to the middle.
           <div>
-            <PdfPreviewButton
+            <PdfModalButton
               loadPdf={() => getLifecareDecisionPdf(errandId)}
               label={t('message.showPdf')}
               modalLabel={t('message.previewModalLabel')}

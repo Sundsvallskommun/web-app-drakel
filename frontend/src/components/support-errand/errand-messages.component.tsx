@@ -21,6 +21,8 @@ const SHARED_ATTACHMENTS_TAB = 1;
 
 interface ErrandMessagesProps {
   errandId: string;
+  /** Shows the conversation without the composer or reply, for a handläggare who may only read errands. */
+  readOnly?: boolean;
   /** The applicant(s) the conversation is held with; shown as the conversation's counterpart. */
   applicantNames?: string[];
   errandNumber?: string;
@@ -35,6 +37,7 @@ interface ErrandMessagesProps {
  */
 export const ErrandMessages: FC<ErrandMessagesProps> = ({
   errandId,
+  readOnly = false,
   applicantNames = [],
   errandNumber,
   sharedAttachments,
@@ -166,7 +169,7 @@ export const ErrandMessages: FC<ErrandMessagesProps> = ({
                     errandId={errandId}
                     isHighlighted={message.id === highlightId}
                     repliedMessage={message.inReplyToId ? messagesById.get(message.inReplyToId) : undefined}
-                    onReply={setReplyTo}
+                    onReply={readOnly ? undefined : setReplyTo}
                     onJumpTo={jumpToMessage}
                   />
                 </li>
@@ -196,16 +199,18 @@ export const ErrandMessages: FC<ErrandMessagesProps> = ({
         : null}
       </div>
 
-      <div className="px-20 py-16 md:px-40">
-        <ErrandNewMessage
-          errandId={errandId}
-          replyTo={replyTo}
-          onCancelReply={() => {
-            setReplyTo(undefined);
-          }}
-          onSent={handleSent}
-        />
-      </div>
+      {readOnly ? null : (
+        <div className="px-20 py-16 md:px-40">
+          <ErrandNewMessage
+            errandId={errandId}
+            replyTo={replyTo}
+            onCancelReply={() => {
+              setReplyTo(undefined);
+            }}
+            onSent={handleSent}
+          />
+        </div>
+      )}
     </>
   );
 

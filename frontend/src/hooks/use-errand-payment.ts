@@ -1,23 +1,24 @@
 'use client';
 
-import { getPaymentStatus, PaymentStatus } from '@services/payment-service';
+import { PaymentStatusView } from '@data-contracts/backend/data-contracts';
+import { getPaymentStatus } from '@services/payment-service';
 import { useCallback } from 'react';
 
 import { ServiceError, useServiceQuery } from './use-service-query';
 
 interface UseErrandPaymentResult {
-  status?: PaymentStatus;
+  status?: PaymentStatusView;
   isLoading: boolean;
   error?: ServiceError;
   refresh: () => void;
 }
 
-const NO_STATUS: PaymentStatus | undefined = undefined;
+const NO_STATUS: PaymentStatusView | undefined = undefined;
 
 /** Loads the Lifecare utbetalning status for an errand. */
 export const useErrandPayment = (errandId: string): UseErrandPaymentResult => {
   const fetchStatus = useCallback(() => getPaymentStatus(errandId), [errandId]);
-  const { data, ...query } = useServiceQuery<PaymentStatus | undefined>(fetchStatus, {
+  const { data, ...query } = useServiceQuery<PaymentStatusView | undefined>(fetchStatus, {
     initialData: NO_STATUS,
     ready: !!errandId,
   });

@@ -28,8 +28,7 @@ class ErrandSsbtekService {
    * sökande failing fails the whole, the medsökande or a child failing only leaves their payments out.
    */
   async readPayments(errandIdentifier: string, period: SsbtekPeriodQueryDto): Promise<SsbtekPaymentsView> {
-    const errand = await this.errandService.getErrandByIdentifier(errandIdentifier);
-    const errandId = errand.data.id ?? errandIdentifier;
+    const errandId = await this.errandService.resolveErrandId(errandIdentifier);
     const [applicant, coApplicant, children, personalNumbers] = await Promise.all([
       this.ssbtekService.readBasis(errandId, 'APPLICANT', period),
       this.readCoApplicant(errandId, period),

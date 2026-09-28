@@ -24,10 +24,9 @@ class ErrandLifecareCalculationService {
     return calculation === null ? null : toLifecareCalculationView(calculation);
   }
 
-  /** The errand's beräkning as Lifecare prints it, a PDF in base64; careM answers 404 while none is saved there. */
-  async pdf(errandId: string): Promise<string> {
-    const pdf = await this.apiService.getBinary({ url: calculationUrl(errandId, 'pdf') });
-    return pdf.toString('base64');
+  /** The errand's beräkning as Lifecare prints it; careM answers 404 while none is saved there. */
+  async pdf(errandId: string): Promise<Buffer> {
+    return this.apiService.getBinary({ url: calculationUrl(errandId, 'pdf') });
   }
 
   /**

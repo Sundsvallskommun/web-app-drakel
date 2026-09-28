@@ -1,4 +1,5 @@
 import authMiddleware from '@middlewares/auth.middleware';
+import { requireErrandWrite } from '@middlewares/permission.middleware';
 import CaremanagementActualisationService from '@services/caremanagement-actualisation.service';
 import CaremanagementAttachmentService from '@services/caremanagement-attachment.service';
 import CaremanagementStakeholderService from '@services/caremanagement-stakeholder.service';
@@ -25,7 +26,7 @@ export class ActualisationController {
   @ResponseSchema(ActualisationsApiResponse)
   @UseBefore(authMiddleware)
   async list(@Param('errandId') errandId: string) {
-    const applicantPartyId = await this.readApplicantPartyId(errandId);
+    const applicantPartyId = await this.stakeholderService.readApplicantPartyId(errandId);
     if (!applicantPartyId) {
       return { data: [], message: 'No applicant partyId on errand' };
     }
@@ -36,9 +37,9 @@ export class ActualisationController {
   @Post('/errands/:errandId/actualisations/:actualisationId/archive')
   @HttpCode(204)
   @OpenAPI({ summary: "Archive the errand's CASE_DATA PDF to a chosen aktualisering (stamps the errand)" })
-  @UseBefore(authMiddleware)
+  @UseBefore(authMiddleware, requireErrandWrite)
   async archive(@Param('errandId') errandId: string, @Param('actualisationId') actualisationId: string) {
-    const applicantPartyId = await this.readApplicantPartyId(errandId);
+    const applicantPartyId = await this.stakeholderService.readApplicantPartyId(errandId);
     if (!applicantPartyId) {
       throw new HttpException(404, 'No applicant partyId on errand');
     }
@@ -50,11 +51,5 @@ export class ActualisationController {
     const file = await this.attachmentService.streamAttachmentFile(errandId, caseData.id);
     await this.actualisationService.archive(actualisationId, applicantPartyId, file, { errandId });
     return { message: 'success' };
-  }
-
-  /** The applicant's partyId (the APPLICANT stakeholder's externalId); undefined when the errand has none. */
-  private async readApplicantPartyId(errandId: string): Promise<string | undefined> {
-    const stakeholders = await this.stakeholderService.readStakeholders(errandId);
-    return (stakeholders.data ?? []).find(stakeholder => stakeholder.role === 'APPLICANT')?.externalId;
   }
 }

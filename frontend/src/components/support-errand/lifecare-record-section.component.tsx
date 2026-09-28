@@ -58,7 +58,12 @@ const keysFor = (category: RecordCategory) =>
  * Both the "Journal" and "Dokument" tabs are this component with a different `category`; the data comes
  * from the same person-wide Lifecare list, split by kind on the backend.
  */
-export const LifecareRecordSection: FC<{ errandId: string; category: RecordCategory }> = ({ errandId, category }) => {
+export const LifecareRecordSection: FC<{
+  errandId: string;
+  category: RecordCategory;
+  /** Shows the records without creating or changing any, for a handläggare who may only read errands. */
+  readOnly?: boolean;
+}> = ({ errandId, category, readOnly = false }) => {
   const { records, isLoading, error, refresh } = useLifecareDocuments(errandId);
   const bodies = useLifecareRecordBodies(errandId, category);
   const { t } = useTranslation('documentation');
@@ -82,17 +87,19 @@ export const LifecareRecordSection: FC<{ errandId: string; category: RecordCateg
         title={t(keys.title)}
         description={t(keys.description)}
         action={
-          <Button
-            color="vattjom"
-            variant="primary"
-            size="sm"
-            leftIcon={<Plus />}
-            onClick={() => {
-              setShowCreate(true);
-            }}
-          >
-            {t(keys.newRecord)}
-          </Button>
+          readOnly ? undefined : (
+            <Button
+              color="vattjom"
+              variant="primary"
+              size="sm"
+              leftIcon={<Plus />}
+              onClick={() => {
+                setShowCreate(true);
+              }}
+            >
+              {t(keys.newRecord)}
+            </Button>
+          )
         }
       />
 
@@ -174,6 +181,7 @@ export const LifecareRecordSection: FC<{ errandId: string; category: RecordCateg
         <LifecareRecordModal
           errandId={errandId}
           record={openRecord}
+          readOnly={readOnly}
           onClose={() => {
             setOpenRecord(undefined);
           }}
@@ -184,7 +192,7 @@ export const LifecareRecordSection: FC<{ errandId: string; category: RecordCateg
         />
       : null}
 
-      {showCreate ?
+      {showCreate && !readOnly ?
         <CreateModal
           errandId={errandId}
           onClose={() => {

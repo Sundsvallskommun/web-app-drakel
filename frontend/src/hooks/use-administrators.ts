@@ -1,6 +1,7 @@
 'use client';
 
-import { Administrator, getAdministrators } from '@services/administrator-service';
+import { Administrator } from '@data-contracts/backend/data-contracts';
+import { getAdministrators } from '@services/administrator-service';
 
 import { useServiceQuery } from './use-service-query';
 

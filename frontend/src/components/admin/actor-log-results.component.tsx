@@ -1,6 +1,6 @@
 'use client';
 
-import { ErrandEvent } from '@services/event-service';
+import { ErrandEvent } from '@data-contracts/backend/data-contracts';
 import { Table } from '@sk-web-gui/react';
 import { formatDateTime } from '@utils/date-time';
 import NextLink from 'next/link';

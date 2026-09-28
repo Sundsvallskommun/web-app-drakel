@@ -14,6 +14,12 @@ const START_OF_DAY = '00:00';
 export const combineDateAndTime = (date: string, time?: string): string =>
   dayjs(`${date}T${time && time !== '' ? time : START_OF_DAY}`).format(ISO_OFFSET_FORMAT);
 
+/**
+ * The last second of a yyyy-MM-dd date as an ISO offset date-time (23:59:59), for an upper bound that is meant to
+ * include the whole day. Second precision, in the same format as every other date-time sent.
+ */
+export const endOfDayDateTime = (date: string): string => dayjs(date).endOf('day').format(ISO_OFFSET_FORMAT);
+
 /** Splits an ISO offset date-time into the yyyy-MM-dd and HH:mm parts the pickers bind to. */
 export const splitDateTime = (dateTime?: string): { date: string; time: string } => {
   if (!dateTime) {
@@ -25,11 +31,14 @@ export const splitDateTime = (dateTime?: string): { date: string; time: string }
     : { date: '', time: '' };
 };
 
-/** Formats an ISO date-time for display as "YYYY-MM-DD HH:mm"; empty string when missing or unparsable. */
-export const formatDateTime = (dateTime?: string): string => {
+/**
+ * Formats a date-time for display as "YYYY-MM-DD HH:mm" — or with another `separator` between date and time, e.g.
+ * ", " for "YYYY-MM-DD, HH:mm". Empty string when missing or unparsable.
+ */
+export const formatDateTime = (dateTime?: string | Date, separator = ' '): string => {
   if (!dateTime) {
     return '';
   }
   const parsed = dayjs(dateTime);
-  return parsed.isValid() ? parsed.format('YYYY-MM-DD HH:mm') : '';
+  return parsed.isValid() ? parsed.format(`YYYY-MM-DD[${separator}]HH:mm`) : '';
 };

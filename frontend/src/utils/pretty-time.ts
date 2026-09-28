@@ -1,3 +1,4 @@
+import { formatDateTime } from '@utils/date-time';
 import dayjs from 'dayjs';
 import { TFunction } from 'i18next';
 
@@ -10,12 +11,12 @@ export const prettyTime = (time: string | Date | undefined, t: TFunction): strin
   if (!time) {
     return '';
   }
-  const d = dayjs(time);
-  if (d.isSame(dayjs(), 'day')) {
-    return t('overview:relativeTime.today', { time: d.format('HH:mm') });
+  const moment = dayjs(time);
+  if (moment.isSame(dayjs(), 'day')) {
+    return t('overview:relativeTime.today', { time: moment.format('HH:mm') });
   }
-  if (d.isSame(dayjs().subtract(1, 'day'), 'day')) {
-    return t('overview:relativeTime.yesterday', { time: d.format('HH:mm') });
+  if (moment.isSame(dayjs().subtract(1, 'day'), 'day')) {
+    return t('overview:relativeTime.yesterday', { time: moment.format('HH:mm') });
   }
-  return d.format('YYYY-MM-DD HH:mm');
+  return formatDateTime(time);
 };

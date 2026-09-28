@@ -1,27 +1,22 @@
 import { RequestWithUser } from '@interfaces/auth.interface';
+import { UploadedFileLike } from '@interfaces/file.interface';
 import authMiddleware from '@middlewares/auth.middleware';
-import { UploadedFileLike } from '@services/caremanagement-attachment.service';
+import { requireErrandWrite } from '@middlewares/permission.middleware';
 import CaremanagementMessageService from '@services/caremanagement-message.service';
+import { assertAllowedMessageAttachments } from '@utils/message-attachment-types';
+import { withRequestContext } from '@utils/request-context';
+import { sendAttachment } from '@utils/send-attachment';
 import { Response } from 'express';
 import { BodyParam, Controller, Get, HttpCode, Param, Post, Req, Res, UploadedFiles, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
-import { MAX_UPLOAD_FILE_SIZE_BYTES } from '@/constants/upload';
+import { multipartUploadOptions } from '@/constants/upload';
+import { CreateMessageDirectionEnum } from '@/data-contracts/caremanagement/data-contracts';
 import { HttpException } from '@/exceptions/HttpException';
 import { MessagesApiResponse } from '@/responses/message.response';
 
 const MESSAGE_BODY_MAX_LENGTH = 8192;
 const MAX_MESSAGE_ATTACHMENT_FILES = 10;
-
-const messageAttachmentUploadOptions = {
-  required: false,
-  options: {
-    limits: {
-      files: MAX_MESSAGE_ATTACHMENT_FILES,
-      fileSize: MAX_UPLOAD_FILE_SIZE_BYTES,
-    },
-  },
-};
 
 const normalizeMessageBody = (body: unknown): string => {
   if (typeof body !== 'string') {
@@ -64,7 +59,7 @@ export class MessageController {
   @Post('/errands/:errandId/messages')
   @HttpCode(201)
   @OpenAPI({ summary: 'Post a message (with optional attachments) to the errand conversation' })
-  @UseBefore(authMiddleware)
+  @UseBefore(authMiddleware, requireErrandWrite)
   async createMessage(
     @Req() req: RequestWithUser,
     @Param('errandId') errandId: string,
@@ -73,20 +68,25 @@ export class MessageController {
     // be parsed into JSON") before the handler runs. A string target is returned verbatim.
     // normalizeMessageBody still validates defensively (handles missing/duplicate-field cases).
     @BodyParam('body') body: string,
-    @UploadedFiles('files', messageAttachmentUploadOptions) files?: UploadedFileLike[],
+    @UploadedFiles('files', multipartUploadOptions(MAX_MESSAGE_ATTACHMENT_FILES)) files?: UploadedFileLike[],
     // Optional id of the message this one replies to (a plain string, like `body`). caremanagement
     // validates that it references a message on the same errand.
     @BodyParam('inReplyToId', { required: false }) inReplyToId?: string,
   ) {
-    // Every message a handläggare posts is OUTBOUND (caseworker → applicant), authored by the logged-in
-    // user. Both are decided here, never trusted from the client (mirrors the initiateErrand flow).
-    const replyTo = normalizeInReplyToId(inReplyToId);
-    await this.messageService.createMessage(
-      errandId,
-      { direction: 'OUTBOUND', body: normalizeMessageBody(body), author: req.user.username, ...(replyTo ? { inReplyToId: replyTo } : {}) },
-      files ?? [],
-    );
-    return { data: null, message: 'success' };
+    // Multipart: multer has dropped the request context, so the handläggare is put back for X-Sent-By.
+    return withRequestContext(req, async () => {
+      // Every message a handläggare posts is OUTBOUND (caseworker → applicant), authored by the logged-in
+      // user. Both are decided here, never trusted from the client (mirrors the initiateErrand flow).
+      const replyTo = normalizeInReplyToId(inReplyToId);
+      const message = normalizeMessageBody(body);
+      assertAllowedMessageAttachments(files ?? []);
+      await this.messageService.createMessage(
+        errandId,
+        { direction: CreateMessageDirectionEnum.OUTBOUND, body: message, author: req.user.username, ...(replyTo ? { inReplyToId: replyTo } : {}) },
+        files ?? [],
+      );
+      return { data: null, message: 'success' };
+    });
   }
 
   @Get('/errands/:errandId/messages/:messageId/attachments/:attachmentId/file')
@@ -99,10 +99,6 @@ export class MessageController {
     @Res() response: Response,
   ) {
     const file = await this.messageService.streamMessageAttachmentFile(errandId, messageId, attachmentId);
-    if (file.contentType) {
-      response.setHeader('Content-Type', file.contentType);
-    }
-    response.setHeader('Content-Disposition', `attachment; filename="${file.fileName ?? attachmentId}"`);
-    return response.send(file.data);
+    return sendAttachment(response, file, attachmentId);
   }
 }

@@ -101,10 +101,13 @@ Config lives in `backend/.env.{NODE_ENV}.local` (currently
 - **Every upstream goes through the WSO2 API gateway** (`API_BASE_URL`, e.g.
   `api-test.sundsvall.se`) with an OAuth2 client-credentials bearer token
   (`ApiTokenService`) — caremanagement, Templating, Active Directory, Citizen and
-  Messaging alike. No service has a host of its own. The subscribed APIs and their
-  versions are listed in `backend/src/config/api-config.ts` (`APIS`); build their
-  URLs with `gatewayUrl`, and caremanagement's with `caremanagementUrl`
+  Messaging alike — unless caremanagement or Templating is given a host of its own
+  (below). The subscribed APIs and their versions are listed in
+  `backend/src/config/api-config.ts` (`APIS`); build their URLs with `gatewayUrl`, and
+  caremanagement's with `caremanagementUrl`
   (`{API_BASE_URL}/caremanagement/1.0/{MUNICIPALITY_ID}/{CAREMANAGEMENT_NAMESPACE}/...`).
+  Every builder goes through `joinUrlSegments`, which percent-encodes each path segment
+  and refuses an empty, `.` or `..` one (400): pass raw values, never pre-encoded ones.
   The drakel application in WSO2 must subscribe to every API in `APIS`, and the
   gateway only lets through the routes of an API's *published* definition — a new
   caremanagement route needs the definition republished before it works.
@@ -130,7 +133,8 @@ Config lives in `backend/.env.{NODE_ENV}.local` (currently
   the frontend never knows the namespace. Injected into the caremanagement URL.
 - Authorization groups (mirrors draken's `authorization.service`):
   - `AUTHORIZED_GROUPS` — comma-separated groups allowed to use the app.
-  - `ADMIN_GROUP` — admin access.
+  - `ADMIN_GROUP` — grants `canEditErrands`: the only group that may change an errand or
+    write anything upstream on its behalf (every such route carries `requireErrandWrite`).
   - **Not used now:** `SUPERADMIN_GROUP`, `DEVELOPER_GROUP`. Do not add them.
 
 ## Conventions

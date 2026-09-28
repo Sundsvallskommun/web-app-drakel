@@ -1,8 +1,9 @@
 'use client';
 
-import { AdminTemplate, getAdminTemplates } from '@services/admin-template-service';
-import { DocumentType, getDocumentTypes } from '@services/document-service';
-import { getJournalTypes, JournalEntryType } from '@services/journal-service';
+import { AdminTemplate, DocumentType, JournalEntryType } from '@data-contracts/backend/data-contracts';
+import { getAdminTemplates } from '@services/admin-template-service';
+import { getDocumentTypes } from '@services/document-service';
+import { getJournalTypes } from '@services/journal-service';
 
 import { ServiceError, useServiceQuery } from './use-service-query';
 

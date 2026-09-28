@@ -1,6 +1,6 @@
 import { HttpException } from '@exceptions/HttpException';
 import CaremanagementApiService from '@services/caremanagement-api.service';
-import { caremanagementLifecareUrl, caremanagementUrl } from '@utils/caremanagement-url';
+import { caremanagementFinancialAssistanceUrl, caremanagementLifecareUrl } from '@utils/caremanagement-url';
 
 import {
   LifecareDecisionReason as CaremanagementDecisionReason,
@@ -45,7 +45,7 @@ class ErrandLifecareDecisionService {
       throw new HttpException(400, 'The beslutstyp code must be a whole number');
     }
     const reasons = await this.apiService.get<CaremanagementDecisionReason[]>({
-      url: caremanagementUrl('errands', 'financial-assistance', 'lifecare', 'decision-types', String(decisionCode), 'reasons'),
+      url: caremanagementFinancialAssistanceUrl('lifecare', 'decision-types', String(decisionCode), 'reasons'),
     });
     return reasons.data.map(toDecisionReasonView);
   }

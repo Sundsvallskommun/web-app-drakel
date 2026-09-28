@@ -2,15 +2,11 @@
 
 import { AsyncContent } from '@components/common/async-content.component';
 import { Errand } from '@data-contracts/backend/data-contracts';
-import {
-  faLabel,
-  faPersonLabel,
-  FinancialAssistanceData,
-  formatPeriodMonth,
-  SubmittedChild,
-} from '@interfaces/financial-assistance';
-import { getApplicationData } from '@services/errand-service/errand-service';
+import { useErrandApplicationData } from '@hooks/use-errand-application-data';
+import { faLabel, faPersonLabel, FinancialAssistanceData, SubmittedChild } from '@interfaces/financial-assistance';
+import { formatPeriodMonth } from '@utils/application-month';
 import { formatDateRange } from '@utils/date-range';
+import { formatKronor } from '@utils/format-amount';
 import type { TFunction } from 'i18next';
 import {
   Banknote,
@@ -23,7 +19,7 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
-import { FC, ReactNode, useEffect, useState } from 'react';
+import { FC, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ContentBox } from './content-box.component';
@@ -41,7 +37,7 @@ interface AnswerItem {
   value?: ReactNode;
 }
 
-const kr = (value?: number): string | undefined => (value == null ? undefined : `${value} kr`);
+const kr = (value?: number): string | undefined => (value == null ? undefined : formatKronor(value));
 const yesNo = (t: TFunction, value?: boolean): string | undefined =>
   value == null ? undefined
   : value ? t('common:yes')
@@ -54,8 +50,11 @@ const sickLeaveSummary = (planning: SubmittedPlanning, t: TFunction): string | u
   const period = planning.sickLeaveFrom ? formatDateRange(planning.sickLeaveFrom, planning.sickLeaveTo, t) : undefined;
   return [level, period].filter(Boolean).join(' · ') || undefined;
 };
-const childName = (child: SubmittedChild): string =>
-  child.name?.trim() ?? [child.firstName, child.lastName].filter(Boolean).join(' ').trim();
+/** The child's name as given, or — when it is missing or blank — put together from the name parts. */
+const childName = (child: SubmittedChild): string => {
+  const givenName = child.name?.trim() ?? '';
+  return givenName !== '' ? givenName : [child.firstName, child.lastName].filter(Boolean).join(' ').trim();
+};
 
 const assetValue = (t: TFunction, asset: SubmittedAsset): string | undefined => {
   const fromValue = kr(asset.value);
@@ -315,21 +314,7 @@ const ApplicationSections: FC<{ data: FinancialAssistanceData }> = ({ data }) =>
  */
 export const ErrandApplicationData: FC<{ errand: Errand }> = ({ errand }) => {
   const { t } = useTranslation('application');
-  const [data, setData] = useState<FinancialAssistanceData | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    let active = true;
-    setIsLoading(true);
-    void getApplicationData(errand.id ?? '').then((res) => {
-      if (!active) return;
-      setData(res.error ? null : (res.data ?? null));
-      setIsLoading(false);
-    });
-    return () => {
-      active = false;
-    };
-  }, [errand.id]);
+  const { data, isLoading, error } = useErrandApplicationData(errand.id ?? '');
 
   return (
     <div className="flex flex-col gap-24">
@@ -337,7 +322,13 @@ export const ErrandApplicationData: FC<{ errand: Errand }> = ({ errand }) => {
         <ErrandStakeholders errandId={errand.id ?? ''} />
       </ApplicationAccordion>
 
-      <AsyncContent isLoading={isLoading} errorText="" isEmpty={!data} emptyText={t('data.emptyText')}>
+      <AsyncContent
+        isLoading={isLoading}
+        error={error}
+        errorText={t('data.loadError')}
+        isEmpty={!data}
+        emptyText={t('data.emptyText')}
+      >
         {data ?
           <ApplicationSections data={data} />
         : null}

@@ -86,6 +86,31 @@ describe('SsbtekTransfer', () => {
     });
   });
 
+  it('keeps saying the transfer went through when the list read again is empty', async () => {
+    vi.mocked(getSsbtekChanges)
+      .mockResolvedValueOnce({ data: COMPARISON })
+      .mockResolvedValueOnce({ data: { available: true, isFinal: false, changes: [] } });
+    vi.mocked(transferSsbtekIncomes).mockResolvedValue({ data: { available: true, isFinal: false, changes: [] } });
+    render(<SsbtekTransfer errandId="EB-26090036" />);
+
+    fireEvent.click(await screen.findByRole('checkbox', { name: 'Överför Bostadsbidrag för Sökande' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Överför 1 inkomst' }));
+
+    expect(
+      await screen.findByText('Normberäkningen stämmer med SSBTEK – det finns inget att överföra.')
+    ).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('1 inkomst överfördes till normberäkningen.');
+  });
+
+  it('shows the comparison without picking or transferring for a handläggare who may only read errands', async () => {
+    vi.mocked(getSsbtekChanges).mockResolvedValue({ data: COMPARISON });
+
+    render(<SsbtekTransfer errandId="EB-26090036" readOnly />);
+
+    expect(await screen.findByRole('checkbox', { name: 'Överför Bostadsbidrag för Sökande' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: /Överför/ })).not.toBeInTheDocument();
+  });
+
   it("shows careM's or the BFF's reason when the transfer is refused", async () => {
     vi.mocked(getSsbtekChanges).mockResolvedValue({ data: COMPARISON });
     vi.mocked(transferSsbtekIncomes).mockResolvedValue({

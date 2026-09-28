@@ -1,4 +1,5 @@
 import authMiddleware from '@middlewares/auth.middleware';
+import { requireErrandWrite } from '@middlewares/permission.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import ErrandLifecareRecordsService from '@services/errand-lifecare-records.service';
 import { Body, Controller, Get, HttpCode, Param, Post, Put, UseBefore } from 'routing-controllers';
@@ -62,7 +63,7 @@ export class LifecareDocumentsController {
   @HttpCode(201)
   @OpenAPI({ summary: "Write a new journalanteckning on the errand's insats in Lifecare" })
   @ResponseSchema(LifecareRecordApiResponse)
-  @UseBefore(authMiddleware, validationMiddleware(CreateLifecareJournalNoteDto, 'body'))
+  @UseBefore(authMiddleware, requireErrandWrite, validationMiddleware(CreateLifecareJournalNoteDto, 'body'))
   async createJournalNote(@Param('errandId') errandId: string, @Body() input: CreateLifecareJournalNoteDto) {
     return { data: await this.recordsService.createJournalNote(errandId, input), message: 'success' };
   }
@@ -79,7 +80,7 @@ export class LifecareDocumentsController {
   @HttpCode(201)
   @OpenAPI({ summary: "Write a new document on the errand's insats in Lifecare" })
   @ResponseSchema(LifecareRecordApiResponse)
-  @UseBefore(authMiddleware, validationMiddleware(CreateLifecareDocumentDto, 'body'))
+  @UseBefore(authMiddleware, requireErrandWrite, validationMiddleware(CreateLifecareDocumentDto, 'body'))
   async createDocument(@Param('errandId') errandId: string, @Body() input: CreateLifecareDocumentDto) {
     return { data: await this.recordsService.createDocument(errandId, input), message: 'success' };
   }
@@ -103,7 +104,7 @@ export class LifecareDocumentsController {
   @Put('/errands/:errandId/lifecare-documents/journal-notes/:id')
   @OpenAPI({ summary: 'Save an edit to a Lifecare journalanteckning (if not finalised)' })
   @ResponseSchema(LifecareRecordContentApiResponse)
-  @UseBefore(authMiddleware, validationMiddleware(UpdateLifecareRecordDto, 'body'))
+  @UseBefore(authMiddleware, requireErrandWrite, validationMiddleware(UpdateLifecareRecordDto, 'body'))
   async updateJournalNote(@Param('errandId') errandId: string, @Param('id') id: string, @Body() input: UpdateLifecareRecordDto) {
     return { data: await this.recordsService.updateJournalNote(errandId, id, input), message: 'success' };
   }
@@ -111,7 +112,7 @@ export class LifecareDocumentsController {
   @Put('/errands/:errandId/lifecare-documents/documents/:id')
   @OpenAPI({ summary: 'Save an edit to a Lifecare document (if not finalised)' })
   @ResponseSchema(LifecareRecordContentApiResponse)
-  @UseBefore(authMiddleware, validationMiddleware(UpdateLifecareRecordDto, 'body'))
+  @UseBefore(authMiddleware, requireErrandWrite, validationMiddleware(UpdateLifecareRecordDto, 'body'))
   async updateDocument(@Param('errandId') errandId: string, @Param('id') id: string, @Body() input: UpdateLifecareRecordDto) {
     return { data: await this.recordsService.updateDocument(errandId, id, input), message: 'success' };
   }

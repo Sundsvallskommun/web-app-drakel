@@ -2,7 +2,7 @@ import { RequestWithUser } from '@interfaces/auth.interface';
 import authMiddleware from '@middlewares/auth.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import CaremanagementNotificationService from '@services/caremanagement-notification.service';
-import { Body, Controller, Get, OnUndefined, Param, Patch, Put, Req, UseBefore } from 'routing-controllers';
+import { Body, Controller, Get, Param, Patch, Req, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
 import { UpdateNotificationDto } from '@/dtos/notification.dto';
@@ -39,17 +39,5 @@ export class NotificationController {
       handled: input.handled,
     });
     return { data: res.data, message: 'success' };
-  }
-
-  /**
-   * Nothing in Draken calls this yet — the notification list marks one at a time. It mirrors
-   * caremanagement's bulk endpoint so a "markera alla som hanterade" action has somewhere to go.
-   */
-  @Put('/errands/:errandId/notifications/handled')
-  @OpenAPI({ summary: 'Mark every notification on an errand as handled' })
-  @OnUndefined(204)
-  @UseBefore(authMiddleware)
-  async markAllHandled(@Param('errandId') errandId: string) {
-    await this.notificationService.markAllHandled(errandId);
   }
 }

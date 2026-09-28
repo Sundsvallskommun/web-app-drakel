@@ -1,16 +1,10 @@
+import { Administrator, AdministratorsApiResponse } from '@data-contracts/backend/data-contracts';
 import { ServiceResponse } from '@interfaces/services';
-import { ApiResponse, apiService, toServiceError } from '@services/api-service';
+import { apiService, mapData } from '@services/api-service';
 
-/** A handläggare from Active Directory. `username` is the AD account, i.e. an errand's assignedUserId. */
-export interface Administrator {
-  username: string;
-  displayName: string;
-  description?: string;
-}
-
-/** Fetches the handläggare roster (empty when AD is unavailable). */
+/**
+ * Fetches the handläggare roster (empty when AD is unavailable). `username` is the AD account, i.e. an
+ * errand's assignedUserId.
+ */
 export const getAdministrators = (): Promise<ServiceResponse<Administrator[]>> =>
-  apiService
-    .get<ApiResponse<Administrator[]>>('administrators')
-    .then((res) => ({ data: res.data.data ?? [] }))
-    .catch(toServiceError);
+  mapData(apiService.get<AdministratorsApiResponse>('administrators'), (administrators) => administrators ?? []);

@@ -4,8 +4,8 @@ import { Attachment } from '@data-contracts/backend/data-contracts';
 import { useAttachmentImagePreviews } from '@hooks/use-attachment-previews';
 import { downloadUnifiedAttachment } from '@services/errand-service/errand-service';
 import { attachmentCategoryKey } from '@utils/attachment-category';
+import { formatDateTime } from '@utils/date-time';
 import { formatFileSize } from '@utils/format-file-size';
-import dayjs from 'dayjs';
 import { FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -14,9 +14,7 @@ import { AttachmentPreviewModal, isPreviewableAttachment } from './attachment-pr
 
 /** "YYYY-MM-DD HH:mm · 1.2 MB" — the secondary line under an attachment's name. */
 const attachmentDescription = (attachment: Attachment): string =>
-  `${attachment.created ? dayjs(attachment.created).format('YYYY-MM-DD HH:mm') : '—'} · ${formatFileSize(
-    attachment.fileSize
-  )}`;
+  `${formatDateTime(attachment.created) || '—'} · ${formatFileSize(attachment.fileSize)}`;
 
 interface AttachmentListProps {
   errandId: string;

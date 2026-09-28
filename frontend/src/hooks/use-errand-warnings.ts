@@ -18,14 +18,14 @@ const timestamp = (warning: Warning): number => new Date(warning.created ?? warn
 const newestFirst = (warnings: Warning[]): Warning[] => [...warnings].sort((a, b) => timestamp(b) - timestamp(a));
 
 /**
- * Loads an errand's EB income warnings (newest first). `enabled` gates the fetch so warnings are only read when
- * the Varningar sidebar section or the Normberäkning tab is opened (not on every errand open).
+ * Loads an errand's EB income warnings (newest first) as soon as the errand id is known. They load with the
+ * errand rather than on demand: the SSBTEK read-failure banner has to appear as soon as the errand opens.
  */
-export const useErrandWarnings = (errandId: string, enabled = true): UseErrandWarningsResult => {
+export const useErrandWarnings = (errandId: string): UseErrandWarningsResult => {
   const fetchWarnings = useCallback(() => getWarnings(errandId), [errandId]);
   const { data, ...query } = useServiceQuery(fetchWarnings, {
     initialData: NO_WARNINGS,
-    enabled: enabled && !!errandId,
+    enabled: !!errandId,
     select: newestFirst,
   });
   return { warnings: data, ...query };

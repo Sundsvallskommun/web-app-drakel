@@ -38,7 +38,6 @@ export class DocumentTemplateController {
   @UseBefore(authMiddleware)
   async getTemplateContent(@Param('identifier') identifier: string) {
     const template = await this.templatingService.getTemplate(identifier);
-    const content = template.content ? Buffer.from(template.content, 'base64').toString('utf-8') : '';
-    return { data: { content }, message: 'success' };
+    return { data: { content: template.content }, message: 'success' };
   }
 }

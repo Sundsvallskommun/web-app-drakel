@@ -1,6 +1,8 @@
 'use client';
 
+import { ReadOnlyNotice } from '@components/common/read-only-notice.component';
 import { useErrandApiId } from '@hooks/use-errand-api-id';
+import { useErrandEditPermission } from '@hooks/use-errand-edit-permission';
 import { defaultSsbtekMonths, periodOfMonths, SsbtekMonths } from '@utils/ssbtek-period';
 import { FC, useState } from 'react';
 
@@ -18,10 +20,15 @@ export const SsbtekPaymentsTab: FC<{
 }> = ({ errandReference }) => {
   const errandId = useErrandApiId(errandReference);
   const [months, setMonths] = useState<SsbtekMonths>(() => defaultSsbtekMonths());
+  // Transferring changes the errand's normberäkning, which the backend refuses without canEditErrands.
+  const { canEditErrands, readOnly } = useErrandEditPermission();
 
   return (
     <div className="flex flex-col gap-40">
-      <SsbtekTransfer errandId={errandId} />
+      {readOnly ?
+        <ReadOnlyNotice />
+      : null}
+      <SsbtekTransfer errandId={errandId} readOnly={!canEditErrands} />
       <div className="flex flex-col gap-24">
         <SsbtekPeriodPicker months={months} onSearch={setMonths} />
         <SsbtekPayments errandId={errandId} period={periodOfMonths(months)} />

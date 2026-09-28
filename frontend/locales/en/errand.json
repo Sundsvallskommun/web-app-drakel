@@ -78,14 +78,15 @@
       "addCalculation": "Add the calculation",
       "fromLifecare": "From Lifecare",
       "fromComputer": "From your computer",
-      "lifecareOnlyPdf": "Only PDF documents can be sent from Lifecare, e.g. received documents. Text documents and forms do not work in caremanagement yet. Files from your computer must be PDF.",
       "fromLifecareName": "{{name}} (Lifecare)",
       "add": "Add {{name}}",
       "addShort": "Add",
-      "lifecarePdfs": "PDF documents in Lifecare",
       "lifecareLoading": "Fetching documents from Lifecare",
       "lifecareError": "The documents in Lifecare could not be fetched.",
-      "lifecareNone": "There are no more PDF documents in Lifecare to add."
+      "lifecareNone": "There are no more documents in Lifecare to add.",
+      "lifecareHelp": "Documents from Lifecare are sent as PDF. Files from your computer must be PDF.",
+      "lifecareDocuments": "Documents in Lifecare",
+      "lifecareDocumentFailed": "{{name}} could not be fetched from Lifecare. Nothing has been decided or sent. Remove the document and send again."
     }
   },
   "actualisation": {

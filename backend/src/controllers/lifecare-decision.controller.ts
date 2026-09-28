@@ -1,4 +1,5 @@
 import authMiddleware from '@middlewares/auth.middleware';
+import { requireErrandWrite } from '@middlewares/permission.middleware';
 import { validationMiddleware } from '@middlewares/validation.middleware';
 import ErrandLifecareDecisionService from '@services/errand-lifecare-decision.service';
 import { Body, Controller, Get, Param, Put, UseBefore } from 'routing-controllers';
@@ -28,7 +29,7 @@ export class LifecareDecisionController {
   @Put('/errands/:errandId/lifecare-decision')
   @OpenAPI({ summary: "Save the errand's beslut in Lifecare — created the first time, changed after that" })
   @ResponseSchema(LifecareDecisionApiResponse)
-  @UseBefore(authMiddleware, validationMiddleware(SaveLifecareDecisionDto, 'body'))
+  @UseBefore(authMiddleware, requireErrandWrite, validationMiddleware(SaveLifecareDecisionDto, 'body'))
   async save(@Param('errandId') errandId: string, @Body() input: SaveLifecareDecisionDto) {
     return { data: await this.decisionService.save(errandId, input), message: 'success' };
   }

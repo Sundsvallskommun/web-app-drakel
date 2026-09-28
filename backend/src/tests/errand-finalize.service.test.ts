@@ -5,7 +5,7 @@ import DecisionNotificationService from '@services/decision-notification.service
 import ErrandFinalizeService from '@services/errand-finalize.service';
 import ErrandLifecareDecisionService from '@services/errand-lifecare-decision.service';
 import ErrandLifecareSectionStatusService from '@services/errand-lifecare-section-status.service';
-import { caremanagementLifecareUrl, caremanagementUrl } from '@utils/caremanagement-url';
+import { caremanagementFinancialAssistanceUrl, caremanagementLifecareUrl } from '@utils/caremanagement-url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { LifecareDecisionRegistrationOutcomeEnum, NormberakningDraftSourceEnum } from '@/data-contracts/caremanagement/data-contracts';
@@ -23,7 +23,7 @@ const channels = {
 };
 const communication = { minaSidor: true, digitalMailbox: false, letter: true };
 
-const FINALIZE_URL = caremanagementUrl('errands', 'financial-assistance', 'errand-1', 'finalize');
+const FINALIZE_URL = caremanagementFinancialAssistanceUrl('errand-1', 'finalize');
 const NORMBERAKNING_URL = caremanagementLifecareUrl('errand-1', 'normberakning');
 
 const decisionFile = { buffer: Buffer.from('%PDF-beslut'), originalname: 'beslut-EB-26090039.pdf', mimetype: 'application/pdf' };

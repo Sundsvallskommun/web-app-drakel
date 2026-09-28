@@ -18,6 +18,8 @@ import { LifecareReminderRemoveConfirm } from './lifecare-reminder-remove-confir
 
 interface ErrandBevakningarProps {
   errandId: string;
+  /** Shows the bevakningar without adding, changing or removing any, for a handläggare who may only read errands. */
+  readOnly?: boolean;
   reminders: LifecareReminderView[];
   isLoading: boolean;
   loadError: boolean;
@@ -33,11 +35,12 @@ const toFormValues = (reminder: LifecareReminderView): CreateLifecareReminderDto
 });
 
 /** One bevakning: date and status on top, the text, then who it is "bevakad av" and what it hangs on. */
-const ReminderSummary: FC<{ reminder: LifecareReminderView; onEdit: () => void; onRemove: () => void }> = ({
-  reminder,
-  onEdit,
-  onRemove,
-}) => {
+const ReminderSummary: FC<{
+  reminder: LifecareReminderView;
+  /** Left out for a handläggare who may only read errands: the bevakning is then shown without actions. */
+  onEdit?: () => void;
+  onRemove?: () => void;
+}> = ({ reminder, onEdit, onRemove }) => {
   const { t } = useTranslation('sidebar');
 
   return (
@@ -56,24 +59,26 @@ const ReminderSummary: FC<{ reminder: LifecareReminderView; onEdit: () => void; 
           {[reminder.caseworker, reminder.type].filter(Boolean).join(' · ')}
         </span>
       </div>
-      <div className="flex shrink-0 gap-4">
-        <Button
-          size="sm"
-          variant="tertiary"
-          iconButton
-          aria-label={t('bevakningar.edit')}
-          leftIcon={<Pencil />}
-          onClick={onEdit}
-        />
-        <Button
-          size="sm"
-          variant="tertiary"
-          iconButton
-          aria-label={t('bevakningar.remove')}
-          leftIcon={<Trash />}
-          onClick={onRemove}
-        />
-      </div>
+      {onEdit && onRemove ?
+        <div className="flex shrink-0 gap-4">
+          <Button
+            size="sm"
+            variant="tertiary"
+            iconButton
+            aria-label={t('bevakningar.edit')}
+            leftIcon={<Pencil />}
+            onClick={onEdit}
+          />
+          <Button
+            size="sm"
+            variant="tertiary"
+            iconButton
+            aria-label={t('bevakningar.remove')}
+            leftIcon={<Trash />}
+            onClick={onRemove}
+          />
+        </div>
+      : null}
     </div>
   );
 };
@@ -85,6 +90,7 @@ const ReminderSummary: FC<{ reminder: LifecareReminderView; onEdit: () => void; 
  */
 export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
   errandId,
+  readOnly = false,
   reminders,
   isLoading,
   loadError,
@@ -150,14 +156,22 @@ export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
               : <>
                   <ReminderSummary
                     reminder={reminder}
-                    onEdit={() => {
-                      setRemovingId(undefined);
-                      setEditingId(reminder.id);
-                    }}
-                    onRemove={() => {
-                      setEditingId(undefined);
-                      setRemovingId(reminder.id);
-                    }}
+                    onEdit={
+                      readOnly ? undefined : (
+                        () => {
+                          setRemovingId(undefined);
+                          setEditingId(reminder.id);
+                        }
+                      )
+                    }
+                    onRemove={
+                      readOnly ? undefined : (
+                        () => {
+                          setEditingId(undefined);
+                          setRemovingId(reminder.id);
+                        }
+                      )
+                    }
                   />
                   {removingId === reminder.id ?
                     <LifecareReminderRemoveConfirm
@@ -174,14 +188,16 @@ export const ErrandBevakningar: FC<ErrandBevakningarProps> = ({
         </ul>
       </AsyncContent>
 
-      <div className="mt-auto border-t-1 border-divider pt-16">
-        <LifecareReminderForm
-          idPrefix="bevakning-ny"
-          options={options}
-          submitLabel={t('bevakningar.add')}
-          onSubmit={add}
-        />
-      </div>
+      {readOnly ? null : (
+        <div className="mt-auto border-t-1 border-divider pt-16">
+          <LifecareReminderForm
+            idPrefix="bevakning-ny"
+            options={options}
+            submitLabel={t('bevakningar.add')}
+            onSubmit={add}
+          />
+        </div>
+      )}
     </div>
   );
 };
