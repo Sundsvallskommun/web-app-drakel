@@ -59,16 +59,15 @@ export interface Mailbox {
 export interface DigitalMailAttachment {
   /** Content type */
   contentType?: DigitalMailAttachmentContentTypeEnum;
-  /**
-   * Content (BASE64-encoded)
-   * @minLength 1
-   */
-  content: string;
+  /** Content (BASE64-encoded). Mutually exclusive with objectId */
+  content?: string;
   /**
    * Filename
    * @minLength 1
    */
   filename: string;
+  /** Id of an object holding the attachment content. The bucket is server configuration, not the caller's to choose. Mutually exclusive with content */
+  objectId?: string;
 }
 
 export interface DigitalMailParty {
@@ -246,8 +245,10 @@ export interface SnailmailAttachment {
   filename: string;
   /** The attachment content type */
   contentType?: string;
-  /** The attachment (file) content as a BASE64-encoded string */
-  content: string;
+  /** The attachment (file) content as a BASE64-encoded string. Mutually exclusive with objectId */
+  content?: string;
+  /** Id of an object holding the attachment content. The bucket is server configuration, not the caller's to choose. Mutually exclusive with content */
+  objectId?: string;
 }
 
 export interface SnailmailParty {
@@ -498,10 +499,12 @@ export interface EmailAttachment {
    * @minLength 1
    */
   name: string;
-  /** The attachment content type */
+  /** The attachment content type. Falls back to what the object store holds, and to application/octet-stream */
   contentType?: string;
-  /** The attachment (file) content as a BASE64-encoded string */
-  content: string;
+  /** The attachment (file) content as a BASE64-encoded string. Mutually exclusive with objectId */
+  content?: string;
+  /** Id of an object holding the attachment content. The bucket is server configuration, not the caller's to choose. Mutually exclusive with content */
+  objectId?: string;
 }
 
 export interface EmailRequest {

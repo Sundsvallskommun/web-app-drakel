@@ -1,21 +1,16 @@
-import CaremanagementAttachmentService from '@services/caremanagement-attachment.service';
-import CaremanagementErrandService from '@services/caremanagement-errand.service';
 import CaremanagementMessageService from '@services/caremanagement-message.service';
 import CaremanagementStakeholderService from '@services/caremanagement-stakeholder.service';
 import DecisionNotificationService from '@services/decision-notification.service';
-import ErrandLifecareCalculationService from '@services/errand-lifecare-calculation.service';
-import ErrandLifecareDecisionService from '@services/errand-lifecare-decision.service';
 import MessagingService from '@services/messaging.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const MESSAGE = 'Hej,\nDin ansökan för september 2026 är klar. Se bifogade dokument.';
+const MESSAGE = '<p>Hej,</p><p>Din ansökan för september 2026 är klar. Se bifogade dokument.</p>';
+const decision = { buffer: Buffer.from('%PDF-beslut'), originalname: 'beslut-EB-26090039.pdf', mimetype: 'application/pdf' };
 const ownFile = { buffer: Buffer.from('%PDF-own'), originalname: 'hyresavi.pdf', mimetype: 'application/pdf' };
+const input = { meddelande: true, brev: true, message: MESSAGE, includeDecision: true, includeCalculation: false, lifecareDocumentIds: [] };
 
 describe('DecisionNotificationService.send', () => {
   beforeEach(() => {
-    vi.spyOn(ErrandLifecareDecisionService.prototype, 'pdf').mockResolvedValue(Buffer.from('%PDF-beslut'));
-    vi.spyOn(ErrandLifecareCalculationService.prototype, 'pdf').mockResolvedValue(Buffer.from('%PDF-berakning').toString('base64'));
-    vi.spyOn(CaremanagementErrandService.prototype, 'getErrand').mockResolvedValue({ data: { errandNumber: 'EB-26090039' }, message: 'success' });
     vi.spyOn(CaremanagementStakeholderService.prototype, 'readStakeholders').mockResolvedValue({
       data: [{ role: 'APPLICANT', externalId: 'applicant-party' }],
       message: 'success',
@@ -26,51 +21,27 @@ describe('DecisionNotificationService.send', () => {
     vi.restoreAllMocks();
   });
 
-  it("sends the handläggare's message with the beslut, the beräkning and their own files through every channel", async () => {
-    const saveOnErrand = vi
-      .spyOn(CaremanagementAttachmentService.prototype, 'createAttachment')
-      .mockResolvedValue({ data: null, message: 'success' });
+  it("sends the handläggare's message with the same documents as a meddelande and as a brev", async () => {
     const conversation = vi.spyOn(CaremanagementMessageService.prototype, 'createMessage').mockResolvedValue({ data: null, message: 'success' });
     const letter = vi.spyOn(MessagingService.prototype, 'sendLetter').mockResolvedValue();
 
-    const failed = await new DecisionNotificationService().send(
-      'errand-1',
-      { meddelande: true, brev: true, message: MESSAGE, includeDecision: true, includeCalculation: true },
-      'caseworker01',
-      [ownFile],
-    );
+    const failed = await new DecisionNotificationService().send('errand-1', input, 'caseworker01', [decision, ownFile]);
 
     expect(failed).toEqual([]);
-    expect(saveOnErrand).toHaveBeenCalledWith('errand-1', expect.objectContaining({ originalname: 'beslut-EB-26090039.pdf' }), 'DECISION');
-    const sentFiles = ['beslut-EB-26090039.pdf', 'normberakning-EB-26090039.pdf', 'hyresavi.pdf'];
-    expect(conversation).toHaveBeenCalledWith(
-      'errand-1',
-      { direction: 'OUTBOUND', body: MESSAGE, author: 'caseworker01' },
-      sentFiles.map(name => expect.objectContaining({ originalname: name }) as unknown),
-    );
-    expect(letter).toHaveBeenCalledWith(
-      'applicant-party',
-      'Beslut om ekonomiskt bistånd',
-      MESSAGE,
-      sentFiles.map(filename => expect.objectContaining({ filename }) as unknown),
-    );
+    expect(conversation).toHaveBeenCalledWith('errand-1', { direction: 'OUTBOUND', body: MESSAGE, author: 'caseworker01' }, [decision, ownFile]);
+    expect(letter).toHaveBeenCalledWith('applicant-party', 'Beslut om ekonomiskt bistånd', MESSAGE, [
+      { filename: 'beslut-EB-26090039.pdf', content: decision.buffer.toString('base64') },
+      { filename: 'hyresavi.pdf', content: ownFile.buffer.toString('base64') },
+    ]);
   });
 
-  it('keeps the beslut on the errand but leaves out what the handläggare took away', async () => {
-    const saveOnErrand = vi
-      .spyOn(CaremanagementAttachmentService.prototype, 'createAttachment')
-      .mockResolvedValue({ data: null, message: 'success' });
-    const calculation = vi.spyOn(ErrandLifecareCalculationService.prototype, 'pdf');
-    const letter = vi.spyOn(MessagingService.prototype, 'sendLetter').mockResolvedValue();
+  it('sends only through the channels chosen, and reports the ones that failed', async () => {
+    const conversation = vi.spyOn(CaremanagementMessageService.prototype, 'createMessage');
+    vi.spyOn(MessagingService.prototype, 'sendLetter').mockRejectedValue(new Error('Messaging svarade inte'));
 
-    await new DecisionNotificationService().send(
-      'errand-1',
-      { brev: true, message: MESSAGE, includeDecision: false, includeCalculation: false },
-      'caseworker01',
-    );
+    const failed = await new DecisionNotificationService().send('errand-1', { ...input, meddelande: false }, 'caseworker01', [decision]);
 
-    expect(saveOnErrand).toHaveBeenCalledTimes(1);
-    expect(calculation).not.toHaveBeenCalled();
-    expect(letter).toHaveBeenCalledWith('applicant-party', 'Beslut om ekonomiskt bistånd', MESSAGE, []);
+    expect(conversation).not.toHaveBeenCalled();
+    expect(failed).toEqual(['Brev']);
   });
 });

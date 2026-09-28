@@ -2,13 +2,19 @@
 
 import { Button } from '@sk-web-gui/react';
 import { FileText, Paperclip, Plus, X } from 'lucide-react';
-import { FC, useRef } from 'react';
+import { FC, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-/** What goes with the message: Lifecare's beslut and beräkning (in unless taken out) and the handläggare's own files. */
+import { LifecareDocumentChoice, LifecareDocumentPicker } from './lifecare-document-picker.component';
+
+/**
+ * What goes with the message: Lifecare's beslut and beräkning (in unless taken out), the stored PDFs the handläggare
+ * picked from Lifecare, and their own files.
+ */
 export interface DecisionAttachments {
   includeDecision: boolean;
   includeCalculation: boolean;
+  lifecareDocuments: LifecareDocumentChoice[];
   files: File[];
 }
 
@@ -28,16 +34,23 @@ const AttachmentRow: FC<{ name: string; removeLabel: string; onRemove: () => voi
 
 /**
  * The documents that go with "Skicka beräkning och beslut": the beslut and the beräkning from Lifecare are in to
- * begin with, and the handläggare can take them out, add them back, and add and remove PDFs from their computer.
- * Adding from Lifecare is shown but not offered, as caremanagement cannot hand Lifecare's documents over yet.
+ * begin with, and the handläggare can take them out, add them back, add the sökandes stored PDFs from Lifecare and
+ * add and remove PDFs from their computer. Textdokument and blanketter from Lifecare cannot be added yet.
  */
 export const SendDecisionAttachments: FC<{
+  errandId: string;
   value: DecisionAttachments;
   onChange: (value: DecisionAttachments) => void;
-}> = ({ value, onChange }) => {
+}> = ({ errandId, value, onChange }) => {
   const { t } = useTranslation('errand');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const nothing = !value.includeDecision && !value.includeCalculation && value.files.length === 0;
+  const [pickerOpen, setPickerOpen] = useState<boolean>(false);
+  const nothing =
+    !value.includeDecision &&
+    !value.includeCalculation &&
+    value.lifecareDocuments.length === 0 &&
+    value.files.length === 0;
+  const removeLabel = (name: string): string => t('decideAndPay.attachments.remove', { name });
 
   return (
     <div className="flex flex-col gap-12">
@@ -45,11 +58,11 @@ export const SendDecisionAttachments: FC<{
       <p className="m-0 text-small text-dark-secondary">{t('decideAndPay.attachments.help')}</p>
       {nothing ?
         <p className="m-0 text-small text-dark-secondary">{t('decideAndPay.attachments.none')}</p>
-      : <ul className="m-0 p-0 list-none flex flex-col gap-8">
+      : <ul className="m-0 p-0 list-none flex flex-col gap-8" aria-label={t('decideAndPay.attachments.title')}>
           {value.includeDecision ?
             <AttachmentRow
               name={t('decideAndPay.attachments.decision')}
-              removeLabel={t('decideAndPay.attachments.remove', { name: t('decideAndPay.attachments.decision') })}
+              removeLabel={removeLabel(t('decideAndPay.attachments.decision'))}
               onRemove={() => {
                 onChange({ ...value, includeDecision: false });
               }}
@@ -58,17 +71,33 @@ export const SendDecisionAttachments: FC<{
           {value.includeCalculation ?
             <AttachmentRow
               name={t('decideAndPay.attachments.calculation')}
-              removeLabel={t('decideAndPay.attachments.remove', { name: t('decideAndPay.attachments.calculation') })}
+              removeLabel={removeLabel(t('decideAndPay.attachments.calculation'))}
               onRemove={() => {
                 onChange({ ...value, includeCalculation: false });
               }}
             />
           : null}
+          {value.lifecareDocuments.map((document) => {
+            const name = t('decideAndPay.attachments.fromLifecareName', { name: document.title });
+            return (
+              <AttachmentRow
+                key={document.id}
+                name={name}
+                removeLabel={removeLabel(name)}
+                onRemove={() => {
+                  onChange({
+                    ...value,
+                    lifecareDocuments: value.lifecareDocuments.filter((chosen) => chosen.id !== document.id),
+                  });
+                }}
+              />
+            );
+          })}
           {value.files.map((file, index) => (
             <AttachmentRow
               key={`${file.name}-${String(index)}`}
               name={file.name}
-              removeLabel={t('decideAndPay.attachments.remove', { name: file.name })}
+              removeLabel={removeLabel(file.name)}
               onRemove={() => {
                 onChange({ ...value, files: value.files.filter((_, position) => position !== index) });
               }}
@@ -102,7 +131,15 @@ export const SendDecisionAttachments: FC<{
             {t('decideAndPay.attachments.addCalculation')}
           </Button>
         )}
-        <Button size="sm" variant="secondary" leftIcon={<Paperclip />} disabled>
+        <Button
+          size="sm"
+          variant="secondary"
+          leftIcon={<Paperclip />}
+          aria-expanded={pickerOpen}
+          onClick={() => {
+            setPickerOpen((open) => !open);
+          }}
+        >
           {t('decideAndPay.attachments.fromLifecare')}
         </Button>
         <Button
@@ -129,7 +166,16 @@ export const SendDecisionAttachments: FC<{
           }}
         />
       </div>
-      <p className="m-0 text-small text-dark-secondary">{t('decideAndPay.attachments.lifecareNotSupported')}</p>
+      {pickerOpen ?
+        <LifecareDocumentPicker
+          errandId={errandId}
+          chosenIds={value.lifecareDocuments.map((document) => document.id)}
+          onPick={(document) => {
+            onChange({ ...value, lifecareDocuments: [...value.lifecareDocuments, document] });
+          }}
+        />
+      : null}
+      <p className="m-0 text-small text-dark-secondary">{t('decideAndPay.attachments.lifecareOnlyPdf')}</p>
     </div>
   );
 };

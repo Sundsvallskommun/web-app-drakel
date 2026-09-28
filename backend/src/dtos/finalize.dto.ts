@@ -1,4 +1,4 @@
-import { IsBoolean, IsString, MaxLength } from 'class-validator';
+import { ArrayMaxSize, ArrayUnique, IsArray, IsBoolean, IsString, MaxLength } from 'class-validator';
 
 import { DecisionNotificationDto } from '@/dtos/decision-notification.dto';
 
@@ -22,4 +22,11 @@ export class FinalizeErrandDto extends DecisionNotificationDto {
   /** Whether Lifecare's print of the normberäkning goes with the message. */
   @IsBoolean()
   includeCalculation!: boolean;
+
+  /** The ids, as the Lifecare documents list gives them, of the stored PDFs from Lifecare that go with the message. */
+  @IsArray()
+  @ArrayMaxSize(10)
+  @ArrayUnique()
+  @IsString({ each: true })
+  lifecareDocumentIds!: string[];
 }

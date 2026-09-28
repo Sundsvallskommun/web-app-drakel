@@ -15,6 +15,7 @@ const careMJournalNote: LifecareRecord = {
   modifiedBy: 'RPA_031DEV 2026-09-22',
   locked: false,
   protected: true,
+  documentKind: 'JournalNote',
 };
 
 describe('toRecordsView', () => {

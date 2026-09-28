@@ -30,6 +30,8 @@ export interface LifecareRecord {
   modifiedBy: string;
   locked: boolean;
   protected: boolean;
+  /** What Lifecare says the record is: Regular (a written document), Form (a blankett), Pdf (a stored file) or JournalNote. */
+  documentKind?: string;
 }
 
 /** A person's Lifecare record, split into the two groups the tab shows. */

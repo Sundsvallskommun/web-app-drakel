@@ -5,6 +5,7 @@ import { finalizeFollowUps } from './finalize-follow-ups';
 
 const clean = {
   processMessageCorrelated: true,
+  decisionAttachmentSaved: true,
   failedChannels: [],
 };
 
@@ -17,7 +18,8 @@ describe('finalizeFollowUps', () => {
     expect(
       finalizeFollowUps({
         ...clean,
-        failedChannels: ['Mina sidor', 'Brev'],
+        failedChannels: ['Meddelande', 'Brev'],
+        decisionAttachmentSaved: false,
         processMessageCorrelated: false,
         lifecareDecision: {
           decisionId: 'decision-1',
@@ -26,7 +28,8 @@ describe('finalizeFollowUps', () => {
         },
       })
     ).toEqual([
-      { key: 'failedChannels', detail: 'Mina sidor, Brev' },
+      { key: 'failedChannels', detail: 'Meddelande, Brev' },
+      { key: 'decisionAttachmentNotSaved' },
       { key: 'processNotResumed' },
       { key: 'decisionNotRegistered', detail: 'Delvis bifall kan inte registreras i Lifecare från Drakel ännu.' },
     ]);

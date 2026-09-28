@@ -52,6 +52,11 @@ class ErrandLifecareRecordsService {
     return toRecordsView(response.data);
   }
 
+  /** One of the applicant's stored documents as a PDF; careM answers 404 when Lifecare holds no PDF for it. */
+  async documentPdf(errandId: string, id: string): Promise<Buffer> {
+    return this.apiService.getBinary({ url: `${recordUrl(errandId, 'DOCUMENT', id)}/pdf` });
+  }
+
   /** The bodies of one group's records, so the tab can show every record's text without opening it. */
   async bodies(errandId: string, category: LifecareRecordCategory): Promise<LifecareRecordBodyView[]> {
     const response = await this.apiService.get<LifecareRecordBody[]>({ url: caremanagementLifecareUrl(errandId, BODIES_SEGMENT[category]) });

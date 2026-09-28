@@ -15,7 +15,12 @@ import { useShallow } from 'zustand/react/shallow';
 import { FinalizeFollowUps } from './finalize-follow-ups.component';
 import { DecisionAttachments, SendDecisionAttachments } from './send-decision-attachments.component';
 
-const ALL_LIFECARE_DOCUMENTS: DecisionAttachments = { includeDecision: true, includeCalculation: true, files: [] };
+const ALL_LIFECARE_DOCUMENTS: DecisionAttachments = {
+  includeDecision: true,
+  includeCalculation: true,
+  lifecareDocuments: [],
+  files: [],
+};
 const EMPTY_MESSAGE: TextEditorValue = { markup: '', plainText: '' };
 
 // Text formatting only: files go through the list below the editor, not into the message.
@@ -27,7 +32,8 @@ const MESSAGE_TOOLBAR = [
 /**
  * "Skicka beräkning och beslut" for the administration bar. The dialog proposes a message to the sökande — for the
  * ansökan's month, signed by the handläggare — which they edit in a rich text editor, and the documents that go with
- * it: the beslut and the beräkning from Lifecare, which they can take out, and PDFs from their computer. On Skicka
+ * it: the beslut and the beräkning from Lifecare, which they can take out, the sökandes stored PDFs from Lifecare
+ * and PDFs from their computer. On Skicka
  * the BFF finalizes the errand in caremanagement from the beslut saved in Lifecare, then sends the message through
  * the chosen channels: meddelande (the errand's conversation) and brev. Mina sidor is recorded but not sent yet.
  * A refusal is shown in careM's or the BFF's words. Anything that did not go through after the errand was decided
@@ -82,6 +88,7 @@ export const ErrandAvsluta: FC<{
         message: message.markup ?? '',
         includeDecision: attachments.includeDecision,
         includeCalculation: attachments.includeCalculation,
+        lifecareDocumentIds: attachments.lifecareDocuments.map((document) => document.id),
       },
       attachments.files
     );
@@ -190,7 +197,7 @@ export const ErrandAvsluta: FC<{
                 : null}
               </FormControl>
 
-              <SendDecisionAttachments value={attachments} onChange={setAttachments} />
+              <SendDecisionAttachments errandId={errandId} value={attachments} onChange={setAttachments} />
 
               {error ?
                 <p className="text-error-surface-primary m-0" role="alert">

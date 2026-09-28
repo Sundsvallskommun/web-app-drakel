@@ -1,3 +1,4 @@
+import { useLifecareDocuments } from '@hooks/use-lifecare-documents';
 import { finalizeErrand } from '@services/finalize-service';
 import { getNormberakningDraft } from '@services/normberakning-service';
 import { useUserStore } from '@services/user-service/user-service';
@@ -9,6 +10,7 @@ import { ErrandAvsluta } from './errand-avsluta.component';
 
 vi.mock('@services/finalize-service', () => ({ finalizeErrand: vi.fn() }));
 vi.mock('@services/normberakning-service', () => ({ getNormberakningDraft: vi.fn() }));
+vi.mock('@hooks/use-lifecare-documents', () => ({ useLifecareDocuments: vi.fn() }));
 // Quill can't run in jsdom: stand in for the rich text editor with a textarea that shows the plain text it is handed
 // and reports what is typed as both plain text and paragraph markup, like the real editor.
 vi.mock('@components/common/text-editor.component', () => ({
@@ -32,8 +34,23 @@ vi.mock('@components/common/text-editor.component', () => ({
 const finalized = {
   decisionId: 'decision-1',
   processMessageCorrelated: true,
+  decisionAttachmentSaved: true,
   failedChannels: [],
 };
+
+/** A row of the sökandes Lifecare documents. */
+const lifecareDocument = (id: string, title: string, documentKind: string) => ({
+  id,
+  category: 'DOCUMENT' as const,
+  title,
+  dateTime: '2026-09-20T10:00',
+  type: 'Inkommen handling',
+  ownerTypeText: 'EK Ekonomiskt bistånd',
+  modifiedBy: '',
+  locked: false,
+  protected: false,
+  documentKind,
+});
 
 const openModal = async ({ onFinalized = vi.fn() } = {}) => {
   render(<ErrandAvsluta errandId="errand-1" onFinalized={onFinalized} />);
@@ -44,7 +61,7 @@ const openModal = async ({ onFinalized = vi.fn() } = {}) => {
 };
 
 const sendButton = (): HTMLElement => screen.getByRole('button', { name: 'Skicka' });
-const attachmentList = (): HTMLElement => screen.getByRole('list');
+const attachmentList = (): HTMLElement => screen.getByRole('list', { name: 'Dokument som skickas' });
 
 describe('ErrandAvsluta', () => {
   beforeEach(() => {
@@ -52,6 +69,14 @@ describe('ErrandAvsluta', () => {
     vi.mocked(getNormberakningDraft).mockResolvedValue({ data: { applicationMonth: '2026-10' } });
     vi.mocked(finalizeErrand).mockReset();
     vi.mocked(finalizeErrand).mockResolvedValue({ data: finalized });
+    vi.mocked(useLifecareDocuments).mockReturnValue({
+      records: {
+        journalNotes: [],
+        documents: [lifecareDocument('12', 'Hyreskontrakt', 'Pdf'), lifecareDocument('13', 'Utredning', 'Regular')],
+      },
+      isLoading: false,
+      refresh: vi.fn(),
+    });
   });
 
   it('proposes the message for the ansökan’s month, signed by the handläggare, to Mina sidor and as a meddelande', async () => {
@@ -83,11 +108,25 @@ describe('ErrandAvsluta', () => {
     expect(within(attachmentList()).getByText('Normberäkning (Lifecare)')).toBeInTheDocument();
   });
 
-  it('says adding from Lifecare does not work in caremanagement yet', async () => {
+  it('adds the sökandes stored PDFs from Lifecare, but not textdokument or blanketter', async () => {
     await openModal();
 
-    expect(screen.getByRole('button', { name: 'Från Lifecare' })).toBeDisabled();
-    expect(screen.getByText(/fungerar inte i caremanagement än/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Från Lifecare' }));
+    const picker = screen.getByRole('list', { name: 'PDF-dokument i Lifecare' });
+    expect(within(picker).queryByText('Utredning')).not.toBeInTheDocument();
+    fireEvent.click(within(picker).getByRole('button', { name: 'Lägg till Hyreskontrakt' }));
+
+    expect(within(attachmentList()).getByText('Hyreskontrakt (Lifecare)')).toBeInTheDocument();
+    expect(screen.getByText('Det finns inga fler PDF-dokument i Lifecare att lägga till.')).toBeInTheDocument();
+    fireEvent.click(sendButton());
+
+    await waitFor(() => {
+      expect(finalizeErrand).toHaveBeenCalledWith(
+        'errand-1',
+        expect.objectContaining({ lifecareDocumentIds: ['12'] }),
+        []
+      );
+    });
   });
 
   it('sends the edited message as markup with what the handläggare kept and added, through the channels ticked', async () => {
@@ -114,6 +153,7 @@ describe('ErrandAvsluta', () => {
         message: '<p>Hej, se bifogat.</p>',
         includeDecision: true,
         includeCalculation: false,
+        lifecareDocumentIds: [],
       },
       [ownFile]
     );

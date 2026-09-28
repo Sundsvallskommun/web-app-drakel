@@ -61,9 +61,10 @@
       "title": "Ärendet är beslutat",
       "description": "Beslutet är sparat, men det här gick inte igenom:",
       "failedChannels": "Beslutet kunde inte skickas till: {{detail}}.",
-      "processNotResumed": "Processen fick inte besked om beslutet.",
+      "processNotResumed": "Beslutet är sparat. Processen återupptas automatiskt.",
       "decisionNotRegistered": "Beslutet registrerades inte i Lifecare: {{detail}} Registrera det direkt i Lifecare.",
-      "decisionReceiptLost": "{{detail}}"
+      "decisionReceiptLost": "{{detail}}",
+      "decisionAttachmentNotSaved": "Beslutet kunde inte sparas som bilaga på ärendet."
     },
     "send": "Skicka",
     "attachments": {
@@ -77,7 +78,14 @@
       "addCalculation": "Lägg till normberäkningen",
       "fromLifecare": "Från Lifecare",
       "fromComputer": "Från datorn",
-      "lifecareNotSupported": "Att bifoga andra dokument från Lifecare fungerar inte i caremanagement än. Filer från datorn måste vara PDF."
+      "lifecareOnlyPdf": "Från Lifecare kan bara PDF-dokument skickas, t.ex. inkomna handlingar. Textdokument och blanketter fungerar inte i caremanagement än. Filer från datorn måste vara PDF.",
+      "fromLifecareName": "{{name}} (Lifecare)",
+      "add": "Lägg till {{name}}",
+      "addShort": "Lägg till",
+      "lifecarePdfs": "PDF-dokument i Lifecare",
+      "lifecareLoading": "Hämtar dokument från Lifecare",
+      "lifecareError": "Dokumenten i Lifecare kunde inte hämtas.",
+      "lifecareNone": "Det finns inga fler PDF-dokument i Lifecare att lägga till."
     }
   },
   "actualisation": {

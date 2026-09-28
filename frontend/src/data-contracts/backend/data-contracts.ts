@@ -547,6 +547,94 @@ export interface LifecareDecisionPdfApiResponse {
   message: string;
 }
 
+export interface LifecareDocumentTypeView {
+  code: number;
+  name: string;
+  canChangeOccurenceDate: boolean;
+  protectedByDefault: boolean;
+}
+
+export interface LifecareDocumentTypesApiResponse {
+  data: LifecareDocumentTypeView[];
+  message: string;
+}
+
+export interface LifecareRecordView {
+  id: string;
+  category: string;
+  title: string;
+  dateTime: string;
+  type: string;
+  ownerTypeText: string;
+  responsibleCaseworker?: string;
+  modifiedBy: string;
+  locked: boolean;
+  protected: boolean;
+  documentKind?: string;
+}
+
+export interface LifecareRecordsView {
+  journalNotes: LifecareRecordView[];
+  documents: LifecareRecordView[];
+}
+
+export interface LifecareRecordsApiResponse {
+  data: LifecareRecordsView;
+  message: string;
+}
+
+export interface LifecareRecordContentView {
+  id: string;
+  category: string;
+  title: string;
+  content: string;
+  occurenceDate: string;
+  time: string;
+  editable: boolean;
+}
+
+export interface LifecareRecordApiResponse {
+  data: LifecareRecordView;
+  message: string;
+}
+
+export interface LifecareRecordContentApiResponse {
+  data: LifecareRecordContentView;
+  message: string;
+}
+
+export interface LifecareRecordBodyView {
+  id: string;
+  content?: string;
+}
+
+export interface LifecareRecordBodiesApiResponse {
+  data: LifecareRecordBodyView[];
+  message: string;
+}
+
+export interface LifecareNoteTypeView {
+  code: number;
+  name: string;
+  protectedByDefault: boolean;
+}
+
+export interface LifecareNoteTypesApiResponse {
+  data: LifecareNoteTypeView[];
+  message: string;
+}
+
+export interface LifecareSectionStatusView {
+  calculationFinalized: boolean;
+  decisionSaved: boolean;
+  paymentRegistered: boolean;
+}
+
+export interface LifecareSectionStatusApiResponse {
+  data: LifecareSectionStatusView;
+  message: string;
+}
+
 export interface DecisionNotificationDto {
   minaSidor?: boolean;
   meddelande?: boolean;
@@ -558,6 +646,11 @@ export interface FinalizeErrandDto {
   message: string;
   includeDecision: boolean;
   includeCalculation: boolean;
+  /**
+   * @maxItems 10
+   * @uniqueItems true
+   */
+  lifecareDocumentIds: string[];
   minaSidor?: boolean;
   meddelande?: boolean;
   brev?: boolean;
@@ -574,6 +667,7 @@ export interface FinalizeResult {
   decisionId?: string;
   processMessageCorrelated: boolean;
   lifecareDecision?: DecisionRegistration;
+  decisionAttachmentSaved: boolean;
   failedChannels: string[];
 }
 
@@ -738,82 +832,6 @@ export interface SaveLifecareDecisionDto {
   /** @maxLength 1048576 */
   decisionMessage?: string;
   writeProtect?: boolean;
-}
-
-export interface LifecareDocumentTypeView {
-  code: number;
-  name: string;
-  canChangeOccurenceDate: boolean;
-  protectedByDefault: boolean;
-}
-
-export interface LifecareDocumentTypesApiResponse {
-  data: LifecareDocumentTypeView[];
-  message: string;
-}
-
-export interface LifecareRecordView {
-  id: string;
-  category: string;
-  title: string;
-  dateTime: string;
-  type: string;
-  ownerTypeText: string;
-  responsibleCaseworker?: string;
-  modifiedBy: string;
-  locked: boolean;
-  protected: boolean;
-}
-
-export interface LifecareRecordsView {
-  journalNotes: LifecareRecordView[];
-  documents: LifecareRecordView[];
-}
-
-export interface LifecareRecordsApiResponse {
-  data: LifecareRecordsView;
-  message: string;
-}
-
-export interface LifecareRecordContentView {
-  id: string;
-  category: string;
-  title: string;
-  content: string;
-  occurenceDate: string;
-  time: string;
-  editable: boolean;
-}
-
-export interface LifecareRecordApiResponse {
-  data: LifecareRecordView;
-  message: string;
-}
-
-export interface LifecareRecordContentApiResponse {
-  data: LifecareRecordContentView;
-  message: string;
-}
-
-export interface LifecareRecordBodyView {
-  id: string;
-  content?: string;
-}
-
-export interface LifecareRecordBodiesApiResponse {
-  data: LifecareRecordBodyView[];
-  message: string;
-}
-
-export interface LifecareNoteTypeView {
-  code: number;
-  name: string;
-  protectedByDefault: boolean;
-}
-
-export interface LifecareNoteTypesApiResponse {
-  data: LifecareNoteTypeView[];
-  message: string;
 }
 
 export interface UpdateLifecareRecordDto {
@@ -1041,17 +1059,6 @@ export interface CreateLifecareReminderDto {
   text: string;
   priority: number;
   status: number;
-}
-
-export interface LifecareSectionStatusView {
-  calculationFinalized: boolean;
-  decisionSaved: boolean;
-  paymentRegistered: boolean;
-}
-
-export interface LifecareSectionStatusApiResponse {
-  data: LifecareSectionStatusView;
-  message: string;
 }
 
 export interface MessageAttachment {

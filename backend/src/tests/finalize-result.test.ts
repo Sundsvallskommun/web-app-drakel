@@ -12,12 +12,14 @@ describe('toFinalizeResult', () => {
         lifecareDecision: { decisionId: 'decision-1', outcome: LifecareDecisionRegistrationOutcomeEnum.REGISTERED, lifecareId: '98' },
       },
       ['Brev'],
+      true,
     );
 
     expect(result).toEqual({
       decisionId: 'decision-1',
       processMessageCorrelated: true,
       lifecareDecision: { decisionId: 'decision-1', outcome: 'REGISTERED', lifecareId: '98' },
+      decisionAttachmentSaved: true,
       failedChannels: ['Brev'],
     });
   });
@@ -35,6 +37,7 @@ describe('toFinalizeResult', () => {
         },
       },
       [],
+      true,
     );
 
     expect(result.lifecareDecision).toEqual({
@@ -56,6 +59,7 @@ describe('toFinalizeResult', () => {
         lifecareDecision: { decisionId: 'decision-1', outcome, detail: 'Lifecare svarade inte' },
       },
       [],
+      true,
     );
 
     expect(result.lifecareDecision).toEqual({ decisionId: 'decision-1', outcome: expected, detail: 'Lifecare svarade inte' });
@@ -65,15 +69,17 @@ describe('toFinalizeResult', () => {
     const result = toFinalizeResult(
       { decisionId: 'decision-1', lifecareDecision: { outcome: LifecareDecisionRegistrationOutcomeEnum.REGISTERED, lifecareId: '98' } },
       [],
+      true,
     );
 
     expect(result.lifecareDecision).toEqual({ decisionId: 'decision-1', outcome: 'REGISTERED', lifecareId: '98' });
   });
 
   it('reports no registration when careM reports none, and an uncorrelated process when careM does not say', () => {
-    expect(toFinalizeResult({ decisionId: 'decision-1' }, [])).toEqual({
+    expect(toFinalizeResult({ decisionId: 'decision-1' }, [], false)).toEqual({
       decisionId: 'decision-1',
       processMessageCorrelated: false,
+      decisionAttachmentSaved: false,
       failedChannels: [],
     });
   });

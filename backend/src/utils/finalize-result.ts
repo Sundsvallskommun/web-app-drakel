@@ -26,10 +26,14 @@ const toDecisionRegistration = ({ decisionId, lifecareDecision }: FinalizeRespon
   };
 };
 
-/** The BFF's finalize result: careM's answer plus the channels the beslut could not be sent through. */
-export const toFinalizeResult = (finalized: FinalizeResponse, failedChannels: string[]): FinalizeResult => ({
+/**
+ * The BFF's finalize result: careM's answer, whether the beslut was kept on the errand and the channels it could not
+ * be sent through.
+ */
+export const toFinalizeResult = (finalized: FinalizeResponse, failedChannels: string[], decisionAttachmentSaved: boolean): FinalizeResult => ({
   decisionId: finalized.decisionId,
   processMessageCorrelated: finalized.processMessageCorrelated ?? false,
   lifecareDecision: toDecisionRegistration(finalized),
+  decisionAttachmentSaved,
   failedChannels,
 });

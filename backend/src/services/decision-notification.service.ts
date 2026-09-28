@@ -1,16 +1,11 @@
-import CaremanagementAttachmentService, { UploadedFileLike } from '@services/caremanagement-attachment.service';
-import CaremanagementErrandService from '@services/caremanagement-errand.service';
+import { UploadedFileLike } from '@services/caremanagement-attachment.service';
 import CaremanagementMessageService from '@services/caremanagement-message.service';
 import CaremanagementStakeholderService from '@services/caremanagement-stakeholder.service';
-import ErrandLifecareCalculationService from '@services/errand-lifecare-calculation.service';
-import ErrandLifecareDecisionService from '@services/errand-lifecare-decision.service';
 import MessagingService from '@services/messaging.service';
 
 import { FinalizeErrandDto } from '@/dtos/finalize.dto';
 
-const DECISION_DOCUMENT_TYPE = 'DECISION';
 const DECISION_SUBJECT = 'Beslut om ekonomiskt bistånd';
-const PDF_MIME_TYPE = 'application/pdf';
 
 interface Channel {
   selected: boolean;
@@ -19,16 +14,12 @@ interface Channel {
 }
 
 /**
- * Sends a beslut to the applicant: takes Lifecare's own print of the beslut as PDF, saves it on the errand as a
- * DECISION attachment and sends it through the chosen channels: meddelande (a message in the errand's conversation)
+ * Sends the beslut to the applicant through the chosen channels: meddelande (a message in the errand's conversation)
  * and brev (a letter through Messaging). Mina sidor (a party asset) is recorded in caremanagement but not sent yet.
- * caremanagement records which channels were chosen but sends nothing itself — this is the BFF's job.
+ * caremanagement records which channels were chosen but sends nothing itself — this is the BFF's job. The documents
+ * are fetched before the errand is finalized (see DecisionDocumentsService) and handed in here.
  */
 class DecisionNotificationService {
-  private lifecareDecision = new ErrandLifecareDecisionService();
-  private lifecareCalculation = new ErrandLifecareCalculationService();
-  private errandService = new CaremanagementErrandService();
-  private attachmentService = new CaremanagementAttachmentService();
   private stakeholderService = new CaremanagementStakeholderService();
   private messageService = new CaremanagementMessageService();
   private messagingService = new MessagingService();
@@ -38,38 +29,12 @@ class DecisionNotificationService {
     return (stakeholders.data ?? []).find(stakeholder => stakeholder.role === 'APPLICANT')?.externalId;
   }
 
-  /** The PDFs that go with the message: Lifecare's beslut and beräkning when kept, and the handläggare's own files. */
-  private async attachmentsFor(
-    errandId: string,
-    errandNumber: string,
-    input: FinalizeErrandDto,
-    files: UploadedFileLike[],
-  ): Promise<UploadedFileLike[]> {
-    const [decision, calculation] = await Promise.all([
-      this.lifecareDecision.pdf(errandId),
-      input.includeCalculation ? this.lifecareCalculation.pdf(errandId) : Promise.resolve(undefined),
-    ]);
-    // Lifecare's print of the beslut is always kept on the errand as its DECISION attachment, sent or not.
-    const decisionFile = { buffer: decision, originalname: `beslut-${errandNumber}.pdf`, mimetype: PDF_MIME_TYPE };
-    await this.attachmentService.createAttachment(errandId, decisionFile, DECISION_DOCUMENT_TYPE);
-    return [
-      ...(input.includeDecision ? [decisionFile] : []),
-      // The beräkning's PDF comes back base64-encoded, as the Normberäkning tab shows it.
-      ...(calculation
-        ? [{ buffer: Buffer.from(calculation, 'base64'), originalname: `normberakning-${errandNumber}.pdf`, mimetype: PDF_MIME_TYPE }]
-        : []),
-      ...files,
-    ];
-  }
-
   /**
-   * Sends the handläggare's message, with the beslut, the beräkning and the files they chose, through the selected
-   * channels and resolves with the labels of the ones that failed. Each channel is sent independently so one failing
-   * channel does not abort the others.
+   * Sends the handläggare's message, with the documents they chose, through the selected channels and resolves with
+   * the labels of the ones that failed. Each channel is sent independently so one failing channel does not abort the
+   * others, and every channel gets the same PDFs.
    */
-  async send(errandId: string, input: FinalizeErrandDto, author: string, files: UploadedFileLike[] = []): Promise<string[]> {
-    const errand = await this.errandService.getErrand(errandId);
-    const attachments = await this.attachmentsFor(errandId, errand.data?.errandNumber ?? errandId, input, files);
+  async send(errandId: string, input: FinalizeErrandDto, author: string, attachments: UploadedFileLike[]): Promise<string[]> {
     const pdfs = attachments.map(file => ({ filename: file.originalname, content: file.buffer.toString('base64') }));
     const body = input.message;
 

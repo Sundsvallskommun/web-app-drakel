@@ -23,6 +23,8 @@ export class LifecareRecordView {
   @IsString() modifiedBy!: string;
   @IsBoolean() locked!: boolean;
   @IsBoolean() protected!: boolean;
+  /** What Lifecare says the record is: Regular (a written document), Form (a blankett), Pdf (a stored file) or JournalNote. */
+  @IsString() @IsOptional() documentKind?: string;
 }
 
 /** The Lifecare records for a person, split into the two groups the tab shows. */
@@ -89,6 +91,7 @@ export const toRecordView = (record: LifecareRecord, category: LifecareRecordCat
   modifiedBy: record.modifiedBy ?? '',
   locked: record.locked ?? false,
   protected: record.protected ?? false,
+  documentKind: record.documentKind ?? undefined,
 });
 
 /**

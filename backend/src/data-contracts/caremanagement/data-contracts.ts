@@ -16,12 +16,12 @@ export enum Direction {
 }
 
 export interface Problem {
-  title?: string;
-  detail?: string;
   /** @format uri */
   instance?: string;
   /** @format uri */
   type?: string;
+  title?: string;
+  detail?: string;
   /** @format int32 */
   status?: number;
 }
@@ -33,10 +33,10 @@ export interface ConstraintViolationProblem {
   status?: number;
   violations?: Violation[];
   title?: string;
-  detail?: string;
-  causeAsProblem?: ThrowableProblem;
   /** @format uri */
   instance?: string;
+  detail?: string;
+  causeAsProblem?: ThrowableProblem;
 }
 
 export interface ThrowableProblem {
@@ -1697,7 +1697,11 @@ export interface NormberakningRowInput {
    * @format int32
    */
   normRowId?: number;
-  /** Free-text note */
+  /**
+   * Free-text note; Lifecare takes at most 80 characters
+   * @minLength 0
+   * @maxLength 80
+   */
   note?: string;
 }
 
@@ -1783,6 +1787,8 @@ export interface LifecareRecord {
   modifiedBy?: string;
   /** Whether Lifecare has locked the record */
   locked?: boolean;
+  /** What kind of record Lifecare says it is: Regular (a written document), Form (a blankett), Pdf (a stored file, e.g. an inkommen handling) or JournalNote */
+  documentKind?: string;
   /** Whether the record is skrivskyddad (finalised) in Lifecare */
   protected?: boolean;
 }
@@ -2122,7 +2128,7 @@ export interface NormIncomeInput {
 export interface NormIncomeRow {
   /** The row id */
   id?: string;
-  /** Who created the row: the process or a caseworker */
+  /** Who created the row: the process from SSBTEK (SYSTEM), the process from the application's declared incomes (APPLICATION) or a caseworker */
   origin?: NormIncomeRowOriginEnum;
   /**
    * Stable 0-based position of the row within its section; assigned on creation and kept across refreshes so the row stays in place
@@ -2383,7 +2389,7 @@ export interface CalculationRequest {
   classifiedIncomes?: string;
   /** The unhandled-income warnings from the operaton rules, recorded on the errand recommendation */
   unhandledIncomes?: string[];
-  /** The period-over-period change warnings from the operaton rules, recorded on the errand recommendation */
+  /** Ignored. The period-over-period change warnings the operaton rules still send; caremanagement compares against the previous normberäkning itself */
   changeWarnings?: string[];
   /** Whether SSBTEK could not be read for this run. True means the rules were deliberately not evaluated: the calculation is left exactly as it stands and the errand carries the read-failure warning until a later run succeeds. Absent is read as false, so a caller that does not know about the flag behaves as before. */
   ssbtekError?: boolean;
@@ -2427,7 +2433,7 @@ export interface CalculationResponse {
   calculationId?: number;
   /** SSBTEK incomes that could not be auto-transferred and must be reviewed */
   unhandledIncomes?: string[];
-  /** Benefits whose net income changed beyond the threshold between the periods */
+  /** Income types whose amount this month differs from the previous normberäkning beyond the threshold, or that are new since it */
   changeWarnings?: string[];
   /** Whether this month's calculation covers every income type the previous month's did — false means SSBTEK data is still missing and the process should poll again */
   informationComplete?: boolean;
@@ -3341,7 +3347,7 @@ export interface NormberakningIncomeRow {
    * @format int32
    */
   position?: number;
-  /** Who created the row: the process or a caseworker (always CASEWORKER in Lifecare) */
+  /** Who created the row: the process from SSBTEK (SYSTEM), the process from the application's declared incomes (APPLICATION) or a caseworker (always CASEWORKER in Lifecare) */
   origin?: NormberakningIncomeRowOriginEnum;
   /**
    * The income type id
@@ -3594,6 +3600,14 @@ export interface LifecareDecisionType {
   requiresToDate?: boolean;
 }
 
+/** A household child named on the application: the partyId the beredning tags the child's SSBTEK incomes with, and the personal number SSBTEK is read with. */
+export interface HouseholdChild {
+  /** The child's partyId, as on the errand's children */
+  partyId?: string;
+  /** The child's personal number (12 characters, may contain letters); null when it could not be resolved */
+  personId?: string;
+}
+
 /** The errand number and the household's personal numbers. Fetched per process run so the personal numbers never become process variables; every read is recorded in the errand's event log. */
 export interface HouseholdIdentifiers {
   /** The errand's human-readable number — what a person searches for in Draken */
@@ -3604,14 +3618,6 @@ export interface HouseholdIdentifiers {
   coApplicantPersonId?: string;
   /** The household children named on the application that have a partyId; empty when there are none */
   children?: HouseholdChild[];
-}
-
-/** A household child named on the application: the partyId the beredning tags the child's SSBTEK incomes with, and the personal number SSBTEK is read with. */
-export interface HouseholdChild {
-  /** The child's partyId, as on the errand's children */
-  partyId?: string;
-  /** The child's personal number (12 characters, may contain letters); null when it could not be resolved */
-  personId?: string;
 }
 
 /** Self-describing snapshot of the form as it was rendered and answered. */
@@ -4449,7 +4455,6 @@ export enum WarningTypeEnum {
   HOUSEHOLD_CHANGE = "HOUSEHOLD_CHANGE",
   HOUSING_COST_CHANGE = "HOUSING_COST_CHANGE",
   EXPENSE_REVIEW = "EXPENSE_REVIEW",
-  EXPENSE_CAPPED = "EXPENSE_CAPPED",
   INCOME_DUPLICATED = "INCOME_DUPLICATED",
   CHILD_NOT_FULL_TIME = "CHILD_NOT_FULL_TIME",
   CHILDREN_RESIDENCE_CHANGED = "CHILDREN_RESIDENCE_CHANGED",
@@ -4589,9 +4594,10 @@ export enum NormPersonRowRoleEnum {
   VISITATION_CHILD = "VISITATION_CHILD",
 }
 
-/** Who created the row: the process or a caseworker */
+/** Who created the row: the process from SSBTEK (SYSTEM), the process from the application's declared incomes (APPLICATION) or a caseworker */
 export enum NormIncomeRowOriginEnum {
   SYSTEM = "SYSTEM",
+  APPLICATION = "APPLICATION",
   CASEWORKER = "CASEWORKER",
 }
 
@@ -4696,9 +4702,10 @@ export enum NormberakningExpenseRowBucketEnum {
   SPECIAL_EXPENSE = "SPECIAL_EXPENSE",
 }
 
-/** Who created the row: the process or a caseworker (always CASEWORKER in Lifecare) */
+/** Who created the row: the process from SSBTEK (SYSTEM), the process from the application's declared incomes (APPLICATION) or a caseworker (always CASEWORKER in Lifecare) */
 export enum NormberakningIncomeRowOriginEnum {
   SYSTEM = "SYSTEM",
+  APPLICATION = "APPLICATION",
   CASEWORKER = "CASEWORKER",
 }
 

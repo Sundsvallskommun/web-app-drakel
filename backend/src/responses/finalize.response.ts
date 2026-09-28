@@ -15,6 +15,8 @@ export class FinalizeResult {
   @IsBoolean() processMessageCorrelated!: boolean;
   /** How careM tied the recorded decision to the beslut in Lifecare; absent when careM reports none. */
   @ValidateNested() @Type(() => DecisionRegistration) @IsOptional() lifecareDecision?: DecisionRegistration;
+  /** Whether the beslut was kept on the errand as its DECISION attachment. */
+  @IsBoolean() decisionAttachmentSaved!: boolean;
   /** The channels the beslut could not be sent through. */
   @IsArray() @IsString({ each: true }) failedChannels!: string[];
 }

@@ -61,9 +61,10 @@
       "title": "The errand is decided",
       "description": "The decision is saved, but this did not go through:",
       "failedChannels": "The decision could not be sent to: {{detail}}.",
-      "processNotResumed": "The process was not told about the decision.",
+      "processNotResumed": "The decision is saved. The process resumes automatically.",
       "decisionNotRegistered": "The decision was not registered in Lifecare: {{detail}} Register it directly in Lifecare.",
-      "decisionReceiptLost": "{{detail}}"
+      "decisionReceiptLost": "{{detail}}",
+      "decisionAttachmentNotSaved": "The decision could not be saved as an attachment on the errand."
     },
     "send": "Send",
     "attachments": {
@@ -77,7 +78,14 @@
       "addCalculation": "Add the calculation",
       "fromLifecare": "From Lifecare",
       "fromComputer": "From your computer",
-      "lifecareNotSupported": "Attaching other documents from Lifecare does not work in caremanagement yet. Files from your computer must be PDF."
+      "lifecareOnlyPdf": "Only PDF documents can be sent from Lifecare, e.g. received documents. Text documents and forms do not work in caremanagement yet. Files from your computer must be PDF.",
+      "fromLifecareName": "{{name}} (Lifecare)",
+      "add": "Add {{name}}",
+      "addShort": "Add",
+      "lifecarePdfs": "PDF documents in Lifecare",
+      "lifecareLoading": "Fetching documents from Lifecare",
+      "lifecareError": "The documents in Lifecare could not be fetched.",
+      "lifecareNone": "There are no more PDF documents in Lifecare to add."
     }
   },
   "actualisation": {
